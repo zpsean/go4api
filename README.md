@@ -170,7 +170,7 @@ $./go4api --baseUrl https://api.douban.com --testhome /<you Path>/go/run/testhom
 
 ---
 
-v1.0 Target:
+v1.0 Target
 --------------------------------
 
 v1.0 is planning to have:
