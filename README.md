@@ -169,6 +169,18 @@ $./go4api --baseUrl https://api.douban.com --testhome /<you Path>/go/run/testhom
 
 ---
 
+v1.0 target:
+--------------------------------
+
+v1.0 is planning to have:
+
+- Fully support the HTTP method on Get, Post, Put, Delete
+- More options to control the test cases execution
+- Fully coverage on Assertion on Equals, Contains, etc.
+
+
+---
+
 Need help or want to contribute?
 --------------------------------
 
