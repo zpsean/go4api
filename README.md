@@ -48,6 +48,8 @@ To build from source you need **[Go](https://golang.org/doc/install)** (1.10 or 
 Quick start
 -----------
 
+Note: You can prepare many many test cases based on below examples to let go4api run for you.
+
 ### A simple case, with hard-coded Json:
 #### Prepare the Json:
 
@@ -93,7 +95,7 @@ Quick start
 #### Running go4api
 
 ```js
-$go4api --testhome /<you Path>/go/run/testhome --testresults /<you Path>/go/run/testresults
+$./go4api --testhome /<you Path>/go/run/testhome --testresults /<you Path>/go/run/testresults
 ```
 
 
@@ -145,7 +147,7 @@ dt1-2,1,500
 #### Running go4api
 
 ```js
-$go4api --baseUrl https://api.douban.com --testhome /<you Path>/go/run/testhome --testresults /<you Path>/go/run/testresults
+$./go4api --baseUrl https://api.douban.com --testhome /<you Path>/go/run/testhome --testresults /<you Path>/go/run/testresults
 ```
 
 ---
