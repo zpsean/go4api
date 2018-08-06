@@ -29,7 +29,7 @@ Features
 Install
 ------
 
-### Using the binary package
+### Mac: Using the binary package
 
 Grab a prebuilt binary from [the Releases page](https://github.com/zpsean/go4api/releases).
 
@@ -48,13 +48,64 @@ To build from source you need **[Go](https://golang.org/doc/install)** (1.10 or 
 Quick start
 -----------
 
-### Prepare the Json:
+### A simple case, with hard-coded Json:
+#### Prepare the Json:
 
 ```js
 {
   "TestCases": [
     {
-      "Sku-TC-{{.tc}}": {
+      "FirstTestCase-001": {
+        "priority": "3",
+        "parentTestCase": "root",
+        "request": {
+          "method": "GET",
+          "path": "https://api.douban.com/v2/movie/top250",
+          "headers": {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36"
+          },
+          "queryString": {
+            "pageIndex": "1",
+            "pageSize": "12"
+          }
+        },
+        "response": {
+          "status": {
+            "Equals": 200
+          },
+          "headers": {
+            "Content-Type": {
+              "Contains": "application/json;charset=UTF-8"
+            }
+          },
+          "body": {
+            "total": {
+              "Equals": 250
+            }
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+#### Running go4api
+
+```js
+$go4api --testhome /<you Path>/go/run/testhome --testresults /<you Path>/go/run/testresults
+```
+
+
+### A much more real case, with variables in Json:
+#### Prepare the Json:
+
+SecondTeseCase.json
+```js
+{
+  "TestCases": [
+    {
+      "SecondTestCase-{{.tc}}": {
         "priority": "{{.priority}}",
         "parentTestCase": "root",
         "request": {
@@ -84,12 +135,17 @@ Quick start
 }
 ```
 
-### Running go4api
+SecondTeseCase_dt1.csv
+```js
+tc,priority,statuscode
+dt1-1,1,500
+dt1-2,1,500
+```
 
-First run:
+#### Running go4api
 
 ```js
-$go4api --testEnv QA --testhome /<you Path>/go/run/testhome --testresults /<you Path>/go/run/testresults
+$go4api --baseUrl https://api.douban.com --testhome /<you Path>/go/run/testhome --testresults /<you Path>/go/run/testresults
 ```
 
 ---
