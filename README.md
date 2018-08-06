@@ -110,7 +110,7 @@ SecondTeseCase.json
         "parentTestCase": "root",
         "request": {
           "method": "GET",
-          "path": "/api/operation/skus?pageIndex=1&pageSize=12",
+          "path": "/v2/movie/top250",
           "headers": {
             "authorization": "{{.authorization}}"
           },
