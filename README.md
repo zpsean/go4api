@@ -50,7 +50,7 @@ Quick start
 
 Note: You can prepare many many test cases based on below examples to let go4api run for you.
 
-### Your testing workspace will looks like below:
+### Your testing workspace will like below:
 ```js
 ├── testhome
 │   ├── testconfig
