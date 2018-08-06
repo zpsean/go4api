@@ -15,6 +15,7 @@ Menu
 - [Features](#features)
 - [Install](#install)
 - [Quick Start](#quick-start)
+- [v1.0 Target](#v1.0-target)
 - [Need help or want to contribute?](#need-help-or-want-to-contribute)
 
 Features
@@ -169,7 +170,7 @@ $./go4api --baseUrl https://api.douban.com --testhome /<you Path>/go/run/testhom
 
 ---
 
-v1.0 target:
+v1.0 Target:
 --------------------------------
 
 v1.0 is planning to have:
