@@ -37,7 +37,16 @@ func Run(ch chan int, pStart string, options map[string]string) { //client
     if options["baseUrl"] != "" {
         baseUrl = options["baseUrl"]
     } else {
-        baseUrl = utils.GetBaseUrlFromConfig(options["testhome"] + "/testconfig/testconfig.json", testenv)    
+        _, err := os.Stat(options["testhome"] + "/testconfig/testconfig.json")
+        // fmt.Println("err: ", err)
+        if err == nil {
+            baseUrl = utils.GetBaseUrlFromConfig(options["testhome"] + "/testconfig/testconfig.json", testenv) 
+        }
+    }
+    if baseUrl == "" {
+        fmt.Println("Warning: baseUrl is not set")
+    } else {
+        fmt.Println("baseUrl set to: " + baseUrl)
     }
     // get results dir
     resultsDir := GetResultsDir(pStart, options)
@@ -269,13 +278,13 @@ func GenerateTestReport(resultsDir string, pStart string) {
 
     texttmpl.GenerateHtmlReportFromTemplateAndVar(ui.Index_template, resultsDir, resultsDir + pStart + ".log")
     //
-    err := os.Mkdir(resultsDir + "js", 0777)
+    err := os.MkdirAll(resultsDir + "js", 0777)
     if err != nil {
       panic(err) 
     }
     utils.GenerateFileBasedOnVar(js.Js, resultsDir + "js/go4api.js")
     //
-    err = os.Mkdir(resultsDir + "style", 0777)
+    err = os.MkdirAll(resultsDir + "style", 0777)
     if err != nil {
       panic(err) 
     }
@@ -284,7 +293,7 @@ func GenerateTestReport(resultsDir string, pStart string) {
 
 func GetResultsDir(pStart string, options map[string]string) string {
     var resultsDir string
-    err := os.Mkdir(options["testresults"] + "/" + pStart + "/", 0777)
+    err := os.MkdirAll(options["testresults"] + "/" + pStart + "/", 0777)
     if err != nil {
       panic(err) 
     } else {
