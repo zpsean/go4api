@@ -160,10 +160,11 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
         expStatus map[string]interface{}, expHeader map[string]interface{}, expBody map[string]interface{}) string {
 
     // the map for mapping the string and the related funciton to call
+    // fmt.Println("Compare: ", tcName)
     funcs := map[string]interface{} {
         "Equals": assertion.Equals,
         "Contains": assertion.Contains,
-        // "LargerThan": assertion.LargerThan,
+        "LargerThan": assertion.LargerThan,
     }
 
     var testResults []bool
@@ -172,7 +173,7 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
     for key, _ := range expStatus {
         // fmt.Println("expStatus", key, expStatus[key])
         // call the assertion function
-        testResult, _ := assertion.CallAssertion(funcs, key, expStatus[key], actualStatusCode)
+        testResult, _ := assertion.CallAssertion(funcs, key, actualStatusCode, expStatus[key])
         // fmt.Println(tcName, "expStatus", testResult[0])
         testResults = append(testResults, testResult[0].Interface().(bool))
     }
@@ -188,7 +189,7 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
         for comp_key, _ := range expHeader_2 {
             // fmt.Println("expHeader_2", comp_key, expHeader_2[comp_key], actualHeader[key][0])
             // call the assertion function
-            testResult, _ := assertion.CallAssertion(funcs, comp_key, expHeader_2[comp_key], actualHeader[key][0])
+            testResult, _ := assertion.CallAssertion(funcs, comp_key, actualHeader[key][0], expHeader_2[comp_key])
             // fmt.Println(tcName, "expHeader", testResult[0])
             testResults = append(testResults, testResult[0].Interface().(bool))
         } 
@@ -211,7 +212,7 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
             actualValue, _ := actualRes.Get(key).Int()
             // fmt.Println("expBody_2", comp_key, expBody_2[comp_key], actualValue)
             // call the assertion function
-            testResult, _ := assertion.CallAssertion(funcs, comp_key, expBody_2[comp_key], actualValue)
+            testResult, _ := assertion.CallAssertion(funcs, comp_key, actualValue, expBody_2[comp_key])
             // fmt.Println(tcName, "expBody", testResult[0])
             testResults = append(testResults, testResult[0].Interface().(bool))
         }
