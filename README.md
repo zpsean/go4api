@@ -15,7 +15,7 @@ Menu
 - [Features](#features)
 - [Install](#install)
 - [Quick Start](#quick-start)
-- [v1.0 Target](#v1-0-target)
+- [v1.0 Target](#v1.0-target)
 - [Need help or want to contribute?](#need-help-or-want-to-contribute)
 
 Features
