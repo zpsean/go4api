@@ -50,6 +50,23 @@ Quick start
 
 Note: You can prepare many many test cases based on below examples to let go4api run for you.
 
+### Your testing workspace will looks like below:
+```js
+├── testhome
+│   ├── testconfig
+│   │   └── testconfig.json
+│   ├── testdata
+│   │   ├── FirstTeseCase.json
+│   │   ├── SecondTeseCase.json
+│   │   ├── SecondTeseCase_dt1.csv
+│   │   └── SecondTeseCase_dt2.csv
+│   └── testresource
+│       ├── excelforupload.xlsx
+│       └── image.png
+└── testresults
+    └── 2018-08-06\ 10:55:55.853034228\ +0800\ CST\ m=+0.001557642
+```
+
 ### A simple case, with hard-coded Json:
 #### Prepare the Json:
 
