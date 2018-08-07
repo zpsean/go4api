@@ -133,14 +133,14 @@ func Run(ch chan int, pStart string, options map[string]string) { //client
     }
 
     //
-    fmt.Println("-------------------------------------------------------------------")
+    fmt.Println("---------------------------------------------------------------------------")
     fmt.Println("----- Total " + strconv.Itoa(len(tcArray)) + " Cases in template -----")
     fmt.Println("----- Total " + strconv.Itoa(tcTotalCount) + " Cases put onto tcTree -----")
-    fmt.Println("----- Total " + strconv.Itoa(statusOtherCount) + " Cases Skipped (Not Executed) -----")
+    fmt.Println("----- Total " + strconv.Itoa(statusOtherCount) + " Cases Skipped (Not Executed, due to Parent Failed) -----")
     fmt.Println("----- Total " + strconv.Itoa(tcTotalCount - statusOtherCount) + " Cases Executed -----")
     fmt.Println("----- Total " + strconv.Itoa(statusSuccessCount) + " Cases Success -----")
     fmt.Println("----- Total " + strconv.Itoa(statusFailCount) + " Cases Fail -----")
-    fmt.Println("-------------------------------------------------------------------\n\n")
+    fmt.Println("---------------------------------------------------------------------------\n\n")
 
 
     // generate the html report based on template, and results data
