@@ -11,17 +11,17 @@
 package assertion
 
 import (
-    // "fmt"
+    "fmt"
 	"reflect"
     "strings"
     "encoding/json"
     // "encoding/xml"
     // "encoding/json"
     // "regexp"
-    // simplejson "github.com/bitly/go-simplejson"
+    simplejson "github.com/bitly/go-simplejson"
 )
 
-// What to support assertion here:
+// To support assertion here:
 // if response body is xml: [key, using xpath] [operator, like Equals, ...] [value, can use regrex]
 // if response body is html: [key, using xpath, css] [operator, like Equals, ...] [value, can use regrex]
 // if response body is json: [key] [operator, like Equals, ...] [value, can use regrex]
@@ -39,6 +39,10 @@ import (
 // LessOrEquals
 // Greater
 // GreaterOrEquals
+
+// for Bool (true, false):
+// Equals
+// NotEquals
 
 // for general regrex
 // Match
@@ -66,14 +70,28 @@ func Contains(a interface{}, b interface{}) bool {
     }
 }
 
-func LargerThan(a interface{}, b interface{}) bool {
-    // fmt.Println("LargerThan", a, b, reflect.TypeOf(a), reflect.TypeOf(b))
+func GreaterOrEquals(actualValue interface{}, expValue interface{}) bool {
+    // fmt.Println("GreaterOrEquals", a, b, reflect.TypeOf(a), reflect.TypeOf(b))
+    typeActualValue := reflect.TypeOf(actualValue)
+    typeExpValue := reflect.TypeOf(expValue)
 
-    fa := int64(a.(int))
-    fb, _ := b.(json.Number).Int64()
+    valueActualValue := reflect.ValueOf(actualValue)
+    valueExpValue := reflect.ValueOf(expValue)
+
+    fmt.Println("GreaterOrEquals", typeActualValue, valueActualValue, typeExpValue, valueExpValue)
+
+    // to check the valueExpValue first, it may be string, number, boolean, null, array, json, etc.
+    var act, exp float64
+
+    switch typeExpValue.Name() {
+        case "json.Number": {
+            act, _ = actualValue.(*simplejson.Json).Float64()
+            exp, _ = expValue.(json.Number).Float64()
+        }
+    }
     
-    // fmt.Println("LargerThan", fa, fb)
-    if fa > fb {
+    // fmt.Println("GreaterOrEquals", act, exp)
+    if act > exp {
         return true
     } else {
         return false
@@ -81,19 +99,19 @@ func LargerThan(a interface{}, b interface{}) bool {
 }
 
 
-// For regrex, Match function, 
+// For regrex, Match function, for value - value match 
 // a is the key, wold be path, like: $.headers.Content-Type, $.body.resource[0], $.body.resource.count, etc. 
-// a may be a simple concrete type liek string, Int, etc. or other complex type like struct, map
+// a may be a simple concrete type liek string, number, boolean, null, etc. or other complex type like array, json, etc.
 // b is the value, wold be regrex expression, like: application\\/json, ^\\d{4}-\\d{2}-\\d{2}$, etc.
-// b may be a simple concrete type liek string, Int, etc. or other complex type like struct, map
+// b may be a simple concrete type liek string, number, boolean, null, etc. or other complex type like array, json, etc. 
 func Match(a interface{}, b interface{}) bool {
-    // fmt.Println("LargerThan", a, b, reflect.TypeOf(a), reflect.TypeOf(b))
+    // fmt.Println("GreaterOrEquals", a, b, reflect.TypeOf(a), reflect.TypeOf(b))
 
-    fa := int64(a.(int))
-    fb, _ := b.(json.Number).Int64()
+    // fa := int64(a.(int))
+    // fb, _ := b.(json.Number).Int64()
     
-    // fmt.Println("LargerThan", fa, fb)
-    if fa > fb {
+    // fmt.Println("GreaterOrEquals", fa, fb)
+    if a == b {
         return true
     } else {
         return false

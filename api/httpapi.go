@@ -19,7 +19,8 @@ import (
     "mime/multipart"
     "path/filepath"
     "io"
-    "net/http"                                                                                                                                            
+    "net/http"     
+    "net/url"                                                                                                                                       
     "go4api/utils"
     "go4api/assertion"
     "go4api/logger"
@@ -59,6 +60,7 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
     funcs := map[string]interface{} {
         "GET": protocal.HttpGet,
         "POST": protocal.HttpPost,
+        "POSTForm": protocal.HttpPostForm,
         "POSTMultipart": protocal.HttpPostMultipart,
     }
     // request payload(body)
@@ -85,6 +87,8 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
             bodyText = PrepPostPayload(reqPayload)
             break
         }
+        // case 3: if Post, and the key does not have filename, text, then it would be PostForm
+        bodyText = PrepPostFormPayload(reqPayload)
     }
 
     // request headers
@@ -164,11 +168,11 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
     funcs := map[string]interface{} {
         "Equals": assertion.Equals,
         "Contains": assertion.Contains,
-        "LargerThan": assertion.LargerThan,
+        "GreaterOrEquals": assertion.GreaterOrEquals,
+        "Match": assertion.Match,
     }
 
     var testResults []bool
-    // expStatusCode := "200"
     // status
     for key, _ := range expStatus {
         // fmt.Println("expStatus", key, expStatus[key])
@@ -180,39 +184,32 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
 
     // header
     for key, _ := range expHeader {
-        // fmt.Println("expHeader", key, actualHeader[key])
         bytesExpHeader, _ := json.Marshal(expHeader)
-        res, _ := simplejson.NewJson(bytesExpHeader)
-
-        expHeader_2, _ := res.Get(key).Map()
-
-        for comp_key, _ := range expHeader_2 {
-            // fmt.Println("expHeader_2", comp_key, expHeader_2[comp_key], actualHeader[key][0])
+        expRes, _ := simplejson.NewJson(bytesExpHeader)
+        expHeader_2, _ := expRes.Get(key).Map()
+        //
+        for assertionKey, _ := range expHeader_2 {
+            // http.Header has structure map[key:[] ...]
+            actualValue := actualHeader[key][0]
             // call the assertion function
-            testResult, _ := assertion.CallAssertion(funcs, comp_key, actualHeader[key][0], expHeader_2[comp_key])
+            testResult, _ := assertion.CallAssertion(funcs, assertionKey, actualValue, expHeader_2[assertionKey])
             // fmt.Println(tcName, "expHeader", testResult[0])
             testResults = append(testResults, testResult[0].Interface().(bool))
         } 
     }
 
     // body
-    for key, _ := range expBody {
-        // fmt.Println("expHeader", key, actualHeader[key])
-
+   for key, _ := range expBody {
         bytesExpBody, _ := json.Marshal(expBody)
-        res, _ := simplejson.NewJson(bytesExpBody)
+        expRes, _ := simplejson.NewJson(bytesExpBody)
+        expBody_2, _ := expRes.Get(key).Map()
         //
-        // bytesActualBody, _ := json.Marshal(actualBody)
-        actualRes, _ := simplejson.NewJson([]byte(actualBody))
-        //
-        expBody_2, _ := res.Get(key).Map()
-
-        for comp_key, _ := range expBody_2 {
-            // Note: here does not know the type of the value, but use Int first for demo, may be a bug
-            actualValue, _ := actualRes.Get(key).Int()
+        for assertionKey, _ := range expBody_2 {
+            // if path, then value - value, otherwise, key - value
+            actualValue := GetActualValueBasedOnExpKeyAndActualBody(key, actualBody)
             // fmt.Println("expBody_2", comp_key, expBody_2[comp_key], actualValue)
             // call the assertion function
-            testResult, _ := assertion.CallAssertion(funcs, comp_key, actualValue, expBody_2[comp_key])
+            testResult, _ := assertion.CallAssertion(funcs, assertionKey, actualValue, expBody_2[assertionKey])
             // fmt.Println(tcName, "expBody", testResult[0])
             testResults = append(testResults, testResult[0].Interface().(bool))
         }
@@ -301,4 +298,58 @@ func PrepPostPayload(reqPayload map[string]interface{}) *strings.Reader {
 
     return body
 }
+
+func PrepPostFormPayload(reqPayload map[string]interface{}) *strings.Reader {
+    mv := reflect.ValueOf(reqPayload)
+    var body *strings.Reader
+
+    // Note, has 3 conditions: text (json), form, or multipart file upload
+    data := url.Values{}
+    for _, k := range mv.MapKeys() {
+        v := mv.MapIndex(k)
+        data.Set(k.Interface().(string), v.Interface().(string))
+        }
+    body = strings.NewReader(data.Encode())
+
+    return body
+}
+
+func GetActualValueBasedOnExpKeyAndActualBody(key string, actualBody string) interface{} {
+    var actualValue interface{}
+    // if key starts with "$.", it represents the path, for xml, json
+    // if key == "text", it is plain text, represents its valu is the whole returned body
+    //
+    // parse it based on the json by default, need add logic for xml, and other format
+    actualRes, _ := simplejson.NewJson([]byte(actualBody))
+    //
+    jsonKeyList := strings.Split(key, ".")
+    lastItem := jsonKeyList[(len(jsonKeyList) - 1):(len(jsonKeyList))][0]
+    // fmt.Println("lastItem: ", lastItem)
+    //
+    if jsonKeyList[0] == "$" {
+        switch lastItem {
+            case "Count()": {
+                var jsonValue *simplejson.Json
+                for _, jsonKey := range jsonKeyList[0:(len(jsonKeyList) - 1)] {
+                    jsonValue = actualRes.Get(jsonKey)
+                }
+                jsonValueList, _ := jsonValue.Array()
+                actualValue = len(jsonValueList)
+            }
+            default: {
+                for _, jsonKey := range jsonKeyList {
+                    actualValue = actualRes.Get(jsonKey)
+                } 
+            }
+        }
+    } else {
+        for _, jsonKey := range jsonKeyList {
+            actualValue = actualRes.Get(jsonKey)
+        } 
+    }
+
+    // fmt.Println("actualValue: ", actualValue)
+    return actualValue
+}
+
 

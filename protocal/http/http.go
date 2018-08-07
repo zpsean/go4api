@@ -2,7 +2,7 @@ package protocal
 
 import (
     // "fmt"
-    "net/http" 
+    "net/http"
     "io/ioutil"
     "strconv"
     "reflect"
@@ -25,17 +25,6 @@ func HttpGet(url string, apiMethod string, reqHeaders map[string]interface{}, re
         v := mv.MapIndex(k)
         reqest.Header.Add(k.Interface().(string), v.Interface().(string))
     }
-
-    // for _, k := range mv.MapKeys() {
-    //     v := mv.MapIndex(k)
-    //     // fmt.Println("reqHeaders", k, v)
-    //     if k.Interface().(string) == "authorization" {
-    //         reqest.Header.Add(k.Interface().(string), "afafddsfas")
-    //     } else {
-    //         reqest.Header.Add(k.Interface().(string), v.Interface().(string))
-    //     }
-    // }
-
     // fmt.Println("url", url)
     // fmt.Println("payload", payload)
     // fmt.Println("reqest.Header", reqest.Header)
@@ -58,6 +47,39 @@ func HttpGet(url string, apiMethod string, reqHeaders map[string]interface{}, re
 }
 
 func HttpPost(url string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (string, http.Header, string) { 
+    //client 
+    client := &http.Client{}
+    //
+    // payload := strings.NewReader("{\"mid\":\"550049154\"}")
+    payload := reqBody
+    //
+    reqest, err := http.NewRequest(apiMethod, url, payload)
+
+    //Header
+    mv := reflect.ValueOf(reqHeaders)
+    for _, k := range mv.MapKeys() {
+        v := mv.MapIndex(k)
+        reqest.Header.Add(k.Interface().(string), v.Interface().(string))
+    }
+    // fmt.Println("url", url)
+    // fmt.Println("payload", payload)
+    // fmt.Println("reqest.Header", reqest.Header)
+
+    //response
+    response, err := client.Do(reqest)
+    if err != nil {
+        panic(err)
+    }  
+    defer response.Body.Close()
+    body, _ := ioutil.ReadAll(response.Body)
+    // fmt.Println(response.Header)
+    // fmt.Println(response.StatusCode)
+    // fmt.Println(string(body))
+
+    return strconv.Itoa(response.StatusCode), response.Header, string(body)
+}
+
+func HttpPostForm(url string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (string, http.Header, string) { 
     //client 
     client := &http.Client{}
     //
