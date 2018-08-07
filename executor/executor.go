@@ -69,7 +69,7 @@ func Run(ch chan int, pStart string, options map[string]string) { //client
     fmt.Println("------------------")
     //
     prioritySet := GetPrioritySet(tcArray)
-    // classifications := GetTestCasesByPriority(prioritySet, tcArray)
+    classifications := GetTestCasesByPriority(prioritySet, tcArray)
     // Note, before starting execution, needs to sort the priorities_set first by priority
     // Note: here is a bug, as the sort results is 1, 10, 11, 2, 3, etc. => fixed
     prioritySet_Int := utils.ConvertStringArrayToIntArray(prioritySet)
@@ -87,14 +87,16 @@ func Run(ch chan int, pStart string, options map[string]string) { //client
 
     //
     fmt.Println("\n====> test cases execution starts!\n")
-    tcTotalCount = 0
     statusReadyCount = 0
-    statusSuccessCount = 0
-    statusFailCount = 0
-    statusOtherCount = 0
+    // init the status count list
+    statusCountList = make([][]int, len(prioritySet) + 1)
+    for i := range statusCountList {
+        statusCountList[i] = make([]int, 5)
+    }
+    fmt.Println("====> statusCountList init: ", statusCountList)
     //
-    for _, priority := range prioritySet {
-        // tcArrayPriority := classifications[priority]
+    for p_index, priority := range prioritySet {
+        tcArrayPriority := classifications[priority]
         fmt.Println("====> Priority " + priority + " starts!")
         
         miniLoop:
@@ -119,27 +121,44 @@ func Run(ch chan int, pStart string, options map[string]string) { //client
                 }
             // if tcTree has no node with "Ready" status, break the miniloop
             statusReadyCount = 0
-            //
-            CollectNodeStatus(root, priority)
+            CollectNodeReadyStatus(root, priority)
             // fmt.Println("------------------ statusReadyCount: ", statusReadyCount)
             if statusReadyCount == 0 {
                 break miniLoop
             }
         }
+        CollectNodeStatusByPriority(root, p_index, priority)
+        //
+        var successCount = statusCountList[p_index][2]
+        var failCount = statusCountList[p_index][3]
+        //
+        fmt.Println("---------------------------------------------------------------------------")
+        fmt.Println("----- Priority " + strconv.Itoa(p_index) + ": " + strconv.Itoa(len(tcArrayPriority)) + " Cases in template -----")
+        fmt.Println("----- Priority " + strconv.Itoa(p_index) + ": " + strconv.Itoa(statusCountList[p_index][0]) + " Cases put onto tcTree -----")
+        fmt.Println("----- Priority " + strconv.Itoa(p_index) + ": " + strconv.Itoa(statusCountList[p_index][0] - successCount - failCount) + " Cases Skipped (Not Executed, due to Parent Failed) -----")
+        fmt.Println("----- Priority " + strconv.Itoa(p_index) + ": " + strconv.Itoa(successCount + failCount) + " Cases Executed -----")
+        fmt.Println("----- Priority " + strconv.Itoa(p_index) + ": " + strconv.Itoa(successCount) + " Cases Success -----")
+        fmt.Println("----- Priority " + strconv.Itoa(p_index) + ": " + strconv.Itoa(failCount) + " Cases Fail -----")
+        fmt.Println("---------------------------------------------------------------------------")
 
         fmt.Println("====> Priority " + priority + " ended! \n")
         // sleep for debug
         // time.Sleep(1 * time.Second)
     }
-
+    // ShowNodes(root)
+    CollectOverallNodeStatus(root, len(prioritySet))
+    // fmt.Println("====> statusCountList final: ", statusCountList)
+    //
+    var successCount = statusCountList[len(prioritySet)][2]
+    var failCount = statusCountList[len(prioritySet)][3]
     //
     fmt.Println("---------------------------------------------------------------------------")
     fmt.Println("----- Total " + strconv.Itoa(len(tcArray)) + " Cases in template -----")
-    fmt.Println("----- Total " + strconv.Itoa(tcTotalCount) + " Cases put onto tcTree -----")
-    fmt.Println("----- Total " + strconv.Itoa(statusOtherCount) + " Cases Skipped (Not Executed, due to Parent Failed) -----")
-    fmt.Println("----- Total " + strconv.Itoa(tcTotalCount - statusOtherCount) + " Cases Executed -----")
-    fmt.Println("----- Total " + strconv.Itoa(statusSuccessCount) + " Cases Success -----")
-    fmt.Println("----- Total " + strconv.Itoa(statusFailCount) + " Cases Fail -----")
+    fmt.Println("----- Total " + strconv.Itoa(statusCountList[len(prioritySet)][0]) + " Cases put onto tcTree -----")
+    fmt.Println("----- Total " + strconv.Itoa(statusCountList[len(prioritySet)][0] - successCount - failCount) + " Cases Skipped (Not Executed, due to Parent Failed) -----")
+    fmt.Println("----- Total " + strconv.Itoa(successCount + failCount) + " Cases Executed -----")
+    fmt.Println("----- Total " + strconv.Itoa(successCount) + " Cases Success -----")
+    fmt.Println("----- Total " + strconv.Itoa(failCount) + " Cases Fail -----")
     fmt.Println("---------------------------------------------------------------------------\n\n")
 
 

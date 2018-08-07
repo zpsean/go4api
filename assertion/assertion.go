@@ -11,7 +11,7 @@
 package assertion
 
 import (
-    "fmt"
+    // "fmt"
 	"reflect"
     "strings"
     "encoding/json"
@@ -72,13 +72,23 @@ func Contains(a interface{}, b interface{}) bool {
 
 func GreaterOrEquals(actualValue interface{}, expValue interface{}) bool {
     // fmt.Println("GreaterOrEquals", a, b, reflect.TypeOf(a), reflect.TypeOf(b))
-    typeActualValue := reflect.TypeOf(actualValue)
+    act, exp := CovertValuesBasedOnTypes(actualValue, expValue)   
+    // fmt.Println("GreaterOrEquals", act, exp)
+    if act.(float64) >= exp.(float64) {
+        return true
+    } else {
+        return false
+    }
+}
+
+func CovertValuesBasedOnTypes(actualValue interface{}, expValue interface{}) (interface{}, interface{}) {
+    // typeActualValue := reflect.TypeOf(actualValue)
     typeExpValue := reflect.TypeOf(expValue)
 
-    valueActualValue := reflect.ValueOf(actualValue)
-    valueExpValue := reflect.ValueOf(expValue)
+    // valueActualValue := reflect.ValueOf(actualValue)
+    // valueExpValue := reflect.ValueOf(expValue)
 
-    fmt.Println("GreaterOrEquals", typeActualValue, valueActualValue, typeExpValue, valueExpValue)
+    // fmt.Println("Convert types: ", typeActualValue, valueActualValue, typeExpValue, valueExpValue)
 
     // to check the valueExpValue first, it may be string, number, boolean, null, array, json, etc.
     var act, exp float64
@@ -89,13 +99,8 @@ func GreaterOrEquals(actualValue interface{}, expValue interface{}) bool {
             exp, _ = expValue.(json.Number).Float64()
         }
     }
-    
-    // fmt.Println("GreaterOrEquals", act, exp)
-    if act > exp {
-        return true
-    } else {
-        return false
-    }
+
+    return act, exp
 }
 
 
@@ -104,14 +109,10 @@ func GreaterOrEquals(actualValue interface{}, expValue interface{}) bool {
 // a may be a simple concrete type liek string, number, boolean, null, etc. or other complex type like array, json, etc.
 // b is the value, wold be regrex expression, like: application\\/json, ^\\d{4}-\\d{2}-\\d{2}$, etc.
 // b may be a simple concrete type liek string, number, boolean, null, etc. or other complex type like array, json, etc. 
-func Match(a interface{}, b interface{}) bool {
-    // fmt.Println("GreaterOrEquals", a, b, reflect.TypeOf(a), reflect.TypeOf(b))
-
-    // fa := int64(a.(int))
-    // fb, _ := b.(json.Number).Int64()
-    
-    // fmt.Println("GreaterOrEquals", fa, fb)
-    if a == b {
+func Match(actualValue interface{}, expValue interface{}) bool {
+    act, exp := CovertValuesBasedOnTypes(actualValue, expValue)   
+    // fmt.Println("GreaterOrEquals", act, exp)
+    if act.(float64) == exp.(float64) {
         return true
     } else {
         return false

@@ -34,11 +34,9 @@ var (
     root *tcNode
 
     findNode **tcNode
-    tcTotalCount int
+
     statusReadyCount int
-    statusSuccessCount int
-    statusFailCount int
-    statusOtherCount int
+    statusCountList [][]int
 )
 
 
@@ -259,23 +257,53 @@ func RefreshNodeAndDirectChilrenTcResult(node *tcNode, tcRunResult string) {
     }
 }
 
-
-func CollectNodeStatus(node *tcNode, priority string) {
+func CollectNodeReadyStatus(node *tcNode, priority string) {
     for _, n := range node.children {
         if n.tc[1].(string) == priority {
-            tcTotalCount = tcTotalCount + 1
             switch n.tcRunResult { 
                 case "Ready": 
                     statusReadyCount = statusReadyCount + 1
-                case "Success": 
-                    statusSuccessCount = statusSuccessCount + 1  
-                case "Fail": 
-                    statusFailCount = statusFailCount + 1 
-                default: 
-                    statusOtherCount = statusOtherCount + 1
             }
         }
-        CollectNodeStatus(n, priority)
+        CollectNodeReadyStatus(n, priority)
+    }
+}
+
+func CollectNodeStatusByPriority(node *tcNode, p_index int, priority string) {
+    for _, n := range node.children {
+        if n.tc[1].(string) == priority {
+            statusCountList[p_index][0] = statusCountList[p_index][0] + 1
+
+            switch n.tcRunResult { 
+                case "Ready": 
+                    statusCountList[p_index][1] = statusCountList[p_index][1] + 1
+                case "Success": 
+                    statusCountList[p_index][2] = statusCountList[p_index][2] + 1  
+                case "Fail":
+                    statusCountList[p_index][3] = statusCountList[p_index][3] + 1 
+                default: 
+                    statusCountList[p_index][4] = statusCountList[p_index][4] + 1
+            }
+        }
+        CollectNodeStatusByPriority(n, p_index, priority)
+    }
+}
+
+func CollectOverallNodeStatus(node *tcNode, p_index int) {
+    for _, n := range node.children {
+        statusCountList[p_index][0] = statusCountList[p_index][0] + 1
+
+        switch n.tcRunResult { 
+            case "Ready": 
+                statusCountList[p_index][1] = statusCountList[p_index][1] + 1
+            case "Success": 
+                statusCountList[p_index][2] = statusCountList[p_index][2] + 1  
+            case "Fail":
+                statusCountList[p_index][3] = statusCountList[p_index][3] + 1 
+            default: 
+                statusCountList[p_index][4] = statusCountList[p_index][4] + 1
+        }
+        CollectOverallNodeStatus(n, p_index)
     }
 }
 
