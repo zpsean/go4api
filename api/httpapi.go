@@ -207,10 +207,9 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
         for assertionKey, _ := range expBody_2 {
             // if path, then value - value, otherwise, key - value
             actualValue := GetActualValueBasedOnExpKeyAndActualBody(key, actualBody)
-            // fmt.Println("expBody_2", comp_key, expBody_2[comp_key], actualValue)
             // call the assertion function
             testResult, _ := assertion.CallAssertion(funcs, assertionKey, actualValue, expBody_2[assertionKey])
-            // fmt.Println(tcName, "expBody", testResult[0])
+            // fmt.Println("expBody_2", key, assertionKey, actualValue, actualValue, testResult[0].Interface().(bool))
             testResults = append(testResults, testResult[0].Interface().(bool))
         }
     }
