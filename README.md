@@ -6,8 +6,9 @@
 **Go4Api** is a tool focusing on API testing, which is targeting the huge test cases and test data, with execution concurrently based on Priority and Dependency.
 
 <p align="center">
-  <img width="600" src="https://">
+  <img width="500" src="https://github.com/zpsean/go4api/blob/master/demo.svg">
 </p>
+
 
 Menu
 ----
