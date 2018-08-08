@@ -123,6 +123,10 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
     end := string(time.Now().String())
     // fmt.Println(tcName + " end: ", end)
 
+    // here to generate the outputs file if the Json has "outputs" field
+    // [] := utils.GetExpectedOutputsFieldsForTC(tcJson, tcName)
+    // GenerateOutputsFile(actualBody)
+
     //
     resultPrintString := ""
     csvFileBase := ""
@@ -165,21 +169,14 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
 
     // the map for mapping the string and the related funciton to call
     // fmt.Println("Compare: ", tcName)
-    funcs := map[string]interface{} {
-        "Equals": assertion.Equals,
-        "Contains": assertion.Contains,
-        "GreaterOrEquals": assertion.GreaterOrEquals,
-        "Match": assertion.Match,
-    }
-
     var testResults []bool
     // status
     for key, _ := range expStatus {
         // fmt.Println("expStatus", key, expStatus[key])
         // call the assertion function
-        testResult, _ := assertion.CallAssertion(funcs, key, actualStatusCode, expStatus[key])
-        // fmt.Println(tcName, "expStatus", testResult[0])
-        testResults = append(testResults, testResult[0].Interface().(bool))
+        testResult := assertion.CallAssertion(key, actualStatusCode, expStatus[key])
+        // fmt.Println("expStatus", key, actualStatusCode, expStatus[key], reflect.TypeOf(actualStatusCode), reflect.TypeOf(expStatus[key]), testResult)
+        testResults = append(testResults, testResult)
     }
 
     // header
@@ -192,9 +189,9 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
             // http.Header has structure map[key:[] ...]
             actualValue := actualHeader[key][0]
             // call the assertion function
-            testResult, _ := assertion.CallAssertion(funcs, assertionKey, actualValue, expHeader_2[assertionKey])
-            // fmt.Println(tcName, "expHeader", testResult[0])
-            testResults = append(testResults, testResult[0].Interface().(bool))
+            testResult := assertion.CallAssertion(assertionKey, actualValue, expHeader_2[assertionKey])
+            // fmt.Println("expHeader_2", key, assertionKey, actualValue, actualValue, reflect.TypeOf(actualValue), reflect.TypeOf(expHeader_2[assertionKey]), testResult)
+            testResults = append(testResults, testResult)
         } 
     }
 
@@ -208,9 +205,9 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
             // if path, then value - value, otherwise, key - value
             actualValue := GetActualValueBasedOnExpKeyAndActualBody(key, actualBody)
             // call the assertion function
-            testResult, _ := assertion.CallAssertion(funcs, assertionKey, actualValue, expBody_2[assertionKey])
-            // fmt.Println("expBody_2", key, assertionKey, actualValue, actualValue, testResult[0].Interface().(bool))
-            testResults = append(testResults, testResult[0].Interface().(bool))
+            testResult := assertion.CallAssertion(assertionKey, actualValue, expBody_2[assertionKey])
+            // fmt.Println("expBody_2", key, assertionKey, actualValue, expBody_2[assertionKey], reflect.TypeOf(actualValue), reflect.TypeOf(expBody_2[assertionKey]), testResult)
+            testResults = append(testResults, testResult)
         }
     }
 
@@ -220,7 +217,7 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
     for key := range testResults {
         if testResults[key] == false {
             finalResults = "Fail"
-            // fmt.Println(tcName + " results", testResults, "final results: ", finalResults)
+            fmt.Println(tcName + " results", testResults, "final results: ", finalResults)
             break
         }
     }
@@ -328,12 +325,19 @@ func GetActualValueBasedOnExpKeyAndActualBody(key string, actualBody string) int
     if jsonKeyList[0] == "$" {
         switch lastItem {
             case "Count()": {
-                var jsonValue *simplejson.Json
-                for _, jsonKey := range jsonKeyList[0:(len(jsonKeyList) - 1)] {
-                    jsonValue = actualRes.Get(jsonKey)
+                if len(jsonKeyList) > 2 {
+                    var jsonValue *simplejson.Json
+                    for _, jsonKey := range jsonKeyList[0:(len(jsonKeyList) - 1)] {
+                        jsonValue = actualRes.Get(jsonKey)
+                    }
+                    jsonValueList, _ := jsonValue.Array()
+                    actualValue = len(jsonValueList)
+                } else {
+                    // here to deal with the special case, like returned body is []
+                    jsonValueList, _ := actualRes.Array()
+                    actualValue = len(jsonValueList)
                 }
-                jsonValueList, _ := jsonValue.Array()
-                actualValue = len(jsonValueList)
+                    
             }
             default: {
                 for _, jsonKey := range jsonKeyList {
