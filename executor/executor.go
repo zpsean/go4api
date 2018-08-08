@@ -93,7 +93,6 @@ func Run(ch chan int, pStart string, options map[string]string) { //client
     for i := range statusCountList {
         statusCountList[i] = make([]int, 5)
     }
-    fmt.Println("====> statusCountList init: ", statusCountList)
     //
     for p_index, priority := range prioritySet {
         tcArrayPriority := classifications[priority]
@@ -133,12 +132,12 @@ func Run(ch chan int, pStart string, options map[string]string) { //client
         var failCount = statusCountList[p_index][3]
         //
         fmt.Println("---------------------------------------------------------------------------")
-        fmt.Println("----- Priority " + strconv.Itoa(p_index) + ": " + strconv.Itoa(len(tcArrayPriority)) + " Cases in template -----")
-        fmt.Println("----- Priority " + strconv.Itoa(p_index) + ": " + strconv.Itoa(statusCountList[p_index][0]) + " Cases put onto tcTree -----")
-        fmt.Println("----- Priority " + strconv.Itoa(p_index) + ": " + strconv.Itoa(statusCountList[p_index][0] - successCount - failCount) + " Cases Skipped (Not Executed, due to Parent Failed) -----")
-        fmt.Println("----- Priority " + strconv.Itoa(p_index) + ": " + strconv.Itoa(successCount + failCount) + " Cases Executed -----")
-        fmt.Println("----- Priority " + strconv.Itoa(p_index) + ": " + strconv.Itoa(successCount) + " Cases Success -----")
-        fmt.Println("----- Priority " + strconv.Itoa(p_index) + ": " + strconv.Itoa(failCount) + " Cases Fail -----")
+        fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(len(tcArrayPriority)) + " Cases in template -----")
+        fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(statusCountList[p_index][0]) + " Cases put onto tcTree -----")
+        fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(statusCountList[p_index][0] - successCount - failCount) + " Cases Skipped (Not Executed, due to Parent Failed) -----")
+        fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(successCount + failCount) + " Cases Executed -----")
+        fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(successCount) + " Cases Success -----")
+        fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(failCount) + " Cases Fail -----")
         fmt.Println("---------------------------------------------------------------------------")
 
         fmt.Println("====> Priority " + priority + " ended! \n")
