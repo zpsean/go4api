@@ -129,20 +129,22 @@ func BuildTree(tcArray [][]interface{}) (*tcNode, map[string]*tcNode) {
     // loop the tcArrayNotTree, until none can be added to tree anymore
     for {
         len1 := len(tcArrayNotTree)
-
-        for i, tc := range tcArrayNotTree {
+        // here may be bug, as once the item removed, the index would be out of range 
+        // => fixed, using the name but not the index to remove
+        for _, tc := range tcArrayNotTree {
+            // fmt.Println("!!now try to add tc - 0: ", tc[0].(string), tcArrayNotTree, tc)
             // if parentTestCase name can be found in tree
             ifAdded := AddNode(tc[0].(string), tc[2].(string), "", tc)
-            // fmt.Println("!!now try to add tc: ", tc[0].(string), ifAdded)
+            // fmt.Println("!!now try to add tc: ", tc[0].(string), ifAdded, tcArrayNotTree, tc)
             if ifAdded && true {
                 tcArrayTree = append(tcArrayTree, tc)
-                tcArrayNotTree = utils.RemoveArryaItem(tcArrayNotTree, i)
+                tcArrayNotTree = utils.RemoveArryaItem(tcArrayNotTree, tc)
             }
         }
 
         // fmt.Println("\nlen tcArrayNotTree: ", len(tcArrayNotTree), tcArrayNotTree)
         len2 := len(tcArrayNotTree)
-        // if can not add anymore
+        // if can not add / remove item anymore
         if len1 == len2 {
             break
         }
