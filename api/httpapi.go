@@ -103,7 +103,7 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
 
     // < !! ----------- !! >
 
-    // Actual response
+    // (1). Actual response
     var actualStatusCode string
     var actualHeader http.Header
     var actualBody string
@@ -114,20 +114,19 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
         actualStatusCode, actualHeader, actualBody = protocal.CallHttpMethod(funcs, apiMethodSelector, url, apiMethod, reqHeaders, bodyText)
         }
     //
-    // Expected response
+    // (2). Expected response
     expStatus, expHeader, expBody := utils.GetExpectedResponseForTC(tcJson, tcName)
     // fmt.Println(actualStatusCode, actualHeader, actualBody)
 
-    // compare
+    // (3). compare
     testResult := Compare(tcName, actualStatusCode, actualHeader, actualBody, expStatus, expHeader, expBody)
     end := string(time.Now().String())
     // fmt.Println(tcName + " end: ", end)
 
-    // here to generate the outputs file if the Json has "outputs" field
-    // [] := utils.GetExpectedOutputsFieldsForTC(tcJson, tcName)
-    // GenerateOutputsFile(actualBody)
+    // (4). here to generate the outputs file if the Json has "outputs" field
+    GenerateOutputsFiles(testResult, tcJson, tcName, tc, actualBody)
 
-    //
+    // (5). print to console
     resultPrintString := ""
     csvFileBase := ""
     resultReportString := ""
@@ -152,7 +151,7 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
     }
     fmt.Println(resultPrintString)
 
-    // put the execution log into results
+    // (6). put the execution log into results
     logger.WriteExecutionResults(resultReportString, pStart, resultsDir)
 
 
@@ -322,6 +321,7 @@ func GetActualValueBasedOnExpKeyAndActualBody(key string, actualBody string) int
     lastItem := jsonKeyList[(len(jsonKeyList) - 1):(len(jsonKeyList))][0]
     // fmt.Println("lastItem: ", lastItem)
     //
+    // for convinence, if need to covert all the value to type *simplejson.Json???
     if jsonKeyList[0] == "$" {
         switch lastItem {
             case "Count()": {
@@ -355,4 +355,37 @@ func GetActualValueBasedOnExpKeyAndActualBody(key string, actualBody string) int
     return actualValue
 }
 
+
+func GenerateOutputsFiles(testResult string, tcJson *simplejson.Json, tcName string, tc []interface{}, actualBody string) {
+    var expOutputs []interface{}
+    if testResult == "Success" {
+        expOutputs = utils.GetExpectedOutputsFieldsForTC(tcJson, tcName)
+        
+        if len(expOutputs) > 0 {
+            // get the actual value from actual body based on the fields in json outputs
+            var keyStr string
+            var valueStr string
+            for _, item := range expOutputs {
+                for key, value := range item.(map[string]interface{}) {
+                    // for header
+                    keyStr = keyStr + "," + key
+                    //
+                    actualValue := GetActualValueBasedOnExpKeyAndActualBody(key, actualBody)
+                    // the actualValue can be int or *simplejson.Json
+                    // here need to improve to provide smart way to handle with the type - string, int, float, bool
+                    str := actualValue.(*simplejson.Json).MustString()
+                    // if len(str) > 0 
+                    fmt.Println("expOutputs -1 : ", str, reflect.TypeOf(str), reflect.TypeOf(actualValue))
+                    fmt.Println("expOutputs: ", expOutputs, key, value, actualValue, actualValue.(*simplejson.Json), tc[0], tc[4])
+                }
+                
+            }
+            jsonFileName := strings.TrimRight(filepath.Base(tc[4].(string)), ".json")
+            outputsFile := filepath.Join(filepath.Dir(tc[4].(string)), jsonFileName + "_outputs.csv")
+            //
+            utils.GenerateFileBasedOnVarOverride(keyStr, outputsFile)
+            utils.GenerateFileBasedOnVarAppend(valueStr, outputsFile)
+        }
+    }
+}
 

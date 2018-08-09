@@ -54,6 +54,12 @@ func Run(ch chan int, pStart string, options map[string]string) { //client
     // (1), get the text path, default is ../data/*, then search all the sub-folder to get the test scripts
     //
     tcArray := GetTcArray(options)
+    // to check the tcArray, if the case not distinct, report it to fix
+    if len(tcArray) != len(GetTcNameSet(tcArray)) {
+        fmt.Println("\n!! There are duplicated test case names, please make them distinct\n")
+        os.Exit(1)
+    }
+    //
     // fmt.Println("tcArray:", tcArray, "\n")
     // myabe there needs a scheduler, for priority 1 (w or w/o dependency) -> priority 2 (w or w/o dependency), ...
     // --
@@ -184,6 +190,12 @@ func GetTcArray(options map[string]string) [][]interface{} {
         if err != nil {
           panic(err)
         }
+        // (1). Note: the file *_outputs.csv has high priority than the file *_dt[*]
+        // Note: if not render template, the jsonFile itself may not be valid json fomat
+        // tcInputsFiles := utils.GetTestCaseBasicInputsFileNameFromJsonFile(jsonFile)
+        // fmt.Println("tcInputsFiles: ", jsonFile, tcInputsFiles)
+
+        // (2) get the csv file, the inputs name has high priority than *_dt[*]
         for _, info := range infos {
           if filepath.Ext(info.Name()) == ".csv" {
             csvFileListTemp = append(csvFileListTemp, filepath.Join(filepath.Dir(jsonFile), info.Name()))
@@ -195,6 +207,8 @@ func GetTcArray(options map[string]string) [][]interface{} {
             csvFileName := strings.TrimRight(filepath.Base(csvFile), ".csv")
             jsonFileName := strings.TrimRight(filepath.Base(jsonFile), ".json")
             // Note: the json file realted data table files is pattern: jsonFileName + "_dt[*]"
+            
+            // if tcInputsFiles            
             if strings.Contains(csvFileName, jsonFileName + "_dt") {
                 csvFileList = append(csvFileList, csvFile)
             }
@@ -274,6 +288,26 @@ func GetPrioritySet(tcArray [][]interface{}) []string {
     return prioritySet
 }
 
+func GetTcNameSet(tcArray [][]interface{}) []string {
+    // get the tcNames
+    var tcNames []interface{}
+    for _, tc := range tcArray {
+        tcNames = append(tcNames, tc[0])
+    }
+    // go get the distinct key in tcNames
+    keys := make(map[string]bool)
+    tcNameSet := []string{}
+    for _, entry := range tcNames {
+        // uses 'value, ok := map[key]' to determine if map's key exists, if ok, then true
+        if _, value := keys[entry.(string)]; !value {
+            keys[entry.(string)] = true
+            tcNameSet = append(tcNameSet, entry.(string))
+        }
+    }
+
+    return tcNameSet
+}
+
 func GetTestCasesByPriority(prioritySet []string, tcArray [][]interface{}) map[string][][]interface{} {
     // build the map
     classifications := make(map[string][][]interface{})
@@ -300,13 +334,13 @@ func GenerateTestReport(resultsDir string, pStart string) {
     if err != nil {
       panic(err) 
     }
-    utils.GenerateFileBasedOnVar(js.Js, resultsDir + "js/go4api.js")
+    utils.GenerateFileBasedOnVarOverride(js.Js, resultsDir + "js/go4api.js")
     //
     err = os.MkdirAll(resultsDir + "style", 0777)
     if err != nil {
       panic(err) 
     }
-    utils.GenerateFileBasedOnVar(style.Style, resultsDir + "style/go4api.css")
+    utils.GenerateFileBasedOnVarOverride(style.Style, resultsDir + "style/go4api.css")
 }
 
 func GetResultsDir(pStart string, options map[string]string) string {

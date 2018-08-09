@@ -23,6 +23,7 @@ import (
     "path/filepath"
     "encoding/csv"
     "strconv"
+    // "regexp"
     simplejson "github.com/bitly/go-simplejson"
 )
 
@@ -64,6 +65,16 @@ func GetJsonFromFile(filePath string) *simplejson.Json {
     }
 
     return res
+}
+
+func GetContentFromFile(filePath string) []byte {
+    fi,err := ioutil.ReadFile(filePath)
+    if err != nil {
+        panic(err)
+    }
+    // contents := strings.NewReader(string(fi))
+
+    return fi
 }
 
 func GetBaseUrlFromConfig(filePath string, jsonKey string) string {
@@ -131,10 +142,29 @@ func GetTestCaseBasicInfoFromTestData(testcase interface{}) []interface{} {
       tcInfo = append(tcInfo, key)
       tcInfo = append(tcInfo, tc.Get(key).Get("priority").MustString())
       tcInfo = append(tcInfo, tc.Get(key).Get("parentTestCase").MustString())
+      // inputs if optionsl 
+      // tcInfo = append(tcInfo, tc.Get(key).Get("inputs").MustString())
       // as one test case has only one value each above, breank
     }
 
     return tcInfo
+}
+
+func GetTestCaseBasicInputsFileNameFromJsonFile(filePath string) []string {
+    // as the raw Jsonfile itself is template, may not be valid json fomat, before rendered by data
+    contents := GetContentFromFile(filePath)
+
+    var inputsFiles []string
+    // Note: as we can not ensure if the field inputs and its value will on the same line, so use : as delimiter
+    strList := strings.Split(string(contents), ":")
+    for ii, value := range strList {
+        if strings.Contains(value, `"inputs"`) {
+            fileStr := strings.Split(strList[ii + 1], ",")[0]
+            inputsFiles = append(inputsFiles, strings.TrimSpace(strings.Replace(fileStr, `"`, "", -1)))
+            
+        }
+    }
+    return inputsFiles
 }
 
 func GetRequestForTC(tc *simplejson.Json, tcName string) (string, string) {
@@ -169,6 +199,22 @@ func GetExpectedResponseForTC(tc *simplejson.Json, tcNname string) (map[string]i
     expBody, _ = expResponse.Get("body").Map()
 
     return expStatusCode, expHeader, expBody
+}
+
+func GetInputsFileNameForTC(tc *simplejson.Json, tcNname string) []interface{} {
+    var expOutputs []interface{}
+
+    expOutputs, _ = tc.Get(tcNname).Get("inputs").Array()
+
+    return expOutputs
+}
+
+func GetExpectedOutputsFieldsForTC(tc *simplejson.Json, tcNname string) []interface{} {
+    var expOutputs []interface{}
+
+    expOutputs, _ = tc.Get(tcNname).Get("outputs").Array()
+
+    return expOutputs
 }
 
 func GetJsonKeys(expBody interface{}) {
@@ -268,15 +314,33 @@ func ConvertStringArrayToIntArray(stringArray []string) []int {
     return intArray
 }
 
-func RemoveArryaItem(sourceArray [][]interface{}, index int) [][]interface{} {
-    resultArray := append(sourceArray[:index], sourceArray[index + 1:]...)
+func RemoveArryaItem(sourceArray [][]interface{}, tc []interface{}) [][]interface{} {
+    // fmt.Println("RemoveArryaItem", sourceArray, tc)
+    var resultArray [][]interface{}
+    // resultArray := append(sourceArray[:index], sourceArray[index + 1:]...)
+    for index, tc_i := range sourceArray {
+        if tc_i[0] == tc[0] {
+            resultArray = append(sourceArray[:index], sourceArray[index + 1:]...)
+            break
+        }
+    }
 
     return resultArray
 }
 
 
-func GenerateFileBasedOnVar(strVar string, filePath string) {
+func GenerateFileBasedOnVarAppend(strVar string, filePath string) {
     outFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+    if err != nil {
+       panic(err) 
+    }
+    defer outFile.Close()
+
+    outFile.WriteString(strVar)
+}
+
+func GenerateFileBasedOnVarOverride(strVar string, filePath string) {
+    outFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
     if err != nil {
        panic(err) 
     }
