@@ -20,7 +20,8 @@ import (
     "go4api/utils"
     "text/template"
     "path/filepath"
-    "strconv"
+    "time"
+    // "strconv"
     // "bufio"
     // simplejson "github.com/bitly/go-simplejson"
     
@@ -62,35 +63,45 @@ func GetHtmlTemplateFromFiles(file string, resultsDir string) {
     }
 }
 
-func GenerateHtmlReportFromTemplateAndVar(strVar string, resultsDir string, logResultsFile string) {
-    type tcResults struct {
-        Seq, CaseID, Status, CasePath string
-    }
-    TcResults := tcResults{}
-    tcResultsList := []tcResults{}
-    //
-    outFile, err := os.OpenFile(resultsDir + "index.html", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+func GenerateHtmlJsCSSFromTemplateAndVar(strVar string, pStart_time time.Time, pEnd_time time.Time, resultsDir string, logResultsFile string) {
+    outFile, err := os.OpenFile(resultsDir + "/js/reslts.js", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
     if err != nil {
        panic(err) 
     }
     defer outFile.Close()
     //
     // get the data from the log results file
+    // Note: here has two type of data to display, 1: List, 2: Graphic
+    var tcReportStr string
+
     csvRows := utils.GetCsvFromFile(logResultsFile)
     // fmt.Println("csvRows: ", logResultsFile, csvRows)
     for k, csvrow := range csvRows {
-        TcResults.Seq = strconv.Itoa(k + 1)
-        TcResults.CaseID = csvrow[0]
-        TcResults.Status = csvrow[7]
-        TcResults.CasePath = csvrow[2] + " / " + csvrow[3] + " / " + csvrow[4]
+        if k == 0 {
+            tcReportStr = `[["` + strings.Join(csvrow, `","`) + `"], ` 
+        } else if k < len(csvRows) - 1 {
+            tcReportStr = tcReportStr + `["` + strings.Join(csvrow, `","`) + `"], ` 
+        } else {
+            tcReportStr = tcReportStr + `["` + strings.Join(csvrow, `","`) + `"]]` 
+        }
 
-        tcResultsList = append(tcResultsList, TcResults)
     }
-    // fmt.Println("tcResultsList: ", tcResultsList)
     //
-    tmpl := template.Must(template.New("Html").Parse(strVar))
+    type ResultsJs struct {
+      PStart_time int64
+      PStart   string
+      PEnd_time int64
+      PEnd  string
+      TcReportStr string
+    }
+    
+    OutP := ResultsJs{pStart_time.UnixNano(), `"` + pStart_time.String() + `"`, pEnd_time.UnixNano(), `"` + pEnd_time.String() + `"`, tcReportStr}
+    //
+    // fmt.Println("outP: ", OutP)
+    //
+    tmpl := template.Must(template.New("HtmlJsCss").Parse(strVar))
 
-    err = tmpl.Execute(outFile, tcResultsList)
+    err = tmpl.Execute(outFile, OutP)
     if err != nil {
       panic(err) 
     }

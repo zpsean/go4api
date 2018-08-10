@@ -11,7 +11,20 @@
 package js
 
 var Js = `
-<script>
-document.write("<h1>This is a heading</h1>");
-document.write("<p>This is a paragraph</p>");
-</script>`
+function tabPageControl(n)
+{
+for (var i = 0; i < tabTitles.cells.length; i++)
+{
+tabTitles.cells[i].className = "tabTitleUnSelected";
+}
+tabTitles.cells[n].className = "tabTitleSelected";
+
+for (var i = 0; i < tabPagesContainer.tBodies.length; i++)
+{
+tabPagesContainer.tBodies[i].className = "tabPageUnSelected";
+}
+tabPagesContainer.tBodies[n].className = "tabPageSelected";
+}
+
+
+`

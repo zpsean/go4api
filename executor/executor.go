@@ -12,7 +12,7 @@ package executor
 
 import (
     "fmt"
-    // "time"
+    "time"
     "os"
     "sort"
     "sync"
@@ -30,7 +30,7 @@ import (
 )
 
 
-func Run(ch chan int, pStart string, options map[string]string) { //client
+func Run(ch chan int, pStart_time time.Time, options map[string]string) { //client
     //
     testenv := options["testEnv"]
     baseUrl := ""
@@ -49,6 +49,7 @@ func Run(ch chan int, pStart string, options map[string]string) { //client
         fmt.Println("baseUrl set to: " + baseUrl)
     }
     // get results dir
+    pStart := pStart_time.String()
     resultsDir := GetResultsDir(pStart, options)
     //
     // (1), get the text path, default is ../data/*, then search all the sub-folder to get the test scripts
@@ -117,10 +118,12 @@ func Run(ch chan int, pStart string, options map[string]string) { //client
             close(resultsChan)
 
             for tcRunResults := range resultsChan {
-                // tcName, testResult
+                // tcName, testResult, the search result is saved to *findNode
                 SearchNode(&root, tcRunResults[0].(string))
                 // fmt.Println("---- the found node: ", tcRunResults[0].(string), *findNode)
-                RefreshNodeAndDirectChilrenTcResult(*findNode, tcRunResults[1].(string))
+                // tcRunResults => [[tcName, testResult, start, end, testMessages, tcStartUnixNano, tcEndUnixNano] ...]
+                RefreshNodeAndDirectChilrenTcResult(*findNode, tcRunResults[1].(string), tcRunResults[2].(string), 
+                    tcRunResults[3].(string), tcRunResults[4].([]string), tcRunResults[5].(int64), tcRunResults[6].(int64))
                 // fmt.Println("------------------")
                 // ShowNodes(root)
                 }
@@ -169,8 +172,12 @@ func Run(ch chan int, pStart string, options map[string]string) { //client
 
     // generate the html report based on template, and results data
     // time.Sleep(1 * time.Second)
-    GenerateTestReport(resultsDir, pStart)
-    // fmt.Println("====> Report Generated!\n")
+    pEnd_time := time.Now()
+    //
+    GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time)
+    //
+    fmt.Println("Report Generated at: " + resultsDir + "index.html")
+    fmt.Println("Execution Finished at: " + pEnd_time.String())
 
     // channel code, can be used for the overall success or fail indicator, especially for CI/CD
     ch <- 1
@@ -232,8 +239,7 @@ func GetTcArray(options map[string]string) [][]interface{} {
                             // to get the case info like [casename, priority, parentTestCase, ...], tc, jsonFile, csvFile, row in csv
                             // Note: row in csv = i + 1 (i.e. plus csv header line)
                             tcInfo = utils.GetTestCaseBasicInfoFromTestData(tc)
-                            // append last field: tcRunResult, it is tc[7]
-                            tcInfo = append(tcInfo, tc, jsonFile, csvFile, strconv.Itoa(i + 1), "")
+                            tcInfo = append(tcInfo, tc, jsonFile, csvFile, strconv.Itoa(i + 1))
                             tcInfos = append(tcInfos, tcInfo)
                         }
                     }
@@ -251,8 +257,7 @@ func GetTcArray(options map[string]string) [][]interface{} {
             for _, tc := range tcJsonsTemp {
                 // to get the case info like [casename, priority, parentTestCase, ...]
                 tcInfo = utils.GetTestCaseBasicInfoFromTestData(tc)
-                // append last field: tcRunResult, it is tc[7]
-                tcInfo = append(tcInfo, tc, jsonFile, csvFile, csvRow, "")
+                tcInfo = append(tcInfo, tc, jsonFile, csvFile, csvRow)
                 tcInfos = append(tcInfos, tcInfo)
             }
         }
@@ -324,22 +329,28 @@ func GetTestCasesByPriority(prioritySet []string, tcArray [][]interface{}) map[s
 }
 
 
-func GenerateTestReport(resultsDir string, pStart string) {
+func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time) {
     // read the resource under /ui/*
     // fmt.Println("ui: ", ui.Index_template)
 
-    texttmpl.GenerateHtmlReportFromTemplateAndVar(ui.Index_template, resultsDir, resultsDir + pStart + ".log")
+    // copy the value of var Index to file
+    utils.GenerateFileBasedOnVarOverride(ui.Index, resultsDir + "index.html")
+
     //
     err := os.MkdirAll(resultsDir + "js", 0777)
     if err != nil {
       panic(err) 
     }
+    // copy the value of var js.Js to file
+    texttmpl.GenerateHtmlJsCSSFromTemplateAndVar(js.Results, pStart_time, pEnd_time, resultsDir, resultsDir + pStart + ".log")
+    //
     utils.GenerateFileBasedOnVarOverride(js.Js, resultsDir + "js/go4api.js")
     //
     err = os.MkdirAll(resultsDir + "style", 0777)
     if err != nil {
       panic(err) 
     }
+    // copy the value of var style.Style to file
     utils.GenerateFileBasedOnVarOverride(style.Style, resultsDir + "style/go4api.css")
 }
 

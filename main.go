@@ -43,8 +43,7 @@ func main(){
 
     fmt.Println("\n----- Start Main -----")
 
-    pStart := string(time.Now().String())
-    // fmt.Println("pStart: ", pStart)
+    pStart := time.Now()
     //
     executor.Run(ch, pStart, options)
 
