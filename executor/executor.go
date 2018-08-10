@@ -26,6 +26,7 @@ import (
     "strings"
     "io/ioutil"
     "strconv"
+    "go4api/logger"
     // simplejson "github.com/bitly/go-simplejson"
 )
 
@@ -118,14 +119,34 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
             close(resultsChan)
 
             for tcRunResults := range resultsChan {
-                // tcName, testResult, the search result is saved to *findNode
-                SearchNode(&root, tcRunResults[0].(string))
-                // fmt.Println("---- the found node: ", tcRunResults[0].(string), *findNode)
-                // tcRunResults => [[tcName, testResult, start, end, testMessages, tcStartUnixNano, tcEndUnixNano] ...]
-                RefreshNodeAndDirectChilrenTcResult(*findNode, tcRunResults[1].(string), tcRunResults[2].(string), 
-                    tcRunResults[3].(string), tcRunResults[4].([]string), tcRunResults[5].(int64), tcRunResults[6].(int64))
+                //
+                tcName := tcRunResults[0].(string)
+                parentTestCase := tcRunResults[1].(string)
+                testResult := tcRunResults[2].(string)
+                actualStatusCode := tcRunResults[3].(string)
+                jsonFile_Base := tcRunResults[4].(string)
+                csvFileBase := tcRunResults[5].(string)
+                rowCsv := tcRunResults[6].(string)
+                start := tcRunResults[7].(string)
+                end := tcRunResults[8].(string)
+                testMessages := tcRunResults[9].([]string)
+                start_time_UnixNano := tcRunResults[10]
+                end_time_UnixNano := tcRunResults[11]
+                duration_UnixNano := tcRunResults[12]
+                //
+                // (1). tcName, testResult, the search result is saved to *findNode
+                SearchNode(&root, tcName)
+                // (2). 
+                RefreshNodeAndDirectChilrenTcResult(*findNode, testResult, start, end, 
+                    testMessages, start_time_UnixNano.(int64), end_time_UnixNano.(int64))
                 // fmt.Println("------------------")
-                // ShowNodes(root)
+                // (3). <--> for log write to file
+                resultReportString1 := priority + "," + tcName + "," + parentTestCase + "," + testResult + "," + actualStatusCode + "," + jsonFile_Base + "," + csvFileBase
+                resultReportString2 := "," + rowCsv + "," + start + "," + end + "," + "`" + "d" + "`" + "," + strconv.FormatInt(start_time_UnixNano.(int64), 10)
+                resultReportString3 := "," + strconv.FormatInt(end_time_UnixNano.(int64), 10) + "," +  strconv.FormatInt(duration_UnixNano.(int64), 10)
+                resultReportString :=  resultReportString1 + resultReportString2 + resultReportString3
+                // (4). put the execution log into results
+                logger.WriteExecutionResults(resultReportString, pStart, resultsDir)
                 }
             // if tcTree has no node with "Ready" status, break the miniloop
             statusReadyCount = 0
@@ -136,6 +157,17 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
             }
         }
         CollectNodeStatusByPriority(root, p_index, priority)
+        // (5). also need to put out the cases which has not been executed (i.e. not Success, Fail)
+        for _, tc := range tcNotExecutedList {
+            // [casename, priority, parentTestCase, ...], tc, jsonFile, csvFile, row in csv
+            resultReportString := tc[1].(string) + "," + tc[0].(string) + "," + tc[2].(string) + "," + "ParentFailed" + ",," + tc[4].(string) + "," + tc[5].(string)
+            resultReportString = resultReportString + "," + tc[6].(string) + ",,,,,,"
+
+            logger.WriteExecutionResults(resultReportString, pStart, resultsDir)
+            // to console
+            fmt.Println(resultReportString)
+        }
+        
         //
         var successCount = statusCountList[p_index][2]
         var failCount = statusCountList[p_index][3]
@@ -151,7 +183,7 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
 
         fmt.Println("====> Priority " + priority + " ended! \n")
         // sleep for debug
-        // time.Sleep(1 * time.Second)
+        time.Sleep(500 * time.Millisecond)
     }
     // ShowNodes(root)
     CollectOverallNodeStatus(root, len(prioritySet))
