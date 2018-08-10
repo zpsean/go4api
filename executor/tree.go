@@ -43,6 +43,7 @@ var (
 
     statusReadyCount int
     statusCountList [][]int
+    tcNotExecutedList [][]interface{}
 )
 
 
@@ -189,21 +190,6 @@ func SearchNode(node **tcNode, testCaseNmae string) **tcNode {
 }
 
 
-func SearchNode5(node *tcNode, testCaseNmae string) *tcNode {
-    var findNode *tcNode
-    for _, n := range node.children {
-        if n.tcName == testCaseNmae {
-            fmt.Println("ccccccccc tree found node for 22: ", testCaseNmae, n)
-            findNode = node
-            return findNode
-        } else {
-            findNode = SearchNode5(n, testCaseNmae)
-        }
-        fmt.Println("???c why can touch here?")
-    }
-    return nil
-}
-
 func InitNodesRunResult(node *tcNode, runResult string) {
     for _, n := range node.children {
         // check if the current tese case is parent to others, if yes, then refresh
@@ -301,6 +287,9 @@ func CollectNodeStatusByPriority(node *tcNode, p_index int, priority string) {
                     statusCountList[p_index][3] = statusCountList[p_index][3] + 1 
                 default: 
                     statusCountList[p_index][4] = statusCountList[p_index][4] + 1
+                    // write the cases to tcNotExecutedList
+                    tcNotExecutedList = append(tcNotExecutedList, n.tc)
+                    
             }
         }
         CollectNodeStatusByPriority(n, p_index, priority)

@@ -23,13 +23,12 @@ import (
     "net/url"                                                                                                                                       
     "go4api/utils"
     "go4api/assertion"
-    "go4api/logger"
     "go4api/protocal/http"
     "reflect"
     "encoding/json"
     "strings"
     simplejson "github.com/bitly/go-simplejson"
-    "strconv"
+    // "strconv"
 )
 
 func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[string]string, pStart string, baseUrl string, 
@@ -38,6 +37,7 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
     defer wg.Done()
     //
     tcName := tc[0].(string)
+    parentTestCase := tc[2].(string)
     tcJson := tc[3].(*simplejson.Json)
     jsonFile := tc[4].(string)
     csvFile := tc[5].(string)
@@ -132,7 +132,6 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
     // (5). print to console
     resultPrintString := ""
     csvFileBase := ""
-    resultReportString := ""
     // Note: if csvFile does not exist, the filepath.Base(csvFile) = ".", need to remove
     if filepath.Base(csvFile) == "." {
         csvFileBase = ""
@@ -141,21 +140,19 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
     }
     resultPrintString1 := tcName + "," + actualStatusCode + "," + filepath.Base(jsonFile) + "," + csvFileBase + "," + rowCsv
     resultPrintString = resultPrintString1 + "," + testResult + "," + strings.Join(testMessages, ":")
-
-    resultReportString1 := tcName + "," + actualStatusCode + "," + filepath.Base(jsonFile) + "," + csvFileBase + "," + rowCsv 
-    resultReportString2 := "," + start + "," + end + "," + strconv.FormatInt(start_time.UnixNano(), 10) + "," + strconv.FormatInt(end_time.UnixNano(), 10)
-    resultReportString3 := "," + strconv.FormatInt(end_time.UnixNano() - start_time.UnixNano(), 10) + "," +  testResult + "," + `message`
-    resultReportString =  resultReportString1 + resultReportString2 + resultReportString3
     //
     fmt.Println(resultPrintString)
 
-    // (6). put the execution log into results
-    logger.WriteExecutionResults(resultReportString, pStart, resultsDir)
 
-    // write the channel to executor for scheduler
+    // (6). write the channel to executor for scheduler and log
     var resultsChanArray []interface{}
     resultsChanArray = append(resultsChanArray, tcName)
+    resultsChanArray = append(resultsChanArray, parentTestCase)
     resultsChanArray = append(resultsChanArray, testResult)
+    resultsChanArray = append(resultsChanArray, actualStatusCode)
+    resultsChanArray = append(resultsChanArray, filepath.Base(jsonFile))
+    resultsChanArray = append(resultsChanArray, csvFileBase)
+    resultsChanArray = append(resultsChanArray, rowCsv)
     resultsChanArray = append(resultsChanArray, start)
     resultsChanArray = append(resultsChanArray, end)
     resultsChanArray = append(resultsChanArray, testMessages)
