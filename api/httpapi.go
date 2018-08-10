@@ -29,7 +29,7 @@ import (
     "encoding/json"
     "strings"
     simplejson "github.com/bitly/go-simplejson"
-    // "strconv"
+    "strconv"
 )
 
 func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[string]string, pStart string, baseUrl string, 
@@ -43,7 +43,8 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
     csvFile := tc[5].(string)
     rowCsv := tc[6].(string)
     //
-    start := string(time.Now().String())
+    start_time := time.Now()
+    start := start_time.String()
     // fmt.Println(tcName, " start: ", start)
     //
     apiPath, apiMethod := utils.GetRequestForTC(tcJson, tcName)
@@ -119,12 +120,14 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
     // fmt.Println(actualStatusCode, actualHeader, actualBody)
 
     // (3). compare
-    testResult := Compare(tcName, actualStatusCode, actualHeader, actualBody, expStatus, expHeader, expBody)
-    end := string(time.Now().String())
+    testResult, testMessages := Compare(tcName, actualStatusCode, actualHeader, actualBody, expStatus, expHeader, expBody)
+    //
+    end_time := time.Now()
+    end := end_time.String()
     // fmt.Println(tcName + " end: ", end)
 
     // (4). here to generate the outputs file if the Json has "outputs" field
-    GenerateOutputsFiles(testResult, tcJson, tcName, tc, actualBody)
+    // WriteOutputsDataToFile(testResult, tcJson, tcName, tc, actualBody)
 
     // (5). print to console
     resultPrintString := ""
@@ -136,45 +139,51 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
     } else {
         csvFileBase = filepath.Base(csvFile)
     }
-    if actualStatusCode == "200" {
-        resultPrintString1 := tcName + "," + actualStatusCode + "," + filepath.Base(jsonFile) + "," + csvFileBase + "," + rowCsv
-        resultPrintString = resultPrintString1 + "," + testResult + "," 
+    resultPrintString1 := tcName + "," + actualStatusCode + "," + filepath.Base(jsonFile) + "," + csvFileBase + "," + rowCsv
+    resultPrintString = resultPrintString1 + "," + testResult + "," + strings.Join(testMessages, ":")
 
-        resultReportString1 := tcName + "," + actualStatusCode + "," + filepath.Base(jsonFile) + "," + csvFileBase + "," + rowCsv
-        resultReportString = resultReportString1 + "," + start + "," + end + "," + testResult + "," 
-    } else {
-        resultPrintString1 := tcName + "," + actualStatusCode + "," + filepath.Base(jsonFile) + "," + csvFileBase + "," + rowCsv
-        resultPrintString = resultPrintString1 + "," + testResult + "," + actualBody
-
-        resultReportString1 := tcName + "," + actualStatusCode + "," + filepath.Base(jsonFile) + "," + csvFileBase + "," + rowCsv 
-        resultReportString = resultReportString1 + "," + start + "," + end + "," + testResult + "," + "actualBody" 
-    }
+    resultReportString1 := tcName + "," + actualStatusCode + "," + filepath.Base(jsonFile) + "," + csvFileBase + "," + rowCsv 
+    resultReportString2 := "," + start + "," + end + "," + strconv.FormatInt(start_time.UnixNano(), 10) + "," + strconv.FormatInt(end_time.UnixNano(), 10)
+    resultReportString3 := "," + strconv.FormatInt(end_time.UnixNano() - start_time.UnixNano(), 10) + "," +  testResult + "," + `message`
+    resultReportString =  resultReportString1 + resultReportString2 + resultReportString3
+    //
     fmt.Println(resultPrintString)
 
     // (6). put the execution log into results
     logger.WriteExecutionResults(resultReportString, pStart, resultsDir)
 
-
     // write the channel to executor for scheduler
     var resultsChanArray []interface{}
     resultsChanArray = append(resultsChanArray, tcName)
     resultsChanArray = append(resultsChanArray, testResult)
+    resultsChanArray = append(resultsChanArray, start)
+    resultsChanArray = append(resultsChanArray, end)
+    resultsChanArray = append(resultsChanArray, testMessages)
+    resultsChanArray = append(resultsChanArray, start_time.UnixNano())
+    resultsChanArray = append(resultsChanArray, end_time.UnixNano())
+    resultsChanArray = append(resultsChanArray, end_time.UnixNano() - start_time.UnixNano())
     resultsChan <- resultsChanArray
 
 }
 
 func Compare(tcName string, actualStatusCode string, actualHeader http.Header, actualBody string, 
-        expStatus map[string]interface{}, expHeader map[string]interface{}, expBody map[string]interface{}) string {
+        expStatus map[string]interface{}, expHeader map[string]interface{}, expBody map[string]interface{}) (string, []string) {
 
     // the map for mapping the string and the related funciton to call
     // fmt.Println("Compare: ", tcName)
     var testResults []bool
+    var testMessages []string
     // status
     for key, _ := range expStatus {
         // fmt.Println("expStatus", key, expStatus[key])
         // call the assertion function
         testResult := assertion.CallAssertion(key, actualStatusCode, expStatus[key])
         // fmt.Println("expStatus", key, actualStatusCode, expStatus[key], reflect.TypeOf(actualStatusCode), reflect.TypeOf(expStatus[key]), testResult)
+        if testResult == false {
+            testMessages = append(testMessages, "Status")
+            testMessages = append(testMessages, actualStatusCode)
+            // testMessages = append(testMessages, expStatus[key].(string))
+        }
         testResults = append(testResults, testResult)
     }
 
@@ -190,6 +199,11 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
             // call the assertion function
             testResult := assertion.CallAssertion(assertionKey, actualValue, expHeader_2[assertionKey])
             // fmt.Println("expHeader_2", key, assertionKey, actualValue, actualValue, reflect.TypeOf(actualValue), reflect.TypeOf(expHeader_2[assertionKey]), testResult)
+            if testResult == false {
+            testMessages = append(testMessages, "Header")
+            // testMessages = append(testMessages, actualHeader)
+            // testMessages = append(testMessages, expStatus[key].(string))
+        }
             testResults = append(testResults, testResult)
         } 
     }
@@ -206,6 +220,11 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
             // call the assertion function
             testResult := assertion.CallAssertion(assertionKey, actualValue, expBody_2[assertionKey])
             // fmt.Println("expBody_2", key, assertionKey, actualValue, expBody_2[assertionKey], reflect.TypeOf(actualValue), reflect.TypeOf(expBody_2[assertionKey]), testResult)
+            if testResult == false {
+            testMessages = append(testMessages, "Body")
+            testMessages = append(testMessages, actualBody)
+            // testMessages = append(testMessages, expStatus[key].(string))
+        }
             testResults = append(testResults, testResult)
         }
     }
@@ -216,12 +235,12 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
     for key := range testResults {
         if testResults[key] == false {
             finalResults = "Fail"
-            fmt.Println(tcName + " results", testResults, "final results: ", finalResults)
+            // fmt.Println(tcName + " results", testResults, "final results: ", finalResults, testMessages)
             break
         }
     }
     
-    return finalResults
+    return finalResults, testMessages
 
 }  
 
@@ -356,7 +375,7 @@ func GetActualValueBasedOnExpKeyAndActualBody(key string, actualBody string) int
 }
 
 
-func GenerateOutputsFiles(testResult string, tcJson *simplejson.Json, tcName string, tc []interface{}, actualBody string) {
+func WriteOutputsDataToFile(testResult string, tcJson *simplejson.Json, tcName string, tc []interface{}, actualBody string) {
     var expOutputs []interface{}
     if testResult == "Success" {
         expOutputs = utils.GetExpectedOutputsFieldsForTC(tcJson, tcName)

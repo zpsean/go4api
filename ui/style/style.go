@@ -11,7 +11,15 @@
 package style
 
 var Style = `
-<script>
-document.write("<h1>This is a heading</h1>");
-document.write("<p>This is a paragraph</p>");
-</script>`
+body{text-align:center;}
+.tabTitlesContainer{text-align:center;font-size:small;cursor:hand;width:1000px;border-width:thin;}
+.tabTitleUnSelected{background-color:Silver;width:100px;}
+.tabTitleUnSelected:hover{background-color:White;}
+.tabTitleSelected{background-color:Gray;width:100px;}
+
+#tabPagesContainer{text-align:left;font-size:small;font-size:small;width:1000px;}
+.tabPageUnSelected{background-color:White;display: none;}
+.tabPageSelected{background-color: White;display:block;}
+.tabPage{height:80px;}
+ 
+`
