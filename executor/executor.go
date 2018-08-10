@@ -147,6 +147,7 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
                 resultReportString :=  resultReportString1 + resultReportString2 + resultReportString3
                 // (4). put the execution log into results
                 logger.WriteExecutionResults(resultReportString, pStart, resultsDir)
+                // fmt.Println("------!!!------")
                 }
             // if tcTree has no node with "Ready" status, break the miniloop
             statusReadyCount = 0
@@ -156,16 +157,19 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
                 break miniLoop
             }
         }
+        //
         CollectNodeStatusByPriority(root, p_index, priority)
         // (5). also need to put out the cases which has not been executed (i.e. not Success, Fail)
         for _, tc := range tcNotExecutedList {
             // [casename, priority, parentTestCase, ...], tc, jsonFile, csvFile, row in csv
-            resultReportString := tc[1].(string) + "," + tc[0].(string) + "," + tc[2].(string) + "," + "ParentFailed" + ",," + tc[4].(string) + "," + tc[5].(string)
-            resultReportString = resultReportString + "," + tc[6].(string) + ",,,,,,"
+            if tc[1].(string) == priority {
+                resultReportString := tc[1].(string) + "," + tc[0].(string) + "," + tc[2].(string) + "," + "ParentFailed" + ",," + tc[4].(string) + "," + tc[5].(string)
+                resultReportString = resultReportString + "," + tc[6].(string) + ",,,,,,"
 
-            logger.WriteExecutionResults(resultReportString, pStart, resultsDir)
-            // to console
-            fmt.Println(resultReportString)
+                logger.WriteExecutionResults(resultReportString, pStart, resultsDir)
+                // to console
+                fmt.Println(resultReportString)
+            }
         }
         
         //
