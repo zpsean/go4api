@@ -26,6 +26,7 @@ func GetOptions() map[string]string {
     testresults := flag.String("testresults", defaultTestDir + "/testresults", "the path which test results in")
     testEnv := flag.String("testEnv", "QA", "the testEnv, i.e. dev, qa, uat, etc.")
     baseUrl := flag.String("baseUrl", "", "the baseUrl")
+    ifScenario := flag.String("ifScenario", "", "if the target cases are for scenarios, which have data dependency")
 
     //
     flag.Parse()
@@ -34,6 +35,7 @@ func GetOptions() map[string]string {
     options["testresults"] = *testresults
     options["testEnv"] = *testEnv
     options["baseUrl"] = *baseUrl
+    options["ifScenario"] = *ifScenario
 
 
     //

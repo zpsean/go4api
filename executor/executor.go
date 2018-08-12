@@ -31,8 +31,22 @@ import (
 )
 
 
-func Run(ch chan int, pStart_time time.Time, options map[string]string) { //client
-    //
+func Scheduler(ch chan int, pStart_time time.Time, options map[string]string) { //client
+    if options["ifScenario"] == "" {
+        Run(ch, pStart_time, options)
+    } else {
+        // <!!--> Note: there are two kinds of test cases dependency:
+        // type 1. the parent and child has only execution dependency, no data exchange
+        // type 2. the parent and child has execution dependency and data exchange dynamically
+        // for type 1, the json is rendered by data tables first, then build the tcTree
+        // for type 2, build the cases hierarchy first, then render the child cases using the parent's outputs
+        //
+        RunScenario(ch, pStart_time, options)
+        fmt.Println("--")
+    }
+}
+
+func GetBaseUrl(options map[string]string) string {
     testenv := options["testEnv"]
     baseUrl := ""
     if options["baseUrl"] != "" {
@@ -49,6 +63,12 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
     } else {
         fmt.Println("baseUrl set to: " + baseUrl)
     }
+
+    return baseUrl
+}
+
+func Run(ch chan int, pStart_time time.Time, options map[string]string) { //client
+    baseUrl := GetBaseUrl(options)
     // get results dir
     pStart := pStart_time.String()
     resultsDir := GetResultsDir(pStart, options)
@@ -73,6 +93,7 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
     // need a tree to track and schedule the run dynamiclly, but need a dummy root test case
  
     // dummy root tc => {"root", "0", "0", rooTC, "", "", ""}
+
     root, _ := BuildTree(tcArray)
     fmt.Println("------------------")
     //
@@ -119,7 +140,7 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
             close(resultsChan)
 
             for tcRunResults := range resultsChan {
-                //
+                // here can refactor to struct
                 tcName := tcRunResults[0].(string)
                 parentTestCase := tcRunResults[1].(string)
                 testResult := tcRunResults[2].(string)
@@ -148,7 +169,7 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
                 // (4). put the execution log into results
                 logger.WriteExecutionResults(resultReportString, pStart, resultsDir)
                 // fmt.Println("------!!!------")
-                }
+            }
             // if tcTree has no node with "Ready" status, break the miniloop
             statusReadyCount = 0
             CollectNodeReadyStatus(root, priority)
@@ -221,81 +242,21 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
 }
 
 
-
 func GetTcArray(options map[string]string) [][]interface{} {
     var tcArray [][]interface{}
+
     jsonFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".json")
+    // fmt.Println("jsonFileList:", jsonFileList, "\n")
     // to ge the json and related data file, then get tc from them
     for _, jsonFile := range jsonFileList {
-        // here search out the csv files under the same dir, not to use utils.WalkPath as it is recursively
-        var csvFileListTemp []string
-        infos, err := ioutil.ReadDir(filepath.Dir(jsonFile))
-        if err != nil {
-          panic(err)
-        }
-        // (1). Note: the file *_outputs.csv has high priority than the file *_dt[*]
-        // Note: if not render template, the jsonFile itself may not be valid json fomat
-        // tcInputsFiles := utils.GetTestCaseBasicInputsFileNameFromJsonFile(jsonFile)
-        // fmt.Println("tcInputsFiles: ", jsonFile, tcInputsFiles)
-
-        // (2) get the csv file, the inputs name has high priority than *_dt[*]
-        for _, info := range infos {
-          if filepath.Ext(info.Name()) == ".csv" {
-            csvFileListTemp = append(csvFileListTemp, filepath.Join(filepath.Dir(jsonFile), info.Name()))
-          }
-        }
-        // 
-        var csvFileList []string
-        for _, csvFile := range csvFileListTemp {
-            csvFileName := strings.TrimRight(filepath.Base(csvFile), ".csv")
-            jsonFileName := strings.TrimRight(filepath.Base(jsonFile), ".json")
-            // Note: the json file realted data table files is pattern: jsonFileName + "_dt[*]"
-            
-            // if tcInputsFiles            
-            if strings.Contains(csvFileName, jsonFileName + "_dt") {
-                csvFileList = append(csvFileList, csvFile)
-            }
-        }
+        csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_dt")
         // to get the json test data directly (if not template) based on template (if template)
         // tcInfos: [[casename, priority, parentTestCase, ], ...]
         var tcInfos [][]interface{}
         if len(csvFileList) > 0 {
-            for _, csvFile := range csvFileList {
-                csvRows := utils.GetCsvFromFile(csvFile)
-                for i, csvRow := range csvRows {
-                    // starting with data row
-                    if i > 0 {
-                        // outTempFile := texttmpl.GenerateJsonFileBasedOnTemplateAndCsv(jsonFile, csvRows[0], csvRow, tmpJsonDir)
-                        // tcJsonsTemp := utils.GetTestCaseJsonFromTestDataFile(outTempFile)
-                        outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, csvRows[0], csvRow)
-                        tcJsonsTemp := utils.GetTestCaseJsonFromTestData(outTempJson)
-                        // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
-                        var tcInfo []interface{}
-                        for _, tc := range tcJsonsTemp {
-                            // to get the case info like [casename, priority, parentTestCase, ...], tc, jsonFile, csvFile, row in csv
-                            // Note: row in csv = i + 1 (i.e. plus csv header line)
-                            tcInfo = utils.GetTestCaseBasicInfoFromTestData(tc)
-                            tcInfo = append(tcInfo, tc, jsonFile, csvFile, strconv.Itoa(i + 1))
-                            tcInfos = append(tcInfos, tcInfo)
-                        }
-                    }
-                }
-            }
+            tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
         } else {
-            csvFile := ""
-            csvRow := ""
-            // outTempFile := texttmpl.GenerateJsonFileBasedOnTemplateAndCsv(jsonFile, []string{""}, []string{""}, tmpJsonDir)
-            // tcJsonsTemp := utils.GetTestCaseJsonFromTestDataFile(outTempFile)
-            outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, []string{""}, []string{""})
-            tcJsonsTemp := utils.GetTestCaseJsonFromTestData(outTempJson)
-            // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
-            var tcInfo []interface{}
-            for _, tc := range tcJsonsTemp {
-                // to get the case info like [casename, priority, parentTestCase, ...]
-                tcInfo = utils.GetTestCaseBasicInfoFromTestData(tc)
-                tcInfo = append(tcInfo, tc, jsonFile, csvFile, csvRow)
-                tcInfos = append(tcInfos, tcInfo)
-            }
+            tcInfos = ConstructTcInfosBasedOnJson(jsonFile)
         }
 
         // fmt.Println("tcInfos:", tcInfos, "\n")
@@ -306,6 +267,85 @@ func GetTcArray(options map[string]string) [][]interface{} {
     }
 
     return tcArray
+}
+
+func GetCsvDataFilesForJsonFile(jsonFile string, suffix string) []string {
+    // here search out the csv files under the same dir, not to use utils.WalkPath as it is recursively
+    var csvFileListTemp []string
+    infos, err := ioutil.ReadDir(filepath.Dir(jsonFile))
+    if err != nil {
+      panic(err)
+    }
+
+    // get the csv file, ignore the fields "inputs", "outputs"
+    for _, info := range infos {
+      if filepath.Ext(info.Name()) == ".csv" {
+        csvFileListTemp = append(csvFileListTemp, filepath.Join(filepath.Dir(jsonFile), info.Name()))
+      }
+    }
+    // 
+    var csvFileList []string
+    for _, csvFile := range csvFileListTemp {
+        csvFileName := strings.TrimRight(filepath.Base(csvFile), ".csv")
+        jsonFileName := strings.TrimRight(filepath.Base(jsonFile), ".json")
+        // Note: the json file realted data table files is pattern: jsonFileName + "_dt[*]"
+        
+        // if             
+        if strings.Contains(csvFileName, jsonFileName + suffix) {
+            csvFileList = append(csvFileList, csvFile)
+        }
+    }
+
+    return csvFileList
+}
+
+
+func ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile string, csvFileList []string) [][]interface{} {
+    var tcInfos [][]interface{}
+
+    for _, csvFile := range csvFileList {
+        csvRows := utils.GetCsvFromFile(csvFile)
+        for i, csvRow := range csvRows {
+            // starting with data row
+            if i > 0 {
+                // outTempFile := texttmpl.GenerateJsonFileBasedOnTemplateAndCsv(jsonFile, csvRows[0], csvRow, tmpJsonDir)
+                // tcJsonsTemp := utils.GetTestCaseJsonFromTestDataFile(outTempFile)
+                outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, csvRows[0], csvRow)
+                tcJsonsTemp := utils.GetTestCaseJsonFromTestData(outTempJson)
+                // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
+                var tcInfo []interface{}
+                for _, tc := range tcJsonsTemp {
+                    // to get the case info like [casename, priority, parentTestCase, ...], tc, jsonFile, csvFile, row in csv
+                    // Note: row in csv = i + 1 (i.e. plus csv header line)
+                    tcInfo = utils.GetTestCaseBasicInfoFromTestData(tc)
+                    tcInfo = append(tcInfo, tc, jsonFile, csvFile, strconv.Itoa(i + 1))
+                    tcInfos = append(tcInfos, tcInfo)
+                }
+            }
+        }
+    }
+    return tcInfos
+}
+
+func ConstructTcInfosBasedOnJson(jsonFile string) [][]interface{} {
+    var tcInfos [][]interface{}
+
+    csvFile := ""
+    csvRow := ""
+    // outTempFile := texttmpl.GenerateJsonFileBasedOnTemplateAndCsv(jsonFile, []string{""}, []string{""}, tmpJsonDir)
+    // tcJsonsTemp := utils.GetTestCaseJsonFromTestDataFile(outTempFile)
+    outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, []string{""}, []string{""})
+    tcJsonsTemp := utils.GetTestCaseJsonFromTestData(outTempJson)
+    // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
+    var tcInfo []interface{}
+    for _, tc := range tcJsonsTemp {
+        // to get the case info like [casename, priority, parentTestCase, ...]
+        tcInfo = utils.GetTestCaseBasicInfoFromTestData(tc)
+        tcInfo = append(tcInfo, tc, jsonFile, csvFile, csvRow)
+        tcInfos = append(tcInfos, tcInfo)
+    }
+
+    return tcInfos
 }
 
 

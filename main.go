@@ -45,7 +45,7 @@ func main(){
 
     pStart := time.Now()
     //
-    executor.Run(ch, pStart, options)
+    executor.Scheduler(ch, pStart, options)
 
     x := <-ch
     fmt.Println("----- Finish Main -----\n")
