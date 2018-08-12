@@ -127,7 +127,7 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
     // fmt.Println(tcName + " end: ", end)
 
     // (4). here to generate the outputs file if the Json has "outputs" field
-    // WriteOutputsDataToFile(testResult, tcJson, tcName, tc, actualBody)
+    WriteOutputsDataToFile(testResult, tcJson, tcName, tc, actualBody)
 
     // (5). print to console
     resultPrintString := ""
@@ -146,6 +146,7 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
 
     // (6). write the channel to executor for scheduler and log
     var resultsChanArray []interface{}
+    // here can refactor to struct
     resultsChanArray = append(resultsChanArray, tcName)
     resultsChanArray = append(resultsChanArray, parentTestCase)
     resultsChanArray = append(resultsChanArray, testResult)
@@ -399,7 +400,10 @@ func WriteOutputsDataToFile(testResult string, tcJson *simplejson.Json, tcName s
             jsonFileName := strings.TrimRight(filepath.Base(tc[4].(string)), ".json")
             outputsFile := filepath.Join(filepath.Dir(tc[4].(string)), jsonFileName + "_outputs.csv")
             //
+            keyStr = keyStr + "\n"
             utils.GenerateFileBasedOnVarOverride(keyStr, outputsFile)
+
+            valueStr = ",a,b,c\n"
             utils.GenerateFileBasedOnVarAppend(valueStr, outputsFile)
         }
     }

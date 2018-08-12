@@ -46,15 +46,17 @@ var Index = `<!DOCTYPE html>
                         <table border="1" id="testTble">
                             <col width="20" />
                             <col width="20" />
-                            <col width="300" />
-                            <col width="20" />
-                            <col width="500" />
+                            <col width="200" />
+                            <col width="200" />
+                            <col width="50" />
+                            <col width="150" />
                             <tr style='text-align: left'>
                                 <th>#</th>
-                                <th>Priority/th>
+                                <th>Priority</th>
                                 <th>Case ID</th>
+                                <th>ParentTestCase</th>
                                 <th>Status</th>
-                                <th>Case File / Data Table / Data Row</th>
+                                <th>Case File</th>
                             </tr>
                             
                             <script type="text/javascript">
@@ -67,12 +69,14 @@ var Index = `<!DOCTYPE html>
                                     var newTd2 = newTr.insertCell();
                                     var newTd3 = newTr.insertCell();
                                     var newTd4 = newTr.insertCell();
+                                    var newTd5 = newTr.insertCell();
                              
                                     newTd0.innerText= i + 1;
                                     newTd1.innerText= tcResults[i][0];
                                     newTd2.innerText= tcResults[i][1];
                                     newTd3.innerText= tcResults[i][2];
-                                    newTd4.innerText= tcResults[i][9];
+                                    newTd4.innerText= tcResults[i][3];
+                                    newTd5.innerText= tcResults[i][5];
                                 }
 
 
