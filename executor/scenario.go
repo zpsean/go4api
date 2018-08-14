@@ -16,7 +16,7 @@ import (
     "fmt"
     "sync"
     "strings"
-    // "go4api/api"
+    "go4api/types"
     "go4api/utils"
     "path/filepath"
     // "go4api/utils/texttmpl"
@@ -58,7 +58,7 @@ func RunScenario(ch chan int, pStart_time time.Time, options map[string]string) 
 
     miniLoop:
     for {
-        resultsChan := make(chan []interface{}, len(tcArray))
+        resultsChan := make(chan types.TcRunResults, len(tcArray))
         var wg sync.WaitGroup
         //
         ScheduleNodes(root, &wg, options, "1", resultsChan, pStart, baseUrl, resultsDir)
@@ -70,26 +70,27 @@ func RunScenario(ch chan int, pStart_time time.Time, options map[string]string) 
         for tcRunResults := range resultsChan {
             fmt.Println("tcRunResults: ", tcRunResults)
             // here can refactor to struct
-            tcName := tcRunResults[0].(string)
-            parentTestCase := tcRunResults[1].(string)
-            testResult := tcRunResults[2].(string)
-            actualStatusCode := tcRunResults[3].(string)
-            jsonFile_Base := tcRunResults[4].(string)
-            csvFileBase := tcRunResults[5].(string)
-            rowCsv := tcRunResults[6].(string)
-            start := tcRunResults[7].(string)
-            end := tcRunResults[8].(string)
-            testMessages := tcRunResults[9].([]string)
-            start_time_UnixNano := tcRunResults[10]
-            end_time_UnixNano := tcRunResults[11]
-            duration_UnixNano := tcRunResults[12]
+            tcName := tcRunResults.TcName
+            parentTestCase := tcRunResults.ParentTestCase
+            testResult := tcRunResults.TestResult
+            actualStatusCode := tcRunResults.ActualStatusCode
+            jsonFile_Base := tcRunResults.JsonFile_Base
+            csvFileBase := tcRunResults.CsvFileBase
+            rowCsv := tcRunResults.RowCsv
+            start := tcRunResults.Start
+            end := tcRunResults.End
+            testMessages := tcRunResults.TestMessages
+            start_time_UnixNano := tcRunResults.Start_time_UnixNano
+            end_time_UnixNano := tcRunResults.End_time_UnixNano
+            duration_UnixNano := tcRunResults.Duration_UnixNano
             //
             //(4). render the child cases, using the previous outputs as the inputs
             fmt.Println("----- testResult: ", testResult)
             if testResult == "Success" {
                 tcArrayT := ConstructChildTcInfosBasedOnParentTcName(jsonFileList, tcName, "_outputs")
+                fmt.Println("----- tcArrayT: ", tcArrayT)
                 for _, tc := range tcArrayT {
-                    ifAdded := AddNode(tc[0].(string), tc[2].(string), "", tc, "", "", []string{""})
+                    ifAdded := AddNode(tc[0].(string), tc[2].(string), "", tc, "", "", "")
                     if ifAdded && true {
                         fmt.Println("----- child added")
                     } else {
@@ -103,12 +104,12 @@ func RunScenario(ch chan int, pStart_time time.Time, options map[string]string) 
             SearchNode(&root, tcName)
             // (2). 
             RefreshNodeAndDirectChilrenTcResult(*findNode, testResult, start, end, 
-                testMessages, start_time_UnixNano.(int64), end_time_UnixNano.(int64))
+                testMessages, start_time_UnixNano, end_time_UnixNano)
             // fmt.Println("------------------")
             // (3). <--> for log write to file
             resultReportString1 := "1" + "," + tcName + "," + parentTestCase + "," + testResult + "," + actualStatusCode + "," + jsonFile_Base + "," + csvFileBase
-            resultReportString2 := "," + rowCsv + "," + start + "," + end + "," + "`" + "d" + "`" + "," + strconv.FormatInt(start_time_UnixNano.(int64), 10)
-            resultReportString3 := "," + strconv.FormatInt(end_time_UnixNano.(int64), 10) + "," +  strconv.FormatInt(duration_UnixNano.(int64), 10)
+            resultReportString2 := "," + rowCsv + "," + start + "," + end + "," + "`" + "d" + "`" + "," + strconv.FormatInt(start_time_UnixNano, 10)
+            resultReportString3 := "," + strconv.FormatInt(end_time_UnixNano, 10) + "," +  strconv.FormatInt(duration_UnixNano, 10)
             resultReportString :=  resultReportString1 + resultReportString2 + resultReportString3
             // (4). put the execution log into results
             logger.WriteExecutionResults(resultReportString, pStart, resultsDir)
@@ -134,6 +135,15 @@ func RunScenario(ch chan int, pStart_time time.Time, options map[string]string) 
 
     ShowNodes(root)
 
+    // generate the html report based on template, and results data
+    // time.Sleep(1 * time.Second)
+    pEnd_time := time.Now()
+    //
+    GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time)
+    //
+    fmt.Println("Report Generated at: " + resultsDir + "index.html")
+    fmt.Println("Execution Finished at: " + pEnd_time.String())
+    
     // channel code, can be used for the overall success or fail indicator, especially for CI/CD
     ch <- 1
 }

@@ -4,14 +4,14 @@ import (
     // "fmt"
     "net/http"
     "io/ioutil"
-    "strconv"
+    // "strconv"
     "reflect"
     "strings"
     "bytes"
 )
 
 
-func HttpGet(url string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (string, http.Header, string) { 
+func HttpGet(url string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (int, http.Header, []byte) { 
     //client 
     client := &http.Client{}
 
@@ -36,17 +36,23 @@ func HttpGet(url string, apiMethod string, reqHeaders map[string]interface{}, re
     } 
     defer response.Body.Close()
 
+    //func ReadAll(r io.Reader) ([]byte, error)
     body, _ := ioutil.ReadAll(response.Body)
-    // fmt.Println(response.Header)
-    // fmt.Println(response.StatusCode)
+    
+    // int
+    // fmt.Println(reflect.TypeOf(response.StatusCode), response.StatusCode)
+    // http.Header => type Header map[string][]string
+    // fmt.Println(reflect.TypeOf(response.Header), response.Header)
+    // *http.bodyEOFSignal
+    // fmt.Println(reflect.TypeOf(response.Body), response.Body)
+    // []uint8  -> []byte => byte -- alias for uint8
+    // fmt.Println(reflect.TypeOf(body), body)
     // fmt.Println(string(body))
 
-    // protocalChan <- 1
-
-    return strconv.Itoa(response.StatusCode), response.Header, string(body)
+    return response.StatusCode, response.Header, body
 }
 
-func HttpPost(url string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (string, http.Header, string) { 
+func HttpPost(url string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (int, http.Header, []byte) { 
     //client 
     client := &http.Client{}
     //
@@ -76,10 +82,10 @@ func HttpPost(url string, apiMethod string, reqHeaders map[string]interface{}, r
     // fmt.Println(response.StatusCode)
     // fmt.Println(string(body))
 
-    return strconv.Itoa(response.StatusCode), response.Header, string(body)
+    return response.StatusCode, response.Header, body
 }
 
-func HttpPostForm(url string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (string, http.Header, string) { 
+func HttpPostForm(url string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (int, http.Header, []byte) { 
     //client 
     client := &http.Client{}
     //
@@ -109,10 +115,10 @@ func HttpPostForm(url string, apiMethod string, reqHeaders map[string]interface{
     // fmt.Println(response.StatusCode)
     // fmt.Println(string(body))
 
-    return strconv.Itoa(response.StatusCode), response.Header, string(body)
+    return response.StatusCode, response.Header, body
 }
 
-func HttpPostMultipart(url string, apiMethod string, reqHeaders map[string]interface{}, reqBody *bytes.Buffer) (string, http.Header, string) { 
+func HttpPostMultipart(url string, apiMethod string, reqHeaders map[string]interface{}, reqBody *bytes.Buffer) (int, http.Header, []byte) { 
     //client 
     client := &http.Client{}
     //
@@ -144,11 +150,11 @@ func HttpPostMultipart(url string, apiMethod string, reqHeaders map[string]inter
 
     // protocalChan <- "aaa"
 
-    return strconv.Itoa(response.StatusCode), response.Header, string(body)
+    return response.StatusCode, response.Header, body
 }
 
 
-func CallHttpMethod(m map[string]interface{}, name string, params ... interface{}) (string, http.Header, string) {
+func CallHttpMethod(m map[string]interface{}, name string, params ... interface{}) (int, http.Header, []byte) {
     f := reflect.ValueOf(m[name])
     // if len(params) != f.Type().NumIn() {
     //     err = errors.New("The number of params is not adapted.")
@@ -161,5 +167,5 @@ func CallHttpMethod(m map[string]interface{}, name string, params ... interface{
 
     result := f.Call(in)
 
-    return result[0].Interface().(string), result[1].Interface().(http.Header), result[2].Interface().(string)
+    return result[0].Interface().(int), result[1].Interface().(http.Header), result[2].Interface().([]byte)
 }
