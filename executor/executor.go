@@ -16,12 +16,13 @@ import (
     "os"
     "sort"
     "sync"
-    // "go4api/api"  
+    "go4api/types" 
     "go4api/ui"     
     "go4api/ui/js"  
     "go4api/ui/style"                                                                                                                                
     "go4api/utils"
     "go4api/utils/texttmpl"
+    // "go4api/api"
     "path/filepath"
     "strings"
     "io/ioutil"
@@ -130,7 +131,7 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
         miniLoop:
         for {
             //
-            resultsChan := make(chan []interface{}, len(tcArray))
+            resultsChan := make(chan types.TcRunResults, len(tcArray))
             var wg sync.WaitGroup
             //
             ScheduleNodes(root, &wg, options, priority, resultsChan, pStart, baseUrl, resultsDir)
@@ -141,30 +142,30 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
 
             for tcRunResults := range resultsChan {
                 // here can refactor to struct
-                tcName := tcRunResults[0].(string)
-                parentTestCase := tcRunResults[1].(string)
-                testResult := tcRunResults[2].(string)
-                actualStatusCode := tcRunResults[3].(string)
-                jsonFile_Base := tcRunResults[4].(string)
-                csvFileBase := tcRunResults[5].(string)
-                rowCsv := tcRunResults[6].(string)
-                start := tcRunResults[7].(string)
-                end := tcRunResults[8].(string)
-                testMessages := tcRunResults[9].([]string)
-                start_time_UnixNano := tcRunResults[10]
-                end_time_UnixNano := tcRunResults[11]
-                duration_UnixNano := tcRunResults[12]
+                tcName := tcRunResults.TcName
+                parentTestCase := tcRunResults.ParentTestCase
+                testResult := tcRunResults.TestResult
+                actualStatusCode := tcRunResults.ActualStatusCode
+                jsonFile_Base := tcRunResults.JsonFile_Base
+                csvFileBase := tcRunResults.CsvFileBase
+                rowCsv := tcRunResults.RowCsv
+                start := tcRunResults.Start
+                end := tcRunResults.End
+                testMessages := tcRunResults.TestMessages
+                start_time_UnixNano := tcRunResults.Start_time_UnixNano
+                end_time_UnixNano := tcRunResults.End_time_UnixNano
+                duration_UnixNano := tcRunResults.Duration_UnixNano
                 //
                 // (1). tcName, testResult, the search result is saved to *findNode
                 SearchNode(&root, tcName)
                 // (2). 
                 RefreshNodeAndDirectChilrenTcResult(*findNode, testResult, start, end, 
-                    testMessages, start_time_UnixNano.(int64), end_time_UnixNano.(int64))
+                    testMessages, start_time_UnixNano, end_time_UnixNano)
                 // fmt.Println("------------------")
                 // (3). <--> for log write to file
                 resultReportString1 := priority + "," + tcName + "," + parentTestCase + "," + testResult + "," + actualStatusCode + "," + jsonFile_Base + "," + csvFileBase
-                resultReportString2 := "," + rowCsv + "," + start + "," + end + "," + "`" + "d" + "`" + "," + strconv.FormatInt(start_time_UnixNano.(int64), 10)
-                resultReportString3 := "," + strconv.FormatInt(end_time_UnixNano.(int64), 10) + "," +  strconv.FormatInt(duration_UnixNano.(int64), 10)
+                resultReportString2 := "," + rowCsv + "," + start + "," + end + "," + "`" + "d" + "`" + "," + strconv.FormatInt(start_time_UnixNano, 10)
+                resultReportString3 := "," + strconv.FormatInt(end_time_UnixNano, 10) + "," +  strconv.FormatInt(duration_UnixNano, 10)
                 resultReportString :=  resultReportString1 + resultReportString2 + resultReportString3
                 // (4). put the execution log into results
                 logger.WriteExecutionResults(resultReportString, pStart, resultsDir)

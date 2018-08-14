@@ -15,11 +15,13 @@ import (
     // "time"
     "fmt"
     "sync"
+    "go4api/types"
     "go4api/api"
     "go4api/utils"
     simplejson "github.com/bitly/go-simplejson"
     // "strconv"
 )
+
 
 type tcNode struct{
     tcName string
@@ -27,7 +29,7 @@ type tcNode struct{
     tcRunResult string // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
     tcStart string
     tcEnd string
-    tcRunMessage []string
+    tcRunMessage string
     tcStartUnixNano int64
     tcEndUnixNano int64
     tcDurationUnixNano int64
@@ -64,7 +66,7 @@ func GetDummyRootTc() []interface{} {
     return rootTcInfo
 }
 
-func AddNode(tcName string, parentTestCase string, tcRunResult string, tc []interface{}, tcStart string, tcEnd string, tcRunMessage []string) bool {
+func AddNode(tcName string, parentTestCase string, tcRunResult string, tc []interface{}, tcStart string, tcEnd string, tcRunMessage string) bool {
     node := &tcNode{
         tcName: tcName, 
         parentTestCase: parentTestCase, 
@@ -113,13 +115,13 @@ func BuildTree(tcArray [][]interface{}) (*tcNode, map[string]*tcNode) {
     // here seperate the tcArray into two parts, (appended to tree) and (not yet appended to tree)
     // Step 1: add the root node
     rootTcInfo := GetDummyRootTc()
-    AddNode(rootTcInfo[0].(string), rootTcInfo[2].(string), "", rootTcInfo, "", "", []string{""})
+    AddNode(rootTcInfo[0].(string), rootTcInfo[2].(string), "", rootTcInfo, "", "", "")
 
     // Step 2: add the node, init the tcArrayTree, tcArrayNotTree
     for _, tc := range tcArray {
         // if parentTestCase name can be found in tree
         // tcRunResult is "" for init
-        ifAdded := AddNode(tc[0].(string), tc[2].(string), "", tc, "", "", []string{""})
+        ifAdded := AddNode(tc[0].(string), tc[2].(string), "", tc, "", "", "")
         // fmt.Println("!!now try to add tc: ", tc[0].(string), ifAdded)
         if ifAdded && true {
             tcArrayTree = append(tcArrayTree, tc)
@@ -144,7 +146,7 @@ func BuildTree(tcArray [][]interface{}) (*tcNode, map[string]*tcNode) {
         for _, tc := range tcArrayNotTree {
             // fmt.Println("!!now try to add tc - 0: ", tc[0].(string), tcArrayNotTree, tc)
             // if parentTestCase name can be found in tree
-            ifAdded := AddNode(tc[0].(string), tc[2].(string), "", tc, "", "", []string{""})
+            ifAdded := AddNode(tc[0].(string), tc[2].(string), "", tc, "", "", "")
             // fmt.Println("!!now try to add tc: ", tc[0].(string), ifAdded, tcArrayNotTree, tc)
             if ifAdded && true {
                 tcArrayTree = append(tcArrayTree, tc)
@@ -203,7 +205,7 @@ func InitNodesRunResult(node *tcNode, runResult string) {
 }
 
 
-func ScheduleNodes(node *tcNode, wg *sync.WaitGroup, options map[string]string, priority string, resultsChan chan []interface{}, 
+func ScheduleNodes(node *tcNode, wg *sync.WaitGroup, options map[string]string, priority string, resultsChan chan types.TcRunResults, 
         pStart string, baseUrl string, resultsDir string) {
     //
     for _, n := range node.children {
@@ -242,7 +244,7 @@ func RefreshNodesRunResult(node *tcNode, tcRunResultsArray [][]interface{}) {
 }
 
 
-func RefreshNodeAndDirectChilrenTcResult(node *tcNode, tcRunResult string, tcStart string, tcEnd string, tcRunMessage []string, 
+func RefreshNodeAndDirectChilrenTcResult(node *tcNode, tcRunResult string, tcStart string, tcEnd string, tcRunMessage string, 
         tcStartUnixNano int64, tcEndUnixNano int64) {
     // fmt.Println("ccc the node to be refreshed: ", node, &node)
     node.tcRunResult = tcRunResult

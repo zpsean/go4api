@@ -174,13 +174,13 @@ func GetRequestPayloadForTC(tc *simplejson.Json, tcName string) map[string]inter
     return requestPayload
 }
 
-func GetExpectedResponseForTC(tc *simplejson.Json, tcNname string) (map[string]interface{}, map[string]interface{}, map[string]interface{}) {
-    var expStatusCode, expHeader, expBody map[string]interface{}
+func GetExpectedResponseForTC(tc *simplejson.Json, tcNname string) (*simplejson.Json, *simplejson.Json, *simplejson.Json) {
+    var expStatusCode, expHeader, expBody *simplejson.Json
 
     expResponse := tc.Get(tcNname).Get("response")
-    expStatusCode, _ = expResponse.Get("status").Map()
-    expHeader, _ = expResponse.Get("headers").Map()
-    expBody, _ = expResponse.Get("body").Map()
+    expStatusCode = expResponse.Get("status")
+    expHeader = expResponse.Get("headers")
+    expBody = expResponse.Get("body")
 
     return expStatusCode, expHeader, expBody
 }
@@ -324,7 +324,7 @@ func GenerateFileBasedOnVarAppend(strVar string, filePath string) {
 }
 
 func GenerateFileBasedOnVarOverride(strVar string, filePath string) {
-    outFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
+    outFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
     if err != nil {
        panic(err) 
     }

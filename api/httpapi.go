@@ -20,18 +20,43 @@ import (
     "path/filepath"
     "io"
     "net/http"     
-    "net/url"                                                                                                                                       
+    "net/url"     
+    "go4api/types"                                                                                                                                  
     "go4api/utils"
     "go4api/assertion"
     "go4api/protocal/http"
     "reflect"
-    "encoding/json"
     "strings"
+    "encoding/json"
     simplejson "github.com/bitly/go-simplejson"
-    // "strconv"
+    "strconv"
 )
 
-func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[string]string, pStart string, baseUrl string, 
+type TestMessage struct {  
+    FieldName interface{}
+    AssertionKey  interface{}
+    ExpValue interface{}
+    ActualValue  interface{}
+}
+
+type TcRunResults struct {  
+    tcName string
+    parentTestCase string
+    testResult string
+    actualStatusCode string
+    jsonFile_Base string
+    csvFileBase string
+    rowCsv string
+    start string
+    end string
+    testMessages string
+    start_time_UnixNano int64
+    end_time_UnixNano int64
+    duration_UnixNano int64
+}
+
+
+func HttpApi(wg *sync.WaitGroup, resultsChan chan types.TcRunResults, options map[string]string, pStart string, baseUrl string, 
         tc []interface{}, resultsDir string) {
     //
     defer wg.Done()
@@ -105,9 +130,9 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
     // < !! ----------- !! >
 
     // (1). Actual response
-    var actualStatusCode string
+    var actualStatusCode int
     var actualHeader http.Header
-    var actualBody string
+    var actualBody []byte
     // protocalChan := make(chan interface{}, 50)
     if apiMethodSelector == "POSTMultipart" {
         actualStatusCode, actualHeader, actualBody = protocal.CallHttpMethod(funcs, apiMethodSelector, url, apiMethod, reqHeaders, bodyMultipart)    
@@ -120,7 +145,7 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
     // fmt.Println(actualStatusCode, actualHeader, actualBody)
 
     // (3). compare
-    testResult, testMessages := Compare(tcName, actualStatusCode, actualHeader, actualBody, expStatus, expHeader, expBody)
+    testResult, TestMessages := Compare(tcName, actualStatusCode, actualHeader, actualBody, expStatus, expHeader, expBody)
     //
     end_time := time.Now()
     end := end_time.String()
@@ -138,91 +163,106 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan []interface{}, options map[str
     } else {
         csvFileBase = filepath.Base(csvFile)
     }
-    resultPrintString1 := tcName + "," + actualStatusCode + "," + filepath.Base(jsonFile) + "," + csvFileBase + "," + rowCsv
-    resultPrintString = resultPrintString1 + "," + testResult + "," + strings.Join(testMessages, ":")
+    resultPrintString1 := tcName + "," + strconv.Itoa(actualStatusCode) + "," + filepath.Base(jsonFile) + "," + csvFileBase + "," + rowCsv
+    resultPrintString = resultPrintString1 + "," + testResult + "," + TestMessages
     //
     fmt.Println(resultPrintString)
 
 
     // (6). write the channel to executor for scheduler and log
-    var resultsChanArray []interface{}
-    // here can refactor to struct
-    resultsChanArray = append(resultsChanArray, tcName)
-    resultsChanArray = append(resultsChanArray, parentTestCase)
-    resultsChanArray = append(resultsChanArray, testResult)
-    resultsChanArray = append(resultsChanArray, actualStatusCode)
-    resultsChanArray = append(resultsChanArray, filepath.Base(jsonFile))
-    resultsChanArray = append(resultsChanArray, csvFileBase)
-    resultsChanArray = append(resultsChanArray, rowCsv)
-    resultsChanArray = append(resultsChanArray, start)
-    resultsChanArray = append(resultsChanArray, end)
-    resultsChanArray = append(resultsChanArray, testMessages)
-    resultsChanArray = append(resultsChanArray, start_time.UnixNano())
-    resultsChanArray = append(resultsChanArray, end_time.UnixNano())
-    resultsChanArray = append(resultsChanArray, end_time.UnixNano() - start_time.UnixNano())
-    resultsChan <- resultsChanArray
+    // here can refactor to struct => done
+    tcRunRes := types.TcRunResults {
+        TcName : tcName,
+        ParentTestCase : parentTestCase,
+        TestResult : testResult,
+        ActualStatusCode : strconv.Itoa(actualStatusCode),
+        JsonFile_Base : filepath.Base(jsonFile),
+        CsvFileBase : csvFileBase,
+        RowCsv : rowCsv,
+        Start : start,
+        End : end,
+        TestMessages : TestMessages,
+        Start_time_UnixNano : start_time.UnixNano(),
+        End_time_UnixNano : end_time.UnixNano(),
+        Duration_UnixNano : end_time.UnixNano() - start_time.UnixNano(),
+    }
+
+    resultsChan <- tcRunRes
 
 }
 
-func Compare(tcName string, actualStatusCode string, actualHeader http.Header, actualBody string, 
-        expStatus map[string]interface{}, expHeader map[string]interface{}, expBody map[string]interface{}) (string, []string) {
+func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actualBody []byte, 
+        expStatusJson *simplejson.Json, expHeaderJson *simplejson.Json, expBodyJson *simplejson.Json) (string, string) {
 
     // the map for mapping the string and the related funciton to call
     // fmt.Println("Compare: ", tcName)
     var testResults []bool
-    var testMessages []string
+
+    var TestMessages []TestMessage
+
     // status
-    for key, _ := range expStatus {
-        // fmt.Println("expStatus", key, expStatus[key])
+    expStatus, _ := expStatusJson.Map()
+    for assertionKey, expValue := range expStatus {
         // call the assertion function
-        testResult := assertion.CallAssertion(key, actualStatusCode, expStatus[key])
+        testResult := assertion.CallAssertion(assertionKey, actualStatusCode, expValue)
         // fmt.Println("expStatus", key, actualStatusCode, expStatus[key], reflect.TypeOf(actualStatusCode), reflect.TypeOf(expStatus[key]), testResult)
         if testResult == false {
-            testMessages = append(testMessages, "Status")
-            testMessages = append(testMessages, actualStatusCode)
-            // testMessages = append(testMessages, expStatus[key].(string))
+            msg := TestMessage {
+                    FieldName: "status",
+                    AssertionKey:  assertionKey,
+                    ExpValue: expValue,
+                    ActualValue: actualStatusCode,
+                }
+            TestMessages = append(TestMessages, msg)
         }
         testResults = append(testResults, testResult)
     }
 
     // header
+    // http.Header => map[string][]string
+    expHeader, _ := expHeaderJson.Map()
     for key, _ := range expHeader {
-        bytesExpHeader, _ := json.Marshal(expHeader)
-        expRes, _ := simplejson.NewJson(bytesExpHeader)
-        expHeader_2, _ := expRes.Get(key).Map()
+        expHeader_sub, _ := expHeaderJson.Get(key).Map()
         //
-        for assertionKey, _ := range expHeader_2 {
-            // http.Header has structure map[key:[] ...]
-            actualValue := actualHeader[key][0]
+        for assertionKey, expValue := range expHeader_sub {
+            // as the http.Header has structure, so that here need to assert if the expValue in []string
+            actualValue := strings.Join(actualHeader[key], ",")
             // call the assertion function
-            testResult := assertion.CallAssertion(assertionKey, actualValue, expHeader_2[assertionKey])
+            testResult := assertion.CallAssertion(assertionKey, actualValue, expValue)
             // fmt.Println("expHeader_2", key, assertionKey, actualValue, actualValue, reflect.TypeOf(actualValue), reflect.TypeOf(expHeader_2[assertionKey]), testResult)
             if testResult == false {
-            testMessages = append(testMessages, "Header")
-            // testMessages = append(testMessages, actualHeader)
-            // testMessages = append(testMessages, expStatus[key].(string))
-        }
+                msg := TestMessage {
+                    FieldName: key,
+                    AssertionKey:  assertionKey,
+                    ExpValue: expValue,
+                    ActualValue: actualValue,
+                }
+                TestMessages = append(TestMessages, msg)
+            }
             testResults = append(testResults, testResult)
         } 
     }
 
     // body
-   for key, _ := range expBody {
-        bytesExpBody, _ := json.Marshal(expBody)
-        expRes, _ := simplejson.NewJson(bytesExpBody)
-        expBody_2, _ := expRes.Get(key).Map()
+    expBody, _ := expBodyJson.Map()
+    for key, _ := range expBody {
+        expBody_sub, _ := expBodyJson.Get(key).Map()
         //
-        for assertionKey, _ := range expBody_2 {
+        for assertionKey, expValue := range expBody_sub {
             // if path, then value - value, otherwise, key - value
             actualValue := GetActualValueBasedOnExpKeyAndActualBody(key, actualBody)
             // call the assertion function
-            testResult := assertion.CallAssertion(assertionKey, actualValue, expBody_2[assertionKey])
+            testResult := assertion.CallAssertion(assertionKey, actualValue, expValue)
             // fmt.Println("expBody_2", key, assertionKey, actualValue, expBody_2[assertionKey], reflect.TypeOf(actualValue), reflect.TypeOf(expBody_2[assertionKey]), testResult)
             if testResult == false {
-            testMessages = append(testMessages, "Body")
-            testMessages = append(testMessages, actualBody)
-            // testMessages = append(testMessages, expStatus[key].(string))
-        }
+                msg := TestMessage {
+                    FieldName: key,
+                    AssertionKey:  assertionKey,
+                    ExpValue: expValue,
+                    ActualValue: actualValue,
+                }
+                TestMessages = append(TestMessages, msg)
+            }
             testResults = append(testResults, testResult)
         }
     }
@@ -237,8 +277,12 @@ func Compare(tcName string, actualStatusCode string, actualHeader http.Header, a
             break
         }
     }
+
     
-    return finalResults, testMessages
+    TestMessagesJson, _ := json.Marshal(TestMessages)
+    TestMessagesJsonStr := string(TestMessagesJson)
+    
+    return finalResults, TestMessagesJsonStr
 
 }  
 
@@ -326,13 +370,13 @@ func PrepPostFormPayload(reqPayload map[string]interface{}) *strings.Reader {
     return body
 }
 
-func GetActualValueBasedOnExpKeyAndActualBody(key string, actualBody string) interface{} {
+func GetActualValueBasedOnExpKeyAndActualBody(key string, actualBody []byte) interface{} {
     var actualValue interface{}
     // if key starts with "$.", it represents the path, for xml, json
     // if key == "text", it is plain text, represents its valu is the whole returned body
     //
     // parse it based on the json by default, need add logic for xml, and other format
-    actualRes, _ := simplejson.NewJson([]byte(actualBody))
+    actualRes, _ := simplejson.NewJson(actualBody)
     //
     jsonKeyList := strings.Split(key, ".")
     lastItem := jsonKeyList[(len(jsonKeyList) - 1):(len(jsonKeyList))][0]
@@ -373,37 +417,35 @@ func GetActualValueBasedOnExpKeyAndActualBody(key string, actualBody string) int
 }
 
 
-func WriteOutputsDataToFile(testResult string, tcJson *simplejson.Json, tcName string, tc []interface{}, actualBody string) {
+func WriteOutputsDataToFile(testResult string, tcJson *simplejson.Json, tcName string, tc []interface{}, actualBody []byte) {
     var expOutputs []interface{}
     if testResult == "Success" {
         expOutputs = utils.GetExpectedOutputsFieldsForTC(tcJson, tcName)
         
         if len(expOutputs) > 0 {
             // get the actual value from actual body based on the fields in json outputs
-            var keyStr string
-            var valueStr string
+            var keyStrList []string
+            var valueStrList []interface{}
             for _, item := range expOutputs {
                 for key, value := range item.(map[string]interface{}) {
                     // for header
-                    keyStr = keyStr + "," + key
+                    fmt.Println("key, value: ", key, value)
+                    keyStrList = append(keyStrList, key)
                     //
-                    actualValue := GetActualValueBasedOnExpKeyAndActualBody(key, actualBody)
+                    actualValue := GetActualValueBasedOnExpKeyAndActualBody(value.(string), actualBody)
                     // the actualValue can be int or *simplejson.Json
                     // here need to improve to provide smart way to handle with the type - string, int, float, bool
-                    str := actualValue.(*simplejson.Json).MustString()
-                    // if len(str) > 0 
-                    fmt.Println("expOutputs -1 : ", str, reflect.TypeOf(str), reflect.TypeOf(actualValue))
-                    fmt.Println("expOutputs: ", expOutputs, key, value, actualValue, actualValue.(*simplejson.Json), tc[0], tc[4])
+                    valueStrList = append(valueStrList, actualValue)
                 }
                 
             }
+            // get the full path of outputsfile
             jsonFileName := strings.TrimRight(filepath.Base(tc[4].(string)), ".json")
             outputsFile := filepath.Join(filepath.Dir(tc[4].(string)), jsonFileName + "_outputs.csv")
             //
-            keyStr = keyStr + "\n"
-            utils.GenerateFileBasedOnVarOverride(keyStr, outputsFile)
+            utils.GenerateFileBasedOnVarOverride(strings.Join(keyStrList, ",") + "\n", outputsFile)
 
-            valueStr = ",a,b,c\n"
+            valueStr := "aa,b,c\n"
             utils.GenerateFileBasedOnVarAppend(valueStr, outputsFile)
         }
     }
