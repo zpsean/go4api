@@ -11,20 +11,13 @@
 package utils
 
 import (
-    "fmt"
     "io/ioutil"                                                                                                                                              
     "os"
     "io"
     "strings"
-    // "bufio"
-    "reflect"
-    // "path"
-    "bytes"
     "path/filepath"
     "encoding/csv"
     "strconv"
-    // "regexp"
-    simplejson "github.com/bitly/go-simplejson"
 )
 
 func GetCurrentDir() string{
@@ -50,22 +43,7 @@ func GetCsvFromFile(filePath string) [][]string {
     return csvRows
 }
 
-func GetJsonFromFile(filePath string) *simplejson.Json {
-    fi, err := os.Open(filePath)
-    if err != nil {
-        panic(err)
-    }
-    defer fi.Close()
-    //
-    fd, err := ioutil.ReadAll(fi)
 
-    res, err := simplejson.NewJson([]byte(fd))
-    if err != nil {
-        panic(err)
-    }
-
-    return res
-}
 
 func GetContentFromFile(filePath string) []byte {
     fi,err := ioutil.ReadFile(filePath)
@@ -77,139 +55,7 @@ func GetContentFromFile(filePath string) []byte {
     return fi
 }
 
-func GetBaseUrlFromConfig(filePath string, jsonKey string) string {
-    res := GetJsonFromFile(filePath)
 
-    baseUrl, err := res.Get(jsonKey).Get("baseUrl").String()
-    if err != nil {
-        panic(err)
-    }
-
-    return baseUrl
-}
-
-func GetTestCaseJsonFromTestDataFile(filePath string) []interface{} {
-    res := GetJsonFromFile(filePath)
-
-    testcases, err := res.Get("TestCases").Array()
-    if err != nil {
-        panic(err)
-    }
-
-    var tcJsons []interface{}
-
-    for i, _ := range testcases {
-      tc := res.Get("TestCases").GetIndex(i)
-      tcJsons = append(tcJsons, tc)
-    }
-
-    // fmt.Println("testcases:", testcases, "\n")
-    // fmt.Println("tcJsons:", tcJsons, "\n")
-
-    return tcJsons
-}
-
-func GetTestCaseJsonFromTestData(fjson *bytes.Buffer) []interface{} {
-    // fmt.Println("fjson", fjson)
-    readBuf, _ := ioutil.ReadAll(fjson)
-    res, err := simplejson.NewJson(readBuf)
-
-    testcases, err := res.Get("TestCases").Array()
-    if err != nil {
-        panic(err)
-    }
-
-    var tcJsons []interface{}
-
-    for i, _ := range testcases {
-      tc := res.Get("TestCases").GetIndex(i)
-      tcJsons = append(tcJsons, tc)
-    }
-
-    // fmt.Println("testcases:", testcases, "\n")
-    // fmt.Println("tcJsons:", tcJsons, "\n")
-
-    return tcJsons
-}
-
-func GetTestCaseBasicInfoFromTestData(testcase interface{}) []interface{} {
-    // Big question, how to get the KEY for each json => using: func (j *Json) Map() (map[string]interface{}, error)
-    tc := testcase.(*simplejson.Json)
-    tc_map, _ := tc.Map()
-
-    var tcInfo []interface{}
-    for key, _ := range tc_map {
-      tcInfo = append(tcInfo, key)
-      tcInfo = append(tcInfo, tc.Get(key).Get("priority").MustString())
-      tcInfo = append(tcInfo, tc.Get(key).Get("parentTestCase").MustString())
-      // inputs if optionsl 
-      // tcInfo = append(tcInfo, tc.Get(key).Get("inputs").MustString())
-      // as one test case has only one value each above, breank
-    }
-
-    return tcInfo
-}
-
-
-func GetRequestForTC(tc *simplejson.Json, tcName string) (string, string) {
-    request := tc.Get(tcName).Get("request")
-
-    apiPath, _ := request.Get("path").String()
-    apiMethod, _ := request.Get("method").String()
-
-    return apiPath, apiMethod
-}
-
-
-func GetRequestHeadersForTC(tc *simplejson.Json, tcNname string) map[string]interface{} {
-    requestHeaders, _ := tc.Get(tcNname).Get("request").Get("headers").Map()
-   
-    return requestHeaders
-}
-
-func GetRequestPayloadForTC(tc *simplejson.Json, tcName string) map[string]interface{} {
-    // var requestPayload map[string]interface{}
-    requestPayload, _ := tc.Get(tcName).Get("request").Get("payload").Map()
-
-    return requestPayload
-}
-
-func GetExpectedResponseForTC(tc *simplejson.Json, tcNname string) (*simplejson.Json, *simplejson.Json, *simplejson.Json) {
-    var expStatusCode, expHeader, expBody *simplejson.Json
-
-    expResponse := tc.Get(tcNname).Get("response")
-    expStatusCode = expResponse.Get("status")
-    expHeader = expResponse.Get("headers")
-    expBody = expResponse.Get("body")
-
-    return expStatusCode, expHeader, expBody
-}
-
-func GetInputsFileNameForTC(tc *simplejson.Json, tcNname string) []interface{} {
-    var expOutputs []interface{}
-
-    expOutputs, _ = tc.Get(tcNname).Get("inputs").Array()
-
-    return expOutputs
-}
-
-func GetExpectedOutputsFieldsForTC(tc *simplejson.Json, tcNname string) []interface{} {
-    var expOutputs []interface{}
-
-    expOutputs, _ = tc.Get(tcNname).Get("outputs").Array()
-
-    return expOutputs
-}
-
-func GetJsonKeys(expBody interface{}) {
-  
-  mv := reflect.ValueOf(expBody)
-  for _, k := range mv.MapKeys() {
-      v := mv.MapIndex(k)
-      fmt.Println("aaaaaaaaa")
-      fmt.Println("aaaaaaaaa", k, v)
-  }
-}
 
 
 // for the dir and sub-dir

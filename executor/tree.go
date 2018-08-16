@@ -18,8 +18,6 @@ import (
     "go4api/types"
     "go4api/api"
     "go4api/utils"
-    simplejson "github.com/bitly/go-simplejson"
-    // "strconv"
 )
 
 
@@ -49,11 +47,10 @@ var (
 )
 
 
-
 //
 func GetDummyRootTc() []interface{} {
     // dummy root tc => {"root", "0", "0", rooTC, "", "", ""}
-    rootTC, _ := simplejson.NewJson([]byte("{}}"))
+    rootTC := "{}"
     var rootTcInfo []interface{}
     rootTcInfo = append(rootTcInfo, "root")
     rootTcInfo = append(rootTcInfo, "0")
@@ -254,6 +251,7 @@ func RefreshNodeAndDirectChilrenTcResult(node *tcNode, tcRunResult string, tcSta
     node.tcStartUnixNano = tcStartUnixNano
     node.tcEndUnixNano = tcEndUnixNano
     node.tcDurationUnixNano = tcEndUnixNano - tcStartUnixNano
+
     for _, n := range node.children {
         if tcRunResult == "Fail"{
             n.tcRunResult = "ParentFailed"
