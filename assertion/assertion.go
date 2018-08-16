@@ -14,12 +14,9 @@ import (
     // "fmt"
 	"reflect"
     "strings"
-    "encoding/json"
-    // "encoding/xml"
     // "encoding/json"
-    "strconv"
+    // "strconv"
     "regexp"
-    simplejson "github.com/bitly/go-simplejson"
 )
 
 
@@ -52,232 +49,152 @@ import (
 
 // for both String and Numeric
 func Equals(actualValue interface{}, expValue interface{}) bool {
-    // fmt.Println("Contains", actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue)) 
-    if reflect.TypeOf(actualValue) == reflect.TypeOf(expValue) {
-        if actualValue == expValue {
-            return true
-        } else {
-            return false
-        }
+    if VerifyTypes(actualValue, expValue) == "true" {
+        switch reflect.TypeOf(GetValue(actualValue)).String() {
+            case "float64": {
+                if GetValue(actualValue).(float64) == GetValue(expValue).(float64) {
+                    return true
+                } else {
+                    return false
+                }
+            }
+            case "string": {
+                if GetValue(actualValue).(string) == GetValue(expValue).(string) {
+                    return true
+                } else {
+                    return false
+                }
+            }
+            case "bool": {
+                if GetValue(actualValue).(bool) == GetValue(expValue).(bool) {
+                    return true
+                } else {
+                    return false
+                }
+            }
+            default:
+                return false
+            }
     } else {
-        act, exp := CovertValuesBasedOnTypes(actualValue, expValue)
-        // fmt.Println("Contains", act, exp, reflect.TypeOf(act), reflect.TypeOf(exp)) 
-        if act == exp {
-            return true
-        } else {
-            return false
-        }
+        return false
     }
 }   
     
 
 func Contains(actualValue interface{}, expValue interface{}) bool {
-    // fmt.Println("Contains", actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue)) 
-    if reflect.TypeOf(actualValue) == reflect.TypeOf(expValue) {
-        if strings.Contains(actualValue.(string), expValue.(string)) {
+    if VerifyTypes(actualValue, expValue) == "true" {
+        if strings.Contains(GetValue(actualValue).(string), GetValue(expValue).(string)) {
             return true
         } else {
             return false
         }
     } else {
-        act, exp := CovertValuesBasedOnTypes(actualValue, expValue)
-        // fmt.Println("Contains", act, exp, reflect.TypeOf(act), reflect.TypeOf(exp)) 
-        if strings.Contains(act.(string), exp.(string)) {
-            return true
-        } else {
-            return false
-        }
+        return false
     }
 }
 
 func StartsWith(actualValue interface{}, expValue interface{}) bool {
-    // fmt.Println("Contains", actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue)) 
-    if reflect.TypeOf(actualValue) == reflect.TypeOf(expValue) {
-        if strings.HasPrefix(actualValue.(string), expValue.(string)) {
+    if VerifyTypes(actualValue, expValue) == "true" {
+        if strings.HasPrefix(GetValue(actualValue).(string), GetValue(expValue).(string)) {
             return true
         } else {
             return false
         }
     } else {
-        act, exp := CovertValuesBasedOnTypes(actualValue, expValue)
-        // fmt.Println("Contains", act, exp, reflect.TypeOf(act), reflect.TypeOf(exp)) 
-        if strings.HasPrefix(act.(string), exp.(string)) {
-            return true
-        } else {
-            return false
-        }
+        return false
     }
 }
 
 func EndsWith(actualValue interface{}, expValue interface{}) bool {
-    // fmt.Println("Contains", actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue)) 
-    if reflect.TypeOf(actualValue) == reflect.TypeOf(expValue) {
-        if strings.HasSuffix(actualValue.(string), expValue.(string)) {
+    if VerifyTypes(actualValue, expValue) == "true" {
+        if strings.HasSuffix(GetValue(actualValue).(string), GetValue(expValue).(string)) {
             return true
         } else {
             return false
         }
     } else {
-        act, exp := CovertValuesBasedOnTypes(actualValue, expValue)
-        // fmt.Println("Contains", act, exp, reflect.TypeOf(act), reflect.TypeOf(exp)) 
-        if strings.HasSuffix(act.(string), exp.(string)) {
-            return true
-        } else {
-            return false
-        }
+        return false
     }
 }
 
 func NotEquals(actualValue interface{}, expValue interface{}) bool {
-    // fmt.Println("GreaterOrEquals", actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue)) 
-    if reflect.TypeOf(actualValue) == reflect.TypeOf(expValue) {
-        if actualValue.(float64) != expValue.(float64) {
-            return true
-        } else {
-            return false
+    if VerifyTypes(actualValue, expValue) == "true" {
+        switch reflect.TypeOf(GetValue(actualValue)).String() {
+            case "float64": {
+                if GetValue(actualValue).(float64) != GetValue(expValue).(float64) {
+                    return true
+                } else {
+                    return false
+                }
+            }
+            case "string": {
+                if GetValue(actualValue).(string) != GetValue(expValue).(string) {
+                    return true
+                } else {
+                    return false
+                }
+            }
+            case "bool": {
+                if GetValue(actualValue).(bool) != GetValue(expValue).(bool) {
+                    return true
+                } else {
+                    return false
+                }
+            }
+            default:
+                return false
         }
     } else {
-        act, exp := CovertValuesBasedOnTypes(actualValue, expValue)
-        // fmt.Println("GreaterOrEquals", act, exp, reflect.TypeOf(act), reflect.TypeOf(exp)) 
-        if act.(float64) != exp.(float64) {
-            return true
-        } else {
-            return false
-        }
+        return false
     }
 }
 
 func Less(actualValue interface{}, expValue interface{}) bool {
-    // fmt.Println("GreaterOrEquals", actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue)) 
-    if reflect.TypeOf(actualValue) == reflect.TypeOf(expValue) {
-        if actualValue.(float64) < expValue.(float64) {
+    if VerifyTypes(actualValue, expValue) == "true" {
+        if GetValue(actualValue).(float64) < GetValue(expValue).(float64) {
             return true
         } else {
             return false
         }
     } else {
-        act, exp := CovertValuesBasedOnTypes(actualValue, expValue)
-        // fmt.Println("GreaterOrEquals", act, exp, reflect.TypeOf(act), reflect.TypeOf(exp)) 
-        if act.(float64) < exp.(float64) {
-            return true
-        } else {
-            return false
-        }
+        return false
     }
 }
 
 func LessOrEquals(actualValue interface{}, expValue interface{}) bool {
-    // fmt.Println("GreaterOrEquals", actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue)) 
-    if reflect.TypeOf(actualValue) == reflect.TypeOf(expValue) {
-        if actualValue.(float64) <= expValue.(float64) {
+    if VerifyTypes(actualValue, expValue) == "true" {
+        if GetValue(actualValue).(float64) <= GetValue(expValue).(float64) {
             return true
         } else {
             return false
         }
     } else {
-        act, exp := CovertValuesBasedOnTypes(actualValue, expValue)
-        // fmt.Println("GreaterOrEquals", act, exp, reflect.TypeOf(act), reflect.TypeOf(exp)) 
-        if act.(float64) <= exp.(float64) {
-            return true
-        } else {
-            return false
-        }
+        return false
     }
 }
 
 func Greater(actualValue interface{}, expValue interface{}) bool {
-    // fmt.Println("GreaterOrEquals", actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue)) 
-    if reflect.TypeOf(actualValue) == reflect.TypeOf(expValue) {
-        if actualValue.(float64) > expValue.(float64) {
+    if VerifyTypes(actualValue, expValue) == "true" {
+        if GetValue(actualValue).(float64) > GetValue(expValue).(float64) {
             return true
         } else {
             return false
         }
     } else {
-        act, exp := CovertValuesBasedOnTypes(actualValue, expValue)
-        // fmt.Println("GreaterOrEquals", act, exp, reflect.TypeOf(act), reflect.TypeOf(exp)) 
-        if act.(float64) > exp.(float64) {
-            return true
-        } else {
-            return false
-        }
+        return false
     }
 }
 
 func GreaterOrEquals(actualValue interface{}, expValue interface{}) bool {
-    // fmt.Println("GreaterOrEquals", actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue)) 
-    if reflect.TypeOf(actualValue) == reflect.TypeOf(expValue) {
-        if actualValue.(float64) >= expValue.(float64) {
+    if VerifyTypes(actualValue, expValue) == "true" {
+        if GetValue(actualValue).(float64) >= GetValue(expValue).(float64) {
             return true
         } else {
             return false
         }
     } else {
-        act, exp := CovertValuesBasedOnTypes(actualValue, expValue)
-        // fmt.Println("GreaterOrEquals", act, exp, reflect.TypeOf(act), reflect.TypeOf(exp)) 
-        if act.(float64) >= exp.(float64) {
-            return true
-        } else {
-            return false
-        }
+        return false
     }
-}
-
-func CovertValuesBasedOnTypes(actualValue interface{}, expValue interface{}) (interface{}, interface{}) {
-    // Note: the possible combinations for actualtype and exptype are:
-    // ==> status
-    // string json.Number
-    // ==> header
-    // string string
-    // ==> body
-    // *simplejson.Json json.Number
-    // *simplejson.Json string
-    // int json.Number
-
-
-    typeActualValue := reflect.TypeOf(actualValue)
-    typeExpValue := reflect.TypeOf(expValue)
-
-    // valueActualValue := reflect.ValueOf(actualValue)
-    // valueExpValue := reflect.ValueOf(expValue)
-
-    // fmt.Println("Convert types: ", typeActualValue, valueActualValue, typeExpValue, valueExpValue)
-
-    // to check the valueExpValue first, it may be string, number, boolean, null, array, json, etc.
-    var act, exp interface{}
-
-    switch typeExpValue.String() {
-        case "json.Number": {
-            switch typeActualValue.String(){
-                case "*simplejson.Json": {
-                    act, _ = actualValue.(*simplejson.Json).Float64()
-                    exp, _ = expValue.(json.Number).Float64()
-                }
-                case "string": {
-                    act = actualValue
-
-                    expF, _ := expValue.(json.Number).Float64()
-                    exp = strconv.FormatFloat(expF, 'f', -1, 64)
-                }
-                case "int": {
-                    act = float64(actualValue.(int))
-                    exp, _ = expValue.(json.Number).Float64()
-                }
-            }
-        }
-        case "string": {
-            act, _ = actualValue.(*simplejson.Json).String()
-            exp = expValue
-        }
-        case "bool": {
-            act, _ = actualValue.(*simplejson.Json).Bool()
-            exp = expValue
-        }
-    }
-
-    // fmt.Println("Convert types: ", actualValue, expValue, typeActualValue, typeExpValue, act, exp, reflect.TypeOf(act), reflect.TypeOf(exp)) 
-
-    return act, exp
 }
 
 
@@ -287,13 +204,14 @@ func CovertValuesBasedOnTypes(actualValue interface{}, expValue interface{}) (in
 // b is the value, wold be regrex expression, like: application\\/json, ^\\d{4}-\\d{2}-\\d{2}$, etc.
 // b may be a simple concrete type liek string, number, boolean, null, etc. or other complex type like array, json, etc. 
 func Match(actualValue interface{}, expPattern interface{}) bool {
-    act, expP := CovertValuesBasedOnTypes(actualValue, expPattern)   
-    // fmt.Println("GreaterOrEquals", act, exp)
+    if VerifyTypes(actualValue, expPattern) == "true" {
+        ind, _ := regexp.MatchString(GetValue(actualValue).(string), GetValue(expPattern).(string))
 
-    ind, _ := regexp.MatchString(expP.(string), act.(string))
-
-    if ind {
-        return true
+        if ind {
+            return true
+        } else {
+            return false
+        }
     } else {
         return false
     }

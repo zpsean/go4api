@@ -22,13 +22,11 @@ import (
     "go4api/ui/style"                                                                                                                                
     "go4api/utils"
     "go4api/utils/texttmpl"
-    // "go4api/api"
     "path/filepath"
     "strings"
     "io/ioutil"
     "strconv"
     "go4api/logger"
-    // simplejson "github.com/bitly/go-simplejson"
 )
 
 
@@ -309,17 +307,15 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile string, csvFileLi
         for i, csvRow := range csvRows {
             // starting with data row
             if i > 0 {
-                // outTempFile := texttmpl.GenerateJsonFileBasedOnTemplateAndCsv(jsonFile, csvRows[0], csvRow, tmpJsonDir)
-                // tcJsonsTemp := utils.GetTestCaseJsonFromTestDataFile(outTempFile)
                 outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, csvRows[0], csvRow)
-                tcJsonsTemp := utils.GetTestCaseJsonFromTestData(outTempJson)
+                tcJsonsTemp := utils.GetTestCaseJsonsFromTestData(outTempJson)
                 // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
                 var tcInfo []interface{}
-                for _, tc := range tcJsonsTemp {
-                    // to get the case info like [casename, priority, parentTestCase, ...], tc, jsonFile, csvFile, row in csv
+                for _, tcJson := range tcJsonsTemp {
+                    // to get the case info like [casename, priority, parentTestCase, ...], tcJson, jsonFile, csvFile, row in csv
                     // Note: row in csv = i + 1 (i.e. plus csv header line)
-                    tcInfo = utils.GetTestCaseBasicInfoFromTestData(tc)
-                    tcInfo = append(tcInfo, tc, jsonFile, csvFile, strconv.Itoa(i + 1))
+                    tcInfo = utils.GetTestCaseBasicInfoFromTestData(tcJson)
+                    tcInfo = append(tcInfo, tcJson, jsonFile, csvFile, strconv.Itoa(i + 1))
                     tcInfos = append(tcInfos, tcInfo)
                 }
             }
@@ -333,16 +329,14 @@ func ConstructTcInfosBasedOnJson(jsonFile string) [][]interface{} {
 
     csvFile := ""
     csvRow := ""
-    // outTempFile := texttmpl.GenerateJsonFileBasedOnTemplateAndCsv(jsonFile, []string{""}, []string{""}, tmpJsonDir)
-    // tcJsonsTemp := utils.GetTestCaseJsonFromTestDataFile(outTempFile)
     outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, []string{""}, []string{""})
-    tcJsonsTemp := utils.GetTestCaseJsonFromTestData(outTempJson)
+    tcJsonsTemp := utils.GetTestCaseJsonsFromTestData(outTempJson)
     // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
     var tcInfo []interface{}
-    for _, tc := range tcJsonsTemp {
+    for _, tcJson := range tcJsonsTemp {
         // to get the case info like [casename, priority, parentTestCase, ...]
-        tcInfo = utils.GetTestCaseBasicInfoFromTestData(tc)
-        tcInfo = append(tcInfo, tc, jsonFile, csvFile, csvRow)
+        tcInfo = utils.GetTestCaseBasicInfoFromTestData(tcJson)
+        tcInfo = append(tcInfo, tcJson, jsonFile, csvFile, csvRow)
         tcInfos = append(tcInfos, tcInfo)
     }
 

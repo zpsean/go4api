@@ -56,7 +56,6 @@ func HttpPost(url string, apiMethod string, reqHeaders map[string]interface{}, r
     //client 
     client := &http.Client{}
     //
-    // payload := strings.NewReader("{\"mid\":\"550049154\"}")
     payload := reqBody
     //
     reqest, err := http.NewRequest(apiMethod, url, payload)
