@@ -27,3 +27,7 @@ type TcRunResults struct {
 }
 
 
+type TcReportResults struct {  
+    Priority string
+    TcRunRes TcRunResults
+}

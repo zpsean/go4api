@@ -27,6 +27,7 @@ func GetOptions() map[string]string {
     testEnv := flag.String("testEnv", "QA", "the testEnv, i.e. dev, qa, uat, etc.")
     baseUrl := flag.String("baseUrl", "", "the baseUrl")
     ifScenario := flag.String("ifScenario", "", "if the target cases are for scenarios, which have data dependency")
+    ifFuzzTestFirst := flag.String("ifFuzzTestFirst", "", "if to run the fuzz test first")
 
     //
     flag.Parse()
@@ -36,6 +37,7 @@ func GetOptions() map[string]string {
     options["testEnv"] = *testEnv
     options["baseUrl"] = *baseUrl
     options["ifScenario"] = *ifScenario
+    options["ifFuzzTestFirst"] = *ifFuzzTestFirst
 
 
     //

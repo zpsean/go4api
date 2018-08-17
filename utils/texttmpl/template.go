@@ -74,18 +74,12 @@ func GenerateHtmlJsCSSFromTemplateAndVar(strVar string, pStart_time time.Time, p
     // Note: here has two type of data to display, 1: List, 2: Graphic
     var tcReportStr string
 
-    csvRows := utils.GetCsvFromFile(logResultsFile)
-    // fmt.Println("csvRows: ", logResultsFile, csvRows)
-    for k, csvrow := range csvRows {
-        if k == 0 {
-            tcReportStr = `[["` + strings.Join(csvrow, `","`) + `"], ` 
-        } else if k < len(csvRows) - 1 {
-            tcReportStr = tcReportStr + `["` + strings.Join(csvrow, `","`) + `"], ` 
-        } else {
-            tcReportStr = tcReportStr + `["` + strings.Join(csvrow, `","`) + `"]]` 
-        }
-
-    }
+    jsonLinesBytes := utils.GetContentFromFile(logResultsFile)
+    jsonLines := string(jsonLinesBytes)
+    //
+    jsonLines = strings.Replace(jsonLines, "\n", ",", strings.Count(jsonLines, "\n") - 1)
+    tcReportStr = `[` + jsonLines + `]` 
+        
     //
     type ResultsJs struct {
       PStart_time int64
@@ -95,7 +89,12 @@ func GenerateHtmlJsCSSFromTemplateAndVar(strVar string, pStart_time time.Time, p
       TcReportStr string
     }
     
-    OutP := ResultsJs{pStart_time.UnixNano(), `"` + pStart_time.String() + `"`, pEnd_time.UnixNano(), `"` + pEnd_time.String() + `"`, tcReportStr}
+    OutP := ResultsJs{
+        PStart_time: pStart_time.UnixNano(), 
+        PStart: `"` + pStart_time.String() + `"`, 
+        PEnd_time: pEnd_time.UnixNano(), 
+        PEnd: `"` + pEnd_time.String() + `"`, 
+        TcReportStr: tcReportStr}
     //
     // fmt.Println("outP: ", OutP)
     //

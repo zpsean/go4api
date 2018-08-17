@@ -11,7 +11,10 @@
 package mode
 
 import (
-    "fmt"
+    // "fmt"
+    "reflect"
+    "math/rand"
+    "time"
     // "io/ioutil"                                                                                                                                              
     // "os"
     // "strings"
@@ -29,27 +32,24 @@ const numericSet = "0123456789"
 // email
 
 
-func GetOriginModeData(dataModeFile string) {
-    contents := GetContentFromFile(dataModeFile)
+// func GetOriginModeData(dataModeFile string) {
+//     // typeList = []
+//     // targetValueList = [][]
 
-    fmt.Println("contents: ", contents)
-    // typeList = []
-    // targetValueList = [][]
+//     // switch type {
+//     //     case char()
+//     //     case varchar()
+//     //     case int
+//     //     case numeric()
+//     //     case email
+//     //     case float
+//     //     case list
+//     //     ...
 
-    // switch type {
-    //     case char()
-    //     case varchar()
-    //     case int
-    //     case numeric()
-    //     case email
-    //     case float
-    //     case list
-    //     ...
+//     // }
 
-    // }
-
-    // GenerateCombinations()
-}
+//     // GenerateCombinations()
+// }
 
 
 // RandStringRunes - this can handle with non ASCII char
@@ -58,15 +58,29 @@ func RandStringRunes(n int) string {
     l := len(letterRunes)
     for i := range b {
         // [0,n)
+        rand.Seed(time.Now().UnixNano())
         b[i] = letterRunes[rand.Intn(l)]
     }
+    // fmt.Println("RandStringRunes: ", string(b))
+    return string(b)
+}
+
+func RandStringCNRunes(n int) string {
+    b := make([]rune, n)
+    l := len(letterCNRunes)
+    for i := range b {
+        // [0,n)
+        rand.Seed(time.Now().UnixNano())
+        b[i] = letterCNRunes[rand.Intn(l)]
+    }
+    // fmt.Println("RandStringCNRunes: ", string(b))
     return string(b)
 }
 
 // RandNums
 func RandNums(n int) string {
     b := make([]rune, n)
-    l := len(numricSet)
+    l := len(numericSet)
     for i := range b {
         // [0,n)
         b[i] = letterRunes[rand.Intn(l)]
@@ -74,14 +88,25 @@ func RandNums(n int) string {
     return string(b)
 }
 
-func RandCNRunes(n int) string {
-    b := make([]rune, n)
-    l := len(numricSet)
-    for i := range b {
-        // [0,n)
-        b[i] = letterCNRunes[rand.Intn(l)]
-    }
-    return string(b)
-}
 
+func CallRands(name string, params ... interface{}) string {
+    funcs := map[string]interface{} {
+        "RandNums": RandNums,
+        "RandStringRunes": RandStringRunes,
+        "RandStringCNRunes": RandStringCNRunes,
+    }
+
+    f := reflect.ValueOf(funcs[name])
+    // if len(params) != f.Type().NumIn() {
+    //     err: = errors.New("The number of params is not adapted.")
+    //     return
+    // }
+    in := make([]reflect.Value, len(params))
+    for k, param := range params {
+        in[k] = reflect.ValueOf(param)
+    }
+    result := f.Call(in)
+
+    return result[0].Interface().(string)
+}
 
