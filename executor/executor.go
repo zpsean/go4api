@@ -27,54 +27,12 @@ import (
     "io/ioutil"
     "strconv"
     "go4api/logger"
+    "encoding/json"
 )
 
 
-func Scheduler(ch chan int, pStart_time time.Time, options map[string]string) { //client
-    if options["ifScenario"] == "" {
-        Run(ch, pStart_time, options)
-    } else {
-        // <!!--> Note: there are two kinds of test cases dependency:
-        // type 1. the parent and child has only execution dependency, no data exchange
-        // type 2. the parent and child has execution dependency and data exchange dynamically
-        // for type 1, the json is rendered by data tables first, then build the tcTree
-        // for type 2, build the cases hierarchy first, then render the child cases using the parent's outputs
-        //
-        RunScenario(ch, pStart_time, options)
-        fmt.Println("--")
-    }
-}
-
-func GetBaseUrl(options map[string]string) string {
-    testenv := options["testEnv"]
-    baseUrl := ""
-    if options["baseUrl"] != "" {
-        baseUrl = options["baseUrl"]
-    } else {
-        _, err := os.Stat(options["testhome"] + "/testconfig/testconfig.json")
-        // fmt.Println("err: ", err)
-        if err == nil {
-            baseUrl = utils.GetBaseUrlFromConfig(options["testhome"] + "/testconfig/testconfig.json", testenv) 
-        }
-    }
-    if baseUrl == "" {
-        fmt.Println("Warning: baseUrl is not set")
-    } else {
-        fmt.Println("baseUrl set to: " + baseUrl)
-    }
-
-    return baseUrl
-}
-
-func Run(ch chan int, pStart_time time.Time, options map[string]string) { //client
-    baseUrl := GetBaseUrl(options)
-    // get results dir
-    pStart := pStart_time.String()
-    resultsDir := GetResultsDir(pStart, options)
-    //
+func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart string, baseUrl string, resultsDir string, tcArray [][]interface{}) { //client
     // (1), get the text path, default is ../data/*, then search all the sub-folder to get the test scripts
-    //
-    tcArray := GetTcArray(options)
     // to check the tcArray, if the case not distinct, report it to fix
     if len(tcArray) != len(GetTcNameSet(tcArray)) {
         fmt.Println("\n!! There are duplicated test case names, please make them distinct\n")
@@ -105,12 +63,7 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
     prioritySet = utils.ConvertIntArrayToStringArray(prioritySet_Int)
 
     // If need to set the Concurrency MAX?
-    // fmt.Println("------------------", root, &root)
-    // ShowNodes(root)
-    // fmt.Println("------------------", root, &root)
     InitNodesRunResult(root, "Ready")
-    // fmt.Println("------------------", root, &root)
-    // ShowNodes(root)
     // fmt.Println("------------------", root, &root)
 
     //
@@ -139,34 +92,22 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
             close(resultsChan)
 
             for tcRunResults := range resultsChan {
-                // here can refactor to struct
-                tcName := tcRunResults.TcName
-                parentTestCase := tcRunResults.ParentTestCase
-                testResult := tcRunResults.TestResult
-                actualStatusCode := tcRunResults.ActualStatusCode
-                jsonFile_Base := tcRunResults.JsonFile_Base
-                csvFileBase := tcRunResults.CsvFileBase
-                rowCsv := tcRunResults.RowCsv
-                start := tcRunResults.Start
-                end := tcRunResults.End
-                testMessages := tcRunResults.TestMessages
-                start_time_UnixNano := tcRunResults.Start_time_UnixNano
-                end_time_UnixNano := tcRunResults.End_time_UnixNano
-                duration_UnixNano := tcRunResults.Duration_UnixNano
-                //
                 // (1). tcName, testResult, the search result is saved to *findNode
-                SearchNode(&root, tcName)
+                SearchNode(&root, tcRunResults.TcName)
                 // (2). 
-                RefreshNodeAndDirectChilrenTcResult(*findNode, testResult, start, end, 
-                    testMessages, start_time_UnixNano, end_time_UnixNano)
+                RefreshNodeAndDirectChilrenTcResult(*findNode, tcRunResults.TestResult, tcRunResults.Start, tcRunResults.End, 
+                    tcRunResults.TestMessages, tcRunResults.Start_time_UnixNano, tcRunResults.End_time_UnixNano)
                 // fmt.Println("------------------")
                 // (3). <--> for log write to file
-                resultReportString1 := priority + "," + tcName + "," + parentTestCase + "," + testResult + "," + actualStatusCode + "," + jsonFile_Base + "," + csvFileBase
-                resultReportString2 := "," + rowCsv + "," + start + "," + end + "," + "`" + "d" + "`" + "," + strconv.FormatInt(start_time_UnixNano, 10)
-                resultReportString3 := "," + strconv.FormatInt(end_time_UnixNano, 10) + "," +  strconv.FormatInt(duration_UnixNano, 10)
-                resultReportString :=  resultReportString1 + resultReportString2 + resultReportString3
+                tcReportRes := types.TcReportResults {
+                    Priority: priority,
+                    TcRunRes: tcRunResults,
+                }
+
+                repJson, _ := json.Marshal(tcReportRes)
+                // fmt.Println(string(repJson))
                 // (4). put the execution log into results
-                logger.WriteExecutionResults(resultReportString, pStart, resultsDir)
+                logger.WriteExecutionResults(string(repJson), pStart, resultsDir)
                 // fmt.Println("------!!!------")
             }
             // if tcTree has no node with "Ready" status, break the miniloop
@@ -180,15 +121,36 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string) { //clie
         //
         CollectNodeStatusByPriority(root, p_index, priority)
         // (5). also need to put out the cases which has not been executed (i.e. not Success, Fail)
+        notRunTime := time.Now()
+
         for _, tc := range tcNotExecutedList {
             // [casename, priority, parentTestCase, ...], tc, jsonFile, csvFile, row in csv
             if tc[1].(string) == priority {
-                resultReportString := tc[1].(string) + "," + tc[0].(string) + "," + tc[2].(string) + "," + "ParentFailed" + ",," + tc[4].(string) + "," + tc[5].(string)
-                resultReportString = resultReportString + "," + tc[6].(string) + ",,,,,,"
+                tcNotRunRes := types.TcRunResults {
+                    TcName : tc[0].(string),
+                    ParentTestCase : tc[2].(string),
+                    TestResult : "ParentFailed",
+                    ActualStatusCode : "",
+                    JsonFile_Base : tc[4].(string),
+                    CsvFileBase : tc[5].(string),
+                    RowCsv : tc[6].(string),
+                    Start : "",
+                    End : "",
+                    TestMessages : "",
+                    Start_time_UnixNano : notRunTime.UnixNano(),
+                    End_time_UnixNano : notRunTime.UnixNano(),
+                    Duration_UnixNano : 0,
+                }
 
-                logger.WriteExecutionResults(resultReportString, pStart, resultsDir)
+                tcReportRes := types.TcReportResults {
+                    Priority: tc[1].(string),
+                    TcRunRes: tcNotRunRes,
+                }
+                //
+                repJson, _ := json.Marshal(tcReportRes)
+                //
+                logger.WriteExecutionResults(string(repJson), pStart, resultsDir)
                 // to console
-                fmt.Println(resultReportString)
             }
         }
         
@@ -303,6 +265,9 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile string, csvFileLi
     var tcInfos [][]interface{}
 
     for _, csvFile := range csvFileList {
+        // to check the csv file's existence
+
+
         csvRows := utils.GetCsvFromFile(csvFile)
         for i, csvRow := range csvRows {
             // starting with data row
@@ -451,4 +416,3 @@ func GetTmpJsonDir(path string) string {
 
     return resultsDir
 }
-

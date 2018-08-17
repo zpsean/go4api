@@ -188,7 +188,7 @@ func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actu
         expStatusJson gjson.Result, expHeaderJson gjson.Result, expBodyJson gjson.Result) (string, string) {
 
     // the map for mapping the string and the related funciton to call
-    fmt.Println("Compare: ", tcName)
+    // fmt.Println("Compare: ", tcName)
     var testResults []bool
 
     var TestMessages []TestMessage
@@ -406,18 +406,21 @@ func WriteOutputsDataToFile(testResult string, tcJson interface{}, tcName string
         if len(expOutputs) > 0 {
             // get the actual value from actual body based on the fields in json outputs
             var keyStrList []string
-            var valueStrList []interface{}
+            var valueStrList []string
             //
             for _, item := range expOutputs {
                 // item is {}
                 for key, value := range item.Map() {
                     // for csv header
-                    fmt.Println("key, value: ", key, value)
+                    // fmt.Println("key, value: ", key, value)
                     keyStrList = append(keyStrList, key)
                     //
-                    // actualValue := GetActualValueBasedOnExpKeyAndActualBody(value.(gjson.Result).Value(), actualBody)
-                    actualValue := "aa"
-                    valueStrList = append(valueStrList, actualValue)
+                    actualValue := GetActualValueBasedOnExpKeyAndActualBody(value.String(), actualBody)
+                    if actualValue == nil {
+                        valueStrList = append(valueStrList, "")
+                    } else {
+                        valueStrList = append(valueStrList, actualValue.(string))
+                    } 
                 }
             }
             // get the full path of outputsfile
@@ -426,8 +429,8 @@ func WriteOutputsDataToFile(testResult string, tcJson interface{}, tcName string
             // write csv header
             utils.GenerateFileBasedOnVarOverride(strings.Join(keyStrList, ",") + "\n", outputsFile)
 
-            valueStr := "aa,b,c\n"
-            utils.GenerateFileBasedOnVarAppend(valueStr, outputsFile)
+            // write csv data
+            utils.GenerateFileBasedOnVarAppend(strings.Join(valueStrList, ",") + "\n", outputsFile)
         }
     }
 }

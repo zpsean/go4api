@@ -11,7 +11,7 @@
 package executor
 
 import (                                                                                                                                             
-    // "os"
+    "os"
     "time"
     "fmt"
     "sync"
@@ -19,43 +19,35 @@ import (
     "go4api/types"
     "go4api/utils"
     "path/filepath"
-    // "go4api/utils/texttmpl"
-    // simplejson "github.com/bitly/go-simplejson"
-    "strconv"
     "go4api/logger"
+    "encoding/json"
 )
 
 
-func RunScenario(ch chan int, pStart_time time.Time, options map[string]string) {
+func RunScenario(ch chan int, pStart_time time.Time, options map[string]string, pStart string, baseUrl string, resultsDir string) {
     jsonFileList, _ := utils.WalkPath(options["testhome"] + "/Scenarios/", ".json")
     fmt.Println("Scenario jsonFileList:", options["ifScenario"], jsonFileList, "\n")
 
     var tcArray [][]interface{}
     // var tcNames []string
 
-    baseUrl := GetBaseUrl(options)
-    pStart := pStart_time.String()
-    resultsDir := GetResultsDir(pStart, options)
-
     // (1). get the root cases in json (but maybe the json has notation, not valid json)
     // => the json has parentTestCase = root, or the the data table has parentTestCase = root
     tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt") 
 
-    fmt.Println("tcArray:", tcArray, "\n")
+    // fmt.Println("tcArray:", tcArray, "\n")
 
-    
     // (2). render them, get the rendered cases
     // => need to build a tree???
     root, _ := BuildTree(tcArray)
-    fmt.Println("------------------")
-    fmt.Println("------------------", root, &root)
-    ShowNodes(root)
+    // fmt.Println("------------------")
+    // fmt.Println("------------------", root, &root)
+    // ShowNodes(root)
 
     // (3). then execute them, genrate the outputs if have
     InitNodesRunResult(root, "Ready")
 
     
-
     miniLoop:
     for {
         resultsChan := make(chan types.TcRunResults, len(tcArray))
@@ -68,60 +60,41 @@ func RunScenario(ch chan int, pStart_time time.Time, options map[string]string) 
         close(resultsChan)
 
         for tcRunResults := range resultsChan {
-            fmt.Println("tcRunResults: ", tcRunResults)
-            // here can refactor to struct
-            tcName := tcRunResults.TcName
-            parentTestCase := tcRunResults.ParentTestCase
-            testResult := tcRunResults.TestResult
-            actualStatusCode := tcRunResults.ActualStatusCode
-            jsonFile_Base := tcRunResults.JsonFile_Base
-            csvFileBase := tcRunResults.CsvFileBase
-            rowCsv := tcRunResults.RowCsv
-            start := tcRunResults.Start
-            end := tcRunResults.End
-            testMessages := tcRunResults.TestMessages
-            start_time_UnixNano := tcRunResults.Start_time_UnixNano
-            end_time_UnixNano := tcRunResults.End_time_UnixNano
-            duration_UnixNano := tcRunResults.Duration_UnixNano
-            //
-            //(4). render the child cases, using the previous outputs as the inputs
-            fmt.Println("----- testResult: ", testResult)
-            if testResult == "Success" {
-                tcArrayT := ConstructChildTcInfosBasedOnParentTcName(jsonFileList, tcName, "_outputs")
-                fmt.Println("----- tcArrayT: ", tcArrayT)
+            //(). render the child cases, using the previous outputs as the inputs
+            // the case has inputs and its parent's runstatus == Success (i.e. not failed)
+            if tcRunResults.TestResult == "Success" {
+                tcArrayT := ConstructChildTcInfosBasedOnParentTcName(jsonFileList, tcRunResults.TcName, "_outputs")
+                // fmt.Println("----- tcArrayT: ", tcArrayT)
                 for _, tc := range tcArrayT {
                     ifAdded := AddNode(tc[0].(string), tc[2].(string), "", tc, "", "", "")
                     if ifAdded && true {
-                        fmt.Println("----- child added")
+                        fmt.Println("----- child added", tc[0].(string))
                     } else {
-                        fmt.Println("----- child not added")
+                        fmt.Println("----- child not added", tc[0].(string))
                     }
                 }
             }
                 
 
             // (1). tcName, testResult, the search result is saved to *findNode
-            SearchNode(&root, tcName)
+            SearchNode(&root, tcRunResults.TcName)
             // (2). 
-            RefreshNodeAndDirectChilrenTcResult(*findNode, testResult, start, end, 
-                testMessages, start_time_UnixNano, end_time_UnixNano)
+            RefreshNodeAndDirectChilrenTcResult(*findNode, tcRunResults.TestResult, tcRunResults.Start, tcRunResults.End, 
+                    tcRunResults.TestMessages, tcRunResults.Start_time_UnixNano, tcRunResults.End_time_UnixNano)
             // fmt.Println("------------------")
             // (3). <--> for log write to file
-            resultReportString1 := "1" + "," + tcName + "," + parentTestCase + "," + testResult + "," + actualStatusCode + "," + jsonFile_Base + "," + csvFileBase
-            resultReportString2 := "," + rowCsv + "," + start + "," + end + "," + "`" + "d" + "`" + "," + strconv.FormatInt(start_time_UnixNano, 10)
-            resultReportString3 := "," + strconv.FormatInt(end_time_UnixNano, 10) + "," +  strconv.FormatInt(duration_UnixNano, 10)
-            resultReportString :=  resultReportString1 + resultReportString2 + resultReportString3
-            // (4). put the execution log into results
-            logger.WriteExecutionResults(resultReportString, pStart, resultsDir)
+            tcReportRes := types.TcReportResults {
+                    Priority: "1",
+                    TcRunRes: tcRunResults,
+                }
+
+            repJson, _ := json.Marshal(tcReportRes)
+            // (4). put the execution log into resultstestResult
+            logger.WriteExecutionResults(string(repJson), pStart, resultsDir)
             // fmt.Println("------!!!------")
         }
 
-        // (4). render the child cases, using the previous outputs as the inputs
-        // tcInputsFiles := utils.GetTestCaseBasicInputsFileNameFromJsonFile(jsonFile)
-        // fmt.Println("tcInputsFiles: ", jsonFile, tcInputsFiles)
-        
-        // the case has inputs and its parent's runstatus == Success (i.e. not failed)
-
+        // ShowNodes(root)
 
         // (5). execute the chilren, and so on
         statusReadyCount = 0
@@ -133,7 +106,9 @@ func RunScenario(ch chan int, pStart_time time.Time, options map[string]string) 
         }
     }
 
-    ShowNodes(root)
+    // ShowNodes(root)
+
+    // CollectOverallNodeStatus(root, len(prioritySet))
 
     // generate the html report based on template, and results data
     // time.Sleep(1 * time.Second)
@@ -141,13 +116,13 @@ func RunScenario(ch chan int, pStart_time time.Time, options map[string]string) 
     //
     GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time)
     //
+    fmt.Println("---------------------------------------------------------------------------\n")
     fmt.Println("Report Generated at: " + resultsDir + "index.html")
     fmt.Println("Execution Finished at: " + pEnd_time.String())
     
     // channel code, can be used for the overall success or fail indicator, especially for CI/CD
     ch <- 1
 }
-
 
 
 func ConstructChildTcInfosBasedOnParentRoot(jsonFileList []string, parentTcName string, dataTableSuffix string) [][]interface{} {
@@ -158,7 +133,7 @@ func ConstructChildTcInfosBasedOnParentRoot(jsonFileList []string, parentTcName 
         tcNames := GetTestCaseBasicBasedOnParentFromJsonFile(jsonFile, "root")
         if len(tcNames) > 0 {
             csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_dt")
-            fmt.Println("tcNames: ", jsonFile, tcNames)
+            // fmt.Println("tcNames: ", jsonFile, tcNames)
 
             if len(csvFileList) > 0 {
                 tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
@@ -184,20 +159,19 @@ func ConstructChildTcInfosBasedOnParentTcName(jsonFileList []string, parentTcNam
 
     for _, jsonFile := range jsonFileList {
         tcNames := GetTestCaseBasicBasedOnParentFromJsonFile(jsonFile, parentTcName)
+        //
         if len(tcNames) > 0 {
             csvFileList := GetTestCaseBasicInputsFileNameFromJsonFile(jsonFile)
-            fmt.Println("tcInputsFiles: ", jsonFile, csvFileList)
-            // csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_outputs")
-            fmt.Println("tcNames: ", jsonFile, tcNames)
-
-            if len(csvFileList) > 0 {
+            //
+            // if has inputs -> if has *_dt -> use json
+            if len(csvFileList) > 0 && CheckFilesExistence(csvFileList) {
                 tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
+            } else if len(GetCsvDataFilesForJsonFile(jsonFile, "_dt")) > 0 {
+                tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, GetCsvDataFilesForJsonFile(jsonFile, "_dt"))
             } else {
                 tcInfos = ConstructTcInfosBasedOnJson(jsonFile)
             }
 
-            // fmt.Println("tcInfos:", tcInfos, "\n")
-            
             for _, tc := range tcInfos {
                 tcArray = append(tcArray, tc)
             }
@@ -207,6 +181,20 @@ func ConstructChildTcInfosBasedOnParentTcName(jsonFileList []string, parentTcNam
     return tcArray
 }
 
+func CheckFilesExistence(csvFileList []string) bool {
+    ifExist := true
+
+    for _, csvFile := range csvFileList {
+        _, err := os.Stat(csvFile)
+        if err != nil {
+            fmt.Println("!!Error: " + csvFile + " does not exist.\n")
+            ifExist = false
+            break
+        }
+    }
+
+    return ifExist
+}
 
 
 func GetTestCaseBasicBasedOnParentFromJsonFile(filePath string, parentName string) []string {
@@ -223,7 +211,9 @@ func GetTestCaseBasicBasedOnParentFromJsonFile(filePath string, parentName strin
             //     "priority": "10",
             //     "parentTestCase": "root",
             parentStr := strings.Split(strList[ii + 1], ",")[0]
-            if strings.Contains(parentStr, parentName) {
+            parentStr = strings.TrimSpace(strings.Replace(parentStr, `"`, "", -1))
+            // here do not use Contains, use equal exactly
+            if strings.EqualFold(parentStr, parentName) {
                 parentStr := strings.Split(strList[ii - 2], ",")[0]
                 str := strings.Split(parentStr, `"`)[len(strings.Split(parentStr, `"`)) - 2]
                 tcNames = append(tcNames, str)
@@ -247,7 +237,9 @@ func GetTestCaseBasicInputsFileNameFromJsonFile(filePath string) []string {
         if strings.Contains(value, `"inputs"`) {
             fileStr := strings.Split(strList[ii + 1], ",")[0]
             inputsFileBaseName := strings.TrimSpace(strings.Replace(fileStr, `"`, "", -1))
-            inputsFiles = append(inputsFiles, filepath.Join(filepath.Dir(filePath), inputsFileBaseName))
+            if inputsFileBaseName != "" {
+                inputsFiles = append(inputsFiles, filepath.Join(filepath.Dir(filePath), inputsFileBaseName))
+            }
         }
     }
     return inputsFiles
