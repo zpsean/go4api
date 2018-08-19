@@ -95,11 +95,11 @@ var Index = `<!DOCTYPE html>
                 <tr class="tabPage">
                     <td> 
                         
-                        <svg width="1000" height="5000" id="mainSVG" version="1.1" xmlns="http://www.w3.org/2000/svg">
+                        <svg width="1200" height="2000" id="mainSVG" version="1.1" xmlns="http://www.w3.org/2000/svg">
 
 
-                            <line x1="0" y1="0" x2="0" y2="1000" style="stroke:rgb(99,99,99);stroke-width:2"/>
-                            <line x1="0" y1="0" x2="1000" y2="0" style="stroke:rgb(99,99,99);stroke-width:2"/>
+                            <line x1="0" y1="0" x2="0" y2="1500" style="stroke:rgb(99,99,99);stroke-width:2"/>
+                            <line x1="0" y1="0" x2="1200" y2="0" style="stroke:rgb(99,99,99);stroke-width:2"/>
                             <line x1="0" y1="500" x2="600" y2="500" style="stroke:rgb(99,99,99);stroke-width:1"/>
 
                         </svg>
@@ -114,7 +114,7 @@ var Index = `<!DOCTYPE html>
                                 for (var i = 0; i < tcResults.length; i++)
                                 {
                                     var c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                                    c.setAttribute('cx', (i % 10 + 1) * 50);
+                                    c.setAttribute('cx', (i % 15 + 1) * 50);
                                     c.setAttribute('cy', (tcResults[i].TcRunRes.Start_time_UnixNano - pStartUnixNano + tcResults[i].TcRunRes.Duration_UnixNano / 2) / 10000000);
                                     c.r.baseVal.value = tcResults[i].TcRunRes.Duration_UnixNano / 100000000 + 5;
 
@@ -124,7 +124,7 @@ var Index = `<!DOCTYPE html>
                                     strJons = JSON.stringify(tcResults[i], null, 4)
                                     text.textContent = strJons
 
-                                    text.setAttribute('x', (i % 10 + 1) * 50);
+                                    text.setAttribute('x', (i % 15 + 1) * 50);
                                     text.setAttribute('y', (tcResults[i].TcRunRes.Start_time_UnixNano - pStartUnixNano + tcResults[i].TcRunRes.Duration_UnixNano / 2) / 10000000 - 20)
                                     text.style.width = '400px'
                                     text.setAttribute('fill', 'transparent')
@@ -143,7 +143,7 @@ var Index = `<!DOCTYPE html>
 
 
 
-                                    var pos = [(i % 10 + 1) * 50, (tcResults[i].TcRunRes.Start_time_UnixNano - pStartUnixNano + tcResults[i].TcRunRes.Duration_UnixNano / 2) / 10000000];
+                                    var pos = [(i % 15 + 1) * 50, (tcResults[i].TcRunRes.Start_time_UnixNano - pStartUnixNano + tcResults[i].TcRunRes.Duration_UnixNano / 2) / 10000000];
                                     tcPositions[tcResults[i].TcRunRes.TcName] = pos;
 
                                     if (tcResults[i].TcRunRes.TestResult == "Success")
@@ -167,7 +167,7 @@ var Index = `<!DOCTYPE html>
                                         var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                                         line.setAttribute('x1', 0);
                                         line.setAttribute('y1', (tcResults[i].TcRunRes.Start_time_UnixNano - pStartUnixNano + tcResults[i].TcRunRes.Duration_UnixNano / 2) / 10000000);
-                                        line.setAttribute('x2', 600);
+                                        line.setAttribute('x2', 1200);
                                         line.setAttribute('y2', (tcResults[i].TcRunRes.Start_time_UnixNano - pStartUnixNano + tcResults[i].TcRunRes.Duration_UnixNano / 2) / 10000000);
                                         line.setAttribute('style', "stroke:rgb(99,99,99);stroke-width:1");
                                         
