@@ -390,17 +390,6 @@ func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string,
     utils.GenerateFileBasedOnVarOverride(style.Style, resultsDir + "style/go4api.css")
 }
 
-func GetResultsDir(pStart string, options map[string]string) string {
-    var resultsDir string
-    err := os.MkdirAll(options["testresults"] + "/" + pStart + "/", 0777)
-    if err != nil {
-      panic(err) 
-    } else {
-        resultsDir = options["testresults"] + "/" + pStart + "/"
-    }
-
-    return resultsDir
-}
 
 func GetTmpJsonDir(path string) string {
     // check if the /tmp/go4api_wfasf exists, if exists, then rm first

@@ -17,11 +17,10 @@ import (
     "go4api/utils"
 )
 
-
 func Dispatch(ch chan int, pStart_time time.Time, options map[string]string) { 
     baseUrl := GetBaseUrl(options)
-    // get results dir
     pStart := pStart_time.String()
+    // get results dir
     resultsDir := GetResultsDir(pStart, options)
     //
     // <!!--> Note: there are two kinds of test cases dependency:
@@ -35,13 +34,14 @@ func Dispatch(ch chan int, pStart_time time.Time, options map[string]string) {
             fuzzTcArray := PrepFuzzTest(ch, pStart_time, options)
             Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, fuzzTcArray)
         }
-        tcArray := GetTcArray(options)
-        Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, tcArray)
+        // tcArray := GetTcArray(options)
+        // Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, tcArray)
     } else {
         RunScenario(ch, pStart_time, options, pStart, baseUrl, resultsDir)
         fmt.Println("--")
     }
 }
+
 
 func GetBaseUrl(options map[string]string) string {
     testenv := options["testEnv"]
@@ -64,4 +64,16 @@ func GetBaseUrl(options map[string]string) string {
     return baseUrl
 }
 
+
+func GetResultsDir(pStart string, options map[string]string) string {
+    var resultsDir string
+    err := os.MkdirAll(options["testresults"] + "/" + pStart + "/", 0777)
+    if err != nil {
+      panic(err) 
+    } else {
+        resultsDir = options["testresults"] + "/" + pStart + "/"
+    }
+
+    return resultsDir
+}
 
