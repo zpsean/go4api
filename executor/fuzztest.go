@@ -38,7 +38,7 @@ func PrepFuzzTest(ch chan int, pStart_time time.Time, options map[string]string)
     }
     // (2). render the json using the fuzz dt(s)
     fuzzTcArray := GetFuzzTcArray(options)
-    fmt.Println("fuzzTcArray:", fuzzTcArray, "\n")
+    // fmt.Println("fuzzTcArray:", fuzzTcArray, "\n")
     
     return fuzzTcArray
 }
@@ -56,61 +56,46 @@ func GenerateFuzzData(fuzzFile string) types.FuzzData {
     fuzzRowsByte := utils.GetContentFromFile(fuzzFile)
 
     fuzzRows := strings.Split(string(fuzzRowsByte), "\n")
-    fmt.Println(fuzzRows) 
 
     var fuzzData types.FuzzData
-    var validValueList []map[string][]string
-    var invalidValueList []map[string][]string
+    var validValueList []map[string][]interface{}
+    var invalidValueList []map[string][]interface{}
 
-    for i, fuzzLine := range fuzzRows {
-        validValueMap := make(map[string][]string)
-        invalidValueMap := make(map[string][]string)
+    for _, fuzzLine := range fuzzRows {
+        if len(strings.TrimSpace(fuzzLine)) > 0 {
+            validValueMap := make(map[string][]interface{})
+            invalidValueMap := make(map[string][]interface{})
 
-        fmt.Println(fuzzLine)
-        fieldName := "title" + strconv.Itoa(i) 
-        fieldType := "RandStringRunes"
-        fieldMin := 0
-        fieldMax := 20
+            // fmt.Println("\nfuzzLine: ", fuzzLine)
 
-        // get the Boundary (valid, invalid), Equivalence, etc.
-        var validLenList []int
-        var invalidLenList []int
+            fieldName, fieldType, fieldMin, fieldMax := parseLine(fuzzLine)
 
-        validLenList = append(validLenList, fieldMin)
-        validLenList = append(validLenList, fieldMin + 1)
-        
-        validLenList = append(validLenList, fieldMax)
-        if fieldMax - 1 > fieldMin {
-            validLenList = append(validLenList, fieldMax - 1)
+            switch strings.ToLower(fieldType) {
+                case "char", "varchar", "string": {
+                    fmt.Println("\n------ char -")
+                    validValueMap, invalidValueMap = getChar(fieldName, fieldType, fieldMin, fieldMax)
+                }
+                case "int", "int64": {
+                    fmt.Println("\n------ int -")
+                    validValueMap, invalidValueMap = getInt(fieldName, fieldType, fieldMin, fieldMax)
+                }
+                default: {
+                    fmt.Println("\n------ default -")
+                    validValueMap, invalidValueMap = getChar(fieldName, fieldType, fieldMin, fieldMax)
+                }
+                // case numeric
+                // case email
+                // case float
+                // case list
+            }
+
+            validValueList = append(validValueList, validValueMap)
+            invalidValueList = append(invalidValueList, invalidValueMap)
         }
-
-        if fieldMin - 1 > 0 {
-           invalidLenList = append(invalidLenList, fieldMin - 1) 
-        }
-        invalidLenList = append(invalidLenList, fieldMax + 1) 
-
-        //
-        for _, validLen := range validLenList{
-            validValue := mode.CallRands(fieldType, validLen)
-            fmt.Println("validLen, validValue: ", validLen, validValue)
-
-            validValueMap[fieldName] = append(validValueMap[fieldName], validValue)
-        }
-
-        for _, invalidLen := range invalidLenList{
-            invalidValue := mode.CallRands(fieldType, invalidLen)
-            fmt.Println("invalidLen, invalidValue: ", invalidLen, invalidValue)
-
-            invalidValueMap[fieldName] = append(invalidValueMap[fieldName], invalidValue)
-        } 
-
-        validValueList = append(validValueList, validValueMap)
-        invalidValueList = append(invalidValueList, validValueMap)
-
     }
 
     fuzzData = types.FuzzData {
-        ValidData: invalidValueList,
+        ValidData: validValueList,
         InvalidData: invalidValueList,
         ValidStatusCode: 200,
         InvalidStatusCode: 200,
@@ -120,6 +105,69 @@ func GenerateFuzzData(fuzzFile string) types.FuzzData {
 
     return fuzzData
 }
+
+
+func getChar(fieldName string, fieldType string, fieldMin int, fieldMax int) (map[string][]interface{}, map[string][]interface{}) {
+    validValueMap := make(map[string][]interface{})
+    invalidValueMap := make(map[string][]interface{})
+    // get the Boundary (valid, invalid), Equivalence, etc.
+    var validLenList []int
+    var invalidLenList []int
+    //
+    validLenList = append(validLenList, fieldMin)
+    validLenList = append(validLenList, fieldMin + 1)
+
+    validLenList = append(validLenList, fieldMax)
+    if fieldMax - 1 > fieldMin {
+        validLenList = append(validLenList, fieldMax - 1)
+    }
+    //
+    if fieldMin - 1 > 0 {
+       invalidLenList = append(invalidLenList, fieldMin - 1) 
+    }
+    invalidLenList = append(invalidLenList, fieldMax + 1) 
+    //
+
+    fieldRands := []string{"RandStringRunes", "RandStringCNRunes"}
+    //
+    for _, validLen := range validLenList{
+        for _, randType := range fieldRands {
+            validValue := mode.CallRands(randType, validLen)
+            // fmt.Println("validLen, validValue: ", validLen, validValue)
+
+            validValueMap[fieldName] = append(validValueMap[fieldName], validValue)
+        }        
+    }
+    //
+    for _, invalidLen := range invalidLenList{
+        for _, randType := range fieldRands {
+            invalidValue := mode.CallRands(randType, invalidLen)
+            // fmt.Println("invalidLen, invalidValue: ", invalidLen, invalidValue)
+
+            invalidValueMap[fieldName] = append(invalidValueMap[fieldName], invalidValue)
+        }
+    }
+
+    return validValueMap, invalidValueMap
+}
+
+
+func getInt(fieldName string, fieldType string, fieldMin int, fieldMax int) (map[string][]interface{}, map[string][]interface{}) {
+    validValueMap := make(map[string][]interface{})
+    invalidValueMap := make(map[string][]interface{})
+    // get the Boundary (valid, invalid), Equivalence, etc.
+    validValueMap[fieldName] = append(validValueMap[fieldName], fieldMin)
+    validValueMap[fieldName] = append(validValueMap[fieldName], fieldMin + 1)
+    validValueMap[fieldName] = append(validValueMap[fieldName], fieldMax)
+    validValueMap[fieldName] = append(validValueMap[fieldName], fieldMax - 1)
+    //
+    invalidValueMap[fieldName] = append(invalidValueMap[fieldName], fieldMin - 1)
+    invalidValueMap[fieldName] = append(invalidValueMap[fieldName], fieldMax + 1)
+    //
+
+    return validValueMap, invalidValueMap
+}
+
 
 func GenerateFuzzDataFiles(fuzzFile string, fuzzData types.FuzzData) {
     // fmt.Println("validValueList: ", validValueList)
@@ -137,18 +185,24 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData types.FuzzData) {
         }
     }
     utils.GenerateFileBasedOnVarOverride(validHeaderStr + "\n", outputsFile)
-    //
+    
     combValid := mode.GetCombinationValid(fuzzData)
     //
     i := 1
     for subCombValid := range combValid {
-        fmt.Println("subCombValid: ", subCombValid, len(subCombValid))
-        combStr := strings.Join(subCombValid, ",")
+        // fmt.Println("subCombValid -- : ", subCombValid, len(subCombValid))
+        combStr := ""
+        for ii, item := range subCombValid {
+            if ii == 0 {
+                combStr = combStr + fmt.Sprint(item)
+            } else{
+                combStr = combStr + "," + fmt.Sprint(item)
+            }
+        }
         utils.GenerateFileBasedOnVarAppend("valid" + strconv.Itoa(i) + "," + combStr + "\n", outputsFile)  
         i = i + 1  
     }
     
-
 
     // for invalid data
     outputsFile = filepath.Join(filepath.Dir(fuzzFile), 
@@ -163,10 +217,22 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData types.FuzzData) {
     }
     utils.GenerateFileBasedOnVarOverride(invalidHeaderStr, outputsFile)
 
-    //     for i, value := range valueList {
-    //         utils.GenerateFileBasedOnVarAppend("invalid" + strconv.Itoa(i + 1) + "," + value + "\n", outputsFile)
-    // }
-    // Get GetCombinationInvalid(fuzzData)
+    combInvalid := mode.GetCombinationInvalid(fuzzData)
+    //
+    i = 1
+    for subCombInvalid := range combInvalid {
+        // fmt.Println("subCombInvalid: ", subCombInvalid, len(subCombInvalid))
+        combStr := ""
+        for ii, item := range subCombInvalid {
+            if ii == 0 {
+                combStr = combStr + fmt.Sprint(item)
+            } else{
+                combStr = combStr + "," + fmt.Sprint(item)
+            }
+        }
+        utils.GenerateFileBasedOnVarAppend("invalid" + strconv.Itoa(i) + "," + combStr + "\n", outputsFile)  
+        i = i + 1  
+    }
 }
 
 
@@ -195,7 +261,22 @@ func GetFuzzTcArray(options map[string]string) [][]interface{} {
 }
 
 
+func parseLine(fuzzLine string) (string, string, int, int) {
+    var fieldName, fieldType string
 
+
+    line := strings.Split(fuzzLine, ":")
+
+    fieldName = strings.TrimSpace(line[0])
+
+    if strings.Index(line[1], "(") > 0 {
+        fieldType = strings.TrimSpace(line[1][0:strings.Index(line[1], "(")])
+    }
+
+    fmt.Print("fieldName, fieldType: ", fieldName, fieldType)
+
+    return fieldName, fieldType, 0, 20
+}
 
 
 // func ConvertSliceInterfaceToSliceString(params []interface{}) []string {

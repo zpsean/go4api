@@ -47,60 +47,103 @@ func combosString(c chan []string, combo []string, data []string, length int) {
 
 
 
-func GetCombinationValid(fuzzData types.FuzzData) <-chan []string {
-    var combos [][]string
+func GetCombinationValid(fuzzData types.FuzzData) <-chan []interface{} {
+    var combos [][]interface{}
     for _, validDataMap := range fuzzData.ValidData {
-        for key, validList := range validDataMap {
-
-            fmt.Println("validList: ", key, validList)
-
+        for _, validList := range validDataMap {
+            // fmt.Println("validList: ", key, validList)
             combos = append(combos, validList)
         }
     }
-
-    fmt.Println("valid comoss: ", combos)
-
     //
-    c := make(chan []string)
-    go func(c chan []string) {
+    c := make(chan []interface{})
+
+    // combosSliceString(c1, []interface{}{}, combos)
+
+    go func(c chan []interface{}) {
         defer close(c)
-        combosSliceString(c, []string{}, combos)
+        combosSliceString(c, []interface{}{}, combos)
     }(c)
 
     return c
 }
 
 
-func combosSliceString(c chan []string, combo []string, data [][]string) {  
-    // Check if we reached the length limit
-    // If so, we just return without adding anything
-    
-    for _, i_v := range data[0] {
-        var newCombo []string
-        newCombo = append(newCombo, i_v)
-        for _, j_v := range data[1] {
-            output := make([]string, 1)
-            copy(output, newCombo)
+func GetCombinationInvalid(fuzzData types.FuzzData) <-chan []interface{} {
+    var validCombos [][]interface{}
+    for _, validDataMap := range fuzzData.ValidData {
+        for _, validList := range validDataMap {
+            // fmt.Println("validList: ", key, validList)
+            validCombos = append(validCombos, validList)
+        }
+    }
+
+    var invalidCombos [][]interface{}
+    for _, invalidDataMap := range fuzzData.InvalidData {
+        for _, invalidList := range invalidDataMap {
+            // fmt.Println("invalidList: ", key, invalidList)
+            invalidCombos = append(invalidCombos, invalidList)
+        }
+    }
+
+    // fmt.Println("invalid combos: ", invalidCombos)
+
+    //
+    c := make(chan []interface{})
+
+    // comb type 1, for invalid + valid mix
+    for i, invalid := range invalidCombos {
+        var combos [][]interface{}
+
+        if i == 0 {
+            combos = append(combos, invalid)
+            combos = append(combos, validCombos[i + 1: ]...)
+        } else if i < len(invalidCombos) - 1 {
+            combos = append(combos, validCombos[:i]...)
+            combos = append(combos, invalid)
+            combos = append(combos, validCombos[i + 1: ]...)
+        } else {
+            combos = append(combos, validCombos[:i]...)
+            combos = append(combos, invalid)
+        }
+        // fmt.Println("invalid combos - 2: ", combos)
+
+        // go combosSliceString(c2, []interface{}{}, combos)
+    }
+
+    // comb type 2, for invalid + invalid    
+    go func(c chan []interface{}) {
+        defer close(c)
+        combosSliceString(c, []interface{}{}, invalidCombos)
+    }(c)
+
+    // defer close(c)
+
+    return c
+}
+
+
+func combosSliceString(c chan []interface{}, combo []interface{}, data [][]interface{}) {  
+    if len(data) > 1 {
+        var newCombo []interface{}
+        for _, i_v := range data[0] {
+            newCombo = append(combo, i_v)
+
+            combosSliceString(c, newCombo, data[1:])
+        }
+
+    } else if len(data) == 1 {
+        for _, j_v := range data[0] {
+            output := make([]interface{}, len(combo))
+            copy(output, combo)
+
             output = append(output, j_v)
+            fmt.Println("output: ", output)
             c <- output
         }
     }
 }
 
-
-
-
-func GetCombinationInvalid(fuzzData types.FuzzData) {
-    // comb 1, for invalid + valid
-    for _, invalidDataMap := range fuzzData.InvalidData {
-        for key, invalidList := range invalidDataMap {
-
-            fmt.Println("invalidList: ", key, invalidList)
-        }
-    }
-
-    // comb 1, for invalid + invalid
-}
 
 
 
