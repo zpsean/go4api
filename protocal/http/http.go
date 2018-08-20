@@ -8,16 +8,22 @@ import (
     "reflect"
     "strings"
     "bytes"
+    "net/url"
 )
 
 
-func HttpGet(url string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (int, http.Header, []byte) { 
+func HttpGet(urlStr string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (int, http.Header, []byte) { 
     //client 
     client := &http.Client{}
 
     // payload := reqBody
+    u, err := url.Parse(urlStr)
+    urlEncodedQry := u.Query().Encode()
+    urlValue := u.Scheme + "://" + u.Host + "/" + u.Path + "?" + urlEncodedQry
+    // fmt.Println("urlValue", u, urlValue)
+
     //
-    reqest, err := http.NewRequest(apiMethod, url, nil)
+    reqest, err := http.NewRequest(apiMethod, urlValue, nil)
 
     //Header
     mv := reflect.ValueOf(reqHeaders)
@@ -38,27 +44,17 @@ func HttpGet(url string, apiMethod string, reqHeaders map[string]interface{}, re
 
     //func ReadAll(r io.Reader) ([]byte, error)
     body, _ := ioutil.ReadAll(response.Body)
-    
-    // int
-    // fmt.Println(reflect.TypeOf(response.StatusCode), response.StatusCode)
-    // http.Header => type Header map[string][]string
-    // fmt.Println(reflect.TypeOf(response.Header), response.Header)
-    // *http.bodyEOFSignal
-    // fmt.Println(reflect.TypeOf(response.Body), response.Body)
-    // []uint8  -> []byte => byte -- alias for uint8
-    // fmt.Println(reflect.TypeOf(body), body)
-    // fmt.Println(string(body))
 
     return response.StatusCode, response.Header, body
 }
 
-func HttpPost(url string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (int, http.Header, []byte) { 
+func HttpPost(urlStr string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (int, http.Header, []byte) { 
     //client 
     client := &http.Client{}
     //
     payload := reqBody
     //
-    reqest, err := http.NewRequest(apiMethod, url, payload)
+    reqest, err := http.NewRequest(apiMethod, urlStr, payload)
 
     //Header
     mv := reflect.ValueOf(reqHeaders)
@@ -84,14 +80,14 @@ func HttpPost(url string, apiMethod string, reqHeaders map[string]interface{}, r
     return response.StatusCode, response.Header, body
 }
 
-func HttpPostForm(url string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (int, http.Header, []byte) { 
+func HttpPostForm(urlStr string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (int, http.Header, []byte) { 
     //client 
     client := &http.Client{}
     //
     // payload := strings.NewReader("{\"mid\":\"550049154\"}")
     payload := reqBody
     //
-    reqest, err := http.NewRequest(apiMethod, url, payload)
+    reqest, err := http.NewRequest(apiMethod, urlStr, payload)
 
     //Header
     mv := reflect.ValueOf(reqHeaders)
@@ -117,14 +113,14 @@ func HttpPostForm(url string, apiMethod string, reqHeaders map[string]interface{
     return response.StatusCode, response.Header, body
 }
 
-func HttpPostMultipart(url string, apiMethod string, reqHeaders map[string]interface{}, reqBody *bytes.Buffer) (int, http.Header, []byte) { 
+func HttpPostMultipart(urlStr string, apiMethod string, reqHeaders map[string]interface{}, reqBody *bytes.Buffer) (int, http.Header, []byte) { 
     //client 
     client := &http.Client{}
     //
     // payload := strings.NewReader("{\"mid\":\"550049154\"}")
     payload := reqBody
     //
-    reqest, err := http.NewRequest(apiMethod, url, payload)
+    reqest, err := http.NewRequest(apiMethod, urlStr, payload)
 
     //Header
     mv := reflect.ValueOf(reqHeaders)

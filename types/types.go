@@ -35,8 +35,8 @@ type TcReportResults struct {
 // valid, invalid data may have more than one field, but the map itself can not ensure the key sequence
 // so that, here use slice
 type FuzzData struct {  
-    ValidData []map[string][]string
-    InvalidData []map[string][]string
+    ValidData []map[string][]interface{}
+    InvalidData []map[string][]interface{}
     ValidStatusCode int
     InvalidStatusCode int
 }
