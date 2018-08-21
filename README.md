@@ -22,11 +22,11 @@ Menu
 Features
 --------
 
-- **Using Json format to represent API test case(s)** (`which contains the all info about API request, response and assertion`)
-- **Test Cases Json file can be template which will be rendered from csv data table(s)**
-- **Test Cases executed concurrently based on Priority and Dependency**
+- **Using Json format to represent API test case(s)**: contains the all info about API request, response and assertion
+- **Test Cases Json file itself can be template**: which will be rendered by csv data table(s)
+- **Test Cases executed concurrently**: based on Priority and Dependency
 - **Support API Fuzz Testing (trial)**
-- **Support Scenario Testing when APIs have data dependency and exchange**
+- **Support Scenario Testing**: when APIs have data dependency and exchange
 
 
 Install
