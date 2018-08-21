@@ -109,6 +109,18 @@ func GetRequestForTC(tc string, tcName string) (string, string) {
     return apiPath, apiMethod
 }
 
+func GetRequestQueryStringForTC(tc string, tcName string) map[string]interface{} {
+    reqHeaders := gjson.Parse(tc).Get(tcName).Get("request").Get("queryString").Map()
+
+    requestHeaders := map[string]interface{}{}
+    for key, value := range reqHeaders {
+        requestHeaders[key] = value.String()
+    }
+   
+    return requestHeaders
+}
+
+
 func GetRequestHeadersForTC(tc string, tcName string) map[string]interface{} {
     reqHeaders := gjson.Parse(tc).Get(tcName).Get("request").Get("headers").Map()
 

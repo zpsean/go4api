@@ -11,7 +11,6 @@
 package js
 
 var Results = `
-
 var pStartUnixNano = {{.PStart_time}}
 var pStart = {{.PStart}}
 var pEndUnixNano = {{.PEnd_time}}

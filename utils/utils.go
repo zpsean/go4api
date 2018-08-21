@@ -144,19 +144,7 @@ func ConvertStringArrayToIntArray(stringArray []string) []int {
     return intArray
 }
 
-func RemoveArryaItem(sourceArray [][]interface{}, tc []interface{}) [][]interface{} {
-    // fmt.Println("RemoveArryaItem", sourceArray, tc)
-    var resultArray [][]interface{}
-    // resultArray := append(sourceArray[:index], sourceArray[index + 1:]...)
-    for index, tc_i := range sourceArray {
-        if tc_i[0] == tc[0] {
-            resultArray = append(sourceArray[:index], sourceArray[index + 1:]...)
-            break
-        }
-    }
 
-    return resultArray
-}
 
 
 func GenerateFileBasedOnVarAppend(strVar string, filePath string) {
@@ -164,6 +152,7 @@ func GenerateFileBasedOnVarAppend(strVar string, filePath string) {
     if err != nil {
        panic(err) 
     }
+
     defer outFile.Close()
 
     outFile.WriteString(strVar)

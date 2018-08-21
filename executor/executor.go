@@ -17,6 +17,7 @@ import (
     "sort"
     "sync"
     "go4api/types" 
+    "go4api/testcase"
     "go4api/ui"     
     "go4api/ui/js"  
     "go4api/ui/style"                                                                                                                                
@@ -31,7 +32,7 @@ import (
 )
 
 
-func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart string, baseUrl string, resultsDir string, tcArray [][]interface{}) { //client
+func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCase) { //client
     // (1), get the text path, default is ../data/*, then search all the sub-folder to get the test scripts
     // to check the tcArray, if the case not distinct, report it to fix
     if len(tcArray) != len(GetTcNameSet(tcArray)) {
@@ -101,7 +102,7 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart s
                 // (3). <--> for log write to file
                 tcReportRes := types.TcReportResults {
                     Priority: priority,
-                    TcRunRes: tcRunResults,
+                    TcRunRes: tcRunResults,TestCaseDataInfo
                 }
 
                 repJson, _ := json.Marshal(tcReportRes)
@@ -203,25 +204,26 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart s
 }
 
 
-func GetTcArray(options map[string]string) [][]interface{} {
-    var tcArray [][]interface{}
+
+
+
+func GetTcArray(options map[string]string) []testcase.TestCaseDataInfo {
+    var tcArray []testcase.TestCaseDataInfo
 
     jsonFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".json")
     // fmt.Println("jsonFileList:", jsonFileList, "\n")
     // to ge the json and related data file, then get tc from them
     for _, jsonFile := range jsonFileList {
         csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_dt")
-        // to get the json test data directly (if not template) based on template (if template)
-        // tcInfos: [[casename, priority, parentTestCase, ], ...]
-        var tcInfos [][]interface{}
+        //
+        var tcInfos []testcase.TestCaseDataInfo
+
         if len(csvFileList) > 0 {
             tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
         } else {
             tcInfos = ConstructTcInfosBasedOnJson(jsonFile)
         }
 
-        // fmt.Println("tcInfos:", tcInfos, "\n")
-        
         for _, tc := range tcInfos {
             tcArray = append(tcArray, tc)
         }
@@ -261,27 +263,30 @@ func GetCsvDataFilesForJsonFile(jsonFile string, suffix string) []string {
 }
 
 
-func ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile string, csvFileList []string) [][]interface{} {
-    var tcInfos [][]interface{}
+func ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile string, csvFileList []string) []testcase.TestCaseDataInfo {
+    var tcInfos []testcase.TestCaseDataInfo
 
     for _, csvFile := range csvFileList {
         // to check the csv file's existence
-
 
         csvRows := utils.GetCsvFromFile(csvFile)
         for i, csvRow := range csvRows {
             // starting with data row
             if i > 0 {
                 outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, csvRows[0], csvRow)
-                tcJsonsTemp := utils.GetTestCaseJsonsFromTestData(outTempJson)
+
+                var tcases testcase.TestCases
+                json.Unmarshal([]byte(outTempJson.(string)), &tcases)
                 // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
-                var tcInfo []interface{}
-                for _, tcJson := range tcJsonsTemp {
-                    // to get the case info like [casename, priority, parentTestCase, ...], tcJson, jsonFile, csvFile, row in csv
-                    // Note: row in csv = i + 1 (i.e. plus csv header line)
-                    tcInfo = utils.GetTestCaseBasicInfoFromTestData(tcJson)
-                    tcInfo = append(tcInfo, tcJson, jsonFile, csvFile, strconv.Itoa(i + 1))
-                    tcInfos = append(tcInfos, tcInfo)
+                for _, tcase := range tcases.TestCases {
+                    // populate the testcase.TestCaseDataInfo
+                    tcaseData := testcase.TestCaseDataInfo {
+                        TestCase: tcase,
+                        JsonFile: jsonFile,
+                        CsvFile: csvFile,
+                        CsvRow: csvRow,
+                    }
+                    tcInfos = append(tcInfos, tcaseData)
                 }
             }
         }
@@ -289,73 +294,71 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile string, csvFileLi
     return tcInfos
 }
 
-func ConstructTcInfosBasedOnJson(jsonFile string) [][]interface{} {
-    var tcInfos [][]interface{}
+func ConstructTcInfosBasedOnJson(jsonFile string) []testcase.TestCaseDataInfo {
+    var tcInfos []testcase.TestCaseDataInfo
 
     csvFile := ""
     csvRow := ""
     outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, []string{""}, []string{""})
-    tcJsonsTemp := utils.GetTestCaseJsonsFromTestData(outTempJson)
+    
+    var tcases testcase.TestCases
+    json.Unmarshal([]byte(outTempJson.(string)), &tcases)
     // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
-    var tcInfo []interface{}
-    for _, tcJson := range tcJsonsTemp {
-        // to get the case info like [casename, priority, parentTestCase, ...]
-        tcInfo = utils.GetTestCaseBasicInfoFromTestData(tcJson)
-        tcInfo = append(tcInfo, tcJson, jsonFile, csvFile, csvRow)
-        tcInfos = append(tcInfos, tcInfo)
+     for _, tcase := range tcases.TestCases {
+        // populate the testcase.TestCaseDataInfo
+        tcaseData := testcase.TestCaseDataInfo {
+            TestCase: tcase,
+            JsonFile: jsonFile,
+            CsvFile: csvFile,
+            CsvRow: csvRow,
+        }
+        tcInfos = append(tcInfos, tcaseData)
     }
 
     return tcInfos
 }
 
 
-func GetPrioritySet(tcArray [][]interface{}) []string {
+
+
+func GetTcNameSet(tcArray []testcase.TestCaseDataInfo) []string {
+    // get the tcNames
+    var tcNames []string
+    for _, tcaseInfo := range tcArray {
+        tcNames = append(tcNames, tcaseInfo.TcName())
+    }
+    return tcNames
+}
+
+
+func GetPrioritySet(tcArray []testcase.TestCase) []string {
     // get the priorities
-    var priorities []interface{}
-    for _, tc := range tcArray {
-        priorities = append(priorities, tc[1])
+    var priorities []string
+    for _, tcaseInfo := range tcArray {
+        priorities = append(priorities, tcaseInfo.Priority())
     }
     // go get the distinct key in priorities
     keys := make(map[string]bool)
-    prioritySet := []string{}
+    prioritySet := []string
     for _, entry := range priorities {
         // uses 'value, ok := map[key]' to determine if map's key exists, if ok, then true
-        if _, value := keys[entry.(string)]; !value {
-            keys[entry.(string)] = true
-            prioritySet = append(prioritySet, entry.(string))
+        if _, value := keys[entry]; !value {
+            keys[entry] = true
+            prioritySet = append(prioritySet, entry)
         }
     }
 
     return prioritySet
 }
 
-func GetTcNameSet(tcArray [][]interface{}) []string {
-    // get the tcNames
-    var tcNames []interface{}
-    for _, tc := range tcArray {
-        tcNames = append(tcNames, tc[0])
-    }
-    // go get the distinct key in tcNames
-    keys := make(map[string]bool)
-    tcNameSet := []string{}
-    for _, entry := range tcNames {
-        // uses 'value, ok := map[key]' to determine if map's key exists, if ok, then true
-        if _, value := keys[entry.(string)]; !value {
-            keys[entry.(string)] = true
-            tcNameSet = append(tcNameSet, entry.(string))
-        }
-    }
 
-    return tcNameSet
-}
 
-func GetTestCasesByPriority(prioritySet []string, tcArray [][]interface{}) map[string][][]interface{} {
+func GetTestCasesByPriority(prioritySet []string, tcArray []testcase.TestCase) map[string][]testcase.TestCase {
     // build the map
-    classifications := make(map[string][][]interface{})
+    classifications := make(map[string][]testcase.TestCase)
     for _, entry := range prioritySet {
-        for _, tc := range tcArray {
-            // tc[1] represents the priority
-            if entry == tc[1] {
+        for _, tcase := range tcArray {
+            if entry == value.Priority {
                 classifications[entry] = append(classifications[entry], tc)
             }
         }
@@ -363,6 +366,8 @@ func GetTestCasesByPriority(prioritySet []string, tcArray [][]interface{}) map[s
     // fmt.Println("classifications: ", classifications)
     return classifications
 }
+
+
 
 
 func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time) {
@@ -389,6 +394,7 @@ func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string,
     // copy the value of var style.Style to file
     utils.GenerateFileBasedOnVarOverride(style.Style, resultsDir + "style/go4api.css")
 }
+
 
 
 func GetTmpJsonDir(path string) string {
