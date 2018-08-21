@@ -76,11 +76,11 @@ var Index = `<!DOCTYPE html>
                              
                                     newTd0.innerText= i + 1;
                                     newTd1.innerText = tcResults[i].Priority;
-                                    newTd2.innerText = tcResults[i].TcRunRes.TcName;
-                                    newTd3.innerText = tcResults[i].TcRunRes.ParentTestCase;
-                                    newTd4.innerText = tcResults[i].TcRunRes.TestResult;
-                                    newTd5.innerText = tcResults[i].TcRunRes.JsonFile_Base + " / " + tcResults[i].TcRunRes.CsvFileBase  + " / " + tcResults[i].TcRunRes.RowCsv;
-                                    newTd6.innerText = tcResults[i].TcRunRes.TestMessages;
+                                    newTd2.innerText = tcResults[i].TcName;
+                                    newTd3.innerText = tcResults[i].ParentTestCase;
+                                    newTd4.innerText = tcResults[i].TestResult;
+                                    newTd5.innerText = tcResults[i].JsonFilePath + " / " + tcResults[i].CsvFile  + " / " + tcResults[i].CsvRow;
+                                    newTd6.innerText = tcResults[i].TestMessages;
                                 }
 
 
@@ -111,12 +111,13 @@ var Index = `<!DOCTYPE html>
 
                                 var tcPositions = {}
 
+
                                 for (var i = 0; i < tcResults.length; i++)
                                 {
                                     var c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                                     c.setAttribute('cx', (i % 15 + 1) * 50);
-                                    c.setAttribute('cy', (tcResults[i].TcRunRes.Start_time_UnixNano - pStartUnixNano + tcResults[i].TcRunRes.Duration_UnixNano / 2) / 10000000);
-                                    c.r.baseVal.value = tcResults[i].TcRunRes.Duration_UnixNano / 100000000 + 5;
+                                    c.setAttribute('cy', (tcResults[i].StartTimeUnixNano - pStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000);
+                                    c.r.baseVal.value = tcResults[i].DurationUnixNano / 100000000 + 5;
 
 
                                     var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -125,7 +126,7 @@ var Index = `<!DOCTYPE html>
                                     text.textContent = strJons
 
                                     text.setAttribute('x', (i % 15 + 1) * 50);
-                                    text.setAttribute('y', (tcResults[i].TcRunRes.Start_time_UnixNano - pStartUnixNano + tcResults[i].TcRunRes.Duration_UnixNano / 2) / 10000000 - 20)
+                                    text.setAttribute('y', (tcResults[i].StartTimeUnixNano - pStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000 - 20)
                                     text.style.width = '400px'
                                     text.setAttribute('fill', 'transparent')
                                     svgRoot.appendChild(text)
@@ -143,14 +144,14 @@ var Index = `<!DOCTYPE html>
 
 
 
-                                    var pos = [(i % 15 + 1) * 50, (tcResults[i].TcRunRes.Start_time_UnixNano - pStartUnixNano + tcResults[i].TcRunRes.Duration_UnixNano / 2) / 10000000];
-                                    tcPositions[tcResults[i].TcRunRes.TcName] = pos;
+                                    var pos = [(i % 15 + 1) * 50, (tcResults[i].StartTimeUnixNano - pStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000];
+                                    tcPositions[tcResults[i].TcName] = pos;
 
-                                    if (tcResults[i].TcRunRes.TestResult == "Success")
+                                    if (tcResults[i].TestResult == "Success")
                                         {
                                         c.setAttribute('fill', 'green');
                                         }
-                                    else if (tcResults[i].TcRunRes.TestResult == "Fail")
+                                    else if (tcResults[i].TestResult == "Fail")
                                         {
                                         c.setAttribute('fill', 'red');
                                         }
@@ -166,9 +167,9 @@ var Index = `<!DOCTYPE html>
                                     {
                                         var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                                         line.setAttribute('x1', 0);
-                                        line.setAttribute('y1', (tcResults[i].TcRunRes.Start_time_UnixNano - pStartUnixNano + tcResults[i].TcRunRes.Duration_UnixNano / 2) / 10000000);
+                                        line.setAttribute('y1', (tcResults[i].StartTimeUnixNano - pStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000);
                                         line.setAttribute('x2', 1200);
-                                        line.setAttribute('y2', (tcResults[i].TcRunRes.Start_time_UnixNano - pStartUnixNano + tcResults[i].TcRunRes.Duration_UnixNano / 2) / 10000000);
+                                        line.setAttribute('y2', (tcResults[i].StartTimeUnixNano - pStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000);
                                         line.setAttribute('style', "stroke:rgb(99,99,99);stroke-width:1");
                                         
                                         svgRoot.appendChild(line);
@@ -181,14 +182,14 @@ var Index = `<!DOCTYPE html>
                                 {
                                     for (var child = 0; child < tcResults.length; child++)
                                     {
-                                        if (tcResults[parent].TcRunRes.TcName == tcResults[child].TcRunRes.ParentTestCase)
+                                        if (tcResults[parent].TcName == tcResults[child].ParentTestCase)
                                         {
                                             var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                                             
-                                            line.setAttribute('x1', tcPositions[tcResults[parent].TcRunRes.TcName][0]);
-                                            line.setAttribute('y1', tcPositions[tcResults[parent].TcRunRes.TcName][1]);
-                                            line.setAttribute('x2', tcPositions[tcResults[child].TcRunRes.TcName][0]);
-                                            line.setAttribute('y2', tcPositions[tcResults[child].TcRunRes.TcName][1]);
+                                            line.setAttribute('x1', tcPositions[tcResults[parent].TcName][0]);
+                                            line.setAttribute('y1', tcPositions[tcResults[parent].TcName][1]);
+                                            line.setAttribute('x2', tcPositions[tcResults[child].TcName][0]);
+                                            line.setAttribute('y2', tcPositions[tcResults[child].TcName][1]);
                                             line.setAttribute('style', "stroke:rgb(250,99,99);stroke-width:1");
                                             
                                             svgRoot.appendChild(line);

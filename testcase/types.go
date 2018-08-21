@@ -24,7 +24,7 @@ type TestCaseDataInfo struct {
 // test case execution type, includes testdata
 type TestCaseExecutionInfo struct {
     TestCaseDataInfo TestCaseDataInfo
-    TestResult string
+    TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
     ActualStatusCode int
     StartTime string
     EndTime string
@@ -33,9 +33,7 @@ type TestCaseExecutionInfo struct {
     EndTimeUnixNano int64
     DurationUnixNano int64
 }
-type TestCases struct {
-    TestCases []TestCase
-}
+type TestCases []TestCase
 
 // test case type,
 type TestCase map[string]TestCaseBasics
@@ -43,14 +41,15 @@ type TestCase map[string]TestCaseBasics
 type TestCaseBasics struct {
     Priority string
     ParentTestCase string
+    Inputs string
     Request Request
     Response Response
+    Outputs []interface{}
 }
 
 type Request struct {  
     Method string
     Path string
-    Inputs string
     Headers map[string]interface{}
     QueryString map[string]interface{}
     Payload map[string]interface{}
@@ -61,8 +60,23 @@ type Response struct {
     Status map[string]interface{}
     Headers map[string]interface{}
     Body map[string]interface{}
-    Outputs []interface{}
 }
 
-
+// for report format 
+type TcReportResults struct { 
+    TcName string 
+    Priority string
+    ParentTestCase string
+    JsonFilePath string
+    CsvFile string
+    CsvRow string
+    TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
+    ActualStatusCode int
+    StartTime string
+    EndTime string
+    TestMessages string
+    StartTimeUnixNano int64
+    EndTimeUnixNano int64
+    DurationUnixNano int64
+}
 

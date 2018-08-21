@@ -8,18 +8,13 @@
  *
  */
  
-package mode
+package fuzz
 
 import (
     // "fmt"
     "reflect"
     "math/rand"
     "time"
-    // "io/ioutil"                                                                                                                                              
-    // "os"
-    // "strings"
-    // "io"
-    // "bufio"
 )
 
 // Note: this package is for the automatically generate the combinations from the data mode file

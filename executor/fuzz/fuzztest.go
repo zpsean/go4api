@@ -8,7 +8,7 @@
  *
  */
 
-package executor
+package fuzz
 
 import (                                                                                                                                             
     // "os"
@@ -16,18 +16,26 @@ import (
     "fmt"
     // "reflect"
     // "sync"
+    "path/filepath"
     "strings"
     "strconv"
-    "go4api/types"
-    "go4api/utils"
-    "go4api/utils/mode"
-    "path/filepath"
+    "go4api/testcase"
+    "go4api/utils"  
     // "go4api/logger"
     // "encoding/json"
 )
 
+// valid, invalid data may have more than one field, but the map itself can not ensure the key sequence
+// so that, here use slice
+type FuzzData struct {  
+    ValidData []map[string][]interface{}
+    InvalidData []map[string][]interface{}
+    ValidStatusCode int
+    InvalidStatusCode int
+}
 
-func PrepFuzzTest(ch chan int, pStart_time time.Time, options map[string]string) [][]interface{} {
+
+func PrepFuzzTest(ch chan int, pStart_time time.Time, options map[string]string) []testcase.TestCaseDataInfo {
     fuzzFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".fuzz")
     fmt.Println("FuzzTest jsonFileList:", options["ifFuzzTestFirst"], fuzzFileList, "\n")
 
@@ -52,7 +60,7 @@ func PrepFuzzTest(ch chan int, pStart_time time.Time, options map[string]string)
 // array (raw)
 
 // to get the fuzz data table files with naming fuzzcase_fuzz_dt_valid.csv / fuzzcase_fuzz_dt_invalid.csv
-func GenerateFuzzData(fuzzFile string) types.FuzzData {
+func GenerateFuzzData(fuzzFile string) FuzzData {
     fuzzRowsByte := utils.GetContentFromFile(fuzzFile)
 
     fuzzRows := strings.Split(string(fuzzRowsByte), "\n")
@@ -132,7 +140,7 @@ func getChar(fieldName string, fieldType string, fieldMin int, fieldMax int) (ma
     //
     for _, validLen := range validLenList{
         for _, randType := range fieldRands {
-            validValue := mode.CallRands(randType, validLen)
+            validValue := CallRands(randType, validLen)
             // fmt.Println("validLen, validValue: ", validLen, validValue)
 
             validValueMap[fieldName] = append(validValueMap[fieldName], validValue)
@@ -141,7 +149,7 @@ func getChar(fieldName string, fieldType string, fieldMin int, fieldMax int) (ma
     //
     for _, invalidLen := range invalidLenList{
         for _, randType := range fieldRands {
-            invalidValue := mode.CallRands(randType, invalidLen)
+            invalidValue := CallRands(randType, invalidLen)
             // fmt.Println("invalidLen, invalidValue: ", invalidLen, invalidValue)
 
             invalidValueMap[fieldName] = append(invalidValueMap[fieldName], invalidValue)
@@ -186,7 +194,7 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData types.FuzzData) {
     }
     utils.GenerateFileBasedOnVarOverride(validHeaderStr + "\n", outputsFile)
     
-    combValid := mode.GetCombinationValid(fuzzData)
+    combValid := GetCombinationValid(fuzzData)
     //
     i := 1
     for subCombValid := range combValid {
@@ -217,7 +225,7 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData types.FuzzData) {
     }
     utils.GenerateFileBasedOnVarOverride(invalidHeaderStr, outputsFile)
 
-    combInvalid := mode.GetCombinationInvalid(fuzzData)
+    combInvalid := GetCombinationInvalid(fuzzData)
     //
     i = 1
     for subCombInvalid := range combInvalid {
@@ -236,8 +244,8 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData types.FuzzData) {
 }
 
 
-func GetFuzzTcArray(options map[string]string) [][]interface{} {
-    var tcArray [][]interface{}
+func GetFuzzTcArray(options map[string]string) []testcase.TestCaseDataInfo {
+    var tcArray []testcase.TestCaseDataInfo
 
     jsonFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".json")
     // fmt.Println("jsonFileList:", jsonFileList, "\n")
@@ -246,14 +254,14 @@ func GetFuzzTcArray(options map[string]string) [][]interface{} {
         csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_fuzz_dt")
         // to get the json test data directly (if not template) based on template (if template)
         // tcInfos: [[casename, priority, parentTestCase, ], ...]
-        var tcInfos [][]interface{}
+        var tcInfos []testcase.TestCaseDataInfo
         if len(csvFileList) > 0 {
             tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
         }
         // fmt.Println("tcInfos:", tcInfos, "\n")
         
-        for _, tc := range tcInfos {
-            tcArray = append(tcArray, tc)
+        for _, tcData := range tcInfos {
+            tcArray = append(tcArray, tcData)
         }
     }
 

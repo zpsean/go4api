@@ -8,11 +8,10 @@
  *
  */
  
-package mode
+package fuzz
 
 import (
     "fmt"
-    "go4api/types"
 )
 
 
@@ -47,7 +46,7 @@ func combosString(c chan []string, combo []string, data []string, length int) {
 
 
 
-func GetCombinationValid(fuzzData types.FuzzData) <-chan []interface{} {
+func GetCombinationValid(fuzzData FuzzData) <-chan []interface{} {
     var combos [][]interface{}
     for _, validDataMap := range fuzzData.ValidData {
         for _, validList := range validDataMap {
@@ -69,7 +68,7 @@ func GetCombinationValid(fuzzData types.FuzzData) <-chan []interface{} {
 }
 
 
-func GetCombinationInvalid(fuzzData types.FuzzData) <-chan []interface{} {
+func GetCombinationInvalid(fuzzData FuzzData) <-chan []interface{} {
     var validCombos [][]interface{}
     for _, validDataMap := range fuzzData.ValidData {
         for _, validList := range validDataMap {

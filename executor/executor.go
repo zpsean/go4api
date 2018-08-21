@@ -16,7 +16,6 @@ import (
     "os"
     "sort"
     "sync"
-    "go4api/types" 
     "go4api/testcase"
     "go4api/ui"     
     "go4api/ui/js"  
@@ -32,7 +31,7 @@ import (
 )
 
 
-func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCase) { //client
+func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo) { //client
     // (1), get the text path, default is ../data/*, then search all the sub-folder to get the test scripts
     // to check the tcArray, if the case not distinct, report it to fix
     if len(tcArray) != len(GetTcNameSet(tcArray)) {
@@ -48,10 +47,6 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart s
     // (1) case has No parent Dependency or successor Dependency, which can be scheduled concurrently
     // (2) case has parent Dependency or successor Dependency, which has rules to be scheduled concurrently
     // 
-    // need a tree to track and schedule the run dynamiclly, but need a dummy root test case
- 
-    // dummy root tc => {"root", "0", "0", rooTC, "", "", ""}
-
     root, _ := BuildTree(tcArray)
     fmt.Println("------------------")
     //
@@ -83,29 +78,25 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart s
         miniLoop:
         for {
             //
-            resultsChan := make(chan types.TcRunResults, len(tcArray))
+            resultsExeChan := make(chan testcase.TestCaseExecutionInfo, len(tcArray))
             var wg sync.WaitGroup
             //
-            ScheduleNodes(root, &wg, options, priority, resultsChan, pStart, baseUrl, resultsDir)
+            ScheduleNodes(root, &wg, options, priority, resultsExeChan, pStart, baseUrl, resultsDir)
             //
             wg.Wait()
 
-            close(resultsChan)
+            close(resultsExeChan)
 
-            for tcRunResults := range resultsChan {
+            for tcExecution := range resultsExeChan {
                 // (1). tcName, testResult, the search result is saved to *findNode
-                SearchNode(&root, tcRunResults.TcName)
+                SearchNode(&root, tcExecution.TcName())
                 // (2). 
-                RefreshNodeAndDirectChilrenTcResult(*findNode, tcRunResults.TestResult, tcRunResults.Start, tcRunResults.End, 
-                    tcRunResults.TestMessages, tcRunResults.Start_time_UnixNano, tcRunResults.End_time_UnixNano)
+                RefreshNodeAndDirectChilrenTcResult(*findNode, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
+                    tcExecution.TestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
                 // fmt.Println("------------------")
                 // (3). <--> for log write to file
-                tcReportRes := types.TcReportResults {
-                    Priority: priority,
-                    TcRunRes: tcRunResults,TestCaseDataInfo
-                }
-
-                repJson, _ := json.Marshal(tcReportRes)
+                tcReportResults := tcExecution.TcReportResults()
+                repJson, _ := json.Marshal(tcReportResults)
                 // fmt.Println(string(repJson))
                 // (4). put the execution log into results
                 logger.WriteExecutionResults(string(repJson), pStart, resultsDir)
@@ -121,34 +112,19 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart s
         }
         //
         CollectNodeStatusByPriority(root, p_index, priority)
+
         // (5). also need to put out the cases which has not been executed (i.e. not Success, Fail)
         notRunTime := time.Now()
-
-        for _, tc := range tcNotExecutedList {
+        for _, tcExecution := range tcNotExecutedList {
             // [casename, priority, parentTestCase, ...], tc, jsonFile, csvFile, row in csv
-            if tc[1].(string) == priority {
-                tcNotRunRes := types.TcRunResults {
-                    TcName : tc[0].(string),
-                    ParentTestCase : tc[2].(string),
-                    TestResult : "ParentFailed",
-                    ActualStatusCode : "",
-                    JsonFile_Base : tc[4].(string),
-                    CsvFileBase : tc[5].(string),
-                    RowCsv : tc[6].(string),
-                    Start : "",
-                    End : "",
-                    TestMessages : "",
-                    Start_time_UnixNano : notRunTime.UnixNano(),
-                    End_time_UnixNano : notRunTime.UnixNano(),
-                    Duration_UnixNano : 0,
-                }
+            if tcExecution.Priority() == priority {
+                // set some dummy time for the tc not executed
+                tcExecution.StartTimeUnixNano =notRunTime.UnixNano()
+                tcExecution.EndTimeUnixNano = notRunTime.UnixNano()
+                tcExecution.DurationUnixNano = notRunTime.UnixNano() - notRunTime.UnixNano()
 
-                tcReportRes := types.TcReportResults {
-                    Priority: tc[1].(string),
-                    TcRunRes: tcNotRunRes,
-                }
-                //
-                repJson, _ := json.Marshal(tcReportRes)
+                tcReportResults := tcExecution.TcReportResults()
+                repJson, _ := json.Marshal(tcReportResults)
                 //
                 logger.WriteExecutionResults(string(repJson), pStart, resultsDir)
                 // to console
@@ -205,8 +181,6 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart s
 
 
 
-
-
 func GetTcArray(options map[string]string) []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
 
@@ -215,6 +189,7 @@ func GetTcArray(options map[string]string) []testcase.TestCaseDataInfo {
     // to ge the json and related data file, then get tc from them
     for _, jsonFile := range jsonFileList {
         csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_dt")
+        // fmt.Println("csvFileList:", csvFileList, "\n")
         //
         var tcInfos []testcase.TestCaseDataInfo
 
@@ -224,13 +199,14 @@ func GetTcArray(options map[string]string) []testcase.TestCaseDataInfo {
             tcInfos = ConstructTcInfosBasedOnJson(jsonFile)
         }
 
-        for _, tc := range tcInfos {
-            tcArray = append(tcArray, tc)
+        for _, tcData := range tcInfos {
+            tcArray = append(tcArray, tcData)
         }
     }
 
     return tcArray
 }
+
 
 func GetCsvDataFilesForJsonFile(jsonFile string, suffix string) []string {
     // here search out the csv files under the same dir, not to use utils.WalkPath as it is recursively
@@ -276,15 +252,16 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile string, csvFileLi
                 outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, csvRows[0], csvRow)
 
                 var tcases testcase.TestCases
-                json.Unmarshal([]byte(outTempJson.(string)), &tcases)
+                resJson, _ := ioutil.ReadAll(outTempJson)
+                json.Unmarshal([]byte(resJson), &tcases)
                 // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
-                for _, tcase := range tcases.TestCases {
+                for _, tcase := range tcases {
                     // populate the testcase.TestCaseDataInfo
                     tcaseData := testcase.TestCaseDataInfo {
                         TestCase: tcase,
-                        JsonFile: jsonFile,
+                        JsonFilePath: jsonFile,
                         CsvFile: csvFile,
-                        CsvRow: csvRow,
+                        CsvRow: strconv.Itoa(i + 1),
                     }
                     tcInfos = append(tcInfos, tcaseData)
                 }
@@ -302,13 +279,14 @@ func ConstructTcInfosBasedOnJson(jsonFile string) []testcase.TestCaseDataInfo {
     outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, []string{""}, []string{""})
     
     var tcases testcase.TestCases
-    json.Unmarshal([]byte(outTempJson.(string)), &tcases)
+    resJson, _ := ioutil.ReadAll(outTempJson)
+    json.Unmarshal([]byte(resJson), &tcases)
     // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
-     for _, tcase := range tcases.TestCases {
+     for _, tcase := range tcases {
         // populate the testcase.TestCaseDataInfo
         tcaseData := testcase.TestCaseDataInfo {
             TestCase: tcase,
-            JsonFile: jsonFile,
+            JsonFilePath: jsonFile,
             CsvFile: csvFile,
             CsvRow: csvRow,
         }
@@ -331,7 +309,7 @@ func GetTcNameSet(tcArray []testcase.TestCaseDataInfo) []string {
 }
 
 
-func GetPrioritySet(tcArray []testcase.TestCase) []string {
+func GetPrioritySet(tcArray []testcase.TestCaseDataInfo) []string {
     // get the priorities
     var priorities []string
     for _, tcaseInfo := range tcArray {
@@ -339,7 +317,7 @@ func GetPrioritySet(tcArray []testcase.TestCase) []string {
     }
     // go get the distinct key in priorities
     keys := make(map[string]bool)
-    prioritySet := []string
+    var prioritySet []string
     for _, entry := range priorities {
         // uses 'value, ok := map[key]' to determine if map's key exists, if ok, then true
         if _, value := keys[entry]; !value {
@@ -353,13 +331,13 @@ func GetPrioritySet(tcArray []testcase.TestCase) []string {
 
 
 
-func GetTestCasesByPriority(prioritySet []string, tcArray []testcase.TestCase) map[string][]testcase.TestCase {
+func GetTestCasesByPriority(prioritySet []string, tcArray []testcase.TestCaseDataInfo) map[string][]testcase.TestCaseDataInfo {
     // build the map
-    classifications := make(map[string][]testcase.TestCase)
+    classifications := make(map[string][]testcase.TestCaseDataInfo)
     for _, entry := range prioritySet {
-        for _, tcase := range tcArray {
-            if entry == value.Priority {
-                classifications[entry] = append(classifications[entry], tc)
+        for _, tcaseData := range tcArray {
+            if entry == tcaseData.Priority() {
+                classifications[entry] = append(classifications[entry], tcaseData)
             }
         }
     }

@@ -18,6 +18,7 @@ import (
     "path/filepath"
     "encoding/csv"
     "strconv"
+    gjson "github.com/tidwall/gjson"
 )
 
 func GetCurrentDir() string{
@@ -55,7 +56,32 @@ func GetContentFromFile(filePath string) []byte {
     return fi
 }
 
+func GetJsonFromFile(filePath string) string {
+    fi, err := os.Open(filePath)
+    if err != nil {
+        panic(err)
+    }
+    defer fi.Close()
+    
+    fd, err := ioutil.ReadAll(fi)
+    if err != nil {
+        panic(err)
+    }
 
+    return string(fd)
+}
+
+func GetBaseUrlFromConfig(filePath string, jsonKey string) string {
+    resJson := GetJsonFromFile(filePath)
+
+    value := gjson.Parse(resJson).Get(jsonKey).Get("baseUrl")
+
+    if value.Value() == nil {
+        panic(value)
+    }
+
+    return value.String()
+}
 
 
 // for the dir and sub-dir
@@ -143,7 +169,6 @@ func ConvertStringArrayToIntArray(stringArray []string) []int {
 
     return intArray
 }
-
 
 
 

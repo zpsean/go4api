@@ -30,10 +30,10 @@ func Dispatch(ch chan int, pStart_time time.Time, options map[string]string) {
     // for type 2, build the cases hierarchy first, then render the child cases using the parent's outputs
     //
     if options["ifScenario"] == "" {
-        if options["ifFuzzTestFirst"] != "" {
-            fuzzTcArray := PrepFuzzTest(ch, pStart_time, options)
-            Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, fuzzTcArray)
-        }
+        // if options["ifFuzzTestFirst"] != "" {
+        //     fuzzTcArray := PrepFuzzTest(ch, pStart_time, options)
+        //     Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, fuzzTcArray)
+        // }
         tcArray := GetTcArray(options)
         Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, tcArray)
     } else {
