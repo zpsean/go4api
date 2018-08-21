@@ -74,42 +74,40 @@ Note: You can prepare many many test cases based on below examples to let go4api
 #### Prepare the Json:
 
 ```js
-{
-  "TestCases": [
-    {
-      "FirstTestCase-001": {
-        "priority": "3",
-        "parentTestCase": "root",
-        "request": {
-          "method": "GET",
-          "path": "https://api.douban.com/v2/movie/top250",
-          "headers": {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36"
-          },
-          "queryString": {
-            "pageIndex": "1",
-            "pageSize": "12"
+[
+  {
+    "FirstTestCase-001": {
+      "priority": "3",
+      "parentTestCase": "root",
+      "request": {
+        "method": "GET",
+        "path": "https://api.douban.com/v2/movie/top250",
+        "headers": {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36"
+        },
+        "queryString": {
+          "pageIndex": "1",
+          "pageSize": "12"
+        }
+      },
+      "response": {
+        "status": {
+          "Equals": 200
+        },
+        "headers": {
+          "Content-Type": {
+            "Contains": "application/json;charset=UTF-8"
           }
         },
-        "response": {
-          "status": {
-            "Equals": 200
-          },
-          "headers": {
-            "Content-Type": {
-              "Contains": "application/json;charset=UTF-8"
-            }
-          },
-          "body": {
-            "total": {
-              "Equals": 250
-            }
+        "body": {
+          "total": {
+            "Equals": 250
           }
         }
       }
     }
-  ]
-}
+  }
+]
 ```
 
 #### Running go4api
@@ -124,37 +122,35 @@ $./go4api --testhome /<you Path>/go/run/testhome --testresults /<you Path>/go/ru
 
 SecondTeseCase.json
 ```js
-{
-  "TestCases": [
-    {
-      "SecondTestCase-{{.tc}}": {
-        "priority": "{{.priority}}",
-        "parentTestCase": "root",
-        "request": {
-          "method": "GET",
-          "path": "/v2/movie/top250",
-          "headers": {
-            "authorization": "{{.authorization}}"
-          },
-          "queryString": {
-            "pageIndex": "1",
-            "pageSize": "12"
-          }
+[
+  {
+    "SecondTestCase-{{.tc}}": {
+      "priority": "{{.priority}}",
+      "parentTestCase": "root",
+      "request": {
+        "method": "GET",
+        "path": "/v2/movie/top250",
+        "headers": {
+          "authorization": "{{.authorization}}"
         },
-        "response": {
-          "status": {
-            "Equals": {{.statuscode}}
-          },
-          "headers": {
-            "Content-Type": {
-              "Contains": "application/json;charset=UTF-8"
-            }
+        "queryString": {
+          "pageIndex": "1",
+          "pageSize": "12"
+        }
+      },
+      "response": {
+        "status": {
+          "Equals": {{.statuscode}}
+        },
+        "headers": {
+          "Content-Type": {
+            "Contains": "application/json;charset=UTF-8"
           }
         }
       }
     }
-  ]
-}
+  }
+]
 ```
 
 SecondTeseCase_dt1.csv

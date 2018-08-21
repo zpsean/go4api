@@ -153,7 +153,7 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
 
 
     // (5). print to console
-    tcReportResults := tcExecution.TcReportResults()
+    tcReportResults := tcExecution.TcConsoleResults()
     repJson, _ := json.Marshal(tcReportResults)
 
     fmt.Println(string(repJson))
@@ -324,19 +324,16 @@ func PrepMultipart(path string, name string) (*bytes.Buffer, string, error) {
 
 
 func PrepPostPayload(reqPayload map[string]interface{}) *strings.Reader {
-    mv := reflect.ValueOf(reqPayload)
     var body *strings.Reader
 
-    // Note, has 3 conditions: text (json), form, or multipart file upload
-    for _, k := range mv.MapKeys() {
-        v := mv.MapIndex(k)
-        // fmt.Println("reqPayload", k, v)
-        if k.Interface().(string) == "text" {
-            body = strings.NewReader(v.Interface().(string))
+    for key, value := range reqPayload {
+        if key == "text" {
+            repJson, _ := json.Marshal(value)
+            body = strings.NewReader(string(repJson))
             break
         }
     }
-
+    
     return body
 }
 

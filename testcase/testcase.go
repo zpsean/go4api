@@ -17,7 +17,7 @@ import (
     // "sort"
     // "sync"
     "net/url" 
-    // "go4api/types" 
+    "path/filepath"
 )
 
 // test case type
@@ -218,6 +218,24 @@ func (tc TestCase) RespBody() map[string]interface{} {
 
 
 // for report
+func (tcExecution TestCaseExecutionInfo) TcConsoleResults() TcConsoleResults {
+    tcConsoleRes := TcConsoleResults { 
+        TcName: tcExecution.TcName(),
+        Priority: tcExecution.Priority(),
+        ParentTestCase: tcExecution.ParentTestCase(),
+        JsonFilePath: filepath.Base(tcExecution.TestCaseDataInfo.JsonFilePath),
+        CsvFile: filepath.Base(tcExecution.TestCaseDataInfo.CsvFile),
+        CsvRow: tcExecution.TestCaseDataInfo.CsvRow,
+        TestResult: tcExecution.TestResult,
+        ActualStatusCode: tcExecution.ActualStatusCode,
+        TestMessages: tcExecution.TestMessages,
+    }
+
+    return tcConsoleRes
+}
+
+
+
 func (tcExecution TestCaseExecutionInfo) TcReportResults() TcReportResults {
     tcReportRes := TcReportResults { 
         TcName: tcExecution.TcName(),
@@ -238,7 +256,6 @@ func (tcExecution TestCaseExecutionInfo) TcReportResults() TcReportResults {
 
     return tcReportRes
 }
-
 
 
 

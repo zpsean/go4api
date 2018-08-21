@@ -80,3 +80,16 @@ type TcReportResults struct {
     DurationUnixNano int64
 }
 
+
+type TcConsoleResults struct { 
+    TcName string 
+    Priority string
+    ParentTestCase string
+    JsonFilePath string
+    CsvFile string
+    CsvRow string
+    TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
+    ActualStatusCode int
+    TestMessages string
+}
+
