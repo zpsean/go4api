@@ -45,6 +45,23 @@ func (tc TestCase) ParentTestCase() string {
     return parentTestCase
 }
 
+func (tc TestCase) Inputs() string {
+    var inputs string
+    for _, value := range tc {
+        inputs = value.Inputs
+    }
+    return inputs
+}
+
+func (tc TestCase) Outputs() []interface{} {
+    var outputs []interface{}
+    for _, value := range tc {
+        outputs = value.Outputs
+    }
+    return outputs
+}
+
+
 
 // test case data type
 func (tcData TestCaseDataInfo) TcName() string {
@@ -90,7 +107,6 @@ func (tcExecution TestCaseExecutionInfo) SetTestResult(value string) {
 // type Request struct {  
 //     Method string
 //     Path string
-//     Inputs string
 //     Headers map[string]interface{}
 //     QueryString map[string]interface{}
 //     Payload map[string]interface{}
@@ -110,14 +126,6 @@ func (tc TestCase) ReqPath() string {
         reqPath = value.Request.Path
     }
     return reqPath
-}
-
-func (tc TestCase) ReqInputs() string {
-    var reqInputs string
-    for _, value := range tc {
-        reqInputs = value.Request.Inputs
-    }
-    return reqInputs
 }
 
 func (tc TestCase) ReqHeaders() map[string]interface{} {
@@ -179,7 +187,6 @@ func (tc TestCase) ReqPayload() map[string]interface{} {
 //     Status map[string]interface{}
 //     Headers map[string]interface{}
 //     Body map[string]interface{}
-//     Outputs []interface{}
 // }
 
 
@@ -208,13 +215,31 @@ func (tc TestCase) RespBody() map[string]interface{} {
     return reqBody
 }
 
-func (tc TestCase) RespOutputs() []interface{} {
-    var reqOutputs []interface{}
-    for _, value := range tc {
-        reqOutputs = value.Response.Outputs
+
+
+// for report
+func (tcExecution TestCaseExecutionInfo) TcReportResults() TcReportResults {
+    tcReportRes := TcReportResults { 
+        TcName: tcExecution.TcName(),
+        Priority: tcExecution.Priority(),
+        ParentTestCase: tcExecution.ParentTestCase(),
+        JsonFilePath: tcExecution.TestCaseDataInfo.JsonFilePath,
+        CsvFile: tcExecution.TestCaseDataInfo.CsvFile,
+        CsvRow: tcExecution.TestCaseDataInfo.CsvRow,
+        TestResult: tcExecution.TestResult,
+        ActualStatusCode: tcExecution.ActualStatusCode,
+        StartTime: tcExecution.StartTime,
+        EndTime: tcExecution.EndTime,
+        TestMessages: tcExecution.TestMessages,
+        StartTimeUnixNano: tcExecution.StartTimeUnixNano,
+        EndTimeUnixNano: tcExecution.EndTimeUnixNano,
+        DurationUnixNano: tcExecution.DurationUnixNano,
     }
-    return reqOutputs
+
+    return tcReportRes
 }
+
+
 
 
 

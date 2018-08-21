@@ -21,7 +21,6 @@ import (
     "io"
     "net/http"     
     "net/url"     
-    "go4api/types"
     "go4api/testcase"                                                                                                                               
     "go4api/utils"
     "go4api/assertion"
@@ -30,7 +29,6 @@ import (
     "strings"
     "encoding/json"
     gjson "github.com/tidwall/gjson"
-    "strconv"
 )
 
 type TestMessage struct {  
@@ -41,16 +39,12 @@ type TestMessage struct {
 }
 
 
-func HttpApi(wg *sync.WaitGroup, resultsChan chan types.TcRunResults, options map[string]string, pStart string, baseUrl string, 
+func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionInfo, options map[string]string, pStart string, baseUrl string, 
         tcData testcase.TestCaseDataInfo, resultsDir string) {
     //
     defer wg.Done()
     //
     tcName := tcData.TcName()
-    parentTestCase := tcData.ParentTestCase()
-    jsonFile := tcData.JsonFilePath
-    csvFile := tcData.CsvFile
-    rowCsv := tcData.CsvRow
     //
     start_time := time.Now()
     start := start_time.String()
@@ -141,51 +135,32 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan types.TcRunResults, options ma
     // fmt.Println(tcName + " end: ", end)
 
     // (4). here to generate the outputs file if the Json has "outputs" field
-    // WriteOutputsDataToFile(testResult, tcJson, tcName, tc, actualBody)
+    WriteOutputsDataToFile(testResult, tcData, actualBody)
+
+
+    // get the TestCaseExecutionInfo
+    tcExecution := testcase.TestCaseExecutionInfo {
+        TestCaseDataInfo: tcData,
+        TestResult: testResult,
+        ActualStatusCode: actualStatusCode,
+        StartTime: start,
+        EndTime: end,
+        TestMessages: TestMessages,
+        StartTimeUnixNano: start_time.UnixNano(),
+        EndTimeUnixNano: end_time.UnixNano(),
+        DurationUnixNano: end_time.UnixNano() - start_time.UnixNano(),
+    }
+
 
     // (5). print to console
-    resultPrintString := ""
-    csvFileBase := ""
-    TestMessages_len := 0
-    // Note: if csvFile does not exist, the filepath.Base(csvFile) = ".", need to remove
-    if filepath.Base(csvFile) == "." {
-        csvFileBase = ""
-    } else {
-        csvFileBase = filepath.Base(csvFile)
-    }
+    tcReportResults := tcExecution.TcReportResults()
+    repJson, _ := json.Marshal(tcReportResults)
 
-    if len(TestMessages) > 300 {
-        TestMessages_len = 300
-    } else {
-        TestMessages_len = len(TestMessages)
-    }
-
-
-    resultPrintString1 := tcName + "," + strconv.Itoa(actualStatusCode) + "," + filepath.Base(jsonFile) + "," + csvFileBase + "," + rowCsv
-    resultPrintString = resultPrintString1 + "," + testResult + "," + TestMessages[0:TestMessages_len]
-    //
-    fmt.Println(resultPrintString)
-
-
+    fmt.Println(string(repJson))
     // (6). write the channel to executor for scheduler and log
     // here can refactor to struct => done
-    tcRunRes := types.TcRunResults {
-        TcName : tcName,
-        ParentTestCase : parentTestCase,
-        TestResult : testResult,
-        ActualStatusCode : strconv.Itoa(actualStatusCode),
-        JsonFile_Base : filepath.Base(jsonFile),
-        CsvFileBase : csvFileBase,
-        RowCsv : rowCsv,
-        Start : start,
-        End : end,
-        TestMessages : TestMessages,
-        Start_time_UnixNano : start_time.UnixNano(),
-        End_time_UnixNano : end_time.UnixNano(),
-        Duration_UnixNano : end_time.UnixNano() - start_time.UnixNano(),
-    }
-
-    resultsChan <- tcRunRes
+    
+    resultsExeChan <- tcExecution
 
 }
 
@@ -217,20 +192,20 @@ func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actu
 
     // header
     // http.Header => map[string][]string
-    for key, _ := range expHeader {
-        expHeader_sub := expHeader[key]
+    for key, value := range expHeader {
+        expHeader_sub := value.(map[string]interface{})
         //
         for assertionKey, expValue := range expHeader_sub {
             // as the http.Header has structure, so that here need to assert if the expValue in []string
             actualValue := strings.Join(actualHeader[key], ",")
             // call the assertion function
-            testResult := assertion.CallAssertion(assertionKey, actualValue, expValue.Value())
+            testResult := assertion.CallAssertion(assertionKey, actualValue, expValue)
             // fmt.Println("-> expHeader_sub", key, assertionKey, actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue.Value()), testResult)
             if testResult == false {
                 msg := TestMessage {
                     FieldName: key,
                     AssertionKey:  assertionKey,
-                    ExpValue: expValue.Value(),
+                    ExpValue: expValue,
                     ActualValue: actualValue,
                 }
                 TestMessages = append(TestMessages, msg)
@@ -244,7 +219,7 @@ func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actu
         // Note, the below statement does not work, if the key starts with $, such as $.#, maybe bug for gjson???
         // expBody_sub := expBodyJson.Get(key).Map()
         // However, need to use value directly
-        expBody_sub := value.Map()
+        expBody_sub := value.(map[string]interface{})
         for assertionKey, expValue := range expBody_sub {
             // if path, then value - value, otherwise, key - value
             actualValue := GetActualValueBasedOnExpKeyAndActualBody(key, actualBody)
@@ -253,7 +228,7 @@ func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actu
                 msg := TestMessage {
                     FieldName: key,
                     AssertionKey:  assertionKey,
-                    ExpValue: expValue.Value(),
+                    ExpValue: expValue,
                     ActualValue: actualValue,
                 }
                 TestMessages = append(TestMessages, msg)
@@ -261,13 +236,13 @@ func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actu
                 testResults = append(testResults, false)
             } else {
                 // call the assertion function
-                testResult := assertion.CallAssertion(assertionKey, actualValue, expValue.Value())
+                testResult := assertion.CallAssertion(assertionKey, actualValue, expValue)
                 // fmt.Println("-> expBody_sub", key, assertionKey, actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue), testResult)
                 if testResult == false {
                     msg := TestMessage {
                         FieldName: key,
                         AssertionKey:  assertionKey,
-                        ExpValue: expValue.Value(),
+                        ExpValue: expValue,
                         ActualValue: actualValue,
                     }
                     TestMessages = append(TestMessages, msg)
@@ -400,34 +375,37 @@ func GetActualValueBasedOnExpKeyAndActualBody(key string, actualBody []byte) int
 }
 
 
-func WriteOutputsDataToFile(testResult string, tcJson interface{}, tcName string, tc []interface{}, actualBody []byte) {
-    var expOutputs []gjson.Result
+func WriteOutputsDataToFile(testResult string, tcData testcase.TestCaseDataInfo, actualBody []byte) {
+    var expOutputs []interface{}
+
     if testResult == "Success" {
-        expOutputs = utils.GetExpectedOutputsFieldsForTC(tcJson, tcName)
-        
+        expOutputs = tcData.TestCase.Outputs()
         if len(expOutputs) > 0 {
             // get the actual value from actual body based on the fields in json outputs
             var keyStrList []string
             var valueStrList []string
             //
-            for _, item := range expOutputs {
+            for _, itemMap := range expOutputs {
                 // item is {}
-                for key, value := range item.Map() {
+                for key, value := range itemMap.(map[string]interface{}) {
                     // for csv header
-                    // fmt.Println("key, value: ", key, value)
                     keyStrList = append(keyStrList, key)
                     //
-                    actualValue := GetActualValueBasedOnExpKeyAndActualBody(value.String(), actualBody)
-                    if actualValue == nil {
-                        valueStrList = append(valueStrList, "")
+                    if fmt.Sprint(value)[0:2] == "$." {
+                        actualValue := GetActualValueBasedOnExpKeyAndActualBody(fmt.Sprint(value), actualBody)
+                        if actualValue == nil {
+                            valueStrList = append(valueStrList, "")
+                        } else {
+                            valueStrList = append(valueStrList, fmt.Sprint(actualValue))
+                        }
                     } else {
-                        valueStrList = append(valueStrList, actualValue.(string))
-                    } 
+                        valueStrList = append(valueStrList, fmt.Sprint(value))
+                    }
                 }
             }
             // get the full path of outputsfile
-            jsonFileName := strings.TrimRight(filepath.Base(tc[4].(string)), ".json")
-            outputsFile := filepath.Join(filepath.Dir(tc[4].(string)), jsonFileName + "_outputs.csv")
+            jsonFileName := strings.TrimRight(filepath.Base(tcData.JsonFilePath), ".json")
+            outputsFile := filepath.Join(filepath.Dir(tcData.JsonFilePath), jsonFileName + "_outputs.csv")
             // write csv header
             utils.GenerateFileBasedOnVarOverride(strings.Join(keyStrList, ",") + "\n", outputsFile)
 
