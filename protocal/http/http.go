@@ -53,8 +53,11 @@ func HttpPost(urlStr string, apiMethod string, reqHeaders map[string]interface{}
     client := &http.Client{}
     //
     payload := reqBody
+    u, err := url.Parse(urlStr)
+    urlEncodedQry := u.Query().Encode()
+    urlValue := u.Scheme + "://" + u.Host + "/" + u.Path + "?" + urlEncodedQry
     //
-    reqest, err := http.NewRequest(apiMethod, urlStr, payload)
+    reqest, err := http.NewRequest(apiMethod, urlValue, payload)
 
     //Header
     mv := reflect.ValueOf(reqHeaders)
@@ -86,8 +89,11 @@ func HttpPostForm(urlStr string, apiMethod string, reqHeaders map[string]interfa
     //
     // payload := strings.NewReader("{\"mid\":\"550049154\"}")
     payload := reqBody
+    u, err := url.Parse(urlStr)
+    urlEncodedQry := u.Query().Encode()
+    urlValue := u.Scheme + "://" + u.Host + "/" + u.Path + "?" + urlEncodedQry
     //
-    reqest, err := http.NewRequest(apiMethod, urlStr, payload)
+    reqest, err := http.NewRequest(apiMethod, urlValue, payload)
 
     //Header
     mv := reflect.ValueOf(reqHeaders)
@@ -119,8 +125,11 @@ func HttpPostMultipart(urlStr string, apiMethod string, reqHeaders map[string]in
     //
     // payload := strings.NewReader("{\"mid\":\"550049154\"}")
     payload := reqBody
+    u, err := url.Parse(urlStr)
+    urlEncodedQry := u.Query().Encode()
+    urlValue := u.Scheme + "://" + u.Host + "/" + u.Path + "?" + urlEncodedQry
     //
-    reqest, err := http.NewRequest(apiMethod, urlStr, payload)
+    reqest, err := http.NewRequest(apiMethod, urlValue, payload)
 
     //Header
     mv := reflect.ValueOf(reqHeaders)

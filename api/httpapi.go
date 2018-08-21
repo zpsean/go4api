@@ -21,7 +21,8 @@ import (
     "io"
     "net/http"     
     "net/url"     
-    "go4api/types"                                                                                                                                  
+    "go4api/types"
+    "go4api/testcase"                                                                                                                               
     "go4api/utils"
     "go4api/assertion"
     "go4api/protocal/http"
@@ -41,22 +42,22 @@ type TestMessage struct {
 
 
 func HttpApi(wg *sync.WaitGroup, resultsChan chan types.TcRunResults, options map[string]string, pStart string, baseUrl string, 
-        tc []interface{}, resultsDir string) {
+        tcData testcase.TestCaseDataInfo, resultsDir string) {
     //
     defer wg.Done()
     //
-    tcName := tc[0].(string)
-    parentTestCase := tc[2].(string)
-    tcJson := tc[3].(string)
-    jsonFile := tc[4].(string)
-    csvFile := tc[5].(string)
-    rowCsv := tc[6].(string)
+    tcName := tcData.TcName()
+    parentTestCase := tcData.ParentTestCase()
+    jsonFile := tcData.JsonFilePath
+    csvFile := tcData.CsvFile
+    rowCsv := tcData.CsvRow
     //
     start_time := time.Now()
     start := start_time.String()
     // fmt.Println(tcName, " start: ", start)
     //
-    apiPath, apiMethod := utils.GetRequestForTC(tcJson, tcName)
+    apiPath := tcData.TestCase.ReqPath()
+    apiMethod := tcData.TestCase.ReqMethod()
     // apiPath := "/api/operation/soldtos?pageIndex=1&pageSize=12"
     url := ""
     if strings.HasPrefix(strings.ToLower(apiPath), "http") {
@@ -64,6 +65,8 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan types.TcRunResults, options ma
     } else {
         url = baseUrl + apiPath
     }
+    // BuildUrlWithQuery()
+    // reqQueryStrings := utils.GetRequestQueryStringForTC(tcJson, tcName)
     
     //
     // the map for mapping the string and the related funciton to call
@@ -75,7 +78,7 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan types.TcRunResults, options ma
     }
     // request payload(body)
     var reqPayload map[string]interface{}
-    reqPayload = utils.GetRequestPayloadForTC(tcJson, tcName)
+    reqPayload = tcData.TestCase.ReqPayload()
     //
     var bodyText *strings.Reader // init body
     bodyMultipart := &bytes.Buffer{}
@@ -103,7 +106,7 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan types.TcRunResults, options ma
     // fmt.Println("bodyText: ", reqPayload)
     // request headers
     var reqHeaders map[string]interface{}
-    reqHeaders = utils.GetRequestHeadersForTC(tcJson, tcName)
+    reqHeaders = tcData.TestCase.ReqHeaders()
     // set the boundary to headers, if multipart
     if boundary != "" {
         reqHeaders["Content-Type"] = boundary
@@ -125,7 +128,9 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan types.TcRunResults, options ma
         }
     //
     // (2). Expected response
-    expStatus, expHeader, expBody := utils.GetExpectedResponseForTC(tcJson, tcName)
+    expStatus := tcData.TestCase.RespStatus()
+    expHeader := tcData.TestCase.RespHeaders()
+    expBody := tcData.TestCase.RespBody()
     // fmt.Println(actualStatusCode, actualHeader, actualBody)
 
     // (3). compare
@@ -136,7 +141,7 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan types.TcRunResults, options ma
     // fmt.Println(tcName + " end: ", end)
 
     // (4). here to generate the outputs file if the Json has "outputs" field
-    WriteOutputsDataToFile(testResult, tcJson, tcName, tc, actualBody)
+    // WriteOutputsDataToFile(testResult, tcJson, tcName, tc, actualBody)
 
     // (5). print to console
     resultPrintString := ""
@@ -185,7 +190,7 @@ func HttpApi(wg *sync.WaitGroup, resultsChan chan types.TcRunResults, options ma
 }
 
 func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actualBody []byte, 
-        expStatusJson gjson.Result, expHeaderJson gjson.Result, expBodyJson gjson.Result) (string, string) {
+        expStatus map[string]interface{}, expHeader map[string]interface{}, expBody map[string]interface{}) (string, string) {
 
     // the map for mapping the string and the related funciton to call
     // fmt.Println("Compare: ", tcName)
@@ -194,16 +199,15 @@ func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actu
     var TestMessages []TestMessage
 
     // status
-    expStatus := expStatusJson.Map()
     for assertionKey, expValue := range expStatus {
         // call the assertion function
-        testResult := assertion.CallAssertion(assertionKey, actualStatusCode, expValue.Value())
+        testResult := assertion.CallAssertion(assertionKey, actualStatusCode, expValue)
         // fmt.Println("--> expStatus", assertionKey, actualStatusCode, expValue, reflect.TypeOf(actualStatusCode), reflect.TypeOf(expValue), testResult)
         if testResult == false {
             msg := TestMessage {
                     FieldName: "status",
                     AssertionKey:  assertionKey,
-                    ExpValue: expValue.Value(),
+                    ExpValue: expValue,
                     ActualValue: actualStatusCode,
                 }
             TestMessages = append(TestMessages, msg)
@@ -213,9 +217,8 @@ func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actu
 
     // header
     // http.Header => map[string][]string
-    expHeader := expHeaderJson.Map()
     for key, _ := range expHeader {
-        expHeader_sub := expHeaderJson.Get(key).Map()
+        expHeader_sub := expHeader[key]
         //
         for assertionKey, expValue := range expHeader_sub {
             // as the http.Header has structure, so that here need to assert if the expValue in []string
@@ -237,7 +240,6 @@ func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actu
     }
 
     // body
-    expBody := expBodyJson.Map()
     for key, value := range expBody {
         // Note, the below statement does not work, if the key starts with $, such as $.#, maybe bug for gjson???
         // expBody_sub := expBodyJson.Get(key).Map()
