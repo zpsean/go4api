@@ -14,15 +14,10 @@ import (
     // "os"
     "time"
     "fmt"
-    // "reflect"
-    // "sync"
     "path/filepath"
     "strings"
     "strconv"
-    "go4api/testcase"
     "go4api/utils"  
-    // "go4api/logger"
-    // "encoding/json"
 )
 
 // valid, invalid data may have more than one field, but the map itself can not ensure the key sequence
@@ -35,7 +30,7 @@ type FuzzData struct {
 }
 
 
-func PrepFuzzTest(ch chan int, pStart_time time.Time, options map[string]string) []testcase.TestCaseDataInfo {
+func PrepFuzzTest(ch chan int, pStart_time time.Time, options map[string]string) {
     fuzzFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".fuzz")
     fmt.Println("FuzzTest jsonFileList:", options["ifFuzzTestFirst"], fuzzFileList, "\n")
 
@@ -45,10 +40,8 @@ func PrepFuzzTest(ch chan int, pStart_time time.Time, options map[string]string)
         GenerateFuzzDataFiles(fuzzFile, fuzzData)
     }
     // (2). render the json using the fuzz dt(s)
-    fuzzTcArray := GetFuzzTcArray(options)
+    // fuzzTcArray := GetFuzzTcArray(options)
     // fmt.Println("fuzzTcArray:", fuzzTcArray, "\n")
-    
-    return fuzzTcArray
 }
 
 // JSON Schema defines the following basic types:
@@ -65,7 +58,7 @@ func GenerateFuzzData(fuzzFile string) FuzzData {
 
     fuzzRows := strings.Split(string(fuzzRowsByte), "\n")
 
-    var fuzzData types.FuzzData
+    var fuzzData FuzzData
     var validValueList []map[string][]interface{}
     var invalidValueList []map[string][]interface{}
 
@@ -102,7 +95,7 @@ func GenerateFuzzData(fuzzFile string) FuzzData {
         }
     }
 
-    fuzzData = types.FuzzData {
+    fuzzData = FuzzData {
         ValidData: validValueList,
         InvalidData: invalidValueList,
         ValidStatusCode: 200,
@@ -177,7 +170,7 @@ func getInt(fieldName string, fieldType string, fieldMin int, fieldMax int) (map
 }
 
 
-func GenerateFuzzDataFiles(fuzzFile string, fuzzData types.FuzzData) {
+func GenerateFuzzDataFiles(fuzzFile string, fuzzData FuzzData) {
     // fmt.Println("validValueList: ", validValueList)
     // fmt.Println("invalidValueList: ", invalidValueList)
 
@@ -244,29 +237,6 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData types.FuzzData) {
 }
 
 
-func GetFuzzTcArray(options map[string]string) []testcase.TestCaseDataInfo {
-    var tcArray []testcase.TestCaseDataInfo
-
-    jsonFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".json")
-    // fmt.Println("jsonFileList:", jsonFileList, "\n")
-    // to ge the json and related data file, then get tc from them
-    for _, jsonFile := range jsonFileList {
-        csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_fuzz_dt")
-        // to get the json test data directly (if not template) based on template (if template)
-        // tcInfos: [[casename, priority, parentTestCase, ], ...]
-        var tcInfos []testcase.TestCaseDataInfo
-        if len(csvFileList) > 0 {
-            tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
-        }
-        // fmt.Println("tcInfos:", tcInfos, "\n")
-        
-        for _, tcData := range tcInfos {
-            tcArray = append(tcArray, tcData)
-        }
-    }
-
-    return tcArray
-}
 
 
 func parseLine(fuzzLine string) (string, string, int, int) {
@@ -285,17 +255,6 @@ func parseLine(fuzzLine string) (string, string, int, int) {
 
     return fieldName, fieldType, 0, 20
 }
-
-
-// func ConvertSliceInterfaceToSliceString(params []interface{}) []string {
-//     var paramSlice []string
-//     for _, param := range params {
-//         paramSlice = append(paramSlice, (reflect.ValueOf(param)).String())
-//         // fmt.Println("param: ", reflect.TypeOf(param), reflect.ValueOf(param))
-//     }
-
-//     return paramSlice
-// }
 
 
 

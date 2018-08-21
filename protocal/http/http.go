@@ -1,14 +1,13 @@
 package protocal
 
 import (
-    // "fmt"
+    "fmt"
     "net/http"
     "io/ioutil"
     // "strconv"
     "reflect"
     "strings"
     "bytes"
-    "net/url"
 )
 
 
@@ -17,13 +16,9 @@ func HttpGet(urlStr string, apiMethod string, reqHeaders map[string]interface{},
     client := &http.Client{}
 
     // payload := reqBody
-    u, err := url.Parse(urlStr)
-    urlEncodedQry := u.Query().Encode()
-    urlValue := u.Scheme + "://" + u.Host + "/" + u.Path + "?" + urlEncodedQry
-    // fmt.Println("urlValue", u, urlValue)
-
+    fmt.Println("urlStr", urlStr)
     //
-    reqest, err := http.NewRequest(apiMethod, urlValue, nil)
+    reqest, err := http.NewRequest(apiMethod, urlStr, nil)
 
     //Header
     mv := reflect.ValueOf(reqHeaders)
@@ -53,11 +48,8 @@ func HttpPost(urlStr string, apiMethod string, reqHeaders map[string]interface{}
     client := &http.Client{}
     //
     payload := reqBody
-    u, err := url.Parse(urlStr)
-    urlEncodedQry := u.Query().Encode()
-    urlValue := u.Scheme + "://" + u.Host + "/" + u.Path + "?" + urlEncodedQry
-    //
-    reqest, err := http.NewRequest(apiMethod, urlValue, payload)
+
+    reqest, err := http.NewRequest(apiMethod, urlStr, payload)
 
     //Header
     mv := reflect.ValueOf(reqHeaders)
@@ -87,13 +79,9 @@ func HttpPostForm(urlStr string, apiMethod string, reqHeaders map[string]interfa
     //client 
     client := &http.Client{}
     //
-    // payload := strings.NewReader("{\"mid\":\"550049154\"}")
     payload := reqBody
-    u, err := url.Parse(urlStr)
-    urlEncodedQry := u.Query().Encode()
-    urlValue := u.Scheme + "://" + u.Host + "/" + u.Path + "?" + urlEncodedQry
-    //
-    reqest, err := http.NewRequest(apiMethod, urlValue, payload)
+
+    reqest, err := http.NewRequest(apiMethod, urlStr, payload)
 
     //Header
     mv := reflect.ValueOf(reqHeaders)
@@ -123,13 +111,9 @@ func HttpPostMultipart(urlStr string, apiMethod string, reqHeaders map[string]in
     //client 
     client := &http.Client{}
     //
-    // payload := strings.NewReader("{\"mid\":\"550049154\"}")
     payload := reqBody
-    u, err := url.Parse(urlStr)
-    urlEncodedQry := u.Query().Encode()
-    urlValue := u.Scheme + "://" + u.Host + "/" + u.Path + "?" + urlEncodedQry
-    //
-    reqest, err := http.NewRequest(apiMethod, urlValue, payload)
+    
+    reqest, err := http.NewRequest(apiMethod, urlStr, payload)
 
     //Header
     mv := reflect.ValueOf(reqHeaders)

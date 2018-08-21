@@ -53,14 +53,22 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     apiPath := tcData.TestCase.ReqPath()
     apiMethod := tcData.TestCase.ReqMethod()
     // apiPath := "/api/operation/soldtos?pageIndex=1&pageSize=12"
-    url := ""
+    urlStr := ""
     if strings.HasPrefix(strings.ToLower(apiPath), "http") {
-        url = apiPath
+        urlStr = apiPath
     } else {
-        url = baseUrl + apiPath
+        urlStr = baseUrl + apiPath
     }
-    // BuildUrlWithQuery()
-    // reqQueryStrings := utils.GetRequestQueryStringForTC(tcJson, tcName)
+
+    reqQueryStringEncoded := tcData.TestCase.ReqQueryStringEncode()
+
+    u, _ := url.Parse(urlStr)
+    urlEncodedQry := u.Query().Encode()
+    if len(urlEncodedQry) > 0 {
+        urlStr = u.Scheme + "://" + u.Host + "/" + u.Path + "?" + urlEncodedQry + "&" + reqQueryStringEncoded
+    } else {
+        urlStr = u.Scheme + "://" + u.Host + "/" + u.Path + "?" + reqQueryStringEncoded
+    }
     
     //
     // the map for mapping the string and the related funciton to call
@@ -116,9 +124,9 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     var actualBody []byte
     // protocalChan := make(chan interface{}, 50)
     if apiMethodSelector == "POSTMultipart" {
-        actualStatusCode, actualHeader, actualBody = protocal.CallHttpMethod(funcs, apiMethodSelector, url, apiMethod, reqHeaders, bodyMultipart)    
+        actualStatusCode, actualHeader, actualBody = protocal.CallHttpMethod(funcs, apiMethodSelector, urlStr, apiMethod, reqHeaders, bodyMultipart)    
     } else {
-        actualStatusCode, actualHeader, actualBody = protocal.CallHttpMethod(funcs, apiMethodSelector, url, apiMethod, reqHeaders, bodyText)
+        actualStatusCode, actualHeader, actualBody = protocal.CallHttpMethod(funcs, apiMethodSelector, urlStr, apiMethod, reqHeaders, bodyText)
         }
     //
     // (2). Expected response
@@ -333,7 +341,7 @@ func PrepPostPayload(reqPayload map[string]interface{}) *strings.Reader {
             break
         }
     }
-    
+
     return body
 }
 
