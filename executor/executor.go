@@ -389,3 +389,29 @@ func GetTmpJsonDir(path string) string {
 
     return resultsDir
 }
+
+
+
+func GetFuzzTcArray(options map[string]string) []testcase.TestCaseDataInfo {
+    var tcArray []testcase.TestCaseDataInfo
+
+    jsonFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".json")
+    // fmt.Println("jsonFileList:", jsonFileList, "\n")
+    // to ge the json and related data file, then get tc from them
+    for _, jsonFile := range jsonFileList {
+        csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_fuzz_dt")
+        // to get the json test data directly (if not template) based on template (if template)
+        // tcInfos: [[casename, priority, parentTestCase, ], ...]
+        var tcInfos []testcase.TestCaseDataInfo
+        if len(csvFileList) > 0 {
+            tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
+        }
+        // fmt.Println("tcInfos:", tcInfos, "\n")
+        
+        for _, tcData := range tcInfos {
+            tcArray = append(tcArray, tcData)
+        }
+    }
+
+    return tcArray
+}
