@@ -1,7 +1,7 @@
 package protocal
 
 import (
-    // "fmt"
+    "fmt"
     "net/http"
     "io/ioutil"
     // "strconv"
@@ -21,10 +21,8 @@ func HttpGet(urlStr string, apiMethod string, reqHeaders map[string]interface{},
     reqest, err := http.NewRequest(apiMethod, urlStr, nil)
 
     //Header
-    mv := reflect.ValueOf(reqHeaders)
-    for _, k := range mv.MapKeys() {
-        v := mv.MapIndex(k)
-        reqest.Header.Add(k.Interface().(string), v.Interface().(string))
+    for key, value := range reqHeaders {
+        reqest.Header.Add(key, fmt.Sprint(value))
     }
     // fmt.Println("url", url)
     // fmt.Println("payload", payload)
@@ -52,10 +50,8 @@ func HttpPost(urlStr string, apiMethod string, reqHeaders map[string]interface{}
     reqest, err := http.NewRequest(apiMethod, urlStr, payload)
 
     //Header
-    mv := reflect.ValueOf(reqHeaders)
-    for _, k := range mv.MapKeys() {
-        v := mv.MapIndex(k)
-        reqest.Header.Add(k.Interface().(string), v.Interface().(string))
+    for key, value := range reqHeaders {
+        reqest.Header.Add(key, fmt.Sprint(value))
     }
     // fmt.Println("url", url)
     // fmt.Println("payload", payload)
@@ -84,10 +80,8 @@ func HttpPostForm(urlStr string, apiMethod string, reqHeaders map[string]interfa
     reqest, err := http.NewRequest(apiMethod, urlStr, payload)
 
     //Header
-    mv := reflect.ValueOf(reqHeaders)
-    for _, k := range mv.MapKeys() {
-        v := mv.MapIndex(k)
-        reqest.Header.Add(k.Interface().(string), v.Interface().(string))
+    for key, value := range reqHeaders {
+        reqest.Header.Add(key, fmt.Sprint(value))
     }
     // fmt.Println("url", url)
     // fmt.Println("payload", payload)
@@ -116,10 +110,8 @@ func HttpPostMultipart(urlStr string, apiMethod string, reqHeaders map[string]in
     reqest, err := http.NewRequest(apiMethod, urlStr, payload)
 
     //Header
-    mv := reflect.ValueOf(reqHeaders)
-    for _, k := range mv.MapKeys() {
-        v := mv.MapIndex(k)
-        reqest.Header.Add(k.Interface().(string), v.Interface().(string))
+    for key, value := range reqHeaders {
+        reqest.Header.Add(key, fmt.Sprint(value))
     }
     // fmt.Println("url", url)
     // fmt.Println("payload", payload)
@@ -149,12 +141,10 @@ func HttpPut(urlStr string, apiMethod string, reqHeaders map[string]interface{},
     payload := reqBody
 
     reqest, err := http.NewRequest(apiMethod, urlStr, payload)
-
+    // fmt.Println("urlStr", urlStr)
     //Header
-    mv := reflect.ValueOf(reqHeaders)
-    for _, k := range mv.MapKeys() {
-        v := mv.MapIndex(k)
-        reqest.Header.Add(k.Interface().(string), v.Interface().(string))
+    for key, value := range reqHeaders {
+        reqest.Header.Add(key, fmt.Sprint(value))
     }
     // fmt.Println("urlStr", urlStr)
     // fmt.Println("payload", payload)

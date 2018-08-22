@@ -20,7 +20,7 @@ import (
     "path/filepath"
 )
 
-// test case type
+// test case type - get
 func (tc TestCase) TcName() string {
     var tcName string
     for key, _ := range tc {
@@ -61,9 +61,98 @@ func (tc TestCase) Outputs() []interface{} {
     return outputs
 }
 
+// !! ---------------------------------------
+// !! --- test case type - set
+// !! ---------------------------------------
+func (tc TestCase) SetPriority(newValue string) {
+    for _, value := range tc {
+        value.Priority = newValue
+    }
+}
+
+func (tc TestCase) SetParentTestCase(newValue string) {
+    for _, value := range tc {
+        value.ParentTestCase = newValue
+    }
+}
 
 
-// test case data type
+func (tc TestCase) SetInputs(newValue string) {
+    for _, value := range tc {
+        value.Inputs = newValue
+    }
+}
+
+func (tc TestCase) SetOutputs(newValue []interface{}) {
+    for _, value := range tc {
+        value.Outputs = newValue
+    }
+}
+
+func (tc TestCase) SetRequestMethod (newValue string) {
+    for _, value := range tc {
+        value.Request.Method = newValue
+    }
+}
+
+func (tc TestCase) SetRequestPath (newValue string) {
+    for _, value := range tc {
+        value.Request.Path = newValue
+    }
+}
+
+// request header
+func (tc TestCase) SetRequestHeader (key string, newValue string) {
+    for _, value := range tc {
+        value.Request.Headers[key] = newValue
+    }
+}
+
+func (tc TestCase) AddRequestHeader (key string, newValue string) {
+    for _, value := range tc {
+        value.Request.Headers[key] = newValue
+    }
+}
+
+func (tc TestCase) DelRequestHeader (key string) {
+    for _, value := range tc {
+        delete(value.Request.Headers, key)
+    }
+}
+
+// request query string
+func (tc TestCase) SetRequestQueryString (key string, newValue string) {
+    for _, value := range tc {
+        value.Request.QueryString[key] = value
+    }
+}
+
+func (tc TestCase) AddRequestQueryString (key string, newValue string) {
+    for _, value := range tc {
+        value.Request.QueryString[key] = newValue
+    }
+}
+
+func (tc TestCase) DelRequestQueryString (key string) {
+    for _, value := range tc {
+        delete(value.Request.QueryString, key)
+    }
+}
+
+
+// request query Payload??
+// Note: currently, if the post data is json, then the key is "text"
+func (tc TestCase) SetRequestPayload (key string, newValue string) {
+    for _, value := range tc {
+        value.Request.Payload[key] = newValue
+    }
+}
+
+
+
+// !! ---------------------------------------
+// !! --- test case data type 
+// !! ---------------------------------------
 func (tcData TestCaseDataInfo) TcName() string {
     return tcData.TestCase.TcName()
 }
@@ -75,8 +164,6 @@ func (tcData TestCaseDataInfo) Priority() string {
 func (tcData TestCaseDataInfo) ParentTestCase() string {
     return tcData.TestCase.ParentTestCase()
 }
-
-
 
 
 
@@ -194,6 +281,33 @@ func (tc TestCase) UrlEncode(baseUrl string) string {
         urlStr = u.Scheme + "://" + u.Host + "" + u.Path + "?" + urlEncodedQry
     } else if len (reqQueryStringEncoded) > 0 {
         urlStr = u.Scheme + "://" + u.Host + "" + u.Path + "?" + reqQueryStringEncoded
+    } else {
+        urlStr = u.Scheme + "://" + u.Host + "" + u.Path
+    }
+    return urlStr
+}
+
+
+func (tc TestCase) UrlRaw(baseUrl string) string {
+    urlStr := ""
+    apiPath := tc.ReqPath()
+
+    if strings.HasPrefix(strings.ToLower(apiPath), "http") {
+        urlStr = apiPath
+    } else {
+        urlStr = baseUrl + apiPath
+    }
+
+    reqQueryStringRaw := tc.ReqQueryString()
+
+    u, _ := url.Parse(urlStr)
+    urlQry := u.RawQuery
+    if len(urlQry) > 0 && len(reqQueryStringRaw) > 0 {
+        urlStr = u.Scheme + "://" + u.Host + "" + u.Path + "?" + urlQry + "&" + reqQueryStringRaw
+    } else if len (urlQry) > 0 {
+        urlStr = u.Scheme + "://" + u.Host + "" + u.Path + "?" + urlQry
+    } else if len (reqQueryStringRaw) > 0 {
+        urlStr = u.Scheme + "://" + u.Host + "" + u.Path + "?" + reqQueryStringRaw
     } else {
         urlStr = u.Scheme + "://" + u.Host + "" + u.Path
     }
