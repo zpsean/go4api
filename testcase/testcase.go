@@ -15,7 +15,7 @@ import (
     // "time"
     // "os"
     // "sort"
-    // "sync"
+    "strings"
     "net/url" 
     "path/filepath"
 )
@@ -173,6 +173,32 @@ func (tc TestCase) ReqQueryStringEncode() string {
     return reqQueryStringEncoded
 }
 
+
+func (tc TestCase) UrlEncode(baseUrl string) string {
+    urlStr := ""
+    apiPath := tc.ReqPath()
+
+    if strings.HasPrefix(strings.ToLower(apiPath), "http") {
+        urlStr = apiPath
+    } else {
+        urlStr = baseUrl + apiPath
+    }
+
+    reqQueryStringEncoded := tc.ReqQueryStringEncode()
+
+    u, _ := url.Parse(urlStr)
+    urlEncodedQry := u.Query().Encode()
+    if len(urlEncodedQry) > 0 && len(reqQueryStringEncoded) > 0 {
+        urlStr = u.Scheme + "://" + u.Host + "" + u.Path + "?" + urlEncodedQry + "&" + reqQueryStringEncoded
+    } else if len (urlEncodedQry) > 0 {
+        urlStr = u.Scheme + "://" + u.Host + "" + u.Path + "?" + urlEncodedQry
+    } else if len (reqQueryStringEncoded) > 0 {
+        urlStr = u.Scheme + "://" + u.Host + "" + u.Path + "?" + reqQueryStringEncoded
+    } else {
+        urlStr = u.Scheme + "://" + u.Host + "" + u.Path
+    }
+    return urlStr
+}
 
 func (tc TestCase) ReqPayload() map[string]interface{} {
     var reqPayload map[string]interface{}

@@ -1,7 +1,7 @@
 package protocal
 
 import (
-    "fmt"
+    // "fmt"
     "net/http"
     "io/ioutil"
     // "strconv"
@@ -16,7 +16,7 @@ func HttpGet(urlStr string, apiMethod string, reqHeaders map[string]interface{},
     client := &http.Client{}
 
     // payload := reqBody
-    fmt.Println("urlStr", urlStr)
+    // fmt.Println("urlStr", urlStr)
     //
     reqest, err := http.NewRequest(apiMethod, urlStr, nil)
 
@@ -137,6 +137,39 @@ func HttpPostMultipart(urlStr string, apiMethod string, reqHeaders map[string]in
     // fmt.Println(string(body))
 
     // protocalChan <- "aaa"
+
+    return response.StatusCode, response.Header, body
+}
+
+
+func HttpPut(urlStr string, apiMethod string, reqHeaders map[string]interface{}, reqBody *strings.Reader) (int, http.Header, []byte) { 
+    //client 
+    client := &http.Client{}
+    //
+    payload := reqBody
+
+    reqest, err := http.NewRequest(apiMethod, urlStr, payload)
+
+    //Header
+    mv := reflect.ValueOf(reqHeaders)
+    for _, k := range mv.MapKeys() {
+        v := mv.MapIndex(k)
+        reqest.Header.Add(k.Interface().(string), v.Interface().(string))
+    }
+    // fmt.Println("urlStr", urlStr)
+    // fmt.Println("payload", payload)
+    // fmt.Println("reqest.Header", reqest.Header)
+
+    //response
+    response, err := client.Do(reqest)
+    if err != nil {
+        panic(err)
+    }  
+    defer response.Body.Close()
+    body, _ := ioutil.ReadAll(response.Body)
+    // fmt.Println(response.Header)
+    // fmt.Println(response.StatusCode)
+    // fmt.Println(string(body))
 
     return response.StatusCode, response.Header, body
 }

@@ -109,6 +109,7 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart s
             if statusReadyCount == 0 {
                 break miniLoop
             }
+            // ShowNodes(root)
         }
         //
         CollectNodeStatusByPriority(root, p_index, priority)
@@ -344,7 +345,6 @@ func GetTestCasesByPriority(prioritySet []string, tcArray []testcase.TestCaseDat
     // fmt.Println("classifications: ", classifications)
     return classifications
 }
-
 
 
 

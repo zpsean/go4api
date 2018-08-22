@@ -25,7 +25,6 @@ import (
     "go4api/utils"
     "go4api/assertion"
     "go4api/protocal/http"
-    "reflect"
     "strings"
     "encoding/json"
     gjson "github.com/tidwall/gjson"
@@ -48,36 +47,10 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     //
     start_time := time.Now()
     start := start_time.String()
-    // fmt.Println(tcName, " start: ", start)
     //
-    apiPath := tcData.TestCase.ReqPath()
     apiMethod := tcData.TestCase.ReqMethod()
-    // apiPath := "/api/operation/soldtos?pageIndex=1&pageSize=12"
-    urlStr := ""
-    if strings.HasPrefix(strings.ToLower(apiPath), "http") {
-        urlStr = apiPath
-    } else {
-        urlStr = baseUrl + apiPath
-    }
-
-    reqQueryStringEncoded := tcData.TestCase.ReqQueryStringEncode()
-
-    u, _ := url.Parse(urlStr)
-    urlEncodedQry := u.Query().Encode()
-    if len(urlEncodedQry) > 0 {
-        urlStr = u.Scheme + "://" + u.Host + "/" + u.Path + "?" + urlEncodedQry + "&" + reqQueryStringEncoded
-    } else {
-        urlStr = u.Scheme + "://" + u.Host + "/" + u.Path + "?" + reqQueryStringEncoded
-    }
-    
+    urlStr := tcData.TestCase.UrlEncode(baseUrl)
     //
-    // the map for mapping the string and the related funciton to call
-    funcs := map[string]interface{} {
-        "GET": protocal.HttpGet,
-        "POST": protocal.HttpPost,
-        "POSTForm": protocal.HttpPostForm,
-        "POSTMultipart": protocal.HttpPostMultipart,
-    }
     // request payload(body)
     var reqPayload map[string]interface{}
     reqPayload = tcData.TestCase.ReqPayload()
@@ -85,28 +58,25 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     var bodyText *strings.Reader // init body
     bodyMultipart := &bytes.Buffer{}
     var boundary string
+    //
     apiMethodSelector := apiMethod
-    mv := reflect.ValueOf(reqPayload)
     // Note, has 3 conditions: text (json), form, or multipart file upload
-    for _, k := range mv.MapKeys() {
-        v := mv.MapIndex(k)
+    for key, value := range reqPayload {
         // case 1: multipart upload
-        if k.Interface().(string) == "filename" {
-            // Note, hardcode the name = excel here, potential bug
-            bodyMultipart, boundary, _ = PrepMultipart(options["testhome"] + "/testresource/" + v.Interface().(string), "excel")
+        if key == "filename" {
+            bodyMultipart, boundary, _ = PrepMultipart(options["testhome"] + "/testresource/" + value.(string), "excel")
             apiMethodSelector = "POSTMultipart"
             break
         }
         // case 2: normal json
-        if k.Interface().(string) == "text" {
+        if key == "text" {
             bodyText = PrepPostPayload(reqPayload)
             break
         }
         // case 3: if Post, and the key does not have filename, text, then it would be PostForm
         bodyText = PrepPostFormPayload(reqPayload)
     }
-    // fmt.Println("bodyText: ", reqPayload)
-    // request headers
+    //
     var reqHeaders map[string]interface{}
     reqHeaders = tcData.TestCase.ReqHeaders()
     // set the boundary to headers, if multipart
@@ -117,12 +87,20 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
    
 
     // < !! ----------- !! >
+    // the map for mapping the string and the related funciton to call
+    funcs := map[string]interface{} {
+        "GET": protocal.HttpGet,
+        "POST": protocal.HttpPost,
+        "POSTForm": protocal.HttpPostForm,
+        "POSTMultipart": protocal.HttpPostMultipart,
+        "PUT": protocal.HttpPut,
+    }
 
     // (1). Actual response
     var actualStatusCode int
     var actualHeader http.Header
     var actualBody []byte
-    // protocalChan := make(chan interface{}, 50)
+    // fmt.Println("----- to start call the http ------")
     if apiMethodSelector == "POSTMultipart" {
         actualStatusCode, actualHeader, actualBody = protocal.CallHttpMethod(funcs, apiMethodSelector, urlStr, apiMethod, reqHeaders, bodyMultipart)    
     } else {
@@ -162,9 +140,43 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
 
     // (5). print to console
     tcReportResults := tcExecution.TcConsoleResults()
-    repJson, _ := json.Marshal(tcReportResults)
+    // repJson, _ := json.Marshal(tcReportResults)
 
-    fmt.Println(string(repJson))
+    if tcReportResults.TestResult == "Fail" {
+        length := len(string(actualBody))
+        out_len := 0
+        if length > 300 {
+            out_len = 300
+        } else {
+            out_len = length
+        }
+
+        fmt.Printf("%-30s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
+            tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
+            tcReportResults.ActualStatusCode)
+
+        fmt.Println(tcReportResults.TestMessages)
+        fmt.Println(string(actualBody)[0:out_len], "...")
+    } else {
+        // fmt.Println(string(repJson))
+
+        // type TcConsoleResults struct { 
+        //     TcName string 
+        //     Priority string
+        //     ParentTestCase string
+        //     JsonFilePath string
+        //     CsvFile string
+        //     CsvRow string
+        //     TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
+        //     ActualStatusCode int
+        //     TestMessages string
+        // }
+
+        fmt.Printf("%-30s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
+            tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
+            tcReportResults.ActualStatusCode)
+    }
+    
     // (6). write the channel to executor for scheduler and log
     // here can refactor to struct => done
     
@@ -346,15 +358,14 @@ func PrepPostPayload(reqPayload map[string]interface{}) *strings.Reader {
 }
 
 func PrepPostFormPayload(reqPayload map[string]interface{}) *strings.Reader {
-    mv := reflect.ValueOf(reqPayload)
     var body *strings.Reader
 
     // Note, has 3 conditions: text (json), form, or multipart file upload
     data := url.Values{}
-    for _, k := range mv.MapKeys() {
-        v := mv.MapIndex(k)
-        data.Set(k.Interface().(string), v.Interface().(string))
-        }
+    for key, value := range reqPayload {
+        // value (type interface {}) as type string in argument to data.Set: need type assertion
+        data.Set(key, fmt.Sprint(value))
+    }
     body = strings.NewReader(data.Encode())
 
     return body
