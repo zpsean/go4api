@@ -12,7 +12,7 @@ package executor
 
 import (                                                                                                                                             
     // "os"
-    // "time"
+    "time"
     "fmt"
     "sync"
     "encoding/json"
@@ -235,11 +235,21 @@ func InitNodesRunResult(node *tcNode, runResult string) {
 func ScheduleNodes(node *tcNode, wg *sync.WaitGroup, options map[string]string, priority string, resultsChan chan testcase.TestCaseExecutionInfo, 
         pStart string, baseUrl string, resultsDir string) {
     //
+    tick := 0
+    max := 50
+    //
     for _, n := range node.children {
         if priority == n.TestCaseExecutionInfo.Priority() && n.TestCaseExecutionInfo.TestResult == "Ready"{
             wg.Add(1)
-            // Note: how to control one test case not be be run more than once???
-            go api.HttpApi(wg, resultsChan, options, pStart, baseUrl, n.TestCaseExecutionInfo.TestCaseDataInfo, resultsDir)
+            // Note: to prevent to tcp connection, here set a max, then sleep for a while
+            if tick % max == 0 {
+                time.Sleep(500 * time.Millisecond)
+                go api.HttpApi(wg, resultsChan, options, pStart, baseUrl, n.TestCaseExecutionInfo.TestCaseDataInfo, resultsDir)
+            } else {
+                go api.HttpApi(wg, resultsChan, options, pStart, baseUrl, n.TestCaseExecutionInfo.TestCaseDataInfo, resultsDir)
+            }
+
+            tick = tick + 1
         }
         
         ScheduleNodes(n, wg, options, priority, resultsChan, pStart, baseUrl, resultsDir)
@@ -322,7 +332,7 @@ func CollectOverallNodeStatus(node *tcNode, p_index int) {
 
 
 func ShowNodes(node *tcNode) {
-    fmt.Println("\nNN P node:", &node, node, node.children)
+    fmt.Println("\nNN P node:", node.TestCaseExecutionInfo.Priority(), node.TestCaseExecutionInfo.TcName(), node.TestCaseExecutionInfo.TestResult)
     for _, n := range node.children {
         // fmt.Println("NN - C node:", &n, n)
         ShowNodes(n)

@@ -108,68 +108,6 @@ func GenerateFuzzData(fuzzFile string) FuzzData {
 }
 
 
-func getChar(fieldName string, fieldType string, fieldMin int, fieldMax int) (map[string][]interface{}, map[string][]interface{}) {
-    validValueMap := make(map[string][]interface{})
-    invalidValueMap := make(map[string][]interface{})
-    // get the Boundary (valid, invalid), Equivalence, etc.
-    var validLenList []int
-    var invalidLenList []int
-    //
-    validLenList = append(validLenList, fieldMin)
-    validLenList = append(validLenList, fieldMin + 1)
-
-    validLenList = append(validLenList, fieldMax)
-    if fieldMax - 1 > fieldMin {
-        validLenList = append(validLenList, fieldMax - 1)
-    }
-    //
-    if fieldMin - 1 > 0 {
-       invalidLenList = append(invalidLenList, fieldMin - 1) 
-    }
-    invalidLenList = append(invalidLenList, fieldMax + 1) 
-    //
-
-    fieldRands := []string{"RandStringRunes", "RandStringCNRunes"}
-    //
-    for _, validLen := range validLenList{
-        for _, randType := range fieldRands {
-            validValue := CallRands(randType, validLen)
-            // fmt.Println("validLen, validValue: ", validLen, validValue)
-
-            validValueMap[fieldName] = append(validValueMap[fieldName], validValue)
-        }        
-    }
-    //
-    for _, invalidLen := range invalidLenList{
-        for _, randType := range fieldRands {
-            invalidValue := CallRands(randType, invalidLen)
-            // fmt.Println("invalidLen, invalidValue: ", invalidLen, invalidValue)
-
-            invalidValueMap[fieldName] = append(invalidValueMap[fieldName], invalidValue)
-        }
-    }
-
-    return validValueMap, invalidValueMap
-}
-
-
-func getInt(fieldName string, fieldType string, fieldMin int, fieldMax int) (map[string][]interface{}, map[string][]interface{}) {
-    validValueMap := make(map[string][]interface{})
-    invalidValueMap := make(map[string][]interface{})
-    // get the Boundary (valid, invalid), Equivalence, etc.
-    validValueMap[fieldName] = append(validValueMap[fieldName], fieldMin)
-    validValueMap[fieldName] = append(validValueMap[fieldName], fieldMin + 1)
-    validValueMap[fieldName] = append(validValueMap[fieldName], fieldMax)
-    validValueMap[fieldName] = append(validValueMap[fieldName], fieldMax - 1)
-    //
-    invalidValueMap[fieldName] = append(invalidValueMap[fieldName], fieldMin - 1)
-    invalidValueMap[fieldName] = append(invalidValueMap[fieldName], fieldMax + 1)
-    //
-
-    return validValueMap, invalidValueMap
-}
-
-
 func GenerateFuzzDataFiles(fuzzFile string, fuzzData FuzzData) {
     // fmt.Println("validValueList: ", validValueList)
     // fmt.Println("invalidValueList: ", invalidValueList)

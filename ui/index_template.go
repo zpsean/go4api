@@ -95,12 +95,11 @@ var Index = `<!DOCTYPE html>
                 <tr class="tabPage">
                     <td> 
                         
-                        <svg width="1200" height="2000" id="mainSVG" version="1.1" xmlns="http://www.w3.org/2000/svg">
+                        <svg width="1200" height="4000" id="mainSVG" version="1.1" xmlns="http://www.w3.org/2000/svg">
 
 
                             <line x1="0" y1="0" x2="0" y2="1500" style="stroke:rgb(99,99,99);stroke-width:2"/>
                             <line x1="0" y1="0" x2="1200" y2="0" style="stroke:rgb(99,99,99);stroke-width:2"/>
-                            <line x1="0" y1="500" x2="600" y2="500" style="stroke:rgb(99,99,99);stroke-width:1"/>
 
                         </svg>
 
