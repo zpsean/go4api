@@ -177,7 +177,7 @@ func BuildTree(tcArray []testcase.TestCaseDataInfo) (*tcNode, map[string]*tcNode
             // fmt.Println("!!now try to add tc: ", tc[0].(string), ifAdded, tcArrayNotTree, tc)
             if ifAdded && true {
                 tcArrayTree = append(tcArrayTree, tcData)
-                tcArrayNotTree = RemoveArryaItem(tcArrayNotTree, tcData)
+                tcArrayNotTree = RemoveArrayItem(tcArrayNotTree, tcData)
             }
         }
 
@@ -341,7 +341,7 @@ func ShowNodes(node *tcNode) {
 
 
 
-func RemoveArryaItem(sourceArray []testcase.TestCaseDataInfo, tcData testcase.TestCaseDataInfo) []testcase.TestCaseDataInfo {
+func RemoveArrayItem(sourceArray []testcase.TestCaseDataInfo, tcData testcase.TestCaseDataInfo) []testcase.TestCaseDataInfo {
     // fmt.Println("RemoveArryaItem", sourceArray, tc)
     var resultArray []testcase.TestCaseDataInfo
     // resultArray := append(sourceArray[:index], sourceArray[index + 1:]...)

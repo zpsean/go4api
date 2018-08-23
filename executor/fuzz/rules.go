@@ -50,18 +50,20 @@ func getChar(fieldName string, fieldType string, fieldMin int, fieldMax int) (ma
     invalidLenList = append(invalidLenList, fieldMax + 1) 
     //
 
-    fieldRands := []string{"RandStringRunes", "RandStringCNRunes"}
+    fieldRands := []string{"RandStringRunes"} //, "RandStringCNRunes"}
     //
-    for _, validLen := range validLenList{
+    for _, validLen := range validLenList {
         for _, randType := range fieldRands {
+            // CallRands(randType, validLen)
             validValue := CallRands(randType, validLen)
             // fmt.Println("validLen, validValue: ", validLen, validValue)
 
             validValueMap[fieldName] = append(validValueMap[fieldName], validValue)
+            // validValueMap[fieldName] = append(validValueMap[fieldName], fieldName + "a" + strconv.Itoa(i)) 
         }        
     }
     //
-    for _, invalidLen := range invalidLenList{
+    for _, invalidLen := range invalidLenList {
         for _, randType := range fieldRands {
             invalidValue := CallRands(randType, invalidLen)
             // fmt.Println("invalidLen, invalidValue: ", invalidLen, invalidValue)
