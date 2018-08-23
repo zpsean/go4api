@@ -21,12 +21,18 @@ import (
 )
 
 // mutation is to mutate the valid data to working api, see if mutated invalid data still can be handled by the api
-type Mutation struct {
+type MutationField struct {
+    MuChar string
+    MuInt int64
+}
+
+
+type MutationTestCase struct {
     TestCase testcase.TestCase
 }
 
-func (mut Mutation) MutateRequestMethod () {
-    mut.TestCase.SetRequestMethod("DELETE")
+func (muTc MutationTestCase) MutateRequestMethod () {
+    muTc.TestCase.SetRequestMethod("DELETE")
 
     // "request": {
     //     "method": "GET",
@@ -40,8 +46,8 @@ func (mut Mutation) MutateRequestMethod () {
     //     }
 }
 
-func (mut Mutation) MutateRequestPath () {
-    mut.TestCase.SetRequestPath("DELETE")
+func (muTc MutationTestCase) MutateRequestPath () {
+    muTc.TestCase.SetRequestPath("/aa/bb/cc")
 }
 
 
