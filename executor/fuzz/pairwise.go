@@ -50,9 +50,48 @@ type Node struct {
 // for the elements already added / arranged
 type Pairs struct {
     PwLength int
-    Pairs []Node
-    PwCombsArr []interface{}
+    PwNodes map[string]Node
+    PwCombsArr [][]interface{}
 }
+
+//
+type KeyCache struct {
+    PairItems [][]interface{}
+    PairIds [][]interface{}
+}
+
+var keyCache KeyCache
+
+func GetPairIds(items []interface{}) []interface{} {
+    for ind, cacheItems := range keyCache.PairItems {
+        totalFound := 0
+        for i, _ := range cacheItems {
+            if cacheItems[i] == items[i] {
+                totalFound = totalFound + 1
+                if totalFound == len(items) {
+                    return keyCache.PairIds[ind]
+                }
+            }
+        }
+    }
+
+    var keyIds []interface{}
+    for _, id := range items {
+        keyIds = append(keyIds, id)
+    }
+    // set keyCache
+    keyCache.PairItems = append(keyCache.PairItems, items)
+    keyCache.PairIds = append(keyCache.PairIds, keyIds)
+
+    return keyIds
+}
+///
+    
+
+
+
+
+
 
 // here is the entry for pairwise algorithm 1
 func GetPairWiseValid11(fuzzData FuzzData, PwLength int) {
@@ -72,46 +111,84 @@ func GetPairWiseValid11(fuzzData FuzzData, PwLength int) {
 }
 
 
-// func (pairs Pairs) AddSequence(sequence []interface{}) {
-//     indexSlice := make([]int, Pairs.PwLength)
-//     for i, _ := range indexSlice {
-//         for combination := combinations(sequence, i + 1):
-//             AddCombination(combination)
-//     }     
-// }
+func (pairs Pairs) AddSequence(sequence []interface{}) {
+    indexSlice := make([]int, pairs.PwLength)
+    for i, _ := range indexSlice {
+        for combination := range combinationsInterface(sequence, i + 1) {
+            pairs.AddCombination(combination)
+        }
+    }     
+}
 
-// func (pairs Pairs) GetNodeInfo (item []interface{}) {
-//     nodeInfo := Node(item.id)
-//     for _, node := range pairs {
-//         if node.Id == item.Id {
-//             nodeInfo = pairs...item.id
-//         }
-//     }
-//     return nodeInfo
-// }
+func (pairs Pairs) GetNodeInfo (item interface{}) string {
+    var node Node
+    node.Id = item.(Item).Id
+    nodeInfo := node.Id
+    for _, node := range pairs.PwNodes {
+        if node.Id == item.(Item).Id {
+            nodeInfo = node.Id
+            break
+        }
+    }
+    return nodeInfo
+}
 
-// func (pairs Pairs) GetCombs() {
-//     return pairs.PwCombsArr
-// }
+func (pairs Pairs) GetCombs() [][]interface{} {
+    return pairs.PwCombsArr
+}
 
-// func (pairs Pairs) AddCombination(combination ) {
-//    n = len(combination)
-//     assert n > 0
+func (pairs Pairs) Length() int {
+    if len(pairs.PwCombsArr) > 0 {
+        return len(pairs.PwCombsArr[len(pairs.PwCombsArr) - 1]) 
+    } else {
+        return 0
+    }
+}
 
-//     pairs.PwCombsArr[n - 1].add(key(combination))
-//     if n == 1 && combination[0].id not in pairs.Pairs {
-//         self.__pairs[combination[0].id] = Node(combination[0].id)
-//         return
-//     }
+func (pairs Pairs) AddCombination(combination []interface{}) {
+    n := len(combination)
+    if n > 0 {
+            pairs.PwCombsArr[n - 1] = append(pairs.PwCombsArr[n - 1], GetPairIds(combination))
+        if n == 1 {
+            for key, _ := range pairs.PwNodes {
+                if combination[0].(Item).Id == key {
+                    var node Node
+                    node.Id = combination[0].(Item).Id
+
+                    pairs.PwNodes[combination[0].(Item).Id] = node
+                    break
+                }
+            }
+        }
         
-//     ids = [x.id for x in combination]
-//     for i, id := range enumerate(ids) {
-//         curr = self.__pairs[id]
-//         curr.inc_counter()
-//         curr.in_.update(ids[:i])
-//         curr.out.update(ids[i + 1 :])
-//     }
-// }
+        var ids []string
+        for _, item := range combination {
+            ids = append(ids, item.(Item).Id)
+        }
+        for i, id := range ids {
+            curr := pairs.PwNodes[id]
+            curr.Counter = curr.Counter + 1
+
+            tempInIds := curr.InIds
+            for _, id_i := range ids[:i] {
+                for _, id_ii := range curr.InIds {
+                    if id_i == id_ii {
+                        tempInIds = append(tempInIds, id_i)
+                    }
+                } 
+            }
+
+            tempOutIds := curr.OutIds
+            for _, id_i := range ids[i + 1:] {
+                for _, id_ii := range curr.OutIds {
+                    if id_i == id_ii {
+                        tempInIds = append(tempOutIds, id_i)
+                    }
+                } 
+            }
+        }
+    }
+}
 
 
 // to get the total number of pairwise combinations
@@ -202,13 +279,13 @@ func NextPairWiseTestCaseData(combs [][]interface{}, PwLength int) []interface{}
     var pairs Pairs
     pairs.PwLength = PwLength
 
-    // maxUniquePairsExpected := GetMaxPairWiseCombinationNumber(combs, PwLength)
-    // if len(pairs.Pairs) > maxUniquePairsExpected {
+    maxUniquePairsExpected := GetMaxPairWiseCombinationNumber(combs, PwLength)
+    // if pairs.Length() > maxUniquePairsExpected {
     //     os.Exit(1)
     // }
-    // if len(pairs) == maxUniquePairsExpected {
-    //     return []interface {}{}
-    // }
+    if pairs.Length() == maxUniquePairsExpected {
+        return []interface {}{}
+    }
     workingItemMatrix := GetWorkingItemMatrix(combs)
 
     // previousUniquePairsCount = len(pairs)
@@ -267,7 +344,7 @@ func NextPairWiseTestCaseData(combs [][]interface{}, PwLength int) []interface{}
 
     // pairs.add_sequence(chosenValuesArr)
 
-    // if len(pairs.Pairs) == previousUniquePairsCount {
+    // if pairs.Length() == previousUniquePairsCount {
     //     // could not find new unique pairs - stop
     //     return []interface {}{}
     // }
