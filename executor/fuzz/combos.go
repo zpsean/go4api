@@ -39,7 +39,6 @@ import (
 // }
 
 
-
 // combinations([]int{1, 2, 3, 4}, 2) =>
 // [1 2]
 // [1 3]
@@ -62,6 +61,28 @@ func combinations(list []int, length int) (c chan []int) {
                 for i := 0; i < len(list); i++ {
                     for sub_comb := range combinations(list[i + 1:], length - 1) {
                         c <- append([]int{list[i]}, sub_comb...)
+                    }
+                }
+            }
+    }()
+    return
+}
+
+func combinationsInterface(list []interface{}, length int) (c chan []interface{}) {
+    c = make(chan []interface{})
+    go func() {
+        defer close(c)
+        switch {
+            case length == 0:
+                c <- []interface{}{}
+            case length == len(list):
+                c <- list
+            case len(list) < length:
+                return
+            default:
+                for i := 0; i < len(list); i++ {
+                    for sub_comb := range combinationsInterface(list[i + 1:], length - 1) {
+                        c <- append([]interface{}{list[i]}, sub_comb...)
                     }
                 }
             }
@@ -141,7 +162,7 @@ func GetCombinationValid(fuzzData FuzzData) <-chan []interface{} {
         }
     }
     //
-    GetPairWiseValid22(fuzzData, 2)
+    GetPairWiseValid11(fuzzData, 2)
 
     //
     c := make(chan []interface{})
