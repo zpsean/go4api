@@ -39,86 +39,246 @@ type Item struct {
     Weights []int
 }
 
+// for the element already added / arranged
+type Node struct {
+    Id string
+    Counter int
+    InIds []string
+    OutIds []string
+}
 
-// to get the total number of pairwise combinations
-// func GetMaxPairWiseCombinationNumber(combs [][]interface{}, PwLength int) {
+// for the elements already added / arranged
+type Pairs struct {
+    PwLength int
+    Pairs []Node
+    PwCombsArr []interface{}
+}
 
+// here is the entry for pairwise algorithm 1
+func GetPairWiseValid11(fuzzData FuzzData, PwLength int) {
+    var combos [][]interface{}
+    for _, validDataMap := range fuzzData.ValidData {
+        for _, validList := range validDataMap {
+            combos = append(combos, validList)
+        }
+    }
+
+    GetWorkingItemMatrix(combos)
+    GetMaxPairWiseCombinationNumber(combos, PwLength)
+
+    NextPairWiseTestCaseData(combos, PwLength)
+
+    NextPairWiseTestCaseData(combos, PwLength)
+}
+
+
+// func (pairs Pairs) AddSequence(sequence []interface{}) {
+//     indexSlice := make([]int, Pairs.PwLength)
+//     for i, _ := range indexSlice {
+//         for combination := combinations(sequence, i + 1):
+//             AddCombination(combination)
+//     }     
 // }
 
-// to get the item matrix with type Item
-// func GetWorkingItemMatrix(combs [][]interface{}) {
-
-// }
-
-
-// -------------------------------------------------------------------------
-// The algorithm 1 is rewitten the code for AllPairs (python) using Golang
-// refer to: https://github.com/thombashi/allpairspy
-// -------------------------------------------------------------------------
-
-// func NextPairWiseTestCaseData(combs [][]interface{}, PwLength int):
-//     maxUniquePairsExpected := GetMaxPairWiseCombinationNumber(combs [][]interface{}, PwLength int)
-
-//     // assert len(self.__pairs) <= self.__max_unique_pairs_expected
-
-//     if len(self.__pairs) == self.maxUniquePairsExpected {
-//         return
-//     }
-
-//     workingItemMatrix := GetWorkingItemMatrix(combs)
-
-//     previousUniquePairsCount = len(self.__pairs)
-//     chosenValuesArr := make([]interface{}, len(workingItemMatrix))
-//     indexes := make([]int, len(workingItemMatrix))
-
-//     direction := 1
-//     i := 0
-
-//     for {
-//         if direction == 1:
-//             // move forward
-//             self.__resort_working_array(chosenValuesArr[:i], i)
-//             indexes[i] = 0
-//         elif direction == 0 or direction == -1:
-//             // scan current array or go back
-//             indexes[i] += 1
-//             if indexes[i] >= len(workingItemMatrix[i]):
-//                 direction = -1
-//                 if i == 0:
-//                     raise StopIteration()
-//                 i += direction
-//                 continue
-//             direction = 0
-//         else:
-//             raise ValueError("next(): unknown 'direction' code '{}'".format(direction))
-
-//         chosenValuesArr[i] = workingItemMatrix[i][indexes[i]]
-
-//         if self.__filter_func(self.__get_values_array(chosenValuesArr[:i + 1])):
-//             assert direction > -1
-//             direction = 1
-//         else:
-//             direction = 0
-//         i += direction
-
-//         // to break the for if ...
-//         if i < -1 || i > len(workingItemMatrix) {
-//             break
+// func (pairs Pairs) GetNodeInfo (item []interface{}) {
+//     nodeInfo := Node(item.id)
+//     for _, node := range pairs {
+//         if node.Id == item.Id {
+//             nodeInfo = pairs...item.id
 //         }
 //     }
+//     return nodeInfo
+// }
+
+// func (pairs Pairs) GetCombs() {
+//     return pairs.PwCombsArr
+// }
+
+// func (pairs Pairs) AddCombination(combination ) {
+//    n = len(combination)
+//     assert n > 0
+
+//     pairs.PwCombsArr[n - 1].add(key(combination))
+//     if n == 1 && combination[0].id not in pairs.Pairs {
+//         self.__pairs[combination[0].id] = Node(combination[0].id)
+//         return
+//     }
+        
+//     ids = [x.id for x in combination]
+//     for i, id := range enumerate(ids) {
+//         curr = self.__pairs[id]
+//         curr.inc_counter()
+//         curr.in_.update(ids[:i])
+//         curr.out.update(ids[i + 1 :])
+//     }
+// }
+
+
+// to get the total number of pairwise combinations
+func GetMaxPairWiseCombinationNumber(combs [][]interface{}, PwLength int) int {
+    // init -----------------
+    var indexSlice []int
+    for i, _ := range combs {
+        indexSlice = append(indexSlice, i)
+    }
+    // to get the combinations like [1 1][1 2][1 3] ...
+    var pwLen int
+    if PwLength > len(combs) {
+        pwLen = len(combs)
+    } else {
+        pwLen = PwLength
+    }
+    indexCombs := combinations(indexSlice, pwLen)
+    //
+    totalNumber := 0
+    //
+    for indexPair := range indexCombs {
+        var combos_pw_index_slice [][]interface{}
+        for _, ind_value := range indexPair {
+            var indexSlice []interface{}
+            for i, _ := range combs[ind_value] {
+                indexSlice = append(indexSlice, i)
+            }
+
+            combos_pw_index_slice = append(combos_pw_index_slice, indexSlice)
+        }
+        //
+        c := make(chan []interface{})
+        go func(c chan []interface{}) {
+            defer close(c)
+            combosSliceString(c, []interface{}{}, combos_pw_index_slice)
+        }(c)
+
+        // can not use len(c) to get the channel length, as len(c) is always 0 here, why?
+        cLenght := 0
+        for range c{
+            cLenght = cLenght + 1
+        }
+
+        // fmt.Println("c: ", cLenght, len(c))
+        totalNumber = totalNumber + cLenght
+    }
+
+    fmt.Println("MaxPairWiseCombinationNumber: ", totalNumber)
+    return totalNumber
+}
+
+// to get the item matrix with type Item
+func GetWorkingItemMatrix(combs [][]interface{}) [][]interface{} {
+    var workingItemMatrix [][]interface{}
+    for i, combsSlice := range combs {
+        var itemSlice []interface{}
+        for j, value := range combsSlice {
+            var strId string
+            strId = "a" + fmt.Sprint(i) + "v" + fmt.Sprint(j)
+
+            var item Item
+            item.Id = strId
+            item.Value = value
+
+            itemSlice = append(itemSlice, item)
+        }
+        workingItemMatrix = append(workingItemMatrix, itemSlice)
+    }
+    fmt.Println("workingItemMatrix: ", workingItemMatrix)
+    return workingItemMatrix
+}
+
+
+// -------------------------------------------------------------------------
+// The algorithm 1: is rewitten the code for AllPairs (python) using Golang
+// refer to: https://github.com/thombashi/allpairspy
+//
+// key steps of this algorithm is:
+// 1. get the value value_matrix (combs), and maxUniquePairsExpected, workingItemMatrix, 
+// 2. try the next item to be add, with computing and comparing existing pairs, some weights, like most new pairs, in, out, etc.
+// 3. sort the items in one vetor of the workingItemMatrix (workingItemMatrix(m))
+// 4. add the highly recommended item of the sort items (step 3)
+// 5. add the item to existing pairs
+// 6. repeat Step 2 ~ Step 5
+// -------------------------------------------------------------------------
+
+func NextPairWiseTestCaseData(combs [][]interface{}, PwLength int) []interface{} {
+    var pairs Pairs
+    pairs.PwLength = PwLength
+
+    // maxUniquePairsExpected := GetMaxPairWiseCombinationNumber(combs, PwLength)
+    // if len(pairs.Pairs) > maxUniquePairsExpected {
+    //     os.Exit(1)
+    // }
+    // if len(pairs) == maxUniquePairsExpected {
+    //     return []interface {}{}
+    // }
+    workingItemMatrix := GetWorkingItemMatrix(combs)
+
+    // previousUniquePairsCount = len(pairs)
+    chosenValuesArr := make([]interface{}, len(workingItemMatrix))
+    indexes := make([]int, len(workingItemMatrix))
+
+    direction := 1
+    i := 0
+
+    for {
+        // to break the for if ...
+        if i <= -1 || i >= len(workingItemMatrix) {
+            break
+        }
+        //
+        if direction == 1 {
+            // move forward
+            // resortWorkingArray(chosenValuesArr[:i], i)
+            indexes[i] = 0
+        } else if direction == 0 || direction == -1 {
+            // scan current array or go back
+            indexes[i] += 1
+            if indexes[i] >= len(workingItemMatrix[i]) {
+                direction = -1
+                if i == 0 {
+                    fmt.Println("stop and return")
+                    return []interface {}{}
+                }
+                i += direction
+                continue
+            }
+            direction = 0
+        } else {
+            fmt.Println("next(): unknown 'direction' code '{}'", direction)
+        }
+
+        chosenValuesArr[i] = workingItemMatrix[i][indexes[i]]
+
+        if true {
+            if direction < -1 {
+                return []interface {}{}
+            }
+            direction = 1
+        } else {
+            direction = 0
+        }
+        i += direction
+        //
+        fmt.Println("indexes: ", i, indexes, chosenValuesArr)
+    }
    
-//     if len(workingItemMatrix) != len(chosenValuesArr):
-//         raise StopIteration()
+    if len(workingItemMatrix) != len(chosenValuesArr) {
+        fmt.Println("stop and return")
+        return []interface {}{}
+    }
 
-//     self.__pairs.add_sequence(chosenValuesArr)
+    // pairs.add_sequence(chosenValuesArr)
 
-//     if len(self.__pairs) == previousUniquePairsCount:
-//         // could not find new unique pairs - stop
-//         raise StopIteration()
+    // if len(pairs.Pairs) == previousUniquePairsCount {
+    //     // could not find new unique pairs - stop
+    //     return []interface {}{}
+    // }
 
-//     // replace returned array elements with real values and return it
-
-//     return self.__get_iteration_value(chosenValuesArr)
+    // replace returned array elements with real values and return it
+    var chosenValues []interface{}
+    for _, item := range chosenValuesArr {
+        chosenValues = append(chosenValues, item.(Item).Value)
+    }
+    return chosenValues
+}
 
 
 // func resortWorkingArray (chosenValuesArr []interface{}, num int) {
