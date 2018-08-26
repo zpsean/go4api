@@ -13,7 +13,7 @@ package fuzz
 import (
     "fmt"
     "sort"
-    // "sync"
+    "reflect"
 )
 
 // -------------------------------------------------------------------------
@@ -43,16 +43,38 @@ func GetPairWiseValid11(fuzzData FuzzData, PwLength int) {
     }
 
 
+
+    // init the PairsStorage
+    var pairs PairsStorage
+    pairs.PwLength = PwLength
+    pwNodes := map[string]Node{}
+    pairs.PwNodes = pwNodes
+
+    for i := 0; i < PwLength; i++ {
+        pairs.PwCombsArr = append(pairs.PwCombsArr, [][]interface{}{})
+    }
+
+    // init the AllPairs
     var allPairs AllPairs
 
     allPairs.PwLength = PwLength
+    allPairs.Pairs = pairs
     allPairs.MaxPairWiseCombinationNumber = GetMaxPairWiseCombinationNumber(combos, PwLength)
     allPairs.WorkingItemMatrix = GetWorkingItemMatrix(combos)
-
-
-    allPairs.NextPairWiseTestCaseData()
-
-    // NextPairWiseTestCaseData(combos, PwLength)
+    
+    // to get the data 
+    // for debug
+    loopDepth := 0
+    for {
+        loopDepth = loopDepth + 1
+        fmt.Println(allPairs.NextPairWiseTestCaseData())
+        if loopDepth == 30 {
+            break
+        }
+    }
+    
+    // allPairs.NextPairWiseTestCaseData()
+    // allPairs.NextPairWiseTestCaseData()
 }
 
 
@@ -73,9 +95,10 @@ type Item struct {
 }
 
 //
-func (item Item) Append (weight int) {
+func (item Item) Append(weight int) {
     item.Weights = append(item.Weights, weight)
 }
+
 
 // Note: in Python, key_cache (KeyCache) is dict, with tuple(items) as key, tuple(ids) is value
 // {
@@ -91,13 +114,17 @@ type KeyCache struct {
 var keyCache KeyCache
 
 // items -> []Item, return []string -> []Id
-func GetPairIds(items []interface{}) []interface{} {
+func GetPairIdsBk(items []interface{}) []interface{} {
     // Note: in Python, items is tuple(item, item, ...)
     // (<allpairspy.allpairs.Item object at 0x1015dd3c8>,) 
     for ind, cacheItems := range keyCache.PairItems {
         totalFound := 0
+        fmt.Println("keyCache, items: ", keyCache, "::", items)
+
         for i, _ := range cacheItems {
-            if cacheItems[i] == items[i] {
+            // to compare Item, need special method, use the reflect.DeepEqual
+            // if cacheItems[i] == items[i] {
+            if reflect.DeepEqual(cacheItems[i], items[i]) {
                 totalFound = totalFound + 1
                 if totalFound == len(items) {
                     return keyCache.PairIds[ind]
@@ -107,8 +134,8 @@ func GetPairIds(items []interface{}) []interface{} {
     }
 
     var keyIds []interface{}
-    for _, id := range items {
-        keyIds = append(keyIds, id)
+    for _, item := range items {
+        keyIds = append(keyIds, item.(Item).Id)
     }
     // set keyCache
     keyCache.PairItems = append(keyCache.PairItems, items)
@@ -118,6 +145,19 @@ func GetPairIds(items []interface{}) []interface{} {
     // ('a0v2',) 
     return keyIds
 }
+
+func GetPairIds(items []interface{}) []interface{} {
+    // Note: in Python, items is tuple(item, item, ...)
+    // (<allpairspy.allpairs.Item object at 0x1015dd3c8>,) 
+    var keyIds []interface{}
+    for _, item := range items {
+        keyIds = append(keyIds, item.(Item).Id)
+    }
+    // Note: in Python, key_value (keyIds) is tuple(id, id, ...)
+    // ('a0v2',) 
+    // in golang, keyIds = ['id', ...]
+    return keyIds
+}
 ///
 
 
@@ -125,15 +165,16 @@ func GetPairIds(items []interface{}) []interface{} {
 type Node struct {
     Id string
     Counter int
-    InIds []string
-    OutIds []string
+    InIds []string  // ensure no duplicate
+    OutIds []string  // ensure no duplicate
 }
 
 // for the elements already added / arranged
 type PairsStorage struct {
     PwLength int
     PwNodes map[string]Node // Note: in Python, this is dict -> {'id': Node, ...}
-    PwCombsArr [][][]interface{} //[ [[1-comb id], [1-combid], [...]], [[2-comb ids], [2-combids], [...]], ...]
+    PwCombsArr [][][]interface{} // ensure no duplicate
+    //[ [[1-comb id], [1-combid], [...]], [[2-comb ids], [2-combids], [...]], ...]
     // Note: in Python PWCombsArr is array for set(id), like, [set(id), set(id), ...]:
     // [ {('a0v0',), ..., ('a3v1',), ('a1v0',)}, 
     // {('a1v1', 'a2v3'), ..., ('a0v1', 'a2v0')} ]
@@ -143,6 +184,7 @@ type PairsStorage struct {
 func (pairs PairsStorage) GetNodeInfo (item interface{}) Node {
     var node Node
     node.Id = item.(Item).Id
+    node.Counter = 0
     for _, node_i := range pairs.PwNodes {
         if node_i.Id == item.(Item).Id {
             node = node_i
@@ -175,9 +217,28 @@ func (pairs PairsStorage) AddSequence(sequence []interface{}) {
 
 // combination -> [1]item, ..., [PwLength]item
 func (pairs PairsStorage) AddCombination(combination []interface{}) {
+    // fmt.Println("combination: ", combination)
     n := len(combination)
     if n > 0 {
-            pairs.PwCombsArr[n - 1] = append(pairs.PwCombsArr[n - 1], GetPairIds(combination))
+        ids := GetPairIds(combination)
+        // Note: not duplicate: check if pairs.PwCombsArr[n - 1] has ids first, if not, then add
+        if len(pairs.PwCombsArr[n - 1]) > 0 {
+            var ifExists bool
+            ifExists = false
+            for _, set := range pairs.PwCombsArr[n - 1] {
+                if compareSlice(set, ids) {
+                    ifExists = true
+                    break
+                }
+            }
+            if ifExists == false {
+                pairs.PwCombsArr[n - 1] = append(pairs.PwCombsArr[n - 1], ids)
+            }
+        } else {
+            pairs.PwCombsArr[n - 1] = append(pairs.PwCombsArr[n - 1], ids)
+        }
+        
+        // if n == 1 and combination[0].id not in self.__nodes:
         if n == 1 {
             var ifExists bool
             ifExists = false
@@ -191,36 +252,63 @@ func (pairs PairsStorage) AddCombination(combination []interface{}) {
             if ifExists == false {
                 var node Node
                 node.Id = combination[0].(Item).Id
+                node.Counter = 0
 
+                // fmt.Println("AddCombination: ", combination, combination[0].(Item).Id)
                 pairs.PwNodes[combination[0].(Item).Id] = node
-            } 
+
+                return
+            }
         }
         
-        var ids []string
-        for _, item := range combination {
-            ids = append(ids, item.(Item).Id)
-        }
         for i, id := range ids {
-            curr := pairs.PwNodes[id]
-            curr.Counter = curr.Counter + 1
+            // fmt.Println("ids: ", ids)
+            var node Node
+
+            node.Id = id.(string)
+
+            curr := pairs.PwNodes[id.(string)] // curr is Node type
+            // fmt.Println("curr -- 0: ", ids, curr)
+            node.Counter = curr.Counter + 1
+            
 
             tempInIds := curr.InIds
             for _, id_i := range ids[:i] {
-                for _, id_ii := range curr.InIds {
-                    if id_i == id_ii {
-                        tempInIds = append(tempInIds, id_i)
+                // ensure tempInIds has no duplicate elements
+                var ifExists bool
+                ifExists = false
+                for _, id_ii := range tempInIds {
+                    if id_ii == id_i.(string) {
+                        ifExists = true
+                        break
                     }
-                } 
+                }
+                if ifExists == false {
+                    tempInIds = append(tempInIds, id_i.(string))
+                }
+                
             }
+            node.InIds = tempInIds
 
             tempOutIds := curr.OutIds
             for _, id_i := range ids[i + 1:] {
-                for _, id_ii := range curr.OutIds {
-                    if id_i == id_ii {
-                        tempInIds = append(tempOutIds, id_i)
+                // ensure tempOutIds has no duplicate elements
+                var ifExists bool
+                ifExists = false
+                for _, id_ii := range tempInIds {
+                    if id_ii == id_i.(string) {
+                        ifExists = true
+                        break
                     }
-                } 
+                }
+                if ifExists == false {
+                    tempOutIds = append(tempOutIds, id_i.(string))
+                }
             }
+            node.OutIds = tempOutIds
+
+            // fmt.Println("curr -- 1: ", ids, curr, node)
+            pairs.PwNodes[id.(string)] = node
         }
     }
 }
@@ -271,7 +359,7 @@ func GetMaxPairWiseCombinationNumber(combs [][]interface{}, PwLength int) int {
         totalNumber = totalNumber + cLenght
     }
 
-    fmt.Println("MaxPairWiseCombinationNumber: ", totalNumber)
+    // fmt.Println("MaxPairWiseCombinationNumber: ", totalNumber)
     return totalNumber
 }
 
@@ -296,26 +384,24 @@ func GetWorkingItemMatrix(combs [][]interface{}) [][]Item {
         }
         workingItemMatrix = append(workingItemMatrix, itemSlice)
     }
-    fmt.Println("workingItemMatrix: ", workingItemMatrix)
+    // fmt.Println("workingItemMatrix: ", workingItemMatrix)
     return workingItemMatrix
 }
 
 
 // -------------------------------------------------------------------------
 func (allPairs AllPairs) NextPairWiseTestCaseData() []interface{} {
-    var pairs PairsStorage
-    pairs.PwLength = allPairs.PwLength
-
     maxUniquePairsExpected := allPairs.MaxPairWiseCombinationNumber
-    // if pairs.Length() > maxUniquePairsExpected {
+    // if allPairs.Pairs.Length() > maxUniquePairsExpected {
     //     os.Exit(1)
     // }
-    if pairs.Length() == maxUniquePairsExpected {
+    if allPairs.Pairs.Length() == maxUniquePairsExpected {
+        fmt.Println("all pairs have been added: ", maxUniquePairsExpected)
         return []interface {}{}
     }
     workingItemMatrix := allPairs.WorkingItemMatrix
 
-    // previousUniquePairsCount = len(pairs)
+    // previousUniquePairsCount := allPairs.Pairs.Length()
     chosenValuesArr := make([]interface{}, len(workingItemMatrix))
     indexes := make([]int, len(workingItemMatrix))
 
@@ -352,7 +438,7 @@ func (allPairs AllPairs) NextPairWiseTestCaseData() []interface{} {
         chosenValuesArr[i] = workingItemMatrix[i][indexes[i]]
 
         if true {
-            if direction < -1 {
+            if direction <= -1 {
                 return []interface {}{}
             }
             direction = 1
@@ -361,7 +447,7 @@ func (allPairs AllPairs) NextPairWiseTestCaseData() []interface{} {
         }
         i += direction
         //
-        fmt.Println("indexes: ", i, indexes, chosenValuesArr)
+        // fmt.Println("indexes: ", i, indexes, chosenValuesArr)
     }
    
     if len(workingItemMatrix) != len(chosenValuesArr) {
@@ -369,10 +455,12 @@ func (allPairs AllPairs) NextPairWiseTestCaseData() []interface{} {
         return []interface {}{}
     }
 
-    pairs.AddSequence(chosenValuesArr)
+    allPairs.Pairs.AddSequence(chosenValuesArr)
+    fmt.Println("allPairs.Pairs.Length() vs. maxUniquePairsExpected: ", allPairs.Pairs.Length(), maxUniquePairsExpected)
 
-    // if pairs.Length() == previousUniquePairsCount {
+    // if allPairs.Pairs.Length() == previousUniquePairsCount {
     //     // could not find new unique pairs - stop
+    //     fmt.Println("could not find new unique pairs - stop: ", previousUniquePairsCount)
     //     return []interface {}{}
     // }
 
@@ -381,6 +469,7 @@ func (allPairs AllPairs) NextPairWiseTestCaseData() []interface{} {
     for _, item := range chosenValuesArr {
         chosenValues = append(chosenValues, item.(Item).Value)
     }
+    // fmt.Println("-----> chosenValues: ", chosenValuesArr, chosenValues)
     return chosenValues
 }
 
@@ -394,21 +483,42 @@ func (allPairs AllPairs) resortWorkingArray (chosenValuesArr []interface{}, num 
         var newCombs [][][]interface{}
         // newCombs -> [][][]interface{} //[ [[1-comb id], [1-combid], [...]], [[2-comb ids], [2-combids], [...]], ...]
         for i := 0; i < allPairs.PwLength; i++ {
-            chosenValuesArr = append(chosenValuesArr, item)
-        
+            var tempChosen []interface{}
+            // copy(tempChosen, chosenValuesArr) => not sure why copy does not work here
+            tempChosen = append(tempChosen, chosenValuesArr[0:]...)
+            tempChosen = append(tempChosen, item)
+
+            // fmt.Println("---> tempChosen : ", chosenValuesArr, item, tempChosen)
+
             var setPairIds [][]interface{}
-            for z := range combinationsInterface(chosenValuesArr, i + 1) {
+            for z := range combinationsInterface(tempChosen, i + 1) {
+                var idss []interface{}
+                for _, item := range z {
+                    idss = append(idss, item.(Item).Id)
+                }
+
                 if allPairs.Pairs.Length() > 0 {
+                    var ifHas bool
+                    ifHas = false
                     for _, comb := range allPairs.Pairs.GetCombs()[i] {
-                        if compareSlice(GetPairIds(z), comb) {
-                            setPairIds = append(setPairIds, GetPairIds(z))
+                        if compareSlice(idss, comb) {
+                            ifHas = true
+                            break
                         }
                     }
+                    if ifHas == false {
+                        setPairIds = append(setPairIds, idss)
+                    }
+                } else {
+                    setPairIds = append(setPairIds, idss)
                 }
             }
             newCombs = append(newCombs, setPairIds)
         }
 
+        // reset the item.Weights
+        weights := []int{}
+        item.Weights = weights
         // (1). weighting the node
         // node that creates most of new pairs is the best
         item.Weights = append(item.Weights, -len(newCombs[len(newCombs) - 1]))
@@ -418,9 +528,10 @@ func (allPairs AllPairs) resortWorkingArray (chosenValuesArr []interface{}, num 
         item.Weights = append(item.Weights, len(dataNode.OutIds))
 
         var reversedNewCombs [][][]interface{}
-        for i := len(newCombs) - 2; i > 0; i-- {
+        for i := len(newCombs) - 2; i >= 0; i-- {
             reversedNewCombs = append(reversedNewCombs, newCombs[i])
         }
+
         // (3). 
         for _, x := range reversedNewCombs {
             item.Weights = append(item.Weights, len(x))
@@ -435,7 +546,6 @@ func (allPairs AllPairs) resortWorkingArray (chosenValuesArr []interface{}, num 
 
         // re-assign the item.Weights to the allPairs
         allPairs.WorkingItemMatrix[num][ii].Weights = item.Weights
-        fmt.Println("weights--: ", allPairs.WorkingItemMatrix[num][ii], item.Weights)
     }
 
     // workingItemMatrix[num].sort(key=cmp_to_key(cmp_item))
@@ -444,15 +554,18 @@ func (allPairs AllPairs) resortWorkingArray (chosenValuesArr []interface{}, num 
     var items Items
     items = allPairs.WorkingItemMatrix[num]
     fmt.Println("items--before sort: ", items)
-    sort.Sort(items)
-    fmt.Println("items--after sort: ", items)
+    sort.Stable(items)
+    fmt.Println("items--after sort: ", items, "\n")
+    // fmt.Println("items--after sort : allPairs - PwNodes", allPairs.Pairs.PwNodes)
+    // fmt.Println("items--after sort : allPairs - PwCombsArr", allPairs.Pairs.PwCombsArr, "\n\n")
 }
 
 func compareSlice(sliceA []interface{}, sliceB []interface{}) bool {
     var ifMatched bool
     ifMatched = true
     for i, valueA := range sliceA {
-        if valueA != sliceB[i] {
+        // if valueA != sliceB[i] {
+        if !reflect.DeepEqual(valueA, sliceB[i]) {
             ifMatched = false
             break
         }
@@ -474,24 +587,30 @@ func (items Items) Len() int {
 }
 
 func (items Items) Less(i, j int) bool {
-    lenI := len(items[i].Weights)
-    lenJ := len(items[j].Weights)
+    // lenI := len(items[i].Weights)
+    // lenJ := len(items[j].Weights)
 
     var ifLess bool
-    ifLess = true
-    if lenI < lenJ {
-        for ii, itemI := range items[i].Weights {
-            if itemI > items[j].Weights[ii] {
-                ifLess = false
-                break
-            }
-        }
-    } else {
-        for jj, itemJ := range items[j].Weights {
-            if items[i].Weights[jj] >= itemJ {
-                ifLess = false
-                break
-            }
+    ifLess = false
+    // if lenI < lenJ {
+    //     for ii, itemI := range items[i].Weights {
+    //         if itemI > items[j].Weights[ii] {
+    //             ifLess = false
+    //             break
+    //         }
+    //     }
+    // } else if lenI >= lenJ {
+    //     for jj, itemJ := range items[j].Weights {
+    //         if items[i].Weights[jj] > itemJ {
+    //             ifLess = false
+    //             break
+    //         }
+    //     }
+    // }
+    for ii, itemI := range items[i].Weights {
+        if itemI < items[j].Weights[ii] {
+            ifLess = true
+            break
         }
     }
 
@@ -501,7 +620,6 @@ func (items Items) Less(i, j int) bool {
 func (items Items) Swap(i, j int) {
     items[i], items[j] = items[j], items[i] 
 }
-
 
 
 
