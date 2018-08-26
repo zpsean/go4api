@@ -12,26 +12,59 @@ package fuzz
 
 import (
     "fmt"
-    "reflect"
-    "sync"
+    "sort"
+    // "sync"
 )
 
-// Below is for pairwise data
-type PairWises struct {
-    PairWises map[string][]PairWise
+// -------------------------------------------------------------------------
+// Note: for pairewise, there are two kinds of algorithm:
+// --> algorithm 1. use the pairWises to build the test case data (test case)
+// --> algorithm 2. get the full combination first, the filter (remove) them based on the pairWises if repeated
+// -------------------------------------------------------------------------
+// The algorithm 1: is rewitten the code for AllPairs (python) using Golang
+// refer to: https://github.com/thombashi/allpairspy
+//
+// key steps of this algorithm is:
+// 1. get the value value_matrix (combs), and maxUniquePairsExpected, workingItemMatrix, 
+// 2. try the next item to be add, with computing and comparing existing pairs, some weights, like most new pairs, in, out, etc.
+// 3. sort the items in one vetor of the workingItemMatrix (workingItemMatrix(m))
+// 4. add the highly recommended item of the sort items (step 3)
+// 5. add the item to existing pairs
+// 6. repeat Step 2 ~ Step 5
+// -------------------------------------------------------------------------
+
+// here is the entry for pairwise algorithm 1
+func GetPairWiseValid11(fuzzData FuzzData, PwLength int) {
+    var combos [][]interface{}
+    for _, validDataMap := range fuzzData.ValidData {
+        for _, validList := range validDataMap {
+            combos = append(combos, validList)
+        }
+    }
+
+
+    var allPairs AllPairs
+
+    allPairs.PwLength = PwLength
+    allPairs.MaxPairWiseCombinationNumber = GetMaxPairWiseCombinationNumber(combos, PwLength)
+    allPairs.WorkingItemMatrix = GetWorkingItemMatrix(combos)
+
+
+    allPairs.NextPairWiseTestCaseData()
+
+    // NextPairWiseTestCaseData(combos, PwLength)
 }
 
-type PairWise struct {
-    PwLength int
-    PwVectorIndices []int
-    PwElementIndices []int
-    PwValues []interface{}
-}
 
 // to define the item for each element
-type PairWiseTestCaseDataSet []PairWiseTestCaseData
+type AllPairs struct {
+    PwLength int
+    Pairs PairsStorage
+    MaxPairWiseCombinationNumber int
+    WorkingItemMatrix [][]Item  // [][]Item
+    PairWiseTestCaseData [][]interface{} // [][]Item.Value
+}
 
-type PairWiseTestCaseData []Item
 
 type Item struct {
     Id string
@@ -39,30 +72,28 @@ type Item struct {
     Weights []int
 }
 
-// for the element already added / arranged
-type Node struct {
-    Id string
-    Counter int
-    InIds []string
-    OutIds []string
-}
-
-// for the elements already added / arranged
-type Pairs struct {
-    PwLength int
-    PwNodes map[string]Node
-    PwCombsArr [][]interface{}
-}
-
 //
+func (item Item) Append (weight int) {
+    item.Weights = append(item.Weights, weight)
+}
+
+// Note: in Python, key_cache (KeyCache) is dict, with tuple(items) as key, tuple(ids) is value
+// {
+//     (<allpairspy.allpairs.Item object at 0x1015dd2e8>,): ('a0v0',), 
+//     (<allpairspy.allpairs.Item object at 0x1015dd358>,): ('a0v1',), 
+//     (<allpairspy.allpairs.Item object at 0x1015dd3c8>,): ('a0v2',)
+// }
 type KeyCache struct {
-    PairItems [][]interface{}
-    PairIds [][]interface{}
+    PairItems [][]interface{} // [][]Item ->for Item
+    PairIds [][]interface{} // [][]string -> for id
 }
 
 var keyCache KeyCache
 
+// items -> []Item, return []string -> []Id
 func GetPairIds(items []interface{}) []interface{} {
+    // Note: in Python, items is tuple(item, item, ...)
+    // (<allpairspy.allpairs.Item object at 0x1015dd3c8>,) 
     for ind, cacheItems := range keyCache.PairItems {
         totalFound := 0
         for i, _ := range cacheItems {
@@ -83,61 +114,49 @@ func GetPairIds(items []interface{}) []interface{} {
     keyCache.PairItems = append(keyCache.PairItems, items)
     keyCache.PairIds = append(keyCache.PairIds, keyIds)
 
+    // Note: in Python, key_value (keyIds) is tuple(id, id, ...)
+    // ('a0v2',) 
     return keyIds
 }
 ///
-    
 
 
+// for the element already added / arranged
+type Node struct {
+    Id string
+    Counter int
+    InIds []string
+    OutIds []string
+}
 
-
-
-
-// here is the entry for pairwise algorithm 1
-func GetPairWiseValid11(fuzzData FuzzData, PwLength int) {
-    var combos [][]interface{}
-    for _, validDataMap := range fuzzData.ValidData {
-        for _, validList := range validDataMap {
-            combos = append(combos, validList)
-        }
-    }
-
-    GetWorkingItemMatrix(combos)
-    GetMaxPairWiseCombinationNumber(combos, PwLength)
-
-    NextPairWiseTestCaseData(combos, PwLength)
-
-    NextPairWiseTestCaseData(combos, PwLength)
+// for the elements already added / arranged
+type PairsStorage struct {
+    PwLength int
+    PwNodes map[string]Node // Note: in Python, this is dict -> {'id': Node, ...}
+    PwCombsArr [][][]interface{} //[ [[1-comb id], [1-combid], [...]], [[2-comb ids], [2-combids], [...]], ...]
+    // Note: in Python PWCombsArr is array for set(id), like, [set(id), set(id), ...]:
+    // [ {('a0v0',), ..., ('a3v1',), ('a1v0',)}, 
+    // {('a1v1', 'a2v3'), ..., ('a0v1', 'a2v0')} ]
 }
 
 
-func (pairs Pairs) AddSequence(sequence []interface{}) {
-    indexSlice := make([]int, pairs.PwLength)
-    for i, _ := range indexSlice {
-        for combination := range combinationsInterface(sequence, i + 1) {
-            pairs.AddCombination(combination)
-        }
-    }     
-}
-
-func (pairs Pairs) GetNodeInfo (item interface{}) string {
+func (pairs PairsStorage) GetNodeInfo (item interface{}) Node {
     var node Node
     node.Id = item.(Item).Id
-    nodeInfo := node.Id
-    for _, node := range pairs.PwNodes {
-        if node.Id == item.(Item).Id {
-            nodeInfo = node.Id
+    for _, node_i := range pairs.PwNodes {
+        if node_i.Id == item.(Item).Id {
+            node = node_i
             break
         }
     }
-    return nodeInfo
+    return node
 }
 
-func (pairs Pairs) GetCombs() [][]interface{} {
+func (pairs PairsStorage) GetCombs() [][][]interface{} {
     return pairs.PwCombsArr
 }
 
-func (pairs Pairs) Length() int {
+func (pairs PairsStorage) Length() int {
     if len(pairs.PwCombsArr) > 0 {
         return len(pairs.PwCombsArr[len(pairs.PwCombsArr) - 1]) 
     } else {
@@ -145,20 +164,36 @@ func (pairs Pairs) Length() int {
     }
 }
 
-func (pairs Pairs) AddCombination(combination []interface{}) {
+// sequence -> [PwLength]item, which has been choseen for the next test data (case)
+func (pairs PairsStorage) AddSequence(sequence []interface{}) {
+    for i := 0; i < pairs.PwLength; i++ {
+        for combination := range combinationsInterface(sequence, i + 1) {
+            pairs.AddCombination(combination)
+        }
+    }     
+}
+
+// combination -> [1]item, ..., [PwLength]item
+func (pairs PairsStorage) AddCombination(combination []interface{}) {
     n := len(combination)
     if n > 0 {
             pairs.PwCombsArr[n - 1] = append(pairs.PwCombsArr[n - 1], GetPairIds(combination))
         if n == 1 {
+            var ifExists bool
+            ifExists = false
+            // to check if combination[0].(Item).Id already exists in keys of PwNodes (map[id]Node)
             for key, _ := range pairs.PwNodes {
                 if combination[0].(Item).Id == key {
-                    var node Node
-                    node.Id = combination[0].(Item).Id
-
-                    pairs.PwNodes[combination[0].(Item).Id] = node
+                    ifExists = true
                     break
                 }
             }
+            if ifExists == false {
+                var node Node
+                node.Id = combination[0].(Item).Id
+
+                pairs.PwNodes[combination[0].(Item).Id] = node
+            } 
         }
         
         var ids []string
@@ -195,7 +230,7 @@ func (pairs Pairs) AddCombination(combination []interface{}) {
 func GetMaxPairWiseCombinationNumber(combs [][]interface{}, PwLength int) int {
     // init -----------------
     var indexSlice []int
-    for i, _ := range combs {
+    for i := 0; i < len(combs); i++ {
         indexSlice = append(indexSlice, i)
     }
     // to get the combinations like [1 1][1 2][1 3] ...
@@ -241,10 +276,10 @@ func GetMaxPairWiseCombinationNumber(combs [][]interface{}, PwLength int) int {
 }
 
 // to get the item matrix with type Item
-func GetWorkingItemMatrix(combs [][]interface{}) [][]interface{} {
-    var workingItemMatrix [][]interface{}
+func GetWorkingItemMatrix(combs [][]interface{}) [][]Item {
+    var workingItemMatrix [][]Item
     for i, combsSlice := range combs {
-        var itemSlice []interface{}
+        var itemSlice []Item
         for j, value := range combsSlice {
             var strId string
             strId = "a" + fmt.Sprint(i) + "v" + fmt.Sprint(j)
@@ -252,6 +287,10 @@ func GetWorkingItemMatrix(combs [][]interface{}) [][]interface{} {
             var item Item
             item.Id = strId
             item.Value = value
+
+            // init the item.Weights, otherwise, will receive 'can not assign ...' error to change the weight later
+            // var weights []int
+            // item.Weights = weights
 
             itemSlice = append(itemSlice, item)
         }
@@ -263,30 +302,18 @@ func GetWorkingItemMatrix(combs [][]interface{}) [][]interface{} {
 
 
 // -------------------------------------------------------------------------
-// The algorithm 1: is rewitten the code for AllPairs (python) using Golang
-// refer to: https://github.com/thombashi/allpairspy
-//
-// key steps of this algorithm is:
-// 1. get the value value_matrix (combs), and maxUniquePairsExpected, workingItemMatrix, 
-// 2. try the next item to be add, with computing and comparing existing pairs, some weights, like most new pairs, in, out, etc.
-// 3. sort the items in one vetor of the workingItemMatrix (workingItemMatrix(m))
-// 4. add the highly recommended item of the sort items (step 3)
-// 5. add the item to existing pairs
-// 6. repeat Step 2 ~ Step 5
-// -------------------------------------------------------------------------
+func (allPairs AllPairs) NextPairWiseTestCaseData() []interface{} {
+    var pairs PairsStorage
+    pairs.PwLength = allPairs.PwLength
 
-func NextPairWiseTestCaseData(combs [][]interface{}, PwLength int) []interface{} {
-    var pairs Pairs
-    pairs.PwLength = PwLength
-
-    maxUniquePairsExpected := GetMaxPairWiseCombinationNumber(combs, PwLength)
+    maxUniquePairsExpected := allPairs.MaxPairWiseCombinationNumber
     // if pairs.Length() > maxUniquePairsExpected {
     //     os.Exit(1)
     // }
     if pairs.Length() == maxUniquePairsExpected {
         return []interface {}{}
     }
-    workingItemMatrix := GetWorkingItemMatrix(combs)
+    workingItemMatrix := allPairs.WorkingItemMatrix
 
     // previousUniquePairsCount = len(pairs)
     chosenValuesArr := make([]interface{}, len(workingItemMatrix))
@@ -303,7 +330,7 @@ func NextPairWiseTestCaseData(combs [][]interface{}, PwLength int) []interface{}
         //
         if direction == 1 {
             // move forward
-            // resortWorkingArray(chosenValuesArr[:i], i)
+            allPairs.resortWorkingArray(chosenValuesArr[:i], i)
             indexes[i] = 0
         } else if direction == 0 || direction == -1 {
             // scan current array or go back
@@ -342,7 +369,7 @@ func NextPairWiseTestCaseData(combs [][]interface{}, PwLength int) []interface{}
         return []interface {}{}
     }
 
-    // pairs.add_sequence(chosenValuesArr)
+    pairs.AddSequence(chosenValuesArr)
 
     // if pairs.Length() == previousUniquePairsCount {
     //     // could not find new unique pairs - stop
@@ -358,401 +385,123 @@ func NextPairWiseTestCaseData(combs [][]interface{}, PwLength int) []interface{}
 }
 
 
-// func resortWorkingArray (chosenValuesArr []interface{}, num int) {
-//     for item in workingItemMatrix[num]:
-//         data_node = self.__pairs.get_node_info(item)
+func (allPairs AllPairs) resortWorkingArray (chosenValuesArr []interface{}, num int) {
+    for ii, item := range allPairs.WorkingItemMatrix[num] {
+        dataNode := allPairs.Pairs.GetNodeInfo(item)
 
-//         new_combs = [
-//             // numbers of new combinations to be created if this item is
-//             // appended to array
-//             set([key(z) for z in combinations(chosen_values_arr + [item], i + 1)])
-//             - self.__pairs.get_combs()[i]
-//             for i in range(0, self.__n)
-//         ]
-
-//         // weighting the node
-//         // node that creates most of new pairs is the best
-//         item.weights = [-len(new_combs[-1])]
-
-//         // less used outbound connections most likely to produce more new
-//         // pairs while search continues
-//         item.weights += (
-//             [len(data_node.out)]
-//             + [len(x) for x in reversed(new_combs[:-1])]
-//             + [-data_node.counter]  # less used node is better
-//         )
-
-//         // otherwise we will prefer node with most of free inbound
-//         // connections; somehow it works out better ;)
-//         item.weights.append(-len(data_node.in_))
-
-//     workingItemMatrix[num].sort(key=cmp_to_key(cmp_item))
-// }
-
-
-
-
-// func (pws PairWises) ContainsVectorIndex (pos int) (bool, int) {
-//     var ifContains bool
-//     ifContains = false
-//     var pairWiseIndex int
-
-//     for i, pairWise := range pws {
-//         for _, v_ind := range pairWise.PwVectorIndices {
-//             if pos == v_ind {
-//                 ifContains = true
-//                 pairWiseIndex = i
-//                 break
-//             }
-//         }
-//         if ifContains == true {
-//             break
-//         }
-//     }
-//     return ifContains, pairWiseIndex
-// }
-
-func (pw PairWise) ContainsVectorIndex (pos int) bool {
-    var ifContains bool
-    ifContains = false
-    for _, v_ind := range pw.PwVectorIndices {
-        if pos == v_ind {
-            ifContains = true
-            break
-        }
-    }
-    return ifContains
-}
-
-
-// -------------------------------------------------------------
-// Note: for pairewise, there are two kinds of algorithm:
-// --> algorithm 1. use the pairWises to build the test case data (test case)
-// --> algorithm 2. get the full combination first, the filter (remove) them based on the pairWises if repeated
-// -------------------------------------------------------------
-// Here uses the algorithm 1
-
-func GetPairWiseValid22(fuzzData FuzzData, PwLength int) {
-    var combos [][]interface{}
-    for _, validDataMap := range fuzzData.ValidData {
-        for _, validList := range validDataMap {
-            // fmt.Println("validList: ", key, validList)
-            combos = append(combos, validList)
-        }
-    }
-    fmt.Println("combos length", len(combos), "\n")
-
-    // init -----------------
-    var indexSlice []int
-    for i, _ := range combos {
-        indexSlice = append(indexSlice, i)
-    }
-    // to get the combinations like [1 1][1 2][1 3] ...
-    var pwLen int
-    if PwLength > len(combos) {
-        pwLen = len(combos)
-    } else {
-        pwLen = PwLength
-    }
-    indexCombs := combinations(indexSlice, pwLen)
-    GetPairWise12(indexCombs, combos, PwLength)
-}
-
-func GetPairWise12 (indexCombs chan []int, combos [][]interface{}, PwLength int) {
-    var pairWises PairWises
-    mapp := make(map[string][]PairWise)
-
-    for indexPair := range indexCombs {
-        var pairWise PairWise
-        pairWise.PwLength = PwLength
-        pairWise.PwVectorIndices = indexPair
+        // numbers of new combinations to be created if this item is
+        // appended to array
+        var newCombs [][][]interface{}
+        // newCombs -> [][][]interface{} //[ [[1-comb id], [1-combid], [...]], [[2-comb ids], [2-combids], [...]], ...]
+        for i := 0; i < allPairs.PwLength; i++ {
+            chosenValuesArr = append(chosenValuesArr, item)
         
-        var combos_pw_index_slice [][]interface{}
-
-        for _, ind_value := range indexPair {
-            var indexSlice []interface{}
-            for i, _ := range combos[ind_value] {
-                indexSlice = append(indexSlice, i)
-            }
-
-            combos_pw_index_slice = append(combos_pw_index_slice, indexSlice)
-        }
-
-        // fmt.Println("combos_pairwise_index: ", combos_pw_index_slice, len(combos_pw_index_slice))
-        
-        c := make(chan []interface{})
-        go func(c chan []interface{}) {
-            defer close(c)
-            combosSliceString(c, []interface{}{}, combos_pw_index_slice)
-        }(c)
-
-        fmt.Println("c: ", c, len(c))
-
-        i := 0
-        
-        for pairwise := range c {
-            i = i + 1
-            // fmt.Println("results_pairwise: ", pairwise, len(pairwise), pairwise[0], pairwise[1])
-            var pairwiseValue []interface{}
-            var pwind []int
-            for ii, ind_value := range pairwise {
-                pwind = append(pwind, ind_value.(int))
-
-                pairwiseValue = append(pairwiseValue, combos[indexPair[ii]][ind_value.(int)])
-            }
-            pairWise.PwElementIndices = pwind
-            pairWise.PwValues = pairwiseValue
-            fmt.Println("pairwiseValue length: ", pairwiseValue, i)
-
-
-            ///
-            str := ""
-            for _, ind_value := range indexPair {
-                str = str + fmt.Sprint(ind_value)
-            }
-            // fmt.Println("pairWises length: ", fmt.Sprint(indexPair))
-            mapp[str] = append(mapp[str], pairWise)
-            // pairWises.PairWises[str] = append(pairWises.PairWises[str], pairWise)
-            pairWises.PairWises = mapp
-        }
-    }
-    fmt.Println("pairWises length: ", pairWises)
-    // return pairWises
-}
-
-// func GeneratePairWiseTestData () {
-//     // now we have the informations about:
-//     // 1. pairwise length (N), the test case length (M)
-//     // 2. the pairWises, which is grouped by sub-combinations
-//     // 3. the total number of the sub-combinations
-
-// }
-
-
-
-
-
-// -------------------------------------------------------------
-// Note: for pairewise, there are two kinds of algorithm:
-// --> algorithm 1. use the pairWises to build the test case data (test case)
-// --> algorithm 2. get the full combination first, the filter (remove) them based on the pairWises if repeated
-// -------------------------------------------------------------
-// Here uses the algorithm 2
-// Warning: after testing, this algorithm has performance issue, whil also can not result minimal set of pairwise test data (case)
-
-func GetPairWiseValid(fuzzData FuzzData, PwLength int) {
-    var combos [][]interface{}
-    for _, validDataMap := range fuzzData.ValidData {
-        for _, validList := range validDataMap {
-            // fmt.Println("validList: ", key, validList)
-            combos = append(combos, validList)
-        }
-    }
-    fmt.Println("combos length", len(combos), "\n")
-
-    //
-    c := make(chan []interface{})
-    go func(c chan []interface{}) {
-        defer close(c)
-        combosSliceString(c, []interface{}{}, combos)
-    }(c)
-
-    var combosFullValid[][]interface{}
-    for subCombValid := range c {
-        combosFullValid = append(combosFullValid, subCombValid) 
-    }
-
-    // init
-    
-    // to get the combinations like [1 1][1 2][1 3] ...
-    var pwLen int
-    if PwLength > len(combos) {
-        pwLen = len(combos)
-    } else {
-        pwLen = PwLength
-    }
-    //
-    var indexSlice []int
-    for i, _ := range combosFullValid[0] {
-        indexSlice = append(indexSlice, i)
-    }
-
-    indexCombs := combinations(indexSlice, pwLen)
-    var indexPW [][]int
-    combLen := 0
-    for value := range indexCombs {
-        indexPW = append(indexPW, value)
-        combLen = combLen + 1
-    }
-    //
-
-    GetPairWisedTestCases(combosFullValid, pwLen, indexPW)
-}
-
-
-func GetPairWisedTestCases (combosFullValidP [][]interface{}, pwLen int, indexPW [][]int) {
-    // var pairWiseTestCaseDataSet [][]interface{}
-
-    var combosFullValid [][]interface{}
-    combosFullValid = combosFullValidP
-    loopDepth := 0
-
-    miniLoop:
-    for {
-        var resultsCombosFullValid [][]interface{}
-
-        tryIndex := 0
-        for i, subCombValid := range combosFullValid {
-            // fmt.Println("!------subCombValid: ", len(combosFullValid), i, subCombValid, combosFullValid)
-            // Step 1: get the PairWises for subCombValid
-            var totalFoundPwCount []int
-
-            co := make(chan int, len(indexPW))
-            var wg sync.WaitGroup
-            //
-            for _, indvalue := range indexPW {
-                wg.Add(1)
-                go GetFoundPwCount(co, &wg, combosFullValidP, pwLen, indvalue, subCombValid)
-            }
-            wg.Wait()
-            close(co)
-
-            for foundPwCount := range co {
-                totalFoundPwCount = append(totalFoundPwCount, foundPwCount) 
-            }
-            // --> if yes, then remove the subCombValid from combosFullValid
-            // --> if no, then keep this subCombValid, and to next subCombValid
-            // fmt.Println("totalFoundPwCount: ", totalFoundPwCount, indexPW)
-            var ifSubRepeated bool
-            ifSubRepeated = true
-            for _, value := range totalFoundPwCount {
-                if value < 2 {
-                    ifSubRepeated = false
-                    break
+            var setPairIds [][]interface{}
+            for z := range combinationsInterface(chosenValuesArr, i + 1) {
+                if allPairs.Pairs.Length() > 0 {
+                    for _, comb := range allPairs.Pairs.GetCombs()[i] {
+                        if compareSlice(GetPairIds(z), comb) {
+                            setPairIds = append(setPairIds, GetPairIds(z))
+                        }
+                    }
                 }
             }
-            if ifSubRepeated == true {
-                // fmt.Println("len(combosFullValid): ", len(combosFullValid))
-                resultsCombosFullValid = RemoveSliceItem(combosFullValid, subCombValid)
-                // fmt.Println("len(resultsCombosFullValid): ", len(resultsCombosFullValid))
-                combosFullValid = resultsCombosFullValid
-                break
-                // GetPairWisedTestCases(resultsCombosFullValid, pwLen, indexPW) 
-            } else {
-                // fmt.Println(" ---> to next ")
-                combosFullValid = combosFullValid
-            }
-            tryIndex = i
-        }
-        // can not remove anymore
-        if len(combosFullValid) - 1 == tryIndex {
-            break miniLoop
+            newCombs = append(newCombs, setPairIds)
         }
 
-        fmt.Println("len(combosFullValid)", len(combosFullValid))
-        loopDepth = loopDepth + 1
-        // if loopDepth == 3000 {
-        //     break miniLoop
-        // }
-    }
-    fmt.Println("touch the ending", len(combosFullValidP), loopDepth)
-}
+        // (1). weighting the node
+        // node that creates most of new pairs is the best
+        item.Weights = append(item.Weights, -len(newCombs[len(newCombs) - 1]))
 
+        // (2). less used outbound connections most likely to produce more new
+        // pairs while search continues
+        item.Weights = append(item.Weights, len(dataNode.OutIds))
 
-func GetFoundPwCount(co chan int, wg *sync.WaitGroup, combosFullValid [][]interface{}, pwLen int,
-        indvalue []int, subCombValid []interface{}) {
-    //
-    var pairWise PairWise
-    var pairValues []interface{}
-
-    defer wg.Done()
-
-    pairWise.PwLength = pwLen
-    pairWise.PwElementIndices = indvalue
-    
-    for _, v_i := range indvalue {
-        pairValues = append(pairValues, subCombValid[v_i])
-    }
-    pairWise.PwValues = pairValues
-    // fmt.Println("pairWise: ", pairWise)
-    // Step 2: check if the PairWises appears in combosFullValid more than once, 
-    foundPwCount := CheckSliceItemExistence(combosFullValid, pairWise)
-
-    co <- foundPwCount
-}
-
-
-func CheckSliceItemExistence(combosFullValid [][]interface{}, pairWise PairWise) int {
-    foundCount := 0
-
-    for _, subCombValid := range combosFullValid {
-        var sourcePairValues []interface{}
-        for _, v_i := range pairWise.PwElementIndices {
-            sourcePairValues = append(sourcePairValues, subCombValid[v_i])
+        var reversedNewCombs [][][]interface{}
+        for i := len(newCombs) - 2; i > 0; i-- {
+            reversedNewCombs = append(reversedNewCombs, newCombs[i])
+        }
+        // (3). 
+        for _, x := range reversedNewCombs {
+            item.Weights = append(item.Weights, len(x))
         }
 
-        if reflect.DeepEqual(sourcePairValues, pairWise.PwValues) {
-            foundCount = foundCount + 1
+        // (4). less used node is better
+        item.Weights = append(item.Weights, -dataNode.Counter)
 
-            if foundCount == 2 {
-                break
-            }
-        }
+        // (5). otherwise we will prefer node with most of free inbound
+        // connections; somehow it works out better ;)
+        item.Weights = append(item.Weights, -len(dataNode.InIds))
+
+        // re-assign the item.Weights to the allPairs
+        allPairs.WorkingItemMatrix[num][ii].Weights = item.Weights
+        fmt.Println("weights--: ", allPairs.WorkingItemMatrix[num][ii], item.Weights)
     }
 
-    return foundCount
+    // workingItemMatrix[num].sort(key=cmp_to_key(cmp_item))
+    // Sort: Ascending order
+    // sort.Sort(allPairs.WorkingItemMatrix[num])
+    var items Items
+    items = allPairs.WorkingItemMatrix[num]
+    fmt.Println("items--before sort: ", items)
+    sort.Sort(items)
+    fmt.Println("items--after sort: ", items)
 }
 
-
-func RemoveSliceItem(sourceSlice [][]interface{}, item []interface{}) [][]interface{} {
-    var resultSlice [][]interface{}
-
-    for index, source_item := range sourceSlice {
-        if reflect.DeepEqual(source_item, item) {
-            // fmt.Println("reflect.DeepEqual(source_item, item): ", reflect.DeepEqual(source_item, item), source_item, item)
-            if index == 0 {
-                resultSlice = append(resultSlice, sourceSlice[index + 1:]...)
-            } else if index == len(sourceSlice) - 1 {
-                resultSlice = sourceSlice[:index]
-            } else {
-                resultSlice = append(sourceSlice[:index], sourceSlice[index + 1:]...)
-            }
-        }
-    }
-
-    return resultSlice
-}
-
-func ifHasNilElement (vector []interface{}) (bool, int) {
-    var ifNil bool
-    ifNil = false
-    var pos int
-
-    for i, v := range vector {
-        if v == nil {
-            ifNil = true
-            pos = i
+func compareSlice(sliceA []interface{}, sliceB []interface{}) bool {
+    var ifMatched bool
+    ifMatched = true
+    for i, valueA := range sliceA {
+        if valueA != sliceB[i] {
+            ifMatched = false
             break
         }
     }
-    return ifNil, pos
+    return ifMatched
 }
 
 
-func ifPairWiseHasPosElement (vector []interface{}) (bool, int) {
-    var ifNil bool
-    ifNil = false
-    var pos int
+// Implements the Interface in sort package, used for Item sort
+// type Interface interface {
+//     Len() int
+//     Less(i, j int) bool
+//     Swap(i, j int)
+// }
+type Items []Item
 
-    for i, v := range vector {
-        if v == nil {
-            ifNil = true
-            pos = i
-            break
+func (items Items) Len() int { 
+    return len(items) 
+}
+
+func (items Items) Less(i, j int) bool {
+    lenI := len(items[i].Weights)
+    lenJ := len(items[j].Weights)
+
+    var ifLess bool
+    ifLess = true
+    if lenI < lenJ {
+        for ii, itemI := range items[i].Weights {
+            if itemI > items[j].Weights[ii] {
+                ifLess = false
+                break
+            }
+        }
+    } else {
+        for jj, itemJ := range items[j].Weights {
+            if items[i].Weights[jj] >= itemJ {
+                ifLess = false
+                break
+            }
         }
     }
-    return ifNil, pos
+
+    return ifLess
 }
+
+func (items Items) Swap(i, j int) {
+    items[i], items[j] = items[j], items[i] 
+}
+
 
 
 
