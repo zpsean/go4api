@@ -31,15 +31,25 @@ func Dispatch(ch chan int, pStart_time time.Time, options map[string]string) {
     // for type 2, build the cases hierarchy first, then render the child cases using the parent's outputs
     //
     if options["ifScenario"] == "" {
+        if options["ifMutation"] != "" {
+            originMutationTcArray := GetOriginMutationTcArray(options)
+            Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, originMutationTcArray)
+
+            fmt.Println("originMutationTcArray: ", originMutationTcArray)
+            // to mutate 
+            mutatedTcArray := fuzz.MutateTcArray(originMutationTcArray)
+            Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, mutatedTcArray)
+        }
+
         if options["ifFuzzTestFirst"] != "" {
             fuzz.PrepFuzzTest(pStart_time, options)
 
-            GetFuzzTcArray(options)
+            // GetFuzzTcArray(options)
             fuzzTcArray := GetFuzzTcArray(options)
             Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, fuzzTcArray)
         }
-        tcArray := GetTcArray(options)
-        Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, tcArray)
+        // tcArray := GetTcArray(options)
+        // Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, tcArray)
     } else {
         RunScenario(ch, pStart_time, options, pStart, baseUrl, resultsDir)
         fmt.Println("--")

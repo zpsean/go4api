@@ -13,7 +13,7 @@ package fuzz
 import (                                                                                                                                             
     // "os"
     // "time"
-    // "fmt"
+    "fmt"
     // "path/filepath"
     // "strings"
     // "strconv"
@@ -49,6 +49,68 @@ func (muTc MutationTestCase) MutateRequestMethod () {
 func (muTc MutationTestCase) MutateRequestPath () {
     muTc.TestCase.SetRequestPath("/aa/bb/cc")
 }
+
+
+func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase.TestCaseDataInfo {
+    var mutatedTcArray []testcase.TestCaseDataInfo
+
+    for _, originTcData := range originMutationTcArray {
+        // here copy the underlying fields and values to another TestCaseDataInfo, with mutation(s)
+        // the better way would be deep copy the TestCaseDataInfo, and change the value, but Golang standard
+        // Lib has no deepcopy, so that, here use a plain way, that is, to re-sturct the TestCaseDataInfo
+
+
+        // type Request struct {  
+        //     Method string
+        //     Path string
+        //     Headers map[string]interface{}
+        //     QueryString map[string]interface{}
+        //     Payload map[string]interface{}
+        // }
+        // var mtcRequest testcase.Request
+        // mtcRequest.Method = originTcData.TestCase.ReqMethod()
+        // mtcRequest.Path = originTcData.TestCase.ReqPath()
+
+        // mtcRequest.Headers = originTcData.TestCase.DelRequestHeader("authorization")
+
+        // mtcRequest.QueryString = originTcData.TestCase[originTcData.TcName()].Request.QueryString
+        // mtcRequest.Payload = originTcData.TestCase.ReqPayload()
+
+
+        var mTcBasics testcase.TestCaseBasics
+        
+        mTcBasics.Priority = originTcData.TestCase[originTcData.TcName()].Priority
+        mTcBasics.ParentTestCase = originTcData.TestCase[originTcData.TcName()].ParentTestCase
+        mTcBasics.Inputs = originTcData.TestCase[originTcData.TcName()].Inputs
+        // Request
+        mTcBasics.Request = originTcData.TestCase[originTcData.TcName()].Request
+        // Response
+        mTcBasics.Response = originTcData.TestCase[originTcData.TcName()].Response
+        mTcBasics.Outputs = originTcData.TestCase[originTcData.TcName()].Outputs
+
+
+
+        originTcData.TestCase.DelRequestHeader("authorization")
+
+        mTc := testcase.TestCase{}
+        mTc[originTcData.TcName()] = mTcBasics
+
+        var mTcData testcase.TestCaseDataInfo
+        mTcData.TestCase = mTc
+        mTcData.JsonFilePath = originTcData.JsonFilePath
+        mTcData.CsvFile = originTcData.CsvFile
+        mTcData.CsvRow = originTcData.CsvRow
+
+        fmt.Println("TcData: ", mTcData, originTcData)
+        mutatedTcArray = append(mutatedTcArray, mTcData)
+    }
+
+    return mutatedTcArray
+}
+
+
+
+
 
 
 

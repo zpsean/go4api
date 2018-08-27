@@ -35,7 +35,7 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart s
     // (1), get the text path, default is ../data/*, then search all the sub-folder to get the test scripts
     // to check the tcArray, if the case not distinct, report it to fix
     if len(tcArray) != len(GetTcNameSet(tcArray)) {
-        fmt.Println("\n!! There are duplicated test case names, please make them distinct\n")
+        fmt.Println("\n!! There are duplicated test case names, please make them distinct")
         os.Exit(1)
     }
     //
@@ -63,7 +63,7 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart s
     // fmt.Println("------------------", root, &root)
 
     //
-    fmt.Println("\n====> test cases execution starts!\n")
+    fmt.Println("\n====> test cases execution starts!")
     statusReadyCount = 0
     // init the status count list
     statusCountList = make([][]int, len(prioritySet) + 1)
@@ -145,7 +145,7 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart s
         fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(failCount) + " Cases Fail -----")
         fmt.Println("---------------------------------------------------------------------------")
 
-        fmt.Println("====> Priority " + priority + " ended! \n")
+        fmt.Println("====> Priority " + priority + " ended! ")
         // sleep for debug
         time.Sleep(500 * time.Millisecond)
     }
@@ -163,7 +163,7 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart s
     fmt.Println("----- Total " + strconv.Itoa(successCount + failCount) + " Cases Executed -----")
     fmt.Println("----- Total " + strconv.Itoa(successCount) + " Cases Success -----")
     fmt.Println("----- Total " + strconv.Itoa(failCount) + " Cases Fail -----")
-    fmt.Println("---------------------------------------------------------------------------\n\n")
+    fmt.Println("---------------------------------------------------------------------------")
 
 
     // generate the html report based on template, and results data
@@ -400,11 +400,40 @@ func GetFuzzTcArray(options map[string]string) []testcase.TestCaseDataInfo {
     // to ge the json and related data file, then get tc from them
     for _, jsonFile := range jsonFileList {
         csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_fuzz_dt")
+        // fmt.Println("csvFileList:", csvFileList, "\n")
         // to get the json test data directly (if not template) based on template (if template)
         // tcInfos: [[casename, priority, parentTestCase, ], ...]
         var tcInfos []testcase.TestCaseDataInfo
         if len(csvFileList) > 0 {
             tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
+        }
+        // fmt.Println("tcInfos:", tcInfos, "\n")
+        
+        for _, tcData := range tcInfos {
+            tcArray = append(tcArray, tcData)
+        }
+    }
+
+    return tcArray
+}
+
+
+func GetOriginMutationTcArray(options map[string]string) []testcase.TestCaseDataInfo {
+    var tcArray []testcase.TestCaseDataInfo
+
+    jsonFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".mutation")
+    // fmt.Println("jsonFileList:", jsonFileList, "\n")
+    // to ge the json and related data file, then get tc from them
+    for _, jsonFile := range jsonFileList {
+        csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_mutation_dt")
+        // fmt.Println("csvFileList:", csvFileList, "\n")
+        // to get the json test data directly (if not template) based on template (if template)
+        // tcInfos: [[casename, priority, parentTestCase, ], ...]
+        var tcInfos []testcase.TestCaseDataInfo
+        if len(csvFileList) > 0 {
+            tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
+        } else {
+            tcInfos = ConstructTcInfosBasedOnJson(jsonFile)
         }
         // fmt.Println("tcInfos:", tcInfos, "\n")
         

@@ -26,7 +26,7 @@ import (
 
 func RunScenario(ch chan int, pStart_time time.Time, options map[string]string, pStart string, baseUrl string, resultsDir string) {
     jsonFileList, _ := utils.WalkPath(options["testhome"] + "/Scenarios/", ".json")
-    fmt.Println("Scenario jsonFileList:", options["ifScenario"], jsonFileList, "\n")
+    fmt.Println("Scenario jsonFileList:", options["ifScenario"], jsonFileList, "")
 
     var tcArray []testcase.TestCaseDataInfo
     // var tcNames []string
@@ -123,7 +123,7 @@ func RunScenario(ch chan int, pStart_time time.Time, options map[string]string, 
     //
     GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time)
     //
-    fmt.Println("---------------------------------------------------------------------------\n")
+    fmt.Println("---------------------------------------------------------------------------")
     fmt.Println("Report Generated at: " + resultsDir + "index.html")
     fmt.Println("Execution Finished at: " + pEnd_time.String())
     

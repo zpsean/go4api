@@ -48,7 +48,7 @@ func GetPairWiseValid(fuzzData FuzzData, PwLength int) {
             combins = append(combins, validList)
         }
     }
-    fmt.Println("combins length", len(combins), "\n")
+    fmt.Println("combins length", len(combins), "")
 
     //
     c := make(chan []interface{})
@@ -299,7 +299,7 @@ func GetPairWiseValid22(fuzzData FuzzData, PwLength int) {
             combins = append(combins, validList)
         }
     }
-    fmt.Println("combins length", len(combins), "\n")
+    fmt.Println("combins length", len(combins), "")
 
     // init -----------------
     var indexSlice []int

@@ -15,6 +15,27 @@ import (
     "testing"
 )
 
-func Test_GetPairWiseValid11(t *testing.T) {
-    fmt.Println("this is test")
+func Test_GetPairWise(t *testing.T) {
+	fmt.Println("\n--> test started")
+
+	combins := [][]interface{} {
+	    {"Brand X", "Brand Y", "Brand Z", "Brand ZZ"},
+	    {"98", "NT", "2000", "XP"},
+	    {"Internal", "Modem", "Modem2", "Modem3"},
+	    {"Salaried", "Hourly", "Part-Time", "Contr."},
+	}
+
+	c := make(chan []interface{})
+
+    go func(c chan []interface{}) {
+        defer close(c)
+        GetPairWise(c, combins, 3)
+    }(c)
+
+
+    for tcData := range c {
+        fmt.Println(tcData)
+    }
+
+    fmt.Println("\n--> test finished")
 }

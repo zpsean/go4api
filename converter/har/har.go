@@ -31,7 +31,7 @@ type Entries []Entry
 
 type Entry struct {
     startedDateTime string
-    time float
+    time float32
     Request Request
     Response Response
 }
