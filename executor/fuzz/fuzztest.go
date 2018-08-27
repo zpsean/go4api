@@ -32,7 +32,7 @@ type FuzzData struct {
 
 func PrepFuzzTest(pStart_time time.Time, options map[string]string) {
     fuzzFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".fuzz")
-    fmt.Println("FuzzTest jsonFileList:", options["ifFuzzTestFirst"], fuzzFileList, "\n")
+    fmt.Println("FuzzTest jsonFileList:", options["ifFuzzTestFirst"], fuzzFileList, "")
 
     // (1). generate the data tables based on the fuzz test, at least two dt files: positive and negative
     for _, fuzzFile := range fuzzFileList {
@@ -56,7 +56,7 @@ func PrepFuzzTest(pStart_time time.Time, options map[string]string) {
 func GenerateFuzzData(fuzzFile string) FuzzData {
     fuzzRowsByte := utils.GetContentFromFile(fuzzFile)
 
-    fuzzRows := strings.Split(string(fuzzRowsByte), "\n")
+    fuzzRows := strings.Split(string(fuzzRowsByte), "")
 
     var fuzzData FuzzData
     var validValueList []map[string][]interface{}
@@ -128,8 +128,8 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData FuzzData) {
     combValid := GetCombinationValid(fuzzData)
     //
     i := 1
-    for subCombValid := range combValid {
-        // fmt.Println("subCombValid -- : ", subCombValid, len(subCombValid))
+    for _, subCombValid := range combValid {
+        fmt.Println("subCombValid -- : ", subCombValid, len(subCombValid))
         combStr := ""
         for ii, item := range subCombValid {
             if ii == 0 {
@@ -154,13 +154,13 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData FuzzData) {
             invalidHeaderStr = invalidHeaderStr + "," + key
         }
     }
-    utils.GenerateFileBasedOnVarOverride(invalidHeaderStr, outputsFile)
+    utils.GenerateFileBasedOnVarOverride(invalidHeaderStr + "\n", outputsFile)
 
     combInvalid := GetCombinationInvalid(fuzzData)
     //
     i = 1
-    for subCombInvalid := range combInvalid {
-        // fmt.Println("subCombInvalid: ", subCombInvalid, len(subCombInvalid))
+    for _, subCombInvalid := range combInvalid {
+        fmt.Println("subCombInvalid: ", subCombInvalid, len(subCombInvalid))
         combStr := ""
         for ii, item := range subCombInvalid {
             if ii == 0 {

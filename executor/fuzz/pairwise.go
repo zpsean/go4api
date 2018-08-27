@@ -65,7 +65,7 @@ func GetPairWise(c chan []interface{} ,combins [][]interface{}, PwLength int) {
             break
         } else {
             c <- returnedTestCaseData
-            fmt.Println(returnedTestCaseData)
+            // fmt.Println(returnedTestCaseData)
         }
 
         if loopDepth == 30 {
@@ -458,7 +458,7 @@ func (allPairs AllPairs) NextPairWiseTestCaseData() []interface{} {
     }
 
     allPairs.Pairs.AddSequence(chosenValuesArr)
-    fmt.Println("allPairs.Pairs.Length() vs. maxUniquePairsExpected: ", allPairs.Pairs.Length(), maxUniquePairsExpected)
+    // fmt.Println("allPairs.Pairs.Length() vs. maxUniquePairsExpected: ", allPairs.Pairs.Length(), maxUniquePairsExpected)
 
     if allPairs.Pairs.Length() == previousUniquePairsCount {
         // could not find new unique pairs - stop

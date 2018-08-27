@@ -14,6 +14,69 @@ import (
     // "fmt"
 )
 
+///
+func GetCombinationValid(fuzzData FuzzData) [][]interface{} {
+    var combins [][]interface{}
+    for _, validDataMap := range fuzzData.ValidData {
+        for _, validList := range validDataMap {
+            // fmt.Println("validList: ", key, validList)
+            combins = append(combins, validList)
+        }
+    }
+
+    c := make(chan []interface{})
+
+    go func(c chan []interface{}) {
+        defer close(c)
+        GetPairWise(c, combins, 3)
+    }(c)
+
+    var validTcData [][]interface{}
+    for tcData := range c {
+        validTcData = append(validTcData, tcData)
+    }
+
+    return validTcData
+}
+
+
+// -- for the fuzz data
+func GetCombinationInvalid(fuzzData FuzzData) [][]interface{} {
+    var validCombins [][]interface{}
+    for _, validDataMap := range fuzzData.ValidData {
+        for _, validList := range validDataMap {
+            // fmt.Println("validList: ", key, validList)
+            validCombins = append(validCombins, validList)
+        }
+    }
+
+    var invalidCombins [][]interface{}
+    for _, invalidDataMap := range fuzzData.InvalidData {
+        for _, invalidList := range invalidDataMap {
+            // fmt.Println("invalidList: ", key, invalidList)
+            invalidCombins = append(invalidCombins, invalidList)
+        }
+    }
+
+    // to ensure each negative value will be combined with each positive value(s)
+    var invalidTcData [][]interface{}
+    for i, _ := range invalidCombins {
+        var tcData []interface{}
+        if i == 0 {
+            tcData = append(tcData, invalidCombins[0][0])
+            for j := i + 1; j < len(validCombins); j++ {
+                tcData = append(tcData, validCombins[j][0])
+            }
+        }
+
+        invalidTcData = append(invalidTcData, tcData)
+        break
+    }
+    
+
+    return invalidTcData
+}
+
 // Refer to Python:
 // product('ABCD', repeat=2)   AA AB AC AD BA BB BC BD CA CB CC CD DA DB DC DD => cartesian product
 // permutations('ABCD', 2)   AB AC AD BA BC BD CA CB CD DA DB DC
@@ -150,53 +213,6 @@ func combinsInt(c chan []int, combin []int, data []int, length int) {
         }
         combinsInt(c, newCombin, data, length - 1)
     }
-}
-
-///
-func GetCombinationValid(fuzzData FuzzData) <-chan []interface{} {
-    var combins [][]interface{}
-    for _, validDataMap := range fuzzData.ValidData {
-        for _, validList := range validDataMap {
-            // fmt.Println("validList: ", key, validList)
-            combins = append(combins, validList)
-        }
-    }
-
-    c := make(chan []interface{})
-
-    go func(c chan []interface{}) {
-        defer close(c)
-        GetPairWise(c, combins, 3)
-    }(c)
-
-    return c
-}
-
-
-// -- for the fuzz data
-func GetCombinationInvalid(fuzzData FuzzData) <-chan []interface{} {
-    var validCombins [][]interface{}
-    for _, validDataMap := range fuzzData.ValidData {
-        for _, validList := range validDataMap {
-            // fmt.Println("validList: ", key, validList)
-            validCombins = append(validCombins, validList)
-        }
-    }
-
-    var invalidCombins [][]interface{}
-    for _, invalidDataMap := range fuzzData.InvalidData {
-        for _, invalidList := range invalidDataMap {
-            // fmt.Println("invalidList: ", key, invalidList)
-            invalidCombins = append(invalidCombins, invalidList)
-        }
-    }
-
-    // to ensure each negative value will be combined with each positive value(s)
-    c := make(chan []interface{})
-    c <- []interface{}{}
-
-    defer close(c)
-    return c
 }
 
 
