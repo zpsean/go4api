@@ -32,14 +32,14 @@ func Dispatch(ch chan int, pStart_time time.Time, options map[string]string) {
     //
     if options["ifScenario"] == "" {
         if options["ifFuzzTestFirst"] != "" {
-            fuzz.PrepFuzzTest(ch, pStart_time, options)
+            fuzz.PrepFuzzTest(pStart_time, options)
 
             GetFuzzTcArray(options)
-            // fuzzTcArray := GetFuzzTcArray(options)
-            // Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, fuzzTcArray)
+            fuzzTcArray := GetFuzzTcArray(options)
+            Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, fuzzTcArray)
         }
-        // tcArray := GetTcArray(options)
-        // Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, tcArray)
+        tcArray := GetTcArray(options)
+        Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, tcArray)
     } else {
         RunScenario(ch, pStart_time, options, pStart, baseUrl, resultsDir)
         fmt.Println("--")

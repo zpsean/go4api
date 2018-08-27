@@ -46,7 +46,7 @@ import (
 // [2 3]
 // [2 4]
 // [3 4]
-func combinations(list []int, length int) (c chan []int) {
+func combinationsInt(list []int, length int) (c chan []int) {
     c = make(chan []int)
     go func() {
         defer close(c)
@@ -59,7 +59,7 @@ func combinations(list []int, length int) (c chan []int) {
                 return
             default:
                 for i := 0; i < len(list); i++ {
-                    for sub_comb := range combinations(list[i + 1:], length - 1) {
+                    for sub_comb := range combinationsInt(list[i + 1:], length - 1) {
                         c <- append([]int{list[i]}, sub_comb...)
                     }
                 }
@@ -191,40 +191,11 @@ func GetCombinationInvalid(fuzzData FuzzData) <-chan []interface{} {
         }
     }
 
-    // fmt.Println("invalid combins: ", invalidCombins)
-
-    //
+    // to ensure each negative value will be combined with each positive value(s)
     c := make(chan []interface{})
+    c <- []interface{}{}
 
-    // comb type 1, for invalid + valid mix
-    for i, invalid := range invalidCombins {
-        var combins [][]interface{}
-
-        if i == 0 {
-            combins = append(combins, invalid)
-            combins = append(combins, validCombins[i + 1: ]...)
-        } else if i < len(invalidCombins) - 1 {
-            combins = append(combins, validCombins[:i]...)
-            combins = append(combins, invalid)
-            combins = append(combins, validCombins[i + 1: ]...)
-        } else {
-            combins = append(combins, validCombins[:i]...)
-            combins = append(combins, invalid)
-        }
-        // fmt.Println("invalid combins - 2: ", combins)
-
-        // go combinsSliceString(c2, []interface{}{}, combins)
-    }
-
-    // comb type 2, for invalid + invalid    
-    go func(c chan []interface{}) {
-        defer close(c)
-        GetPairWise(c, invalidCombins, 3)
-        // combinsSliceString(c, []interface{}{}, invalidCombins)
-    }(c)
-
-    // defer close(c)
-
+    defer close(c)
     return c
 }
 

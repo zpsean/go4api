@@ -30,7 +30,7 @@ type FuzzData struct {
 }
 
 
-func PrepFuzzTest(ch chan int, pStart_time time.Time, options map[string]string) {
+func PrepFuzzTest(pStart_time time.Time, options map[string]string) {
     fuzzFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".fuzz")
     fmt.Println("FuzzTest jsonFileList:", options["ifFuzzTestFirst"], fuzzFileList, "\n")
 

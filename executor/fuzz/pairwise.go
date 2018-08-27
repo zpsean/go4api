@@ -58,14 +58,15 @@ func GetPairWise(c chan []interface{} ,combins [][]interface{}, PwLength int) {
     // for debug loop
     loopDepth := 0
     for {
-        if len(allPairs.NextPairWiseTestCaseData()) == 0 {
+
+        returnedTestCaseData := allPairs.NextPairWiseTestCaseData()
+
+        if len(returnedTestCaseData) == 0 {
             break
+        } else {
+            c <- returnedTestCaseData
+            fmt.Println(returnedTestCaseData)
         }
-
-        loopDepth = loopDepth + 1
-        fmt.Println(allPairs.NextPairWiseTestCaseData())
-
-        c <- allPairs.NextPairWiseTestCaseData()
 
         if loopDepth == 30 {
             fmt.Println("loopDepth: ", loopDepth)
@@ -75,7 +76,6 @@ func GetPairWise(c chan []interface{} ,combins [][]interface{}, PwLength int) {
     // fmt.Println("touch here ????? => yes")
     // allPairs.NextPairWiseTestCaseData()
     // allPairs.NextPairWiseTestCaseData()
-    return
 }
 
 
@@ -329,7 +329,7 @@ func GetMaxPairWiseCombinationNumber(combs [][]interface{}, PwLength int) int {
     } else {
         pwLen = PwLength
     }
-    indexCombs := combinations(indexSlice, pwLen)
+    indexCombs := combinationsInt(indexSlice, pwLen)
     //
     totalNumber := 0
     //
