@@ -17,6 +17,7 @@ import (
     // "path/filepath"
     // "strings"
     // "strconv"
+    "reflect"
     "encoding/json"
     "go4api/testcase"  
 )
@@ -57,11 +58,12 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
 
     for _, originTcData := range originMutationTcArray {
         tcJson, _ := json.Marshal(originTcData)
-        fmt.Println(string(tcJson)) 
+        fmt.Println("tcJson:", string(tcJson)) 
 
         mutatedTcArray = append(mutatedTcArray, originTcData)
 
         // here to start the mutation
+        // headers
         mutatedTcArray = append(mutatedTcArray, MutateSetRequestHeader(tcJson))
         mutatedTcArray = append(mutatedTcArray, MutateAddRequestHeader(tcJson))
 
@@ -71,7 +73,36 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
             i = i + 1
         }
 
-        break
+        // querystring
+        i = 0
+        for key, value := range originTcData.TestCase.ReqQueryString() {
+            fmt.Println(reflect.TypeOf(value))
+            // if value match number mode
+            mutatedTcArray = append(mutatedTcArray, MutateSetRequestQueryString(tcJson, key, fmt.Sprint(-1), key + fmt.Sprint(i)))
+            i = i + 1
+            mutatedTcArray = append(mutatedTcArray, MutateSetRequestQueryString(tcJson, key, fmt.Sprint(0), key + fmt.Sprint(i)))
+            i = i + 1
+            mutatedTcArray = append(mutatedTcArray, MutateSetRequestQueryString(tcJson, key, fmt.Sprint(10000), key + fmt.Sprint(i)))
+            i = i + 1
+        }
+
+
+        mutatedTcArray = append(mutatedTcArray, MutateAddRequestQueryString(tcJson))
+
+        i = 0
+        for key, _ := range originTcData.TestCase.ReqQueryString() {
+            mutatedTcArray = append(mutatedTcArray, MutateDelRequestQueryString(tcJson, key, i))
+            i = i + 1
+        }
+
+        // Payload
+        i = 0
+        for key, _ := range originTcData.TestCase.ReqPayload() {
+            mutatedTcArray = append(mutatedTcArray, MutateDelPayload(tcJson, key, i))
+            i = i + 1
+        }
+
+
     }
     // fmt.Println("\nmutatedTcArray: ", mutatedTcArray)
 
@@ -86,7 +117,7 @@ func MutateSetRequestHeader (tcJson []byte) testcase.TestCaseDataInfo {
     json.Unmarshal(tcJson, &mTcData)
 
     originTcName := mTcData.TcName()
-    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-" + fmt.Sprint(1))
+    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-seth-" + fmt.Sprint(1))
     mTcData.TestCase.SetRequestHeader("aaaa", "dbddsdsfa")
 
     return mTcData
@@ -98,7 +129,7 @@ func MutateAddRequestHeader (tcJson []byte) testcase.TestCaseDataInfo {
     json.Unmarshal(tcJson, &mTcData)
 
     originTcName := mTcData.TcName()
-    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-" + fmt.Sprint(2))
+    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-addh-" + fmt.Sprint(2))
     mTcData.TestCase.AddRequestHeader("aaaakk", "dbddsdsfa")
 
     return mTcData
@@ -110,8 +141,67 @@ func MutateDelRequestHeader (tcJson []byte, k string, i int) testcase.TestCaseDa
     json.Unmarshal(tcJson, &mTcData)
 
     originTcName := mTcData.TcName()
-    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-Del-" + fmt.Sprint(i))
+    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-Delh-" + fmt.Sprint(i))
     mTcData.TestCase.DelRequestHeader(k)
+
+    return mTcData
+}
+
+
+
+//
+func MutateSetRequestQueryString (tcJson []byte, key string, value string, suffix string) testcase.TestCaseDataInfo {
+    var mTcData testcase.TestCaseDataInfo
+    json.Unmarshal(tcJson, &mTcData)
+
+    originTcName := mTcData.TcName()
+    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-setq-" + suffix)
+    mTcData.TestCase.SetRequestQueryString(key, value)
+    fmt.Println(mTcData.TestCase.ComposeReqQueryString())
+
+    return mTcData
+}
+
+
+func MutateAddRequestQueryString (tcJson []byte) testcase.TestCaseDataInfo {
+    var mTcData testcase.TestCaseDataInfo
+    json.Unmarshal(tcJson, &mTcData)
+
+    originTcName := mTcData.TcName()
+    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-addq-" + fmt.Sprint(2))
+    fmt.Println("\n", mTcData.TestCase.ComposeReqQueryString())
+    mTcData.TestCase.AddRequestQueryString("aaaakk", "dbddsdsfa")
+    fmt.Println(mTcData.TestCase.ComposeReqQueryString())
+
+    return mTcData
+}
+
+
+func MutateDelRequestQueryString (tcJson []byte, k string, i int) testcase.TestCaseDataInfo {
+    var mTcData testcase.TestCaseDataInfo
+    json.Unmarshal(tcJson, &mTcData)
+
+    originTcName := mTcData.TcName()
+    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-Delq-" + fmt.Sprint(i))
+    fmt.Println("\n", mTcData.TestCase.ComposeReqQueryString(), k)
+    mTcData.TestCase.DelRequestQueryString(k)
+    fmt.Println(mTcData.TestCase.ComposeReqQueryString())
+
+    return mTcData
+}
+
+
+//
+func MutateDelPayload (tcJson []byte, k string, i int) testcase.TestCaseDataInfo {
+    var mTcData testcase.TestCaseDataInfo
+    json.Unmarshal(tcJson, &mTcData)
+
+    originTcName := mTcData.TcName()
+    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-Delp-" + fmt.Sprint(i))
+
+    fmt.Println("\n", mTcData.TestCase.ReqPayload(), k)
+    mTcData.TestCase.DelReqPayload(k)
+    fmt.Println(mTcData.TestCase.ReqPayload())
 
     return mTcData
 }
