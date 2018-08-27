@@ -95,28 +95,28 @@ func GenerateCombinationsString(data []string, length int) <-chan []string {
     c := make(chan []string)
     go func(c chan []string) {
         defer close(c)
-        combosString(c, []string{}, data, length)
+        combinsString(c, []string{}, data, length)
     }(c)
     return c
 }
 
 
-func combosString(c chan []string, combo []string, data []string, length int) {  
+func combinsString(c chan []string, combin []string, data []string, length int) {  
     // Check if we reached the length limit
     // If so, we just return without adding anything
     if length <= 0 {
         return
     }
-    var newCombo []string
+    var newCombin []string
     for _, ch := range data {
-        newCombo = append(combo, ch)
+        newCombin = append(combin, ch)
         // remove this conditional to return all sets of length <= k
         if(length == 1){
-            output := make([]string, len(newCombo))
-            copy(output, newCombo)
+            output := make([]string, len(newCombin))
+            copy(output, newCombin)
             c <- output
         }
-        combosString(c, newCombo, data, length - 1)
+        combinsString(c, newCombin, data, length - 1)
     }
 }
 
@@ -127,51 +127,46 @@ func GenerateCombinationsInt(data []int, length int) <-chan []int {
     c := make(chan []int)
     go func(c chan []int) {
         defer close(c)
-        combosInt(c, []int{}, data, length)
+        combinsInt(c, []int{}, data, length)
     }(c)
     return c
 }
 
 
-func combosInt(c chan []int, combo []int, data []int, length int) {  
+func combinsInt(c chan []int, combin []int, data []int, length int) {  
     // Check if we reached the length limit
     // If so, we just return without adding anything
     if length <= 0 {
         return
     }
-    var newCombo []int
+    var newCombin []int
     for _, ch := range data {
-        newCombo = append(combo, ch)
+        newCombin = append(combin, ch)
         // remove this conditional to return all sets of length <=k
         if(length == 1){
-            output := make([]int, len(newCombo))
-            copy(output, newCombo)
+            output := make([]int, len(newCombin))
+            copy(output, newCombin)
             c <- output
         }
-        combosInt(c, newCombo, data, length - 1)
+        combinsInt(c, newCombin, data, length - 1)
     }
 }
 
 ///
 func GetCombinationValid(fuzzData FuzzData) <-chan []interface{} {
-    var combos [][]interface{}
+    var combins [][]interface{}
     for _, validDataMap := range fuzzData.ValidData {
         for _, validList := range validDataMap {
             // fmt.Println("validList: ", key, validList)
-            combos = append(combos, validList)
+            combins = append(combins, validList)
         }
     }
-    //
-    GetPairWiseValid11(fuzzData, 2)
 
-    //
     c := make(chan []interface{})
-
-    // combosSliceString(c1, []interface{}{}, combos)
 
     go func(c chan []interface{}) {
         defer close(c)
-        combosSliceString(c, []interface{}{}, combos)
+        GetPairWise(c, combins, 3)
     }(c)
 
     return c
@@ -180,51 +175,52 @@ func GetCombinationValid(fuzzData FuzzData) <-chan []interface{} {
 
 // -- for the fuzz data
 func GetCombinationInvalid(fuzzData FuzzData) <-chan []interface{} {
-    var validCombos [][]interface{}
+    var validCombins [][]interface{}
     for _, validDataMap := range fuzzData.ValidData {
         for _, validList := range validDataMap {
             // fmt.Println("validList: ", key, validList)
-            validCombos = append(validCombos, validList)
+            validCombins = append(validCombins, validList)
         }
     }
 
-    var invalidCombos [][]interface{}
+    var invalidCombins [][]interface{}
     for _, invalidDataMap := range fuzzData.InvalidData {
         for _, invalidList := range invalidDataMap {
             // fmt.Println("invalidList: ", key, invalidList)
-            invalidCombos = append(invalidCombos, invalidList)
+            invalidCombins = append(invalidCombins, invalidList)
         }
     }
 
-    // fmt.Println("invalid combos: ", invalidCombos)
+    // fmt.Println("invalid combins: ", invalidCombins)
 
     //
     c := make(chan []interface{})
 
     // comb type 1, for invalid + valid mix
-    for i, invalid := range invalidCombos {
-        var combos [][]interface{}
+    for i, invalid := range invalidCombins {
+        var combins [][]interface{}
 
         if i == 0 {
-            combos = append(combos, invalid)
-            combos = append(combos, validCombos[i + 1: ]...)
-        } else if i < len(invalidCombos) - 1 {
-            combos = append(combos, validCombos[:i]...)
-            combos = append(combos, invalid)
-            combos = append(combos, validCombos[i + 1: ]...)
+            combins = append(combins, invalid)
+            combins = append(combins, validCombins[i + 1: ]...)
+        } else if i < len(invalidCombins) - 1 {
+            combins = append(combins, validCombins[:i]...)
+            combins = append(combins, invalid)
+            combins = append(combins, validCombins[i + 1: ]...)
         } else {
-            combos = append(combos, validCombos[:i]...)
-            combos = append(combos, invalid)
+            combins = append(combins, validCombins[:i]...)
+            combins = append(combins, invalid)
         }
-        // fmt.Println("invalid combos - 2: ", combos)
+        // fmt.Println("invalid combins - 2: ", combins)
 
-        // go combosSliceString(c2, []interface{}{}, combos)
+        // go combinsSliceString(c2, []interface{}{}, combins)
     }
 
     // comb type 2, for invalid + invalid    
     go func(c chan []interface{}) {
         defer close(c)
-        combosSliceString(c, []interface{}{}, invalidCombos)
+        GetPairWise(c, invalidCombins, 3)
+        // combinsSliceString(c, []interface{}{}, invalidCombins)
     }(c)
 
     // defer close(c)
@@ -233,19 +229,19 @@ func GetCombinationInvalid(fuzzData FuzzData) <-chan []interface{} {
 }
 
 
-func combosSliceString(c chan []interface{}, combo []interface{}, data [][]interface{}) {  
+func combinsSliceString(c chan []interface{}, combin []interface{}, data [][]interface{}) {  
     if len(data) > 1 {
-        var newCombo []interface{}
+        var newCombin []interface{}
         for _, i_v := range data[0] {
-            newCombo = append(combo, i_v)
+            newCombin = append(combin, i_v)
 
-            combosSliceString(c, newCombo, data[1:])
+            combinsSliceString(c, newCombin, data[1:])
         }
 
     } else if len(data) == 1 {
         for _, j_v := range data[0] {
-            output := make([]interface{}, len(combo))
-            copy(output, combo)
+            output := make([]interface{}, len(combin))
+            copy(output, combin)
 
             output = append(output, j_v)
             // fmt.Println("output: ", output)

@@ -34,19 +34,11 @@ import (
 // -------------------------------------------------------------------------
 
 // here is the entry for pairwise algorithm 1
-func GetPairWiseValid11(fuzzData FuzzData, PwLength int) {
-    var combos [][]interface{}
-    for _, validDataMap := range fuzzData.ValidData {
-        for _, validList := range validDataMap {
-            combos = append(combos, validList)
-        }
-    }
-
-
-
+func GetPairWise(c chan []interface{} ,combins [][]interface{}, PwLength int) {
     // init the PairsStorage
     var pairs PairsStorage
     pairs.PwLength = PwLength
+
     pwNodes := map[string]Node{}
     pairs.PwNodes = pwNodes
 
@@ -59,22 +51,31 @@ func GetPairWiseValid11(fuzzData FuzzData, PwLength int) {
 
     allPairs.PwLength = PwLength
     allPairs.Pairs = pairs
-    allPairs.MaxPairWiseCombinationNumber = GetMaxPairWiseCombinationNumber(combos, PwLength)
-    allPairs.WorkingItemMatrix = GetWorkingItemMatrix(combos)
+    allPairs.MaxPairWiseCombinationNumber = GetMaxPairWiseCombinationNumber(combins, PwLength)
+    allPairs.WorkingItemMatrix = GetWorkingItemMatrix(combins)
     
     // to get the data 
-    // for debug
+    // for debug loop
     loopDepth := 0
     for {
+        if len(allPairs.NextPairWiseTestCaseData()) == 0 {
+            break
+        }
+
         loopDepth = loopDepth + 1
         fmt.Println(allPairs.NextPairWiseTestCaseData())
+
+        c <- allPairs.NextPairWiseTestCaseData()
+
         if loopDepth == 30 {
+            fmt.Println("loopDepth: ", loopDepth)
             break
         }
     }
-    
+    // fmt.Println("touch here ????? => yes")
     // allPairs.NextPairWiseTestCaseData()
     // allPairs.NextPairWiseTestCaseData()
+    return
 }
 
 
@@ -333,20 +334,20 @@ func GetMaxPairWiseCombinationNumber(combs [][]interface{}, PwLength int) int {
     totalNumber := 0
     //
     for indexPair := range indexCombs {
-        var combos_pw_index_slice [][]interface{}
+        var combins_pw_index_slice [][]interface{}
         for _, ind_value := range indexPair {
             var indexSlice []interface{}
             for i, _ := range combs[ind_value] {
                 indexSlice = append(indexSlice, i)
             }
 
-            combos_pw_index_slice = append(combos_pw_index_slice, indexSlice)
+            combins_pw_index_slice = append(combins_pw_index_slice, indexSlice)
         }
         //
         c := make(chan []interface{})
         go func(c chan []interface{}) {
             defer close(c)
-            combosSliceString(c, []interface{}{}, combos_pw_index_slice)
+            combinsSliceString(c, []interface{}{}, combins_pw_index_slice)
         }(c)
 
         // can not use len(c) to get the channel length, as len(c) is always 0 here, why?
@@ -392,16 +393,17 @@ func GetWorkingItemMatrix(combs [][]interface{}) [][]Item {
 // -------------------------------------------------------------------------
 func (allPairs AllPairs) NextPairWiseTestCaseData() []interface{} {
     maxUniquePairsExpected := allPairs.MaxPairWiseCombinationNumber
-    // if allPairs.Pairs.Length() > maxUniquePairsExpected {
-    //     os.Exit(1)
-    // }
+    if allPairs.Pairs.Length() > maxUniquePairsExpected {
+        fmt.Println("!! Error, added pairs more than maxUniquePairsExpected: ", allPairs.Pairs.Length(), maxUniquePairsExpected)
+        return []interface {}{}
+    }
     if allPairs.Pairs.Length() == maxUniquePairsExpected {
         fmt.Println("all pairs have been added: ", maxUniquePairsExpected)
         return []interface {}{}
     }
     workingItemMatrix := allPairs.WorkingItemMatrix
 
-    // previousUniquePairsCount := allPairs.Pairs.Length()
+    previousUniquePairsCount := allPairs.Pairs.Length()
     chosenValuesArr := make([]interface{}, len(workingItemMatrix))
     indexes := make([]int, len(workingItemMatrix))
 
@@ -458,11 +460,11 @@ func (allPairs AllPairs) NextPairWiseTestCaseData() []interface{} {
     allPairs.Pairs.AddSequence(chosenValuesArr)
     fmt.Println("allPairs.Pairs.Length() vs. maxUniquePairsExpected: ", allPairs.Pairs.Length(), maxUniquePairsExpected)
 
-    // if allPairs.Pairs.Length() == previousUniquePairsCount {
-    //     // could not find new unique pairs - stop
-    //     fmt.Println("could not find new unique pairs - stop: ", previousUniquePairsCount)
-    //     return []interface {}{}
-    // }
+    if allPairs.Pairs.Length() == previousUniquePairsCount {
+        // could not find new unique pairs - stop
+        fmt.Println("could not find new unique pairs - stop: ", previousUniquePairsCount)
+        return []interface {}{}
+    }
 
     // replace returned array elements with real values and return it
     var chosenValues []interface{}
@@ -527,12 +529,11 @@ func (allPairs AllPairs) resortWorkingArray (chosenValuesArr []interface{}, num 
         // pairs while search continues
         item.Weights = append(item.Weights, len(dataNode.OutIds))
 
+        // (3). reverse the newCombs except the last [] as it is used in (1)
         var reversedNewCombs [][][]interface{}
         for i := len(newCombs) - 2; i >= 0; i-- {
             reversedNewCombs = append(reversedNewCombs, newCombs[i])
         }
-
-        // (3). 
         for _, x := range reversedNewCombs {
             item.Weights = append(item.Weights, len(x))
         }
@@ -553,9 +554,9 @@ func (allPairs AllPairs) resortWorkingArray (chosenValuesArr []interface{}, num 
     // sort.Sort(allPairs.WorkingItemMatrix[num])
     var items Items
     items = allPairs.WorkingItemMatrix[num]
-    fmt.Println("items--before sort: ", items)
+    // fmt.Println("items--before sort: ", items)
     sort.Stable(items)
-    fmt.Println("items--after sort: ", items, "\n")
+    // fmt.Println("items--after sort: ", items, "\n")
     // fmt.Println("items--after sort : allPairs - PwNodes", allPairs.Pairs.PwNodes)
     // fmt.Println("items--after sort : allPairs - PwCombsArr", allPairs.Pairs.PwCombsArr, "\n\n")
 }
@@ -591,7 +592,6 @@ func (items Items) Less(i, j int) bool {
     // lenJ := len(items[j].Weights)
 
     var ifLess bool
-    ifLess = false
     // if lenI < lenJ {
     //     for ii, itemI := range items[i].Weights {
     //         if itemI > items[j].Weights[ii] {
@@ -610,6 +610,9 @@ func (items Items) Less(i, j int) bool {
     for ii, itemI := range items[i].Weights {
         if itemI < items[j].Weights[ii] {
             ifLess = true
+            break
+        } else if itemI > items[j].Weights[ii] {
+            ifLess = false
             break
         }
     }

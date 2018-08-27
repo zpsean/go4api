@@ -41,39 +41,39 @@ type PairWise struct {
 // -------------------------------------------------------------
 
 func GetPairWiseValid(fuzzData FuzzData, PwLength int) {
-    var combos [][]interface{}
+    var combins [][]interface{}
     for _, validDataMap := range fuzzData.ValidData {
         for _, validList := range validDataMap {
             // fmt.Println("validList: ", key, validList)
-            combos = append(combos, validList)
+            combins = append(combins, validList)
         }
     }
-    fmt.Println("combos length", len(combos), "\n")
+    fmt.Println("combins length", len(combins), "\n")
 
     //
     c := make(chan []interface{})
     go func(c chan []interface{}) {
         defer close(c)
-        combosSliceString(c, []interface{}{}, combos)
+        combinsSliceString(c, []interface{}{}, combins)
     }(c)
 
-    var combosFullValid[][]interface{}
+    var combinsFullValid[][]interface{}
     for subCombValid := range c {
-        combosFullValid = append(combosFullValid, subCombValid) 
+        combinsFullValid = append(combinsFullValid, subCombValid) 
     }
 
     // init
     
     // to get the combinations like [1 1][1 2][1 3] ...
     var pwLen int
-    if PwLength > len(combos) {
-        pwLen = len(combos)
+    if PwLength > len(combins) {
+        pwLen = len(combins)
     } else {
         pwLen = PwLength
     }
     //
     var indexSlice []int
-    for i, _ := range combosFullValid[0] {
+    for i, _ := range combinsFullValid[0] {
         indexSlice = append(indexSlice, i)
     }
 
@@ -86,15 +86,15 @@ func GetPairWiseValid(fuzzData FuzzData, PwLength int) {
     }
     //
 
-    GetPairWisedTestCases(combosFullValid, pwLen, indexPW)
+    GetPairWisedTestCases(combinsFullValid, pwLen, indexPW)
 }
 
 
-func GetPairWisedTestCases (combosFullValidP [][]interface{}, pwLen int, indexPW [][]int) {
+func GetPairWisedTestCases (combinsFullValidP [][]interface{}, pwLen int, indexPW [][]int) {
     // var pairWiseTestCaseDataSet [][]interface{}
 
-    var combosFullValid [][]interface{}
-    combosFullValid = combosFullValidP
+    var combinsFullValid [][]interface{}
+    combinsFullValid = combinsFullValidP
     loopDepth := 0
 
     miniLoop:
@@ -102,8 +102,8 @@ func GetPairWisedTestCases (combosFullValidP [][]interface{}, pwLen int, indexPW
         var resultsCombosFullValid [][]interface{}
 
         tryIndex := 0
-        for i, subCombValid := range combosFullValid {
-            // fmt.Println("!------subCombValid: ", len(combosFullValid), i, subCombValid, combosFullValid)
+        for i, subCombValid := range combinsFullValid {
+            // fmt.Println("!------subCombValid: ", len(combinsFullValid), i, subCombValid, combinsFullValid)
             // Step 1: get the PairWises for subCombValid
             var totalFoundPwCount []int
 
@@ -112,7 +112,7 @@ func GetPairWisedTestCases (combosFullValidP [][]interface{}, pwLen int, indexPW
             //
             for _, indvalue := range indexPW {
                 wg.Add(1)
-                go GetFoundPwCount(co, &wg, combosFullValidP, pwLen, indvalue, subCombValid)
+                go GetFoundPwCount(co, &wg, combinsFullValidP, pwLen, indvalue, subCombValid)
             }
             wg.Wait()
             close(co)
@@ -120,7 +120,7 @@ func GetPairWisedTestCases (combosFullValidP [][]interface{}, pwLen int, indexPW
             for foundPwCount := range co {
                 totalFoundPwCount = append(totalFoundPwCount, foundPwCount) 
             }
-            // --> if yes, then remove the subCombValid from combosFullValid
+            // --> if yes, then remove the subCombValid from combinsFullValid
             // --> if no, then keep this subCombValid, and to next subCombValid
             // fmt.Println("totalFoundPwCount: ", totalFoundPwCount, indexPW)
             var ifSubRepeated bool
@@ -132,34 +132,34 @@ func GetPairWisedTestCases (combosFullValidP [][]interface{}, pwLen int, indexPW
                 }
             }
             if ifSubRepeated == true {
-                // fmt.Println("len(combosFullValid): ", len(combosFullValid))
-                resultsCombosFullValid = RemoveSliceItem(combosFullValid, subCombValid)
+                // fmt.Println("len(combinsFullValid): ", len(combinsFullValid))
+                resultsCombosFullValid = RemoveSliceItem(combinsFullValid, subCombValid)
                 // fmt.Println("len(resultsCombosFullValid): ", len(resultsCombosFullValid))
-                combosFullValid = resultsCombosFullValid
+                combinsFullValid = resultsCombosFullValid
                 break
                 // GetPairWisedTestCases(resultsCombosFullValid, pwLen, indexPW) 
             } else {
                 // fmt.Println(" ---> to next ")
-                combosFullValid = combosFullValid
+                combinsFullValid = combinsFullValid
             }
             tryIndex = i
         }
         // can not remove anymore
-        if len(combosFullValid) - 1 == tryIndex {
+        if len(combinsFullValid) - 1 == tryIndex {
             break miniLoop
         }
 
-        fmt.Println("len(combosFullValid)", len(combosFullValid))
+        fmt.Println("len(combinsFullValid)", len(combinsFullValid))
         loopDepth = loopDepth + 1
         // if loopDepth == 3000 {
         //     break miniLoop
         // }
     }
-    fmt.Println("touch the ending", len(combosFullValidP), loopDepth)
+    fmt.Println("touch the ending", len(combinsFullValidP), loopDepth)
 }
 
 
-func GetFoundPwCount(co chan int, wg *sync.WaitGroup, combosFullValid [][]interface{}, pwLen int,
+func GetFoundPwCount(co chan int, wg *sync.WaitGroup, combinsFullValid [][]interface{}, pwLen int,
         indvalue []int, subCombValid []interface{}) {
     //
     var pairWise PairWise
@@ -175,17 +175,17 @@ func GetFoundPwCount(co chan int, wg *sync.WaitGroup, combosFullValid [][]interf
     }
     pairWise.PwValues = pairValues
     // fmt.Println("pairWise: ", pairWise)
-    // Step 2: check if the PairWises appears in combosFullValid more than once, 
-    foundPwCount := CheckSliceItemExistence(combosFullValid, pairWise)
+    // Step 2: check if the PairWises appears in combinsFullValid more than once, 
+    foundPwCount := CheckSliceItemExistence(combinsFullValid, pairWise)
 
     co <- foundPwCount
 }
 
 
-func CheckSliceItemExistence(combosFullValid [][]interface{}, pairWise PairWise) int {
+func CheckSliceItemExistence(combinsFullValid [][]interface{}, pairWise PairWise) int {
     foundCount := 0
 
-    for _, subCombValid := range combosFullValid {
+    for _, subCombValid := range combinsFullValid {
         var sourcePairValues []interface{}
         for _, v_i := range pairWise.PwElementIndices {
             sourcePairValues = append(sourcePairValues, subCombValid[v_i])
@@ -292,32 +292,32 @@ func (pw PairWise) ContainsVectorIndex (pos int) bool {
 
 
 func GetPairWiseValid22(fuzzData FuzzData, PwLength int) {
-    var combos [][]interface{}
+    var combins [][]interface{}
     for _, validDataMap := range fuzzData.ValidData {
         for _, validList := range validDataMap {
             // fmt.Println("validList: ", key, validList)
-            combos = append(combos, validList)
+            combins = append(combins, validList)
         }
     }
-    fmt.Println("combos length", len(combos), "\n")
+    fmt.Println("combins length", len(combins), "\n")
 
     // init -----------------
     var indexSlice []int
-    for i, _ := range combos {
+    for i, _ := range combins {
         indexSlice = append(indexSlice, i)
     }
     // to get the combinations like [1 1][1 2][1 3] ...
     var pwLen int
-    if PwLength > len(combos) {
-        pwLen = len(combos)
+    if PwLength > len(combins) {
+        pwLen = len(combins)
     } else {
         pwLen = PwLength
     }
     indexCombs := combinations(indexSlice, pwLen)
-    GetPairWise12(indexCombs, combos, PwLength)
+    GetPairWise12(indexCombs, combins, PwLength)
 }
 
-func GetPairWise12 (indexCombs chan []int, combos [][]interface{}, PwLength int) {
+func GetPairWise12 (indexCombs chan []int, combins [][]interface{}, PwLength int) {
     var pairWises PairWises
     mapp := make(map[string][]PairWise)
 
@@ -326,23 +326,23 @@ func GetPairWise12 (indexCombs chan []int, combos [][]interface{}, PwLength int)
         pairWise.PwLength = PwLength
         pairWise.PwVectorIndices = indexPair
         
-        var combos_pw_index_slice [][]interface{}
+        var combins_pw_index_slice [][]interface{}
 
         for _, ind_value := range indexPair {
             var indexSlice []interface{}
-            for i, _ := range combos[ind_value] {
+            for i, _ := range combins[ind_value] {
                 indexSlice = append(indexSlice, i)
             }
 
-            combos_pw_index_slice = append(combos_pw_index_slice, indexSlice)
+            combins_pw_index_slice = append(combins_pw_index_slice, indexSlice)
         }
 
-        // fmt.Println("combos_pairwise_index: ", combos_pw_index_slice, len(combos_pw_index_slice))
+        // fmt.Println("combins_pairwise_index: ", combins_pw_index_slice, len(combins_pw_index_slice))
         
         c := make(chan []interface{})
         go func(c chan []interface{}) {
             defer close(c)
-            combosSliceString(c, []interface{}{}, combos_pw_index_slice)
+            combinsSliceString(c, []interface{}{}, combins_pw_index_slice)
         }(c)
 
         fmt.Println("c: ", c, len(c))
@@ -357,7 +357,7 @@ func GetPairWise12 (indexCombs chan []int, combos [][]interface{}, PwLength int)
             for ii, ind_value := range pairwise {
                 pwind = append(pwind, ind_value.(int))
 
-                pairwiseValue = append(pairwiseValue, combos[indexPair[ii]][ind_value.(int)])
+                pairwiseValue = append(pairwiseValue, combins[indexPair[ii]][ind_value.(int)])
             }
             pairWise.PwElementIndices = pwind
             pairWise.PwValues = pairwiseValue
