@@ -59,25 +59,62 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
         tcJson, _ := json.Marshal(originTcData)
         fmt.Println(string(tcJson)) 
 
+        mutatedTcArray = append(mutatedTcArray, originTcData)
 
-        var mTcData testcase.TestCaseDataInfo
+        // here to start the mutation
+        mutatedTcArray = append(mutatedTcArray, MutateSetRequestHeader(tcJson))
+        mutatedTcArray = append(mutatedTcArray, MutateAddRequestHeader(tcJson))
 
-        json.Unmarshal(tcJson, &mTcData)
-        fmt.Println(mTcData)
-
-        mTcData.TestCase.AddRequestHeader("aaaa", "dbddsdsfa")
-
-        fmt.Println(mTcData)
-
-        mutatedTcArray = append(mutatedTcArray, mTcData)
+        i := 0
+        for k, _ := range originTcData.TestCase.ReqHeaders() {
+            mutatedTcArray = append(mutatedTcArray, MutateDelRequestHeader(tcJson, k, i))
+            i = i + 1
+        }
 
         break
     }
+    // fmt.Println("\nmutatedTcArray: ", mutatedTcArray)
 
     return mutatedTcArray
 }
 
 
+
+
+func MutateSetRequestHeader (tcJson []byte) testcase.TestCaseDataInfo {
+    var mTcData testcase.TestCaseDataInfo
+    json.Unmarshal(tcJson, &mTcData)
+
+    originTcName := mTcData.TcName()
+    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-" + fmt.Sprint(1))
+    mTcData.TestCase.SetRequestHeader("aaaa", "dbddsdsfa")
+
+    return mTcData
+}
+
+
+func MutateAddRequestHeader (tcJson []byte) testcase.TestCaseDataInfo {
+    var mTcData testcase.TestCaseDataInfo
+    json.Unmarshal(tcJson, &mTcData)
+
+    originTcName := mTcData.TcName()
+    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-" + fmt.Sprint(2))
+    mTcData.TestCase.AddRequestHeader("aaaakk", "dbddsdsfa")
+
+    return mTcData
+}
+
+
+func MutateDelRequestHeader (tcJson []byte, k string, i int) testcase.TestCaseDataInfo {
+    var mTcData testcase.TestCaseDataInfo
+    json.Unmarshal(tcJson, &mTcData)
+
+    originTcName := mTcData.TcName()
+    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-Del-" + fmt.Sprint(i))
+    mTcData.TestCase.DelRequestHeader(k)
+
+    return mTcData
+}
 
 
 

@@ -33,11 +33,12 @@ func Dispatch(ch chan int, pStart_time time.Time, options map[string]string) {
     if options["ifScenario"] == "" {
         if options["ifMutation"] != "" {
             originMutationTcArray := GetOriginMutationTcArray(options)
-            Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, originMutationTcArray)
+            // Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, originMutationTcArray)
 
-            fmt.Println("originMutationTcArray: ", originMutationTcArray)
+            fmt.Println("\noriginMutationTcArray: ", originMutationTcArray)
             // to mutate 
             mutatedTcArray := fuzz.MutateTcArray(originMutationTcArray)
+            fmt.Println("\nmutatedTcArray: ", mutatedTcArray)
             Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, mutatedTcArray)
         }
 
