@@ -104,7 +104,11 @@ func (tc TestCase) SetRequestPath (newValue string) {
 // request header
 func (tc TestCase) SetRequestHeader (key string, newValue string) {
     for _, value := range tc {
-        value.Request.Headers[key] = newValue
+        // to check if the headers has the key
+        if _, ok := value.Request.Headers[key]; ok {
+            value.Request.Headers[key] = newValue
+        }
+        
     }
 }
 
@@ -123,7 +127,10 @@ func (tc TestCase) DelRequestHeader (key string) {
 // request query string
 func (tc TestCase) SetRequestQueryString (key string, newValue string) {
     for _, value := range tc {
-        value.Request.QueryString[key] = value
+        // to check if the QueryString has the key
+        if _, ok := value.Request.QueryString[key]; ok {
+            value.Request.QueryString[key] = newValue
+        }
     }
 }
 
@@ -146,6 +153,18 @@ func (tc TestCase) SetRequestPayload (key string, newValue string) {
     for _, value := range tc {
         value.Request.Payload[key] = newValue
     }
+}
+
+
+func (tc TestCase) UpdateTcName (newKey string) TestCase {
+    for _, v := range tc {
+        // mTc -> testcase.TestCase
+        mTc := TestCase{}
+
+        mTc[newKey] = v
+        tc = mTc
+    }
+    return tc
 }
 
 
