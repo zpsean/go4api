@@ -48,7 +48,7 @@ func main(){
     executor.Dispatch(ch, pStart, options)
 
     x := <-ch
-    fmt.Println("----- Finish Main -----\n")
+    fmt.Println("----- Finish Main -----")
 
     close(ch)
     // this exit code to be used for CI/CD
