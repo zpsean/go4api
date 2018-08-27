@@ -113,8 +113,11 @@ func (tc TestCase) SetRequestHeader (key string, newValue string) {
 }
 
 func (tc TestCase) AddRequestHeader (key string, newValue string) {
-    for _, value := range tc {
-        value.Request.Headers[key] = newValue
+    reqH := tc.ReqQueryString()
+    if len(reqH) > 0 {
+        for _, value := range tc {
+            value.Request.Headers[key] = newValue
+        }
     }
 }
 
@@ -135,8 +138,12 @@ func (tc TestCase) SetRequestQueryString (key string, newValue string) {
 }
 
 func (tc TestCase) AddRequestQueryString (key string, newValue string) {
-    for _, value := range tc {
-        value.Request.QueryString[key] = newValue
+    // check if tc has QueryString
+    reqQS := tc.ReqQueryString()
+    if len(reqQS) > 0 {
+        for _, value := range tc {
+            value.Request.QueryString[key] = newValue
+        }
     }
 }
 
@@ -242,7 +249,17 @@ func (tc TestCase) ReqHeaders() map[string]interface{} {
     return reqHeaders
 }
 
-func (tc TestCase) ReqQueryString() string {
+
+func (tc TestCase) ReqQueryString() map[string]interface{} {
+    var reqQueryString map[string]interface{}
+    for _, value := range tc {
+        reqQueryString = value.Request.QueryString
+    }
+    return reqQueryString
+}
+
+
+func (tc TestCase) ComposeReqQueryString() string {
     var reqQueryString string
     i := 0
     for _, value := range tc {
@@ -259,7 +276,7 @@ func (tc TestCase) ReqQueryString() string {
 }
 
 // to encode the query, also avoid the impact if string itself contains char '&'
-func (tc TestCase) ReqQueryStringEncode() string {
+func (tc TestCase) ComposeReqQueryStringEncode() string {
     var reqQueryStringEncoded string
     i := 0
     for _, value := range tc {
@@ -290,7 +307,7 @@ func (tc TestCase) UrlEncode(baseUrl string) string {
         urlStr = baseUrl + apiPath
     }
 
-    reqQueryStringEncoded := tc.ReqQueryStringEncode()
+    reqQueryStringEncoded := tc.ComposeReqQueryStringEncode()
 
     u, _ := url.Parse(urlStr)
     urlEncodedQry := u.Query().Encode()
@@ -317,7 +334,7 @@ func (tc TestCase) UrlRaw(baseUrl string) string {
         urlStr = baseUrl + apiPath
     }
 
-    reqQueryStringRaw := tc.ReqQueryString()
+    reqQueryStringRaw := tc.ComposeReqQueryString()
 
     u, _ := url.Parse(urlStr)
     urlQry := u.RawQuery
@@ -333,12 +350,20 @@ func (tc TestCase) UrlRaw(baseUrl string) string {
     return urlStr
 }
 
+
 func (tc TestCase) ReqPayload() map[string]interface{} {
     var reqPayload map[string]interface{}
     for _, value := range tc {
         reqPayload = value.Request.Payload
     }
     return reqPayload
+}
+
+
+func (tc TestCase) DelReqPayload (key string) {
+    for _, value := range tc {
+        delete(value.Request.Payload, key)
+    }
 }
 
 
