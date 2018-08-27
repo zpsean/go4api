@@ -77,7 +77,7 @@ func GetPairWiseValid(fuzzData FuzzData, PwLength int) {
         indexSlice = append(indexSlice, i)
     }
 
-    indexCombs := combinations(indexSlice, pwLen)
+    indexCombs := combinationsInt(indexSlice, pwLen)
     var indexPW [][]int
     combLen := 0
     for value := range indexCombs {
@@ -313,7 +313,7 @@ func GetPairWiseValid22(fuzzData FuzzData, PwLength int) {
     } else {
         pwLen = PwLength
     }
-    indexCombs := combinations(indexSlice, pwLen)
+    indexCombs := combinationsInt(indexSlice, pwLen)
     GetPairWise12(indexCombs, combins, PwLength)
 }
 
