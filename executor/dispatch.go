@@ -35,22 +35,22 @@ func Dispatch(ch chan int, pStart_time time.Time, options map[string]string) {
             originMutationTcArray := GetOriginMutationTcArray(options)
             // Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, originMutationTcArray)
 
-            fmt.Println("\noriginMutationTcArray: ", originMutationTcArray)
+            // fmt.Println("\noriginMutationTcArray: ", originMutationTcArray)
             // to mutate 
             mutatedTcArray := fuzz.MutateTcArray(originMutationTcArray)
-            fmt.Println("\nmutatedTcArray: ", mutatedTcArray)
+            // fmt.Println("\nmutatedTcArray: ", mutatedTcArray)
             Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, mutatedTcArray)
-        }
-
-        if options["ifFuzzTestFirst"] != "" {
+        } else if options["ifFuzzTestFirst"] != "" {
             fuzz.PrepFuzzTest(pStart_time, options)
 
             // GetFuzzTcArray(options)
             fuzzTcArray := GetFuzzTcArray(options)
             Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, fuzzTcArray)
+        } else {
+            tcArray := GetTcArray(options)
+            Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, tcArray)
         }
-        // tcArray := GetTcArray(options)
-        // Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, tcArray)
+        
     } else {
         RunScenario(ch, pStart_time, options, pStart, baseUrl, resultsDir)
         fmt.Println("--")

@@ -56,6 +56,8 @@ func HttpPost(urlStr string, apiMethod string, reqHeaders map[string]interface{}
     client := &http.Client{}
     //
     payload := reqBody
+    // fmt.Println("urlStr", urlStr)
+    // fmt.Println("payload", payload)
 
     reqest, err := http.NewRequest(apiMethod, urlStr, payload)
 
@@ -63,15 +65,14 @@ func HttpPost(urlStr string, apiMethod string, reqHeaders map[string]interface{}
     for key, value := range reqHeaders {
         reqest.Header.Add(key, fmt.Sprint(value))
     }
-    // fmt.Println("url", url)
-    // fmt.Println("payload", payload)
+    
     // fmt.Println("reqest.Header", reqest.Header)
 
     //response
     response, err := client.Do(reqest)
     if err != nil {
         panic(err)
-    }  
+    }
     defer response.Body.Close()
     body, _ := ioutil.ReadAll(response.Body)
     // fmt.Println(response.Header)

@@ -15,23 +15,16 @@ import (
     // "time"
     "fmt"
     // "path/filepath"
-    // "strings"
+    "strings"
     // "strconv"
     "reflect"
     "encoding/json"
-    "go4api/testcase"  
+    "go4api/testcase"
+    gjson "github.com/tidwall/gjson"
+    sjson "github.com/tidwall/sjson"
 )
 
 // mutation is to mutate the valid data to working api, see if mutated invalid data still can be handled by the api
-// func (tcData testcase.TestCaseDataInfo) MutateRequestMethod () {
-//     tcData.TestCase.SetRequestMethod("DELETE")
-
-// }
-
-// func (muTc testcase.TestCaseDataInfo) MutateRequestPath () {
-//     tcData.TestCase.SetRequestPath("/aa/bb/cc")
-// }
-
 // two ways to mutate the testcase:
 // Option 1: 
 // copy the underlying fields and values to another TestCaseDataInfo, with mutation(s)
@@ -53,12 +46,18 @@ import (
 //     Payload map[string]interface{}
 // }
 
+type PayloadPath struct {
+    FieldPath []string
+    CurrValue interface{}
+    FieldType string
+}
+
 func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase.TestCaseDataInfo {
     var mutatedTcArray []testcase.TestCaseDataInfo
 
     for _, originTcData := range originMutationTcArray {
         tcJson, _ := json.Marshal(originTcData)
-        fmt.Println("tcJson:", string(tcJson)) 
+        // fmt.Println("tcJson:", string(tcJson)) 
 
         mutatedTcArray = append(mutatedTcArray, originTcData)
 
@@ -95,17 +94,48 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
             i = i + 1
         }
 
-        // Payload
-        i = 0
-        for key, _ := range originTcData.TestCase.ReqPayload() {
-            mutatedTcArray = append(mutatedTcArray, MutateDelPayload(tcJson, key, i))
-            i = i + 1
+
+        // --------------------------------------------
+        // Payload, strategy, loop all node, mutate it (include remove)
+        //
+        payloadJson, _ := json.Marshal(originTcData.TestCase.ReqPayload())
+        // fmt.Println("->payloadJson: ", string(payloadJson)) 
+
+        for key, value := range originTcData.TestCase.ReqPayload() {
+            if key == "text" {
+                
+
+                // fmt.Println(" ---> to loop over the struct and display")
+                c := make(chan PayloadPath)
+
+                go func(c chan PayloadPath) {
+                    defer close(c)
+                    sturctFieldsMutation(c, []string{}, value)
+                }(c)
+
+                i := 0
+                for keyPath := range c {
+                    // fmt.Println("keyPath: ", keyPath)
+
+                    // get the value
+                    result := gjson.Get(string(payloadJson), key + "." + strings.Join(keyPath.FieldPath, "."))
+                    // fmt.Println("->result: ", result)
+
+                    // set the value
+                    payloadPath := key + "." + strings.Join(keyPath.FieldPath, ".")
+                    payloadFullPath := "TestCase.FuzzSoldtoCreate.Request.Payload" + "." + payloadPath
+
+                    // update the tcJson using the mutatedPayloadJson
+                    mutatedTcJson, _ := sjson.Set(string(tcJson), payloadFullPath, result.String() + "--------" + result.String())
+
+                    // println("mutatedTcJson: ", mutatedTcJson)
+                    i = i + 1
+                    mutatedTcArray = append(mutatedTcArray, MutatePayload ([]byte(mutatedTcJson), i))
+                }
+            }
         }
-
-
     }
-    // fmt.Println("\nmutatedTcArray: ", mutatedTcArray)
-
+    // fmt.Println("\nmutatedTcArray: ", mutatedTcArray
     return mutatedTcArray
 }
 
@@ -157,7 +187,6 @@ func MutateSetRequestQueryString (tcJson []byte, key string, value string, suffi
     originTcName := mTcData.TcName()
     mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-setq-" + suffix)
     mTcData.TestCase.SetRequestQueryString(key, value)
-    fmt.Println(mTcData.TestCase.ComposeReqQueryString())
 
     return mTcData
 }
@@ -169,9 +198,8 @@ func MutateAddRequestQueryString (tcJson []byte) testcase.TestCaseDataInfo {
 
     originTcName := mTcData.TcName()
     mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-addq-" + fmt.Sprint(2))
-    fmt.Println("\n", mTcData.TestCase.ComposeReqQueryString())
+
     mTcData.TestCase.AddRequestQueryString("aaaakk", "dbddsdsfa")
-    fmt.Println(mTcData.TestCase.ComposeReqQueryString())
 
     return mTcData
 }
@@ -183,32 +211,141 @@ func MutateDelRequestQueryString (tcJson []byte, k string, i int) testcase.TestC
 
     originTcName := mTcData.TcName()
     mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-Delq-" + fmt.Sprint(i))
-    fmt.Println("\n", mTcData.TestCase.ComposeReqQueryString(), k)
+
     mTcData.TestCase.DelRequestQueryString(k)
-    fmt.Println(mTcData.TestCase.ComposeReqQueryString())
 
     return mTcData
 }
 
 
 //
-func MutateDelPayload (tcJson []byte, k string, i int) testcase.TestCaseDataInfo {
+func MutatePayload (tcJson []byte, i int) testcase.TestCaseDataInfo {
     var mTcData testcase.TestCaseDataInfo
     json.Unmarshal(tcJson, &mTcData)
 
     originTcName := mTcData.TcName()
-    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-Delp-" + fmt.Sprint(i))
+    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-P-" + fmt.Sprint(i))
 
-    fmt.Println("\n", mTcData.TestCase.ReqPayload(), k)
-    mTcData.TestCase.DelReqPayload(k)
-    fmt.Println(mTcData.TestCase.ReqPayload())
+    // mTcData.TestCase[mTcData.TcName()].Request.Payload = payloadJson
 
     return mTcData
 }
 
 
+func sturctFieldsDisplay(value interface{}) {
+    switch reflect.TypeOf(value).Kind() {
+        case reflect.String:
+            fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
+        case reflect.Int32:
+            fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
+        case reflect.Map: {
+            // fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
+            for key2, value2 := range reflect.ValueOf(value).Interface().(map[string]interface{}) {
+                // fmt.Println("key2, value2: ", key2, reflect.TypeOf(value2))
+                switch reflect.TypeOf(value2).Kind() {
+                    case reflect.String:
+                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                    case reflect.Int32:
+                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                    case reflect.Map:
+                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                        sturctFieldsDisplay(value2)
+                    case reflect.Array:
+                        // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
+                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                        sturctFieldsDisplay(value2)
+                    case reflect.Slice:
+                        // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
+                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                        sturctFieldsDisplay(value2)
+                }
+            }     
+        }
+        case reflect.Array, reflect.Slice: {
+            // fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
+            for key2, value2 := range reflect.ValueOf(value).Interface().([]interface{}) {
+                // fmt.Println("key2, value2: ", key2, reflect.TypeOf(value2))
+                switch reflect.TypeOf(value2).Kind() {
+                    case reflect.String:
+                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                    case reflect.Int32:
+                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                    case reflect.Map:
+                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                        sturctFieldsDisplay(value2)
+                    case reflect.Array:
+                        // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
+                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                        sturctFieldsDisplay(value2)
+                    case reflect.Slice:
+                        // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
+                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                        sturctFieldsDisplay(value2)
+                }
+            }  
+        }
+    }
+}
 
 
+func sturctFieldsMutation(c chan PayloadPath, subPath []string, value interface{}) {
+    switch reflect.TypeOf(value).Kind() {
+        case reflect.Map: {
+            // fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
+            for key2, value2 := range reflect.ValueOf(value).Interface().(map[string]interface{}) {
+                // fmt.Println("key2, value2: ", key2, reflect.TypeOf(value2))
+                switch reflect.TypeOf(value2).Kind() {
+                    case reflect.String, reflect.Int, reflect.Float64:
+                        subPathNew := append(subPath, key2)
+                        output := make([]string, len(subPathNew))
+                        copy(output, subPathNew)
 
+                        payloadPath := PayloadPath{output, value2, reflect.TypeOf(value2).Kind().String()}
+                        c <- payloadPath
+                    case reflect.Map:
+                        subPathNew := append(subPath, key2)
+                        sturctFieldsMutation(c, subPathNew, value2)
+                    case reflect.Array, reflect.Slice:
+                        // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
+                        for _, v := range reflect.ValueOf(value2).Interface().([]interface{}) {
+                            switch reflect.TypeOf(v).Kind() {
+                                case reflect.Array, reflect.Slice, reflect.Map:
+                                    subPathNew := append(subPath, fmt.Sprint(key2))
+                                    sturctFieldsMutation(c, subPathNew, value2)
+                            }
+                            break
+                        }
+                }
+            }     
+        }
+        case reflect.Array, reflect.Slice: {
+            // fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
+            for key2, value2 := range reflect.ValueOf(value).Interface().([]interface{}) {
+                // fmt.Println("key2, value2: ", key2, reflect.TypeOf(value2))
+                switch reflect.TypeOf(value2).Kind() {
+                    case reflect.String, reflect.Int, reflect.Float64:
+                        subPathNew := append(subPath, fmt.Sprint(key2))
+                        output := make([]string, len(subPathNew))
+                        copy(output, subPathNew)
 
+                        payloadPath := PayloadPath{output, value2, reflect.TypeOf(value2).Kind().String()}
+                        c <- payloadPath
+                    case reflect.Map:
+                        subPathNew := append(subPath, fmt.Sprint(key2))
+                        sturctFieldsMutation(c, subPathNew, value2)
+                    case reflect.Array, reflect.Slice:
+                        // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
+                        for _, v := range reflect.ValueOf(value2).Interface().([]interface{}) {
+                            switch reflect.TypeOf(v).Kind() {
+                                case reflect.Array, reflect.Slice, reflect.Map:
+                                    subPathNew := append(subPath, fmt.Sprint(key2))
+                                    sturctFieldsMutation(c, subPathNew, value2)
+                            }
+                        }
+                        break
+                }
+            } 
+        }
+    }
+}
 
