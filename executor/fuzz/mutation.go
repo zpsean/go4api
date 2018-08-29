@@ -53,6 +53,15 @@ type PayloadInfo struct {
     FieldSubType string  // like ip/email/phone/etc.
 }
 
+
+type MutationDetails struct {
+    FieldPath []string
+    CurrValue interface{}
+    FieldType string // the json supported types
+    FieldSubType string  // like ip/email/phone/etc.
+    MutatedValues []interface{}
+}
+
 func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase.TestCaseDataInfo {
     var mutatedTcArray []testcase.TestCaseDataInfo
 
@@ -64,93 +73,173 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
 
         // here to start the mutation
         // headers
-        mutatedTcArray = append(mutatedTcArray, MutateSetRequestHeader(tcJson))
-        mutatedTcArray = append(mutatedTcArray, MutateAddRequestHeader(tcJson))
-
-        i := 0
-        for k, _ := range originTcData.TestCase.ReqHeaders() {
-            mutatedTcArray = append(mutatedTcArray, MutateDelRequestHeader(tcJson, k, i))
-            i = i + 1
-        }
+        // mutatedTcArrayH := MutateRequestRequestHeader(originTcData, tcJson)
+        
 
         // querystring
-        i = 0
-        for key, value := range originTcData.TestCase.ReqQueryString() {
-            fmt.Println(reflect.TypeOf(value))
-            // if value match number mode
-            mutatedTcArray = append(mutatedTcArray, MutateSetRequestQueryString(tcJson, key, fmt.Sprint(-1), key + fmt.Sprint(i)))
-            i = i + 1
-            mutatedTcArray = append(mutatedTcArray, MutateSetRequestQueryString(tcJson, key, fmt.Sprint(0), key + fmt.Sprint(i)))
-            i = i + 1
-            mutatedTcArray = append(mutatedTcArray, MutateSetRequestQueryString(tcJson, key, fmt.Sprint(10000), key + fmt.Sprint(i)))
-            i = i + 1
-        }
-
-
-        mutatedTcArray = append(mutatedTcArray, MutateAddRequestQueryString(tcJson))
-
-        i = 0
-        for key, _ := range originTcData.TestCase.ReqQueryString() {
-            mutatedTcArray = append(mutatedTcArray, MutateDelRequestQueryString(tcJson, key, i))
-            i = i + 1
-        }
+        // mutatedTcArrayQS := MutateRequestQueryString(originTcData, tcJson)
+        
 
         // --------------------------------------------
-        // Payload, strategy, loop all node, mutate it (include remove)
+        // Payload, loop all node, mutate it (include remove)
         //
         // payloadJson, _ := json.Marshal(originTcData.TestCase.ReqPayload())
         // fmt.Println("->payloadJson: ", string(payloadJson)) 
 
-        for key, value := range originTcData.TestCase.ReqPayload() {
-            if key == "text" {
-                // to loop over the struct
-                c := make(chan PayloadInfo)
+        // mutatedTcArrayPL := MutateRequestPayload(originTcData, tcJson)
 
-                go func(c chan PayloadInfo) {
-                    defer close(c)
-                    sturctFieldsMutation(c, []string{}, value)
-                }(c)
-
-                i := 0
-                for payloadInfo := range c {
-                    // set the value
-                    payloadPath := key + "." + strings.Join(payloadInfo.FieldPath, ".")
-                    payloadFullPath := "TestCase." + originTcData.TcName() + ".Request.Payload" + "." + payloadPath
-
-                    // mutate the value based on rules
-                    // (1). get values 
-                    mType := payloadInfo.DetermineMutationType()
-                    
-                    mutatedValues := payloadInfo.CallRules(mType)
-                    // fmt.Println("mutatedValues: ", mutatedValues, payloadFullPath, i)
-                    // (2). remove node
-
-                    for _, mutatedValue := range mutatedValues {
-                        i = i + 1
-                        mutatedTcJson, _ := sjson.Set(string(tcJson), payloadFullPath, mutatedValue)
-
-                        mutationInfo := fmt.Sprint(payloadInfo) + "," + fmt.Sprint(payloadInfo.CurrValue) + ", `" + fmt.Sprint(mutatedValue) + "`"
-                        mutatedTcArray = append(mutatedTcArray, MutatePayload([]byte(mutatedTcJson), mutationInfo, "1-" + fmt.Sprint(i)))
-                    }
-                }
-            }
-        }
     }
     // fmt.Println("\nmutatedTcArray: ", mutatedTcArray
     return mutatedTcArray
 }
 
+// RequestQueryString
+func MutateRequestQueryString (originTcData testcase.TestCaseDataInfo, tcJson []byte) []testcase.TestCaseDataInfo {
+    var mutatedTcArray []testcase.TestCaseDataInfo
 
+    i := 0
+    for key, value := range originTcData.TestCase.ReqQueryString() {
+        // if value match number mode
+        mutationDetails := MutationDetails{[]string{}, value, reflect.TypeOf(value).Kind().String(), "", []interface{}{}}
+        mType := mutationDetails.DetermineMutationType()
+        mutatedValues := mutationDetails.CallRules(mType)
 
+        // loogp and mutate the value, set new value to key
+        for _, mutatedValue := range mutatedValues {
+            i = i + 1
+            mutationInfo := fmt.Sprint(mutationDetails) + "," + fmt.Sprint(mutationDetails.CurrValue) + ", `" + fmt.Sprint(mutatedValue) + "`"
 
+            mTc := MutateSetRequestQueryString(tcJson, mutationInfo, key, mutatedValue.(string), key + fmt.Sprint(i))
+            mutatedTcArray = append(mutatedTcArray, mTc)
+        }
 
-func MutateSetRequestHeader (tcJson []byte) testcase.TestCaseDataInfo {
+        
+        // del key
+        mTc := MutateDelRequestQueryString(tcJson, key, i)
+        mutatedTcArray = append(mutatedTcArray, mTc)
+        i = i + 1
+    }
+
+    // add new key
+    // get rand key, get rand value, then Add()
+    // mTc := MutateAddRequestQueryString(tcJson, mutationInfo, key, mutatedValue.(string), key + fmt.Sprint(i))
+    // mutatedTcArray = append(mutatedTcArray, mTc)
+    // mutatedTcArray = append(mutatedTcArray, MutateAddRequestQueryString(tcJson))
+
+    // remove all querystring?
+    // qSFullPath := "TestCase." + originTcData.TcName() + ".Request." + "QueryString"
+    // mutatedTcJson, _ := sjson.Del(string(tcJson), qSFullPath)
+    // mTc := MutateDelRequestQueryString([]byte(mutatedTcJson), mutationInfo, "1-" + fmt.Sprint(i))
+
+    return mutatedTcArray
+}
+
+// RequestHeader
+func MutateRequestRequestHeader (originTcData testcase.TestCaseDataInfo, tcJson []byte) []testcase.TestCaseDataInfo {
+    var mutatedTcArray []testcase.TestCaseDataInfo
+
+    i := 0
+    for key, value := range originTcData.TestCase.ReqHeaders() {
+        // mutatedTcArray = append(mutatedTcArray, MutateDelRequestHeader(tcJson, k, i))
+        // i = i + 1
+
+       // if value match number mode
+        mutationDetails := MutationDetails{[]string{}, value, reflect.TypeOf(value).Kind().String(), "", []interface{}{}}
+        mType := mutationDetails.DetermineMutationType()
+        mutatedValues := mutationDetails.CallRules(mType)
+
+        // loogp and mutate the value, set new value to key
+        for _, mutatedValue := range mutatedValues {
+            i = i + 1
+            mutationInfo := fmt.Sprint(mutationDetails) + "," + fmt.Sprint(mutationDetails.CurrValue) + ", `" + fmt.Sprint(mutatedValue) + "`"
+
+            mTc := MutateSetRequestHeader(tcJson, mutationInfo, key, mutatedValue.(string), key + fmt.Sprint(i))
+            mutatedTcArray = append(mutatedTcArray, mTc)
+        }
+
+        // del key
+        mTc := MutateDelRequestHeader(tcJson, key, i)
+        mutatedTcArray = append(mutatedTcArray, mTc)
+        i = i + 1
+    }
+
+    // add new key
+    // get rand key, get rand value, then Add()
+
+    // remove all headers?
+    // qSFullPath := "TestCase." + originTcData.TcName() + ".Request." + "QueryString"
+    // mutatedTcJson, _ := sjson.Del(string(tcJson), qSFullPath)
+    // mTc := MutateDelRequestQueryString([]byte(mutatedTcJson), mutationInfo, "1-" + fmt.Sprint(i))
+
+    return mutatedTcArray
+}
+
+// MutateRequestPayload
+func MutateRequestPayload (originTcData testcase.TestCaseDataInfo, tcJson []byte) []testcase.TestCaseDataInfo {
+    var mutatedTcArray []testcase.TestCaseDataInfo
+
+    i := 0
+    for key, value := range originTcData.TestCase.ReqPayload() {
+        if key == "text" {
+            // to loop over the struct
+            c := make(chan MutationDetails)
+
+            go func(c chan MutationDetails) {
+                defer close(c)
+                sturctFieldsMutation(c, []string{}, value)
+            }(c)
+
+            for mutationDetails := range c {
+                // set the value
+                payloadPath := key + "." + strings.Join(mutationDetails.FieldPath, ".")
+                payloadFullPath := "TestCase." + originTcData.TcName() + ".Request.Payload" + "." + payloadPath
+
+                // mutate the value based on rules
+                // (1). get values 
+                mType := mutationDetails.DetermineMutationType()
+                
+                mutatedValues := mutationDetails.CallRules(mType)
+                // fmt.Println("mutatedValues: ", mutatedValues, payloadFullPath, i)
+                // (2). remove node
+
+                for _, mutatedValue := range mutatedValues {
+                    i = i + 1
+                    mutatedTcJson, _ := sjson.Set(string(tcJson), payloadFullPath, mutatedValue)
+
+                    mutationInfo := fmt.Sprint(mutationDetails) + "," + fmt.Sprint(mutationDetails.CurrValue) + ", `" + fmt.Sprint(mutatedValue) + "`"
+
+                    mTc := MutateSetRequestPayload([]byte(mutatedTcJson), mutationInfo, "1-" + fmt.Sprint(i))
+                    mutatedTcArray = append(mutatedTcArray, mTc)
+                }
+
+                // add new node
+                // del node
+                // del payload
+            }
+        }
+    }
+
+    // add new key
+    // get rand key, get rand value, then Add()
+
+    // remove all headers?
+    // qSFullPath := "TestCase." + originTcData.TcName() + ".Request." + "QueryString"
+    // mutatedTcJson, _ := sjson.Del(string(tcJson), qSFullPath)
+    // mTc := MutateDelRequestQueryString([]byte(mutatedTcJson), mutationInfo, "1-" + fmt.Sprint(i))
+
+    return mutatedTcArray
+}
+
+//
+func MutateSetRequestHeader (tcJson []byte, mutationInfo interface{}, key string, value string, suffix string) testcase.TestCaseDataInfo {
     var mTcData testcase.TestCaseDataInfo
     json.Unmarshal(tcJson, &mTcData)
 
     originTcName := mTcData.TcName()
     mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-seth-" + fmt.Sprint(1))
     mTcData.TestCase.SetRequestHeader("aaaa", "dbddsdsfa")
+
+    mTcData.MutationInfo = mutationInfo
 
     return mTcData
 }
@@ -182,13 +271,15 @@ func MutateDelRequestHeader (tcJson []byte, k string, i int) testcase.TestCaseDa
 
 
 //
-func MutateSetRequestQueryString (tcJson []byte, key string, value string, suffix string) testcase.TestCaseDataInfo {
+func MutateSetRequestQueryString (tcJson []byte, mutationInfo interface{}, key string, value string, suffix string) testcase.TestCaseDataInfo {
     var mTcData testcase.TestCaseDataInfo
     json.Unmarshal(tcJson, &mTcData)
 
     originTcName := mTcData.TcName()
     mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + "-M-setq-" + suffix)
     mTcData.TestCase.SetRequestQueryString(key, value)
+
+    mTcData.MutationInfo = mutationInfo
 
     return mTcData
 }
@@ -221,7 +312,7 @@ func MutateDelRequestQueryString (tcJson []byte, k string, i int) testcase.TestC
 
 
 //
-func MutatePayload (tcJson []byte, mutationInfo interface{}, suffix string) testcase.TestCaseDataInfo {
+func MutateSetRequestPayload (tcJson []byte, mutationInfo interface{}, suffix string) testcase.TestCaseDataInfo {
     var mTcData testcase.TestCaseDataInfo
     json.Unmarshal(tcJson, &mTcData)
 
@@ -292,7 +383,7 @@ func sturctFieldsDisplay(value interface{}) {
 }
 
 
-func sturctFieldsMutation(c chan PayloadInfo, subPath []string, value interface{}) {
+func sturctFieldsMutation(c chan MutationDetails, subPath []string, value interface{}) {
     switch reflect.TypeOf(value).Kind() {
         case reflect.Map: {
             // fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
@@ -304,8 +395,8 @@ func sturctFieldsMutation(c chan PayloadInfo, subPath []string, value interface{
                         output := make([]string, len(subPathNew))
                         copy(output, subPathNew)
 
-                        payloadPath := PayloadInfo{output, value2, reflect.TypeOf(value2).Kind().String(), ""}
-                        c <- payloadPath
+                        mtD := MutationDetails{output, value2, reflect.TypeOf(value2).Kind().String(), "", []interface{}{}}
+                        c <- mtD
                     case reflect.Map:
                         subPathNew := append(subPath, key2)
                         sturctFieldsMutation(c, subPathNew, value2)
@@ -332,8 +423,8 @@ func sturctFieldsMutation(c chan PayloadInfo, subPath []string, value interface{
                         output := make([]string, len(subPathNew))
                         copy(output, subPathNew)
 
-                        payloadPath := PayloadInfo{output, value2, reflect.TypeOf(value2).Kind().String(), ""}
-                        c <- payloadPath
+                        mtD := MutationDetails{output, value2, reflect.TypeOf(value2).Kind().String(), "", []interface{}{}}
+                        c <- mtD
                     case reflect.Map:
                         subPathNew := append(subPath, fmt.Sprint(key2))
                         sturctFieldsMutation(c, subPathNew, value2)
