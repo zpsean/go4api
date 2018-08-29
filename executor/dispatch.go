@@ -40,7 +40,7 @@ func Dispatch(ch chan int, pStart_time time.Time, options map[string]string) {
             mutatedTcArray := fuzz.MutateTcArray(originMutationTcArray)
             // fmt.Println("\nmutatedTcArray: ", mutatedTcArray)
             Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, mutatedTcArray)
-        } else if options["ifFuzzTestFirst"] != "" {
+        } else if options["ifFuzzTest"] != "" {
             fuzz.PrepFuzzTest(pStart_time, options)
 
             // GetFuzzTcArray(options)
