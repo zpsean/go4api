@@ -136,17 +136,6 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
                         mutationInfo := fmt.Sprint(keyPath) + "," + fmt.Sprint(keyPath.CurrValue) + ", `" + fmt.Sprint(mutatedValue) + "`"
                         mutatedTcArray = append(mutatedTcArray, MutatePayload([]byte(mutatedTcJson), mutationInfo, "1-" + fmt.Sprint(i)))
                     }
-
-                    // (1) -> empty ("")
-                    // (2) -> blank (" ")
-                    // (3) -> prefix blank (" " + previousValue)
-                    // (4) -> suffix blank (previousValue + " ")
-                    // (5) -> mid blank (previousValue[0:2] + " " + previousValue[2:])
-                    // (6) -> only one char (previousValue[0])
-                    // (7) -> longlong string (strings.Repeat(previousValue, 50)
-                    // (8) -> special char(s) (~!@#$%^&*()_+{}[]<>?)
-                    // (9) -> null
-                    // (10) -> change type (i.e. to int/float64/...)
                 }
             }
         }
@@ -161,20 +150,7 @@ func MutateFunc(fieldPath []string, currValue interface{}, fieldType string, fie
 
     // if fieldType && fieldSubType
 
-    mutatedValue := ""
-    mutatedValues = append(mutatedValues, mutatedValue)
-
-    mutatedValue = " "
-    mutatedValues = append(mutatedValues, mutatedValue)
-
-    mutatedValue = " " + fmt.Sprint(currValue)
-    mutatedValues = append(mutatedValues, mutatedValue)
-
-    mutatedValue = fmt.Sprint(currValue) + " "
-    mutatedValues = append(mutatedValues, mutatedValue)
-
-    mutatedValue = fmt.Sprint(currValue)[0:2] + " " + fmt.Sprint(currValue)[2:]
-    mutatedValues = append(mutatedValues, mutatedValue)
+    mutatedValues = MutateChar(currValue, fieldType, fieldSubType)
 
     return mutatedValues
 }

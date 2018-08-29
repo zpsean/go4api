@@ -13,7 +13,7 @@ package fuzz
 import (                                                                                                                                             
     // "os"
     // "time"
-    // "fmt"
+    "fmt"
     // "path/filepath"
     // "strings"
     // "strconv"
@@ -123,6 +123,27 @@ import (
 // (3) -> remove key/value (one each time)
 // (4) -> remove key/value (all)
 
+
+func MutateChar(currValue interface{}, fieldType string, fieldSubType string) []interface{} {
+    var mutatedValues []interface{}
+
+    mutatedValue := ""
+    mutatedValues = append(mutatedValues, mutatedValue)
+
+    mutatedValue = " "
+    mutatedValues = append(mutatedValues, mutatedValue)
+
+    mutatedValue = " " + fmt.Sprint(currValue)
+    mutatedValues = append(mutatedValues, mutatedValue)
+
+    mutatedValue = fmt.Sprint(currValue) + " "
+    mutatedValues = append(mutatedValues, mutatedValue)
+
+    mutatedValue = fmt.Sprint(currValue)[0:2] + " " + fmt.Sprint(currValue)[2:]
+    mutatedValues = append(mutatedValues, mutatedValue)
+
+    return mutatedValues
+}
 
 
 // to get the fuzz data table files with naming fuzzcase_fuzz_dt_valid.csv / fuzzcase_fuzz_dt_invalid.csv
