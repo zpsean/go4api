@@ -12,7 +12,7 @@ package fuzz
 
 import (
     // "fmt"
-    "reflect"
+    // "reflect"
     "math/rand"
     "time"
 )
@@ -82,26 +82,3 @@ func RandNums(n int) string {
     }
     return string(b)
 }
-
-
-func CallRands(name string, params ... interface{}) string {
-    funcs := map[string]interface{} {
-        "RandNums": RandNums,
-        "RandStringRunes": RandStringRunes,
-        "RandStringCNRunes": RandStringCNRunes,
-    }
-
-    f := reflect.ValueOf(funcs[name])
-    // if len(params) != f.Type().NumIn() {
-    //     err: = errors.New("The number of params is not adapted.")
-    //     return
-    // }
-    in := make([]reflect.Value, len(params))
-    for k, param := range params {
-        in[k] = reflect.ValueOf(param)
-    }
-    result := f.Call(in)
-
-    return result[0].Interface().(string)
-}
-

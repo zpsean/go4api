@@ -134,6 +134,9 @@ func RulesMapping(key string) []interface{} {
         "MutateCharAlphaNumeric": []interface{}{MutateCharR1, MutateCharR2, MutateCharR3},
         "MutateNumeric": []interface{}{MutateCharR1, MutateCharR2, MutateCharR3},
         "MutateBool": []interface{}{MutateCharR1, MutateCharR2, MutateCharR3},
+
+        "FuzzCharValid": []interface{}{FuzzCharValidR1, FuzzCharValidR2},
+        "FuzzCharInvalid": []interface{}{FuzzCharInvalidR1},
     }
 
     return RulesMapping[key]
@@ -173,30 +176,35 @@ func (payloadInfo PayloadInfo) CallRules(key string) []interface{} {
 //----------------------------------------------
 //------- Below are the rule functions ---------
 //----------------------------------------------
+// empty
 func MutateCharR1(currValue interface{}, fieldType string, fieldSubType string) interface{} {
     mutatedValue := ""
 
     return mutatedValue
 }
 
+// blank
 func MutateCharR2(currValue interface{}, fieldType string, fieldSubType string) interface{} {
     mutatedValue := " "
 
     return mutatedValue
 }
 
+// prefix blank
 func MutateCharR3(currValue interface{}, fieldType string, fieldSubType string) interface{} {
     mutatedValue := " " + fmt.Sprint(currValue)
 
     return mutatedValue
 }
 
+// suffix blank
 func MutateCharR4(currValue interface{}, fieldType string, fieldSubType string) interface{} {
     mutatedValue := fmt.Sprint(currValue) + " "
 
     return mutatedValue
 }
 
+// mid blank
 func MutateCharR5(currValue interface{}, fieldType string, fieldSubType string) interface{} {
     mutatedValue := fmt.Sprint(currValue)[0:2] + " " + fmt.Sprint(currValue)[2:]
 
@@ -205,51 +213,64 @@ func MutateCharR5(currValue interface{}, fieldType string, fieldSubType string) 
 
 
 
+
+// -------- for the fuzz data based on the field definition -----
 // to get the fuzz data table files with naming fuzzcase_fuzz_dt_valid.csv / fuzzcase_fuzz_dt_invalid.csv
-func getChar(fieldName string, fieldType string, fieldMin int, fieldMax int) (map[string][]interface{}, map[string][]interface{}) {
-    validValueMap := make(map[string][]interface{})
-    invalidValueMap := make(map[string][]interface{})
-    // get the Boundary (valid, invalid), Equivalence, etc.
-    var validLenList []int
-    var invalidLenList []int
-    //
-    validLenList = append(validLenList, fieldMin)
-    validLenList = append(validLenList, fieldMin + 1)
 
-    validLenList = append(validLenList, fieldMax)
-    if fieldMax - 1 > fieldMin {
-        validLenList = append(validLenList, fieldMax - 1)
-    }
-    //
-    if fieldMin - 1 > 0 {
-       invalidLenList = append(invalidLenList, fieldMin - 1) 
-    }
-    invalidLenList = append(invalidLenList, fieldMax + 1) 
-    //
+func (fieldDefinition FieldDefinition) CallFuzzRules(key string) []interface{} {
+    var values []interface{}
 
-    fieldRands := []string{"RandStringRunes"} //, "RandStringCNRunes"}
-    //
-    for _, validLen := range validLenList {
-        for _, randType := range fieldRands {
-            // CallRands(randType, validLen)
-            validValue := CallRands(randType, validLen)
-            // fmt.Println("validLen, validValue: ", validLen, validValue)
+    for _, ruleFunc := range RulesMapping(key) {
+        f := reflect.ValueOf(ruleFunc)
+        //
+        in := make([]reflect.Value, 4)
+        in[0] = reflect.ValueOf(fieldDefinition.FieldName)
+        in[1] = reflect.ValueOf(fieldDefinition.FieldType)
+        in[2] = reflect.ValueOf(fieldDefinition.FieldMin)
+        in[3] = reflect.ValueOf(fieldDefinition.FieldMax)
+        //
+        result := f.Call(in)
 
-            validValueMap[fieldName] = append(validValueMap[fieldName], validValue)
-            // validValueMap[fieldName] = append(validValueMap[fieldName], fieldName + "a" + strconv.Itoa(i)) 
-        }        
-    }
-    //
-    for _, invalidLen := range invalidLenList {
-        for _, randType := range fieldRands {
-            invalidValue := CallRands(randType, invalidLen)
-            // fmt.Println("invalidLen, invalidValue: ", invalidLen, invalidValue)
-
-            invalidValueMap[fieldName] = append(invalidValueMap[fieldName], invalidValue)
-        }
+        // fmt.Println("result =>>>>: ", result[0])
+        values = append(values, result[0].Interface())
     }
 
-    return validValueMap, invalidValueMap
+    return values
+}
+
+// valid fieldMin, RandStringRunes
+func FuzzCharValidR1(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
+    value := RandStringRunes(fieldMin)
+
+    return value
+}
+
+func FuzzCharValidR2(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
+    // if fieldMin + 1 < fieldMax
+    value := RandStringRunes(fieldMin + 1)
+
+    return value
+}
+
+func FuzzCharValidR3(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
+    value := RandStringRunes(fieldMax)
+
+    return value
+}
+
+func FuzzCharValidR4(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
+    // if fieldMin < fieldMax - 1
+    value := RandStringRunes(fieldMax - 1)
+
+    return value
+}
+
+// invalid
+func FuzzCharInvalidR1(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
+    // if fieldMin < fieldMax - 1
+    value := RandStringRunes(fieldMax + 1)
+
+    return value
 }
 
 

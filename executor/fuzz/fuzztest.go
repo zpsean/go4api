@@ -29,6 +29,14 @@ type FuzzData struct {
     InvalidStatusCode int
 }
 
+type FieldDefinition struct {  
+    FieldName string
+    FieldType string
+    FieldSubType string
+    FieldMin int
+    FieldMax int
+}
+
 
 func PrepFuzzTest(pStart_time time.Time, options map[string]string) {
     fuzzFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".fuzz")
@@ -56,7 +64,7 @@ func PrepFuzzTest(pStart_time time.Time, options map[string]string) {
 func GenerateFuzzData(fuzzFile string) FuzzData {
     fuzzRowsByte := utils.GetContentFromFile(fuzzFile)
 
-    fuzzRows := strings.Split(string(fuzzRowsByte), "")
+    fuzzRows := strings.Split(string(fuzzRowsByte), "\n")
 
     var fuzzData FuzzData
     var validValueList []map[string][]interface{}
@@ -68,21 +76,23 @@ func GenerateFuzzData(fuzzFile string) FuzzData {
             invalidValueMap := make(map[string][]interface{})
 
             // fmt.Println("\nfuzzLine: ", fuzzLine)
+            fieldDefinition := parseLine(fuzzLine)
 
-            fieldName, fieldType, fieldMin, fieldMax := parseLine(fuzzLine)
-
-            switch strings.ToLower(fieldType) {
+            switch strings.ToLower(fieldDefinition.FieldType) {
                 case "char", "varchar", "string": {
                     fmt.Println("\n------ char -")
-                    validValueMap, invalidValueMap = getChar(fieldName, fieldType, fieldMin, fieldMax)
+                    validValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharValid")
+                    invalidValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharInvalid")
                 }
                 case "int", "int64": {
                     fmt.Println("\n------ int -")
-                    validValueMap, invalidValueMap = getInt(fieldName, fieldType, fieldMin, fieldMax)
+                    validValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharValid")
+                    invalidValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharInvalid")
                 }
                 default: {
                     fmt.Println("\n------ default -")
-                    validValueMap, invalidValueMap = getChar(fieldName, fieldType, fieldMin, fieldMax)
+                    validValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharValid")
+                    invalidValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharInvalid")
                 }
                 // case numeric
                 // case email
@@ -177,23 +187,25 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData FuzzData) {
 
 
 
-func parseLine(fuzzLine string) (string, string, int, int) {
-    var fieldName, fieldType string
-
+func parseLine(fuzzLine string) FieldDefinition {
+    var fieldDefinition FieldDefinition
 
     line := strings.Split(fuzzLine, ":")
 
-    fieldName = strings.TrimSpace(line[0])
+    fieldDefinition.FieldName = strings.TrimSpace(line[0])
 
     if strings.Index(line[1], "(") > 0 {
-        fieldType = strings.TrimSpace(line[1][0:strings.Index(line[1], "(")])
+        fieldDefinition.FieldType = strings.TrimSpace(line[1][0:strings.Index(line[1], "(")])
+    } else {
+        fieldDefinition.FieldType = "float64"
     }
 
-    fmt.Print("fieldName, fieldType: ", fieldName, fieldType)
+    fieldDefinition.FieldSubType = ""
+    fieldDefinition.FieldMin = 0
+    fieldDefinition.FieldMax = 20
 
-    return fieldName, fieldType, 0, 20
+    return fieldDefinition
 }
-
 
 
 
