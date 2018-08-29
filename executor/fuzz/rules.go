@@ -14,6 +14,7 @@ import (
     // "os"
     // "time"
     "fmt"
+    "reflect"
     // "path/filepath"
     // "strings"
     // "strconv"
@@ -124,26 +125,84 @@ import (
 // (4) -> remove key/value (all)
 
 
-func MutateChar(currValue interface{}, fieldType string, fieldSubType string) []interface{} {
+func RulesMapping(key string) []interface{} {
+    //
+    RulesMapping := map[string][]interface{} {
+        "MutateChar": []interface{}{MutateCharR1, MutateCharR2, MutateCharR3},
+        "MutateCharNumeric": []interface{}{MutateCharR1, MutateCharR2, MutateCharR3},
+        "MutateCharAlpha": []interface{}{MutateCharR1, MutateCharR2, MutateCharR3},
+        "MutateCharAlphaNumeric": []interface{}{MutateCharR1, MutateCharR2, MutateCharR3},
+        "MutateNumeric": []interface{}{MutateCharR1, MutateCharR2, MutateCharR3},
+        "MutateBool": []interface{}{MutateCharR1, MutateCharR2, MutateCharR3},
+    }
+
+    return RulesMapping[key]
+}
+
+
+func (payloadInfo PayloadInfo) DetermineMutationType() string {
+    var mType string
+    if payloadInfo.FieldType == "string" {
+        mType = "MutateChar"
+    }
+    
+    return mType
+}
+
+func (payloadInfo PayloadInfo) CallRules(key string) []interface{} {
     var mutatedValues []interface{}
 
-    mutatedValue := ""
-    mutatedValues = append(mutatedValues, mutatedValue)
+    for _, ruleFunc := range RulesMapping(key) {
+        f := reflect.ValueOf(ruleFunc)
+        //
+        in := make([]reflect.Value, 3)
+        in[0] = reflect.ValueOf(payloadInfo.CurrValue)
+        in[1] = reflect.ValueOf(payloadInfo.FieldType)
+        in[2] = reflect.ValueOf(payloadInfo.FieldSubType)
+        //
+        result := f.Call(in)
 
-    mutatedValue = " "
-    mutatedValues = append(mutatedValues, mutatedValue)
-
-    mutatedValue = " " + fmt.Sprint(currValue)
-    mutatedValues = append(mutatedValues, mutatedValue)
-
-    mutatedValue = fmt.Sprint(currValue) + " "
-    mutatedValues = append(mutatedValues, mutatedValue)
-
-    mutatedValue = fmt.Sprint(currValue)[0:2] + " " + fmt.Sprint(currValue)[2:]
-    mutatedValues = append(mutatedValues, mutatedValue)
+        // fmt.Println("result =>>>>: ", result[0])
+        mutatedValues = append(mutatedValues, result[0].Interface())
+    }
 
     return mutatedValues
 }
+
+
+//----------------------------------------------
+//------- Below are the rule functions ---------
+//----------------------------------------------
+func MutateCharR1(currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := ""
+
+    return mutatedValue
+}
+
+func MutateCharR2(currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := " "
+
+    return mutatedValue
+}
+
+func MutateCharR3(currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := " " + fmt.Sprint(currValue)
+
+    return mutatedValue
+}
+
+func MutateCharR4(currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := fmt.Sprint(currValue) + " "
+
+    return mutatedValue
+}
+
+func MutateCharR5(currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := fmt.Sprint(currValue)[0:2] + " " + fmt.Sprint(currValue)[2:]
+
+    return mutatedValue
+}
+
 
 
 // to get the fuzz data table files with naming fuzzcase_fuzz_dt_valid.csv / fuzzcase_fuzz_dt_invalid.csv

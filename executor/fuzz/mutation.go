@@ -95,7 +95,6 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
             i = i + 1
         }
 
-
         // --------------------------------------------
         // Payload, strategy, loop all node, mutate it (include remove)
         //
@@ -104,9 +103,7 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
 
         for key, value := range originTcData.TestCase.ReqPayload() {
             if key == "text" {
-                
-
-                // fmt.Println(" ---> to loop over the struct and display")
+                // to loop over the struct
                 c := make(chan PayloadInfo)
 
                 go func(c chan PayloadInfo) {
@@ -115,25 +112,24 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
                 }(c)
 
                 i := 0
-                for keyPath := range c {
-                    // fmt.Println("keyPath: ", keyPath)
-
-                    // get the value
-                    // result := gjson.Get(string(payloadJson), key + "." + strings.Join(keyPath.FieldPath, "."))
-
+                for payloadInfo := range c {
                     // set the value
-                    payloadPath := key + "." + strings.Join(keyPath.FieldPath, ".")
+                    payloadPath := key + "." + strings.Join(payloadInfo.FieldPath, ".")
                     payloadFullPath := "TestCase." + originTcData.TcName() + ".Request.Payload" + "." + payloadPath
 
                     // mutate the value based on rules
-                    // get values 
-                    mutatedValues := MutateFunc(keyPath.FieldPath, keyPath.CurrValue, keyPath.FieldType, keyPath.FieldSubType)
-                    // remove node
+                    // (1). get values 
+                    mType := payloadInfo.DetermineMutationType()
+                    
+                    mutatedValues := payloadInfo.CallRules(mType)
+                    // fmt.Println("mutatedValues: ", mutatedValues, payloadFullPath, i)
+                    // (2). remove node
 
                     for _, mutatedValue := range mutatedValues {
                         i = i + 1
                         mutatedTcJson, _ := sjson.Set(string(tcJson), payloadFullPath, mutatedValue)
-                        mutationInfo := fmt.Sprint(keyPath) + "," + fmt.Sprint(keyPath.CurrValue) + ", `" + fmt.Sprint(mutatedValue) + "`"
+
+                        mutationInfo := fmt.Sprint(payloadInfo) + "," + fmt.Sprint(payloadInfo.CurrValue) + ", `" + fmt.Sprint(mutatedValue) + "`"
                         mutatedTcArray = append(mutatedTcArray, MutatePayload([]byte(mutatedTcJson), mutationInfo, "1-" + fmt.Sprint(i)))
                     }
                 }
@@ -145,15 +141,7 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
 }
 
 
-func MutateFunc(fieldPath []string, currValue interface{}, fieldType string, fieldSubType string) []interface{} {
-    var mutatedValues []interface{}
 
-    // if fieldType && fieldSubType
-
-    mutatedValues = MutateChar(currValue, fieldType, fieldSubType)
-
-    return mutatedValues
-}
 
 
 func MutateSetRequestHeader (tcJson []byte) testcase.TestCaseDataInfo {
