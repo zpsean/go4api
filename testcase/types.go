@@ -19,6 +19,7 @@ type TestCaseDataInfo struct {
     JsonFilePath string
     CsvFile string
     CsvRow string
+    MutationInfo interface{}
 }
 
 // test case execution type, includes testdata
@@ -70,6 +71,7 @@ type TcReportResults struct {
     JsonFilePath string
     CsvFile string
     CsvRow string
+    MutationInfo interface{}
     TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
     ActualStatusCode int
     StartTime string
@@ -88,6 +90,7 @@ type TcConsoleResults struct {
     JsonFilePath string
     CsvFile string
     CsvRow string
+    MutationInfo interface{}
     TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
     ActualStatusCode int
     TestMessages string

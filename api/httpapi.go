@@ -151,10 +151,11 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
             out_len = length
         }
 
-        fmt.Printf("%-30s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
+        fmt.Printf("\n%-30s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
             tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
             tcReportResults.ActualStatusCode)
 
+        fmt.Println(tcReportResults.MutationInfo)
         fmt.Println(tcReportResults.TestMessages)
         fmt.Println(string(actualBody)[0:out_len], "...")
     } else {

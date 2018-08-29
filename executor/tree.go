@@ -15,6 +15,7 @@ import (
     "time"
     "fmt"
     "sync"
+    "strconv"
     "encoding/json"
     "go4api/testcase"
     "go4api/api"
@@ -236,7 +237,7 @@ func ScheduleNodes(node *tcNode, wg *sync.WaitGroup, options map[string]string, 
         pStart string, baseUrl string, resultsDir string) {
     //
     tick := 0
-    max := 50
+    max, _ := strconv.Atoi(options["concurrencyLimit"])
     //
     for _, n := range node.children {
         if priority == n.TestCaseExecutionInfo.Priority() && n.TestCaseExecutionInfo.TestResult == "Ready"{
