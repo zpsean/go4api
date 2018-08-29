@@ -143,25 +143,25 @@ func RulesMapping(key string) []interface{} {
 }
 
 
-func (payloadInfo PayloadInfo) DetermineMutationType() string {
+func (mtD MutationDetails) DetermineMutationType() string {
     var mType string
-    if payloadInfo.FieldType == "string" {
+    if mtD.FieldType == "string" {
         mType = "MutateChar"
     }
     
     return mType
 }
 
-func (payloadInfo PayloadInfo) CallRules(key string) []interface{} {
+func (mtD MutationDetails) CallRules(key string) []interface{} {
     var mutatedValues []interface{}
 
     for _, ruleFunc := range RulesMapping(key) {
         f := reflect.ValueOf(ruleFunc)
         //
         in := make([]reflect.Value, 3)
-        in[0] = reflect.ValueOf(payloadInfo.CurrValue)
-        in[1] = reflect.ValueOf(payloadInfo.FieldType)
-        in[2] = reflect.ValueOf(payloadInfo.FieldSubType)
+        in[0] = reflect.ValueOf(mtD.CurrValue)
+        in[1] = reflect.ValueOf(mtD.FieldType)
+        in[2] = reflect.ValueOf(mtD.FieldSubType)
         //
         result := f.Call(in)
 
@@ -274,19 +274,48 @@ func FuzzCharInvalidR1(fieldName string, fieldType string, fieldMin int, fieldMa
 }
 
 
-func getInt(fieldName string, fieldType string, fieldMin int, fieldMax int) (map[string][]interface{}, map[string][]interface{}) {
-    validValueMap := make(map[string][]interface{})
-    invalidValueMap := make(map[string][]interface{})
-    // get the Boundary (valid, invalid), Equivalence, etc.
-    validValueMap[fieldName] = append(validValueMap[fieldName], fieldMin)
-    validValueMap[fieldName] = append(validValueMap[fieldName], fieldMin + 1)
-    validValueMap[fieldName] = append(validValueMap[fieldName], fieldMax)
-    validValueMap[fieldName] = append(validValueMap[fieldName], fieldMax - 1)
-    //
-    invalidValueMap[fieldName] = append(invalidValueMap[fieldName], fieldMin - 1)
-    invalidValueMap[fieldName] = append(invalidValueMap[fieldName], fieldMax + 1)
-    //
+// int ---
+func FuzzNumValidR1(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
+    // if fieldMin < fieldMax - 1
+    value := fieldMin
 
-    return validValueMap, invalidValueMap
+    return value
 }
+
+func FuzzNumValidR2(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
+    // if fieldMin < fieldMax - 1
+    value := fieldMin + 1
+
+    return value
+}
+
+func FuzzNumValidR3(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
+    // if fieldMin < fieldMax - 1
+    value := fieldMax
+
+    return value
+}
+
+func FuzzNumValidR4(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
+    // if fieldMin < fieldMax - 1
+    value := fieldMax - 1
+
+    return value
+}
+
+func FuzzNumValidR5(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
+    // if fieldMin < fieldMax - 1
+    value := 0
+
+    return value
+}
+
+func FuzzNumValidR6(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
+    // if fieldMin < fieldMax - 1
+    value := -1
+
+    return value
+}
+
+
 

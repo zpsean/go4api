@@ -81,6 +81,8 @@ func GenerateFuzzData(fuzzFile string) FuzzData {
             switch strings.ToLower(fieldDefinition.FieldType) {
                 case "char", "varchar", "string": {
                     fmt.Println("\n------ char -")
+                    // fType := fieldDefinition.DetermineFuzzType()
+
                     validValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharValid")
                     invalidValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharInvalid")
                 }
@@ -183,7 +185,6 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData FuzzData) {
         i = i + 1  
     }
 }
-
 
 
 
