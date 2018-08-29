@@ -29,6 +29,7 @@ func GetOptions() map[string]string {
     ifScenario := flag.String("ifScenario", "", "if the target cases are for scenarios, which have data dependency")
     ifFuzzTest := flag.String("ifFuzzTest", "", "if to run the Fuzz test")
     ifMutation := flag.String("ifMutation", "", "if to run the Mutation test")
+    concurrency := flag.String("concurrencyLimit", "50", "concurrency limitation")
 
     //
     flag.Parse()
@@ -40,6 +41,7 @@ func GetOptions() map[string]string {
     options["ifScenario"] = *ifScenario
     options["ifFuzzTest"] = *ifFuzzTest
     options["ifMutation"] = *ifMutation
+    options["concurrencyLimit"] = *concurrency
 
     //
     return options
