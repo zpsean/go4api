@@ -152,7 +152,7 @@ func (mtD MutationDetails) DetermineMutationType() string {
     return mType
 }
 
-func (mtD MutationDetails) CallRules(key string) []interface{} {
+func (mtD MutationDetails) CallMutationRules(key string) []interface{} {
     var mutatedValues []interface{}
 
     for _, ruleFunc := range RulesMapping(key) {
