@@ -155,7 +155,11 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
             tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
             tcReportResults.ActualStatusCode)
 
-        fmt.Println(tcReportResults.MutationInfo)
+        if tcReportResults.MutationInfo != nil {
+            fmt.Println(tcReportResults.MutationInfo)
+        }
+        
+        // fmt.Println(tcReportResults.MutationInfo)
         fmt.Println(tcReportResults.TestMessages)
         fmt.Println(string(actualBody)[0:out_len], "...")
     } else {
@@ -177,9 +181,9 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
             tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
             tcReportResults.ActualStatusCode)
 
-        // if len(strings.TrimSpace(fmt.Sprint(tcReportResults.MutationInfo))) > 0 {
+        if tcReportResults.MutationInfo != nil {
             fmt.Println(tcReportResults.MutationInfo)
-        // }
+        }
     }
     
     // (6). write the channel to executor for scheduler and log

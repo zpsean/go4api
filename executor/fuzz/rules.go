@@ -16,7 +16,7 @@ import (
     "fmt"
     "reflect"
     // "path/filepath"
-    // "strings"
+    "strings"
     // "strconv"
     // "go4api/utils"  
 )
@@ -135,14 +135,16 @@ func RulesMapping(key string) []interface{} {
         "MutateNumeric": []interface{}{MutateCharR1, MutateCharR2, MutateCharR3},
         "MutateBool": []interface{}{MutateCharR1, MutateCharR2, MutateCharR3},
 
-        "FuzzCharValid": []interface{}{FuzzCharValidR1, FuzzCharValidR2},
+        "FuzzCharValid": []interface{}{FuzzCharValidR1, FuzzCharValidR2, FuzzCharValidR3},
         "FuzzCharInvalid": []interface{}{FuzzCharInvalidR1},
+        "FuzzCharNumericValid": []interface{}{FuzzCharValidR1, FuzzCharValidR2, FuzzCharValidR3},
+        "FuzzCharAlphaValid": []interface{}{FuzzCharValidR1, FuzzCharValidR2, FuzzCharValidR3},
+        
     }
 
     return RulesMapping[key]
 }
-
-
+//
 func (mtD MutationDetails) DetermineMutationType() string {
     var mType string
     if mtD.FieldType == "string" {
@@ -152,6 +154,7 @@ func (mtD MutationDetails) DetermineMutationType() string {
     return mType
 }
 
+// fuzz - mutation
 func (mtD MutationDetails) CallMutationRules(key string) []interface{} {
     var mutatedValues []interface{}
 
@@ -172,6 +175,49 @@ func (mtD MutationDetails) CallMutationRules(key string) []interface{} {
     return mutatedValues
 }
 
+// fuzz - random
+func (fD FieldDefinition) DetermineFuzzType() string {
+    var mType string
+
+    switch strings.ToLower(fD.FieldType) {
+        case "char":
+            switch strings.ToLower(fD.FieldSubType) {
+                case "numeric":
+                    mType = "FuzzCharNumericValid"
+                case "alpha":
+                    mType = "FuzzCharAlphaValid"
+                default: 
+                    mType = "FuzzCharValid"
+            }
+        case "int":
+            mType = "FuzzInt"
+        default:
+            fmt.Println("!! Error: No specific rules mapping matched")
+    }
+    
+    return mType
+}
+
+func (fieldDefinition FieldDefinition) CallFuzzRules(key string) []interface{} {
+    var values []interface{}
+
+    for _, ruleFunc := range RulesMapping(key) {
+        f := reflect.ValueOf(ruleFunc)
+        //
+        in := make([]reflect.Value, 4)
+        in[0] = reflect.ValueOf(fieldDefinition.FieldName)
+        in[1] = reflect.ValueOf(fieldDefinition.FieldType)
+        in[2] = reflect.ValueOf(fieldDefinition.FieldMin)
+        in[3] = reflect.ValueOf(fieldDefinition.FieldMax)
+        //
+        result := f.Call(in)
+
+        // fmt.Println("result =>>>>: ", result[0])
+        values = append(values, result[0].Interface())
+    }
+
+    return values
+}
 
 //----------------------------------------------
 //------- Below are the rule functions ---------
@@ -216,27 +262,6 @@ func MutateCharR5(currValue interface{}, fieldType string, fieldSubType string) 
 
 // -------- for the fuzz data based on the field definition -----
 // to get the fuzz data table files with naming fuzzcase_fuzz_dt_valid.csv / fuzzcase_fuzz_dt_invalid.csv
-
-func (fieldDefinition FieldDefinition) CallFuzzRules(key string) []interface{} {
-    var values []interface{}
-
-    for _, ruleFunc := range RulesMapping(key) {
-        f := reflect.ValueOf(ruleFunc)
-        //
-        in := make([]reflect.Value, 4)
-        in[0] = reflect.ValueOf(fieldDefinition.FieldName)
-        in[1] = reflect.ValueOf(fieldDefinition.FieldType)
-        in[2] = reflect.ValueOf(fieldDefinition.FieldMin)
-        in[3] = reflect.ValueOf(fieldDefinition.FieldMax)
-        //
-        result := f.Call(in)
-
-        // fmt.Println("result =>>>>: ", result[0])
-        values = append(values, result[0].Interface())
-    }
-
-    return values
-}
 
 // valid fieldMin, RandStringRunes
 func FuzzCharValidR1(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {

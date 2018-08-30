@@ -78,30 +78,11 @@ func GenerateFuzzData(fuzzFile string) FuzzData {
             // fmt.Println("\nfuzzLine: ", fuzzLine)
             fieldDefinition := parseLine(fuzzLine)
 
-            switch strings.ToLower(fieldDefinition.FieldType) {
-                case "char", "varchar", "string": {
-                    fmt.Println("\n------ char -")
-                    // fType := fieldDefinition.DetermineFuzzType()
-
-                    validValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharValid")
-                    invalidValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharInvalid")
-                }
-                case "int", "int64": {
-                    fmt.Println("\n------ int -")
-                    validValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharValid")
-                    invalidValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharInvalid")
-                }
-                default: {
-                    fmt.Println("\n------ default -")
-                    validValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharValid")
-                    invalidValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharInvalid")
-                }
-                // case numeric
-                // case email
-                // case float
-                // case list
-            }
-
+            fType := fieldDefinition.DetermineFuzzType()
+            // call the rules to get values
+            validValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules(fType)
+            invalidValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharInvalid")
+            // append to slice
             validValueList = append(validValueList, validValueMap)
             invalidValueList = append(invalidValueList, invalidValueMap)
         }
@@ -121,10 +102,7 @@ func GenerateFuzzData(fuzzFile string) FuzzData {
 
 
 func GenerateFuzzDataFiles(fuzzFile string, fuzzData FuzzData) {
-    // fmt.Println("validValueList: ", validValueList)
-    // fmt.Println("invalidValueList: ", invalidValueList)
-
-    // for valid data
+    // (1). for valid data ------------------------
     outputsFile := filepath.Join(filepath.Dir(fuzzFile), 
         strings.TrimRight(filepath.Base(fuzzFile), ".fuzz") + "_fuzz_dt_valid.csv")
     // write csv header, data
@@ -136,11 +114,16 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData FuzzData) {
         }
     }
     utils.GenerateFileBasedOnVarOverride(validHeaderStr + "\n", outputsFile)
-    
+
+    // this is to get the combinations, maybe use pairwise
     combValid := GetCombinationValid(fuzzData)
     //
-    i := 1
+    i := 0
+    tcid := ""
     for _, subCombValid := range combValid {
+        i = i + 1
+        tcid = "valid" + strconv.Itoa(i)
+
         fmt.Println("subCombValid -- : ", subCombValid, len(subCombValid))
         combStr := ""
         for ii, item := range subCombValid {
@@ -150,12 +133,11 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData FuzzData) {
                 combStr = combStr + "," + fmt.Sprint(item)
             }
         }
-        utils.GenerateFileBasedOnVarAppend("valid" + strconv.Itoa(i) + "," + combStr + "\n", outputsFile)  
-        i = i + 1  
+        utils.GenerateFileBasedOnVarAppend(tcid + "," + combStr + "\n", outputsFile)
     }
     
 
-    // for invalid data
+    // (2). for invalid data ------------------------
     outputsFile = filepath.Join(filepath.Dir(fuzzFile), 
         strings.TrimRight(filepath.Base(fuzzFile), ".fuzz") + "_fuzz_dt_invalid.csv")
     var invalidHeaderStr string
@@ -170,8 +152,12 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData FuzzData) {
 
     combInvalid := GetCombinationInvalid(fuzzData)
     //
-    i = 1
+    i = 0
+    tcid = ""
     for _, subCombInvalid := range combInvalid {
+        i = i + 1
+        tcid = "invalid" + strconv.Itoa(i)
+
         fmt.Println("subCombInvalid: ", subCombInvalid, len(subCombInvalid))
         combStr := ""
         for ii, item := range subCombInvalid {
@@ -181,8 +167,7 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData FuzzData) {
                 combStr = combStr + "," + fmt.Sprint(item)
             }
         }
-        utils.GenerateFileBasedOnVarAppend("invalid" + strconv.Itoa(i) + "," + combStr + "\n", outputsFile)  
-        i = i + 1  
+        utils.GenerateFileBasedOnVarAppend(tcid + "," + combStr + "\n", outputsFile)  
     }
 }
 
@@ -191,19 +176,26 @@ func GenerateFuzzDataFiles(fuzzFile string, fuzzData FuzzData) {
 func parseLine(fuzzLine string) FieldDefinition {
     var fieldDefinition FieldDefinition
 
-    line := strings.Split(fuzzLine, ":")
+    // id: char(10, 10)
+    lineNS := strings.Replace(fuzzLine, " ", "", -1)
+    line := strings.Split(lineNS, ":")
+    // [id, char(10, 10)]
 
-    fieldDefinition.FieldName = strings.TrimSpace(line[0])
+    fieldDefinition.FieldName = line[0]
 
     if strings.Index(line[1], "(") > 0 {
-        fieldDefinition.FieldType = strings.TrimSpace(line[1][0:strings.Index(line[1], "(")])
+        fieldDefinition.FieldType = line[1][0:strings.Index(line[1], "(")]
     } else {
         fieldDefinition.FieldType = "float64"
     }
 
-    fieldDefinition.FieldSubType = ""
-    fieldDefinition.FieldMin = 0
-    fieldDefinition.FieldMax = 20
+    fieldDefinition.FieldSubType = strings.Split(lineNS, ")")[1]
+
+    line2 := strings.Split(line[1], ",")
+    // [char(10, 10)]
+
+    fieldDefinition.FieldMin, _ = strconv.Atoi(line2[0][strings.Index(line[1], "("):])
+    fieldDefinition.FieldMax, _ = strconv.Atoi(line2[1][0:strings.Index(line2[1], ")")])
 
     return fieldDefinition
 }

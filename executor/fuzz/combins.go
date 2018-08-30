@@ -24,16 +24,29 @@ func GetCombinationValid(fuzzData FuzzData) [][]interface{} {
         }
     }
 
-    c := make(chan []interface{})
-
-    go func(c chan []interface{}) {
-        defer close(c)
-        GetPairWise(c, combins, 3)
-    }(c)
-
+    // Note: hard-code pairWiseLength = 2 first, as currently the pairwise.go works for 2 well, will improve
+    pairWiseLength := 2 
     var validTcData [][]interface{}
-    for tcData := range c {
-        validTcData = append(validTcData, tcData)
+
+    // need to consiber the len(combins) = 1 / = 2 / > 2
+    if len(combins) >= pairWiseLength {
+        c := make(chan []interface{})
+
+        go func(c chan []interface{}) {
+            defer close(c)
+            GetPairWise(c, combins, 2)
+        }(c)
+
+        for tcData := range c {
+            validTcData = append(validTcData, tcData)
+        }
+    } else if len(combins) == 1{
+        for _, item := range combins[0] {
+            var itemSlice []interface{}
+            itemSlice = append(itemSlice, item)
+            validTcData = append(validTcData, itemSlice)
+        }
+            
     }
 
     return validTcData
