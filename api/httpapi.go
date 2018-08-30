@@ -151,7 +151,7 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
             out_len = length
         }
 
-        fmt.Printf("\n%-30s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
+        fmt.Printf("\n%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
             tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
             tcReportResults.ActualStatusCode)
 
@@ -173,9 +173,13 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
         //     TestMessages string
         // }
 
-        fmt.Printf("%-30s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
+        fmt.Printf("\n%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
             tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
             tcReportResults.ActualStatusCode)
+
+        // if len(strings.TrimSpace(fmt.Sprint(tcReportResults.MutationInfo))) > 0 {
+            fmt.Println(tcReportResults.MutationInfo)
+        // }
     }
     
     // (6). write the channel to executor for scheduler and log
