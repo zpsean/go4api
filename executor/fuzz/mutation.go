@@ -190,8 +190,8 @@ func MutateRequestRequestHeader (originTcData testcase.TestCaseDataInfo, tcJson 
     i = i + 1
     tcSuffix = "-M-H-D-" + fmt.Sprint(i)
 
-    qSFullPath := "TestCase." + originTcData.TcName() + ".Request." + "Headers"
-    mutatedTcJson, _ := sjson.Delete(string(tcJson), qSFullPath)
+    hFullPath := "TestCase." + originTcData.TcName() + ".Request." + "Headers"
+    mutatedTcJson, _ := sjson.Delete(string(tcJson), hFullPath)
     mutationInfo = "Remove all headers"
 
     mTc = MutateGeneral([]byte(mutatedTcJson), mutationInfo, tcSuffix)
@@ -218,24 +218,30 @@ func MutateRequestPayload (originTcData testcase.TestCaseDataInfo, tcJson []byte
                 sturctFieldsMutation(c, []string{}, value)
             }(c)
 
+            var mutationDetailsSlice []MutationDetails
+            //
             for mutationDetails := range c {
+                mutationDetailsSlice = append(mutationDetailsSlice, mutationDetails)
+            }
+            // (1). set node with new value
+            for _, mutationDetails := range mutationDetailsSlice {
                 // set the value
-                payloadPath := key + "." + strings.Join(mutationDetails.FieldPath, ".")
-                payloadFullPath := "TestCase." + originTcData.TcName() + ".Request.Payload" + "." + payloadPath
+                plPath := key + "." + strings.Join(mutationDetails.FieldPath, ".")
+                plFullPath := "TestCase." + originTcData.TcName() + ".Request.Payload" + "." + plPath
 
                 // mutate the value based on rules
                 // (1). get values 
                 mType := mutationDetails.DetermineMutationType()
                 
                 mutatedValues := mutationDetails.CallMutationRules(mType)
-                // fmt.Println("mutatedValues: ", mutatedValues, payloadFullPath, i)
+                // fmt.Println("mutatedValues: ", mutatedValues, plFullPath, i)
                 // (2). remove node
 
                 for _, mutatedValue := range mutatedValues {
                     i = i + 1
                     tcSuffix = "-M-PL-S-" + fmt.Sprint(i)
 
-                    mutatedTcJson, _ := sjson.Set(string(tcJson), payloadFullPath, mutatedValue)
+                    mutatedTcJson, _ := sjson.Set(string(tcJson), plFullPath, mutatedValue)
 
                     mutationInfo := fmt.Sprint(mutationDetails) + "," + fmt.Sprint(mutationDetails.CurrValue) + ", `" + fmt.Sprint(mutatedValue) + "`"
 
@@ -244,21 +250,76 @@ func MutateRequestPayload (originTcData testcase.TestCaseDataInfo, tcJson []byte
                 }
 
                 // add new node
-                // del node
-                // del payload
+                
+
             }
+            // (2). add new node, for each node level
+            // get the max level of the paths
+            max := 0
+            for _, mutationDetails := range mutationDetailsSlice {
+                if len(mutationDetails.FieldPath) > max {
+                    max = len(mutationDetails.FieldPath)
+                }
+            }
+
+            // (3). del node
+            var nodePaths []string
+            for i := max; i > 0; i-- {
+                for _, mutationDetails := range mutationDetailsSlice {
+                    if len(mutationDetails.FieldPath) >= i {
+                        nodePathStr := strings.Join(mutationDetails.FieldPath[0:i], ".")
+
+                        ifExists := ""
+                        for _, str := range nodePaths {
+                            if nodePathStr == str {
+                                ifExists = "Y"
+                                break
+                            }
+                        }
+
+                        if ifExists == "" {
+                            nodePaths = append(nodePaths, nodePathStr)
+                        }
+                    }
+                }
+            }
+            
+            for _, pathStr := range nodePaths {
+                i = i + 1
+                tcSuffix = "-M-PL-D-" + fmt.Sprint(i)
+
+                plPath := key + "." + pathStr
+                plFullPath := "TestCase." + originTcData.TcName() + ".Request.Payload" + "." + plPath
+
+                mutatedTcJson, _ := sjson.Delete(string(tcJson), plFullPath)
+                
+                mutationInfo := "Remove payload value on node: " + pathStr
+
+                mTc := MutateGeneral([]byte(mutatedTcJson), mutationInfo, tcSuffix)
+                mutatedTcArray = append(mutatedTcArray, mTc)
+
+            }
+
+            // (4). remove whole payload, i.e. set to: "text" : {} or "text" : null
+            i = i + 1
+            tcSuffix = "-M-PL-D-" + fmt.Sprint(i)
+
+            plFullPath := "TestCase." + originTcData.TcName() + ".Request." + "Payload." + key
+            // mutatedTcJson, _ := sjson.Delete(string(tcJson), plFullPath)
+            mutatedTcJson, _ := sjson.Set(string(tcJson), plFullPath, "")
+            mutationInfo := "Remove whole post body"
+
+            mTc := MutateGeneral([]byte(mutatedTcJson), mutationInfo, tcSuffix)
+            mutatedTcArray = append(mutatedTcArray, mTc)
+
+            
         }
     }
-
-    // add new key: get rand key, get rand value, then Add()
-
-    // remove all headers?
-    // qSFullPath := "TestCase." + originTcData.TcName() + ".Request." + "QueryString"
-    // mutatedTcJson, _ := sjson.Del(string(tcJson), qSFullPath)
-    // mTc := MutateDelRequestQueryString([]byte(mutatedTcJson), mutationInfo, "1-" + fmt.Sprint(i))
-
     return mutatedTcArray
 }
+
+
+
 
 //
 func MutateSetRequestHeader (tcJson []byte, mutationInfo interface{}, key string, value string, suffix string) testcase.TestCaseDataInfo {
@@ -427,7 +488,7 @@ func sturctFieldsMutation(c chan MutationDetails, subPath []string, value interf
             for key2, value2 := range reflect.ValueOf(value).Interface().(map[string]interface{}) {
                 // fmt.Println("key2, value2: ", key2, reflect.TypeOf(value2))
                 switch reflect.TypeOf(value2).Kind() {
-                    case reflect.String, reflect.Int, reflect.Float64:
+                    case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
                         subPathNew := append(subPath, key2)
                         output := make([]string, len(subPathNew))
                         copy(output, subPathNew)
@@ -455,7 +516,7 @@ func sturctFieldsMutation(c chan MutationDetails, subPath []string, value interf
             for key2, value2 := range reflect.ValueOf(value).Interface().([]interface{}) {
                 // fmt.Println("key2, value2: ", key2, reflect.TypeOf(value2))
                 switch reflect.TypeOf(value2).Kind() {
-                    case reflect.String, reflect.Int, reflect.Float64:
+                    case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
                         subPathNew := append(subPath, fmt.Sprint(key2))
                         output := make([]string, len(subPathNew))
                         copy(output, subPathNew)
