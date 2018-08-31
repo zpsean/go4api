@@ -14,10 +14,11 @@ import (
 	"fmt"
   "os"
 	"time"
-  // "go4api/cmd"
+  "go4api/cmd"
   // "go4api/utils"
   "go4api/executor"
   "go4api/converter/har"
+  "go4api/converter/swagger"
 )
 
 func main(){
@@ -49,20 +50,30 @@ func main(){
 
     if os.Args[1] == "-run" {
       executor.Dispatch(ch, pStart)
+
+      //
+      close(ch)
+      x := <-ch
+      fmt.Println("----- Finish Main -----")
+      // this exit code to be used for CI/CD
+      os.Exit(x)
     } else if os.Args[1] == "-convert" {
-      har.Convert()
+      if cmd.Opt.Harfile != "" {
+        har.Convert()
+      } else if cmd.Opt.Swaggerfile != "" {
+        swagger.Convert()
+      }
     } else {
       fmt.Println("Warning: no specific commnd is provided, default is to run")
       executor.Dispatch(ch, pStart)
-    }
-    //
-    
-    x := <-ch
-    fmt.Println("----- Finish Main -----")
 
-    close(ch)
-    // this exit code to be used for CI/CD
-    os.Exit(x)
+      //
+      close(ch)
+      x := <-ch
+      fmt.Println("----- Finish Main -----")
+      // this exit code to be used for CI/CD
+      os.Exit(x)
+    }
 }
 
 
