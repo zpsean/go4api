@@ -21,6 +21,7 @@ import (
     "io"
     "net/http"     
     "net/url"     
+    "go4api/cmd"
     "go4api/testcase"                                                                                                                               
     "go4api/utils"
     "go4api/assertion"
@@ -38,7 +39,7 @@ type TestMessage struct {
 }
 
 
-func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionInfo, options map[string]string, pStart string, baseUrl string, 
+func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionInfo, pStart string, baseUrl string, 
         tcData testcase.TestCaseDataInfo, resultsDir string) {
     //
     defer wg.Done()
@@ -64,7 +65,7 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     for key, value := range reqPayload {
         // case 1: multipart upload
         if key == "filename" {
-            bodyMultipart, boundary, _ = PrepMultipart(options["testhome"] + "/testresource/" + value.(string), "excel")
+            bodyMultipart, boundary, _ = PrepMultipart(cmd.Opt.Testresource + "/" + value.(string), "excel")
             apiMethodSelector = "POSTMultipart"
             break
         }

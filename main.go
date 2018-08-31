@@ -12,11 +12,12 @@ package main
 
 import (
 	"fmt"
-  "go4api/executor" 
   "os"
 	"time"
-  "go4api/cmd"
+  // "go4api/cmd"
   // "go4api/utils"
+  "go4api/executor"
+  "go4api/converter/har"
 )
 
 func main(){
@@ -36,17 +37,26 @@ func main(){
     fmt.Println(Banner)
 
     //get the cmd options
-    options := cmd.GetOptions()
 
-    // fmt.Println(os.Args)
     ch := make(chan int, 1)
 
     fmt.Println("\n----- Start Main -----")
 
     pStart := time.Now()
     //
-    executor.Dispatch(ch, pStart, options)
+    fmt.Println(pStart)
+    // fmt.Println(os.Args)
 
+    if os.Args[1] == "-run" {
+      executor.Dispatch(ch, pStart)
+    } else if os.Args[1] == "-convert" {
+      har.Convert()
+    } else {
+      fmt.Println("Warning: no specific commnd is provided, default is to run")
+      executor.Dispatch(ch, pStart)
+    }
+    //
+    
     x := <-ch
     fmt.Println("----- Finish Main -----")
 
@@ -54,3 +64,5 @@ func main(){
     // this exit code to be used for CI/CD
     os.Exit(x)
 }
+
+

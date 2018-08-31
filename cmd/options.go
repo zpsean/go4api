@@ -11,40 +11,104 @@
 package cmd
 
 import (
-    // "fmt"
+    "fmt"
     // "io/ioutil"                                                                                                                                              
-    // "os"
+    "os"
     "flag"
     "go4api/utils"
 )
 
-func GetOptions() map[string]string {
+var (
+    h bool
+    run bool
+    convert bool
+)
+
+type Options struct {
+    Testconfig string
+    Testcase string 
+    Testresource string
+    Testresults string
+    TestEnv string
+    BaseUrl string
+    IfScenario  bool
+    IfFuzzTest  bool
+    IfMutation  bool
+    ConcurrencyLimit int
+
+    Harfile string
+}
+
+var Opt Options
+
+// Note: as refer to https://golang.org/doc/effective_go.html#init
+// each file can have one or more init(), the init() will be run after all var evaluated
+// import --> const --> var --> init()
+func init() {
     defaultTestDir := utils.GetCurrentDir()
-    options := make(map[string]string)
     //
-    testhome := flag.String("testhome", defaultTestDir + "/testhome", "the path which test scripts in")
-    testresults := flag.String("testresults", defaultTestDir + "/testresults", "the path which test results in")
+    flag.BoolVar(&h, "h", false, "this help")
+    flag.BoolVar(&run, "run", false, "")
+    flag.BoolVar(&convert, "convert", false, "")
+    //
+    testconfig := flag.String("c", defaultTestDir + "/testconfig", "the path which test config in")
+    testcase := flag.String("tc", defaultTestDir + "/testcase", "the path which test json in")
+    testresource := flag.String("tr", defaultTestDir + "/testresource", "the path which test resource in")
+    testresults := flag.String("r", defaultTestDir + "/testresults", "the path which test results in")
     testEnv := flag.String("testEnv", "QA", "the testEnv, i.e. dev, qa, uat, etc.")
     baseUrl := flag.String("baseUrl", "", "the baseUrl")
-    ifScenario := flag.String("ifScenario", "", "if the target cases are for scenarios, which have data dependency")
-    ifFuzzTest := flag.String("ifFuzzTest", "", "if to run the Fuzz test")
-    ifMutation := flag.String("ifMutation", "", "if to run the Mutation test")
-    concurrency := flag.String("concurrencyLimit", "50", "concurrency limitation")
+    ifScenario := flag.Bool("S", false, "if the target cases are for scenarios, which have data dependency")
+    ifFuzzTest := flag.Bool("F", false, "if to run the Fuzz test")
+    ifMutation := flag.Bool("M", false, "if to run the Mutation test")
+    concurrency := flag.Int("cl", 100, "concurrency limitation")
+
+    har := flag.String("harfile", "", "har file name to be converted")
 
     //
     flag.Parse()
     //
-    options["testhome"] = *testhome
-    options["testresults"] = *testresults
-    options["testEnv"] = *testEnv
-    options["baseUrl"] = *baseUrl
-    options["ifScenario"] = *ifScenario
-    options["ifFuzzTest"] = *ifFuzzTest
-    options["ifMutation"] = *ifMutation
-    options["concurrencyLimit"] = *concurrency
+    Opt.Testconfig = *testconfig
+    Opt.Testcase = *testcase
+    Opt.Testresource = *testresource
+    Opt.Testresults = *testresults
+    Opt.TestEnv = *testEnv
+    Opt.BaseUrl = *baseUrl
+    Opt.IfScenario = *ifScenario
+    Opt.IfFuzzTest = *ifFuzzTest
+    Opt.IfMutation = *ifMutation
+    Opt.ConcurrencyLimit = *concurrency
 
-    //
-    return options
+    Opt.Harfile = *har
+
+    if h {
+        usage()
+    }
+
+    // flag.Usage = usage
 }
 
+func usage() {
+    fmt.Fprintf(os.Stderr, `
+go4api version: 0.12.0
 
+Usage:
+  go4api [command] [options]
+
+Available Commands:
+  run         Start a load test
+  convert     Convert a HAR file / Swagger API file to a go4api Json test case
+
+Command: run
+Usage: go4api -run [-?hFMS] [-c config filename] [-t testcase path] [-d test resource path] [-r test results path] 
+
+Options:
+
+Command: convert
+Usage: go4api -convert [-harfile har filename] [-swaggerfile swagger api filename]
+
+Options:
+`)
+    flag.PrintDefaults()
+
+    os.Exit(0)
+}

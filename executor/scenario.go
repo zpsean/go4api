@@ -18,15 +18,16 @@ import (
     "strings"
     "encoding/json"
     "path/filepath"
+    "go4api/cmd"
     "go4api/testcase"
     "go4api/utils"
     "go4api/logger"
 )
 
 
-func RunScenario(ch chan int, pStart_time time.Time, options map[string]string, pStart string, baseUrl string, resultsDir string) {
-    jsonFileList, _ := utils.WalkPath(options["testhome"] + "/Scenarios/", ".json")
-    fmt.Println("Scenario jsonFileList:", options["ifScenario"], jsonFileList, "")
+func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string) {
+    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase + "/Scenarios/", ".json")
+    fmt.Println("Scenario jsonFileList:", cmd.Opt.IfScenario, jsonFileList, "")
 
     var tcArray []testcase.TestCaseDataInfo
     // var tcNames []string
@@ -53,7 +54,7 @@ func RunScenario(ch chan int, pStart_time time.Time, options map[string]string, 
         resultsExeChan := make(chan testcase.TestCaseExecutionInfo, len(tcArray))
         var wg sync.WaitGroup
         //
-        ScheduleNodes(root, &wg, options, "1", resultsExeChan, pStart, baseUrl, resultsDir)
+        ScheduleNodes(root, &wg, "1", resultsExeChan, pStart, baseUrl, resultsDir)
         //
         wg.Wait()
 

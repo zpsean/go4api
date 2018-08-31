@@ -16,6 +16,7 @@ import (
     "os"
     "sort"
     "sync"
+    "go4api/cmd"
     "go4api/testcase"
     "go4api/ui"     
     "go4api/ui/js"  
@@ -31,7 +32,7 @@ import (
 )
 
 
-func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo) { //client
+func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo) { 
     // (1), get the text path, default is ../data/*, then search all the sub-folder to get the test scripts
     // to check the tcArray, if the case not distinct, report it to fix
     if len(tcArray) != len(GetTcNameSet(tcArray)) {
@@ -81,7 +82,7 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart s
             resultsExeChan := make(chan testcase.TestCaseExecutionInfo, len(tcArray))
             var wg sync.WaitGroup
             //
-            ScheduleNodes(root, &wg, options, priority, resultsExeChan, pStart, baseUrl, resultsDir)
+            ScheduleNodes(root, &wg, priority, resultsExeChan, pStart, baseUrl, resultsDir)
             //
             wg.Wait()
 
@@ -182,10 +183,10 @@ func Run(ch chan int, pStart_time time.Time, options map[string]string, pStart s
 
 
 
-func GetTcArray(options map[string]string) []testcase.TestCaseDataInfo {
+func GetTcArray() []testcase.TestCaseDataInfo { 
     var tcArray []testcase.TestCaseDataInfo
 
-    jsonFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".json")
+    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase + "/", ".json")
     // fmt.Println("jsonFileList:", jsonFileList, "\n")
     // to ge the json and related data file, then get tc from them
     for _, jsonFile := range jsonFileList {
@@ -392,10 +393,10 @@ func GetTmpJsonDir(path string) string {
 
 
 
-func GetFuzzTcArray(options map[string]string) []testcase.TestCaseDataInfo {
+func GetFuzzTcArray() []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
 
-    jsonFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".json")
+    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase + "/", ".json")
     // fmt.Println("jsonFileList:", jsonFileList, "\n")
     // to ge the json and related data file, then get tc from them
     for _, jsonFile := range jsonFileList {
@@ -418,10 +419,10 @@ func GetFuzzTcArray(options map[string]string) []testcase.TestCaseDataInfo {
 }
 
 
-func GetOriginMutationTcArray(options map[string]string) []testcase.TestCaseDataInfo {
+func GetOriginMutationTcArray() []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
 
-    jsonFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".mutation")
+    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase + "/", ".mutation")
     // fmt.Println("jsonFileList:", jsonFileList, "\n")
     // to ge the json and related data file, then get tc from them
     for _, jsonFile := range jsonFileList {

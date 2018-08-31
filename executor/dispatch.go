@@ -14,15 +14,17 @@ import (
     "fmt"
     "time"
     "os"
+    "go4api/cmd"
     "go4api/utils"
     "go4api/executor/fuzz"
 )
 
-func Dispatch(ch chan int, pStart_time time.Time, options map[string]string) { 
-    baseUrl := GetBaseUrl(options)
+func Dispatch(ch chan int, pStart_time time.Time) { 
+    //
+    baseUrl := GetBaseUrl(cmd.Opt)
     pStart := pStart_time.String()
     // get results dir
-    resultsDir := GetResultsDir(pStart, options)
+    resultsDir := GetResultsDir(pStart, cmd.Opt)
     //
     // <!!--> Note: there are two kinds of test cases dependency:
     // type 1. the parent and child has only execution dependency, no data exchange
@@ -30,44 +32,42 @@ func Dispatch(ch chan int, pStart_time time.Time, options map[string]string) {
     // for type 1, the json is rendered by data tables first, then build the tcTree
     // for type 2, build the cases hierarchy first, then render the child cases using the parent's outputs
     //
-    if options["ifScenario"] == "" {
-        if options["ifMutation"] != "" {
-            originMutationTcArray := GetOriginMutationTcArray(options)
+    if !cmd.Opt.IfScenario {
+        if cmd.Opt.IfMutation {
+            originMutationTcArray := GetOriginMutationTcArray()
             // Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, originMutationTcArray)
 
             // fmt.Println("\noriginMutationTcArray: ", originMutationTcArray)
             // to mutate 
             mutatedTcArray := fuzz.MutateTcArray(originMutationTcArray)
             // fmt.Println("\nmutatedTcArray: ", mutatedTcArray)
-            Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, mutatedTcArray)
-        } else if options["ifFuzzTest"] != "" {
-            fuzz.PrepFuzzTest(pStart_time, options)
+            Run(ch, pStart_time, pStart, baseUrl, resultsDir, mutatedTcArray)
+        } else if cmd.Opt.IfFuzzTest {
+            fuzz.PrepFuzzTest(pStart_time)
 
             // GetFuzzTcArray(options)
-            fuzzTcArray := GetFuzzTcArray(options)
-            Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, fuzzTcArray)
+            fuzzTcArray := GetFuzzTcArray()
+            Run(ch, pStart_time, pStart, baseUrl, resultsDir, fuzzTcArray)
         } else {
-            tcArray := GetTcArray(options)
-            Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, tcArray)
+            tcArray := GetTcArray()
+            Run(ch, pStart_time, pStart, baseUrl, resultsDir, tcArray)
         }
-        
     } else {
-        RunScenario(ch, pStart_time, options, pStart, baseUrl, resultsDir)
-        fmt.Println("--")
+        RunScenario(ch, pStart_time, pStart, baseUrl, resultsDir)
     }
 }
 
 
-func GetBaseUrl(options map[string]string) string {
-    testenv := options["testEnv"]
+func GetBaseUrl(opt cmd.Options) string {
+    testenv := cmd.Opt.TestEnv
     baseUrl := ""
-    if options["baseUrl"] != "" {
-        baseUrl = options["baseUrl"]
+    if cmd.Opt.BaseUrl != "" {
+        baseUrl = cmd.Opt.BaseUrl
     } else {
-        _, err := os.Stat(options["testhome"] + "/testconfig/testconfig.json")
+        _, err := os.Stat(cmd.Opt.Testconfig + "/config.json")
         // fmt.Println("err: ", err)
         if err == nil {
-            baseUrl = utils.GetBaseUrlFromConfig(options["testhome"] + "/testconfig/testconfig.json", testenv) 
+            baseUrl = utils.GetBaseUrlFromConfig(cmd.Opt.Testconfig + "/config.json", testenv) 
         }
     }
     if baseUrl == "" {
@@ -80,15 +80,15 @@ func GetBaseUrl(options map[string]string) string {
 }
 
 
-func GetResultsDir(pStart string, options map[string]string) string {
+func GetResultsDir(pStart string, opt cmd.Options) string {
     var resultsDir string
-    err := os.MkdirAll(options["testresults"] + "/" + pStart + "/", 0777)
+    err := os.MkdirAll(cmd.Opt.Testresults + "/" + pStart + "/", 0777)
     if err != nil {
       panic(err) 
     } else {
-        resultsDir = options["testresults"] + "/" + pStart + "/"
+        resultsDir = cmd.Opt.Testresults + "/" + pStart + "/"
     }
-
+    fmt.Println("resultsDir: ", cmd.Opt)
     return resultsDir
 }
 
