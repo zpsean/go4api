@@ -37,6 +37,7 @@ type Options struct {
     ConcurrencyLimit int
 
     Harfile string
+    Swaggerfile string
 }
 
 var Opt Options
@@ -63,6 +64,7 @@ func init() {
     concurrency := flag.Int("cl", 100, "concurrency limitation")
 
     har := flag.String("harfile", "", "har file name to be converted")
+    swagger := flag.String("swaggerfile", "", "har file name to be converted")
 
     //
     flag.Parse()
@@ -79,6 +81,7 @@ func init() {
     Opt.ConcurrencyLimit = *concurrency
 
     Opt.Harfile = *har
+    Opt.Swaggerfile = *swagger
 
     if h {
         usage()
