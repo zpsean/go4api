@@ -11,15 +11,23 @@
 package har
 
 import (
-    // "fmt"
+    "fmt"
     // "time"
     // "os"
     // "sort"
     // "sync"
-    // "go4api/types" 
+    // "io/ioutil"
+    "strconv"
+    "strings"
+    "encoding/json"
+    "go4api/cmd"
+    "go4api/utils"
+    "go4api/testcase" 
 )
 
 // test case type
+type Har map[string]HarLog
+
 type HarLog struct {
     Version string
     Creator map[string]string
@@ -56,4 +64,120 @@ type Response struct {
     Headers map[string]interface{}
     Cookies []map[string]interface{}
     content map[string]interface{}
+}
+
+
+func Convert () {
+    var har Har
+
+    filePath := cmd.Opt.Harfile
+    resJson := utils.GetJsonFromFile(filePath)
+    json.Unmarshal([]byte(resJson), &har)
+
+    //
+    var testCases []testcase.TestCase
+    //
+    // Note, if cnovert a bunch of files, the sequence need to use global sequence to avoid duplicate tcnames
+    for i, entry := range har["log"].Entries {
+        g4ATcName := entry.buildG4ATcName(i)
+        priority, parentTestCase, inputs, _ := entry.buildG4ATcGeneralInfo()
+
+        g4ARequest := entry.Request.buildG4ARequest()
+        g4AResponse := entry.Response.buildG4AResponse()
+
+        //
+        tCase := make(map[string]testcase.TestCaseBasics)
+        
+        tCaseBasics := testcase.TestCaseBasics{
+            priority, 
+            parentTestCase,
+            inputs,
+            g4ARequest,
+            g4AResponse,
+            []interface{}{},
+        }
+
+        tCase[g4ATcName] = tCaseBasics
+
+        tcJson, _ := json.Marshal(tCase)
+        fmt.Print(string(tcJson))
+
+        testCases = append(testCases, tCase)
+    }
+    fmt.Println("")
+
+    tcsJson, _ := json.Marshal(testCases)
+    fmt.Print(string(tcsJson))
+}
+
+
+func (harEntry Entry) buildG4ATcName (sequence int) string {
+    g4ATcName := ""
+
+    // the format of tcNmae would be: Get - url(end point) - sequenrce
+    methodP := harEntry.Request.Method
+
+    urlPath := strings.Split(harEntry.Request.Url, "?")[0]
+    urlSlice := strings.Split(urlPath, "/")
+
+    urlP := ""
+    if len(urlSlice[len(urlSlice) - 1]) > 0 {
+        urlP = urlSlice[len(urlSlice) - 1]
+    } else {
+        urlP = urlSlice[len(urlSlice) - 2]
+    }
+
+    g4ATcName = "Har-" + methodP + "-" + urlP + "-" + strconv.Itoa(sequence)
+
+    return g4ATcName
+}
+
+func (harEntry Entry) buildG4ATcGeneralInfo () (string, string, string, string) {
+    // priority, parentTestCase, inputs, outputs
+    return "1", "root", "", ""
+}
+
+
+func (harRequest Request) buildG4ARequest () testcase.Request {
+    var g4ARequest testcase.Request
+
+    g4ARequest.Method = harRequest.Method
+    g4ARequest.Path = harRequest.Url
+
+    //
+    reqHeaders := make(map[string]interface{})
+    for _, header := range harRequest.Headers {
+        reqHeaders[header["name"].(string)] = header["value"]
+    }
+    g4ARequest.Headers = reqHeaders
+
+    //
+    reqQS := make(map[string]interface{})
+    for _, qs := range harRequest.QueryString {
+        reqQS[qs["name"].(string)] = qs["value"]
+    }
+    g4ARequest.QueryString = reqQS
+
+    //
+    reqPL := make(map[string]interface{})
+    for key, value := range harRequest.PostData {
+        if key == "text" {
+            reqPL["text"] = value
+        }
+        
+    }
+    g4ARequest.Payload = reqPL
+
+    return g4ARequest
+}
+
+func (harResponse Response) buildG4AResponse () testcase.Response {
+    var g4AResponse testcase.Response
+
+    respStatus := make(map[string]interface{})
+    respStatus["Equals"] = harResponse.Status
+
+    g4AResponse.Status = respStatus
+
+    return g4AResponse
 }

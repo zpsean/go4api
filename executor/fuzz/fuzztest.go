@@ -17,6 +17,7 @@ import (
     "path/filepath"
     "strings"
     "strconv"
+    "go4api/cmd"
     "go4api/utils"  
 )
 
@@ -38,9 +39,9 @@ type FieldDefinition struct {
 }
 
 
-func PrepFuzzTest(pStart_time time.Time, options map[string]string) {
-    fuzzFileList, _ := utils.WalkPath(options["testhome"] + "/testdata/", ".fuzz")
-    fmt.Println("FuzzTest jsonFileList:", options["ifFuzzTestFirst"], fuzzFileList, "")
+func PrepFuzzTest(pStart_time time.Time) {
+    fuzzFileList, _ := utils.WalkPath(cmd.Opt.Testcase + "/testdata/", ".fuzz")
+    // fmt.Println("FuzzTest jsonFileList:", options["ifFuzzTestFirst"], fuzzFileList, "")
 
     // (1). generate the data tables based on the fuzz test, at least two dt files: positive and negative
     for _, fuzzFile := range fuzzFileList {
