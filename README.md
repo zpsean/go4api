@@ -114,7 +114,7 @@ Note: You can prepare many many test cases based on below examples to let go4api
 #### Running go4api
 
 ```js
-$./go4api --testhome /<you Path>/go/run/testhome --testresults /<you Path>/go/run/testresults
+$./go4api -run -c /<you Path>/testconfig  -tc  /<you Path>/testdata -tr /<you Path>/testresource -r /<you Path>/testresults
 ```
 
 
@@ -164,8 +164,16 @@ dt1-2,1,500
 #### Running go4api
 
 ```js
-$./go4api --baseUrl https://api.douban.com --testhome /<you Path>/go/run/testhome --testresults /<you Path>/go/run/testresults
+$./go4api -run -baseUrl https://api.douban.com -c /<you Path>/testconfig  -tc  /<you Path>/testdata -tr /<you Path>/testresource -r /<you Path>/testresults
 ```
+
+---
+
+CheatSheet
+--------------------------------
+<p align="center">
+  <img width="900" src="https://cdn.rawgit.com/zpsean/go4api/master/demo2.svg">
+</p>
 
 ---
 
