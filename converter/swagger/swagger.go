@@ -129,4 +129,10 @@ func (definitions Definitions) resolveDefinitionNest () {
 }
 
 
+func (definition Definition) BuildJsonExample () {
+    // for key, value := range definition.Properties {
+
+    // }
+}
+
 
