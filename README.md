@@ -173,7 +173,7 @@ $./go4api -run -baseUrl https://api.douban.com -c /<you Path>/testconfig  -tc  /
 CheatSheet
 --------------------------------
 <p align="center">
-  <img width="900" src="https://cdn.rawgit.com/zpsean/go4api/master/CheatSheet.png">
+  <img width="900" src="https://cdn.rawgit.com/zpsean/go4api/master/CheatSheet2.png">
 </p>
 
 ---
