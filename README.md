@@ -159,7 +159,7 @@ SecondTeseCase_dt1.csv
 ```js
 tc,priority,statuscode
 dt1-1,1,500
-dt1-2,1,500
+dt1-2,2,500
 ```
 
 #### Running go4api
@@ -186,7 +186,7 @@ v1.0 is planning to have:
 - Fully support the HTTP method on Get, Post, Put, Delete
 - More options to control the test cases execution
 - Fully coverage on Assertion on Equals, Contains, etc.
-
+- Fully coverage on rules for Fuzz Test (Mutation, Random).
 
 ---
 
