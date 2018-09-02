@@ -25,8 +25,9 @@ Features
 - **Using Json format to represent API test case(s)**: contains the all info about API request, response and assertion
 - **Test Cases Json file itself can be template**: which will be rendered by csv data table(s)
 - **Test Cases executed concurrently**: based on Priority and Dependency
-- **Support API Fuzz Testing (trial)**
+- **Support API Fuzz Testing**: includes Mutation and Random testing (embedded pairwise algorithm implementation)
 - **Support Scenario Testing**: when APIs have data dependency and exchange
+- **Convert HAR file / Swagger API file**
 
 
 Install
