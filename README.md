@@ -1,5 +1,5 @@
 <h3 align="center">Go4Api - a API testing tool written in Go</h3>
-<p align="center">Implementing Data-Driven Test, written in Go.</p>
+<p align="center">Implementing Data-Driven Test, Fuzz Test.</p>
 
 ---
 
