@@ -64,7 +64,7 @@ func Convert () {
     }
     fmt.Println("")
 
-    tcsJson, _ := json.Marshal(testCases)
+    tcsJson, _ := json.MarshalIndent(testCases, "", "\t")
     fmt.Print(string(tcsJson))
 }
 
