@@ -102,8 +102,17 @@ Note: You can prepare many many test cases based on below examples to let go4api
           }
         },
         "body": {
+          "start": {
+            "GreaterOrEquals": 0
+          },
+          "$.subjects.#": {
+            "Equals": 20
+          },
           "total": {
             "Equals": 250
+          },
+          "$.subjects.0.title": {
+            "Contains": "肖申克的救赎"
           }
         }
       }
