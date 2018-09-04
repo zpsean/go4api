@@ -95,7 +95,7 @@ func Convert () {
 
     // json write to file
     outPath := cmd.Opt.Swaggerfile + ".out.json"
-    ioutil.WriteFile(outPath, tcsJson, 0644)
+    ioutil.WriteFile(outPath, tcsJson, 0644) 
 
     fmt.Println("\n! Convert Swagger API file finished !")
     fmt.Println("")
