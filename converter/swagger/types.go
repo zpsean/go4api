@@ -14,7 +14,6 @@ import (
 )
 
 // swagger type
-
 type Swagger2 struct {
 	Swagger string
 	Info map[string]interface{}
@@ -33,12 +32,24 @@ type PathDetails struct {
 	Method string
 	Consumes []string // content-type?
 	Produces []string // content-type?
-	Parameters []map[string]interface{}
+	Parameters []Parameter
 	Responses []string
 	Security []map[string]interface{}
 }
 
-type Definitions map[string]Definition
+type Parameter struct {
+	Name string
+	In string 
+	Description string
+	Required bool
+	Type string
+	Format string
+	Items map[string]interface{}
+	CollectionFormat string
+	Schema map[string]interface{}  // {"$ref": "#/definitions/Order"}
+}
+
+type Definitions map[string]interface{}
 
 type Definition struct {
 	Type string
