@@ -16,7 +16,7 @@ import (
     // "os"
     // "sort"
     // "sync"
-    // "io/ioutil"
+    "io/ioutil"
     "strconv"
     "strings"
     "encoding/json"
@@ -65,7 +65,14 @@ func Convert () {
     fmt.Println("")
 
     tcsJson, _ := json.MarshalIndent(testCases, "", "\t")
-    fmt.Print(string(tcsJson))
+    // fmt.Print(string(tcsJson))
+
+    // json write to file
+    outPath := cmd.Opt.Harfile + ".out.json"
+    ioutil.WriteFile(outPath, tcsJson, 0644)
+
+    fmt.Println("\n! Convert Har file finished !")
+    fmt.Println("")
 }
 
 
