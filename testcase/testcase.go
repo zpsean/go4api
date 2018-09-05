@@ -21,9 +21,9 @@ import (
 )
 
 // test case type - get
-func (tc TestCase) TcName() string {
+func (tc *TestCase) TcName() string {
     var tcName string
-    for key, _ := range tc {
+    for key, _ := range *tc {
         tcName = key
     }
     return tcName
