@@ -164,20 +164,6 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
         fmt.Println(tcReportResults.TestMessages)
         fmt.Println(string(actualBody)[0:out_len], "...")
     } else {
-        // fmt.Println(string(repJson))
-
-        // type TcConsoleResults struct { 
-        //     TcName string 
-        //     Priority string
-        //     ParentTestCase string
-        //     JsonFilePath string
-        //     CsvFile string
-        //     CsvRow string
-        //     TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
-        //     ActualStatusCode int
-        //     TestMessages string
-        // }
-
         fmt.Printf("\n%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
             tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
             tcReportResults.ActualStatusCode)
@@ -198,9 +184,7 @@ func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actu
         expStatus map[string]interface{}, expHeader map[string]interface{}, expBody map[string]interface{}) (string, string) {
 
     // the map for mapping the string and the related funciton to call
-    // fmt.Println("Compare: ", tcName)
     var testResults []bool
-
     var TestMessages []TestMessage
 
     // status

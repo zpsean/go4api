@@ -26,7 +26,7 @@ import (
 
 
 func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string) {
-    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase + "/Scenarios/", ".json")
+    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
     fmt.Println("Scenario jsonFileList:", cmd.Opt.IfScenario, jsonFileList, "")
 
     var tcArray []testcase.TestCaseDataInfo
@@ -36,14 +36,8 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
     // => the json has parentTestCase = root, or the the data table has parentTestCase = root
     tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt") 
 
-    // fmt.Println("tcArray:", tcArray, "\n")
-
     // (2). render them, get the rendered cases
-    // => need to build a tree???
     root, _ := BuildTree(tcArray)
-    // fmt.Println("------------------")
-    // fmt.Println("------------------", root, &root)
-    // ShowNodes(root)
 
     // (3). then execute them, genrate the outputs if have
     InitNodesRunResult(root, "Ready")
@@ -89,9 +83,13 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
             }
                 
             // (1). tcName, testResult, the search result is saved to *findNode
-            SearchNode(&root, tcExecution.TcName())
+            c := make(chan *tcNode)
+            go func(c chan *tcNode) {
+                defer close(c)
+                SearchNode(c, root, tcExecution.TcName())
+            }(c)
             // (2). 
-            RefreshNodeAndDirectChilrenTcResult(*findNode, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
+            RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
                     tcExecution.TestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
             // fmt.Println("------------------")
             // (3). <--> for log write to file
