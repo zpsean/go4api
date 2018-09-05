@@ -78,7 +78,7 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
         bodyText = PrepPostFormPayload(reqPayload)
     }
     //
-    var reqHeaders map[string]interface{}
+    reqHeaders := make(map[string]interface{})
     reqHeaders = tcData.TestCase.ReqHeaders()
     // set the boundary to headers, if multipart
     if boundary != "" {

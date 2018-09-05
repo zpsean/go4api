@@ -40,27 +40,27 @@ type TestCases []TestCase
 type TestCase map[string]TestCaseBasics
 
 type TestCaseBasics struct {
-    Priority string
-    ParentTestCase string
-    Inputs string
-    Request Request
-    Response Response
-    Outputs []interface{}
+    Priority string         `json:"priority"`
+    ParentTestCase string   `json:"parentTestCase"`
+    Inputs string           `json:"inputs"`
+    Request Request         `json:"request"`
+    Response Response       `json:"response"`
+    Outputs []interface{}   `json:"outputs"`
 }
 
 type Request struct {  
-    Method string
-    Path string
-    Headers map[string]interface{}
-    QueryString map[string]interface{}
-    Payload map[string]interface{}
+    Method string                       `json:"method"`
+    Path string                         `json:"path"`
+    Headers map[string]interface{}      `json:"headers"`
+    QueryString map[string]interface{}  `json:"queryString"`
+    Payload map[string]interface{}      `json:"payload"`
 }
 
 
 type Response struct {  
-    Status map[string]interface{}
-    Headers map[string]interface{}
-    Body map[string]interface{}
+    Status map[string]interface{}   `json:"status"`
+    Headers map[string]interface{}  `json:"headers"`
+    Body map[string]interface{}     `json:"body"`
 }
 
 // for report format 

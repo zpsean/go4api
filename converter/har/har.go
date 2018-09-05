@@ -57,8 +57,8 @@ func Convert () {
 
         tCase[g4ATcName] = tCaseBasics
 
-        tcJson, _ := json.Marshal(tCase)
-        fmt.Print(string(tcJson))
+        // tcJson, _ := json.Marshal(tCase)
+        // fmt.Print(string(tcJson))
 
         testCases = append(testCases, tCase)
     }

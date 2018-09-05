@@ -50,7 +50,6 @@ func main(){
 
     if os.Args[1] == "-run" {
       executor.Dispatch(ch, pStart)
-
       //
       close(ch)
       x := <-ch
@@ -66,7 +65,6 @@ func main(){
     } else {
       fmt.Println("Warning: no specific commnd is provided, default is to run")
       executor.Dispatch(ch, pStart)
-
       //
       close(ch)
       x := <-ch
