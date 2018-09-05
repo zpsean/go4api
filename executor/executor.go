@@ -40,7 +40,6 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
         os.Exit(1)
     }
     //
-    // fmt.Println("tcArray:", tcArray, "\n")
     // myabe there needs a scheduler, for priority 1 (w or w/o dependency) -> priority 2 (w or w/o dependency), ...
     // --
     // How to impliment the case Dependency???
@@ -90,9 +89,13 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
 
             for tcExecution := range resultsExeChan {
                 // (1). tcName, testResult, the search result is saved to *findNode
-                SearchNode(&root, tcExecution.TcName())
+                c := make(chan *tcNode)
+                go func(c chan *tcNode) {
+                    defer close(c)
+                    SearchNode(c, root, tcExecution.TcName())
+                }(c)
                 // (2). 
-                RefreshNodeAndDirectChilrenTcResult(*findNode, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
+                RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
                     tcExecution.TestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
                 // fmt.Println("------------------")
                 // (3). <--> for log write to file
@@ -202,6 +205,7 @@ func GetTcArray() []testcase.TestCaseDataInfo {
         }
 
         for _, tcData := range tcInfos {
+            // fmt.Println("\n tcData:", tcData.TcName())
             tcArray = append(tcArray, tcData)
         }
     }
@@ -246,7 +250,6 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile string, csvFileLi
 
     for _, csvFile := range csvFileList {
         // to check the csv file's existence
-
         csvRows := utils.GetCsvFromFile(csvFile)
         for i, csvRow := range csvRows {
             // starting with data row
@@ -257,10 +260,10 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile string, csvFileLi
                 resJson, _ := ioutil.ReadAll(outTempJson)
                 json.Unmarshal([]byte(resJson), &tcases)
                 // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
-                for _, tcase := range tcases {
+                for i, _ := range tcases {
                     // populate the testcase.TestCaseDataInfo
                     tcaseData := testcase.TestCaseDataInfo {
-                        TestCase: &tcase,
+                        TestCase: &tcases[i],
                         JsonFilePath: jsonFile,
                         CsvFile: csvFile,
                         CsvRow: strconv.Itoa(i + 1),
@@ -284,10 +287,10 @@ func ConstructTcInfosBasedOnJson(jsonFile string) []testcase.TestCaseDataInfo {
     resJson, _ := ioutil.ReadAll(outTempJson)
     json.Unmarshal([]byte(resJson), &tcases)
     // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
-     for _, tcase := range tcases {
+     for i, _ := range tcases {
         // populate the testcase.TestCaseDataInfo
         tcaseData := testcase.TestCaseDataInfo {
-            TestCase: &tcase,
+            TestCase: &tcases[i],
             JsonFilePath: jsonFile,
             CsvFile: csvFile,
             CsvRow: csvRow,
@@ -297,8 +300,6 @@ func ConstructTcInfosBasedOnJson(jsonFile string) []testcase.TestCaseDataInfo {
 
     return tcInfos
 }
-
-
 
 
 func GetTcNameSet(tcArray []testcase.TestCaseDataInfo) []string {

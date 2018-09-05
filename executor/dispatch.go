@@ -50,6 +50,7 @@ func Dispatch(ch chan int, pStart_time time.Time) {
             Run(ch, pStart_time, pStart, baseUrl, resultsDir, fuzzTcArray)
         } else {
             tcArray := GetTcArray()
+            // fmt.Println("\n tcArray: ", tcArray)
             Run(ch, pStart_time, pStart, baseUrl, resultsDir, tcArray)
         }
     } else {
@@ -88,7 +89,6 @@ func GetResultsDir(pStart string, opt cmd.Options) string {
     } else {
         resultsDir = cmd.Opt.Testresults + "/" + pStart + "/"
     }
-    fmt.Println("resultsDir: ", cmd.Opt)
     return resultsDir
 }
 
