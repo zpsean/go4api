@@ -127,7 +127,7 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
 
     // get the TestCaseExecutionInfo
     tcExecution := testcase.TestCaseExecutionInfo {
-        TestCaseDataInfo: tcData,
+        TestCaseDataInfo: &tcData,
         TestResult: testResult,
         ActualStatusCode: actualStatusCode,
         StartTime: start,

@@ -327,7 +327,7 @@ func MutateSetRequestHeader (tcJson []byte, mutationInfo interface{}, key string
     json.Unmarshal(tcJson, &mTcData)
 
     originTcName := mTcData.TcName()
-    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + suffix)
+    mTcData.TestCase.UpdateTcName(originTcName + suffix)
     mTcData.TestCase.SetRequestHeader(key, value)
 
     mTcData.MutationInfo = mutationInfo
@@ -341,7 +341,7 @@ func MutateAddRequestHeader (tcJson []byte, mutationInfo interface{}, key string
     json.Unmarshal(tcJson, &mTcData)
 
     originTcName := mTcData.TcName()
-    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + suffix)
+    mTcData.TestCase.UpdateTcName(originTcName + suffix)
     mTcData.TestCase.AddRequestHeader(key, value)
 
     mTcData.MutationInfo = mutationInfo
@@ -355,7 +355,7 @@ func MutateDelRequestHeader (tcJson []byte, mutationInfo interface{}, key string
     json.Unmarshal(tcJson, &mTcData)
 
     originTcName := mTcData.TcName()
-    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + suffix)
+    mTcData.TestCase.UpdateTcName(originTcName + suffix)
     mTcData.TestCase.DelRequestHeader(key)
 
     mTcData.MutationInfo = mutationInfo
@@ -371,7 +371,7 @@ func MutateSetRequestQueryString (tcJson []byte, mutationInfo interface{}, key s
     json.Unmarshal(tcJson, &mTcData)
 
     originTcName := mTcData.TcName()
-    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + suffix)
+    mTcData.TestCase.UpdateTcName(originTcName + suffix)
     mTcData.TestCase.SetRequestQueryString(key, value)
 
     mTcData.MutationInfo = mutationInfo
@@ -385,7 +385,7 @@ func MutateAddRequestQueryString (tcJson []byte, mutationInfo interface{}, key s
     json.Unmarshal(tcJson, &mTcData)
 
     originTcName := mTcData.TcName()
-    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + suffix)
+    mTcData.TestCase.UpdateTcName(originTcName + suffix)
 
     mTcData.TestCase.AddRequestQueryString(key, value)
 
@@ -400,7 +400,7 @@ func MutateDelRequestQueryString (tcJson []byte, mutationInfo string, key string
     json.Unmarshal(tcJson, &mTcData)
 
     originTcName := mTcData.TcName()
-    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + suffix)
+    mTcData.TestCase.UpdateTcName(originTcName + suffix)
 
     mTcData.TestCase.DelRequestQueryString(key)
 
@@ -417,7 +417,7 @@ func MutateGeneral (tcJson []byte, mutationInfo interface{}, suffix string) test
 
     // change the tc name
     originTcName := mTcData.TcName()
-    mTcData.TestCase = mTcData.TestCase.UpdateTcName(originTcName + suffix)
+    mTcData.TestCase.UpdateTcName(originTcName + suffix)
 
     mTcData.MutationInfo = mutationInfo
 

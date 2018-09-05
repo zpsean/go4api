@@ -260,7 +260,7 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile string, csvFileLi
                 for _, tcase := range tcases {
                     // populate the testcase.TestCaseDataInfo
                     tcaseData := testcase.TestCaseDataInfo {
-                        TestCase: tcase,
+                        TestCase: &tcase,
                         JsonFilePath: jsonFile,
                         CsvFile: csvFile,
                         CsvRow: strconv.Itoa(i + 1),
@@ -287,7 +287,7 @@ func ConstructTcInfosBasedOnJson(jsonFile string) []testcase.TestCaseDataInfo {
      for _, tcase := range tcases {
         // populate the testcase.TestCaseDataInfo
         tcaseData := testcase.TestCaseDataInfo {
-            TestCase: tcase,
+            TestCase: &tcase,
             JsonFilePath: jsonFile,
             CsvFile: csvFile,
             CsvRow: csvRow,
