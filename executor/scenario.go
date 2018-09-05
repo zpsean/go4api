@@ -30,7 +30,6 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
     fmt.Println("Scenario jsonFileList:", cmd.Opt.IfScenario, jsonFileList, "")
 
     var tcArray []testcase.TestCaseDataInfo
-    // var tcNames []string
 
     // (1). get the root cases in json (but maybe the json has notation, not valid json)
     // => the json has parentTestCase = root, or the the data table has parentTestCase = root
@@ -41,8 +40,7 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
 
     // (3). then execute them, genrate the outputs if have
     InitNodesRunResult(root, "Ready")
-
-    
+  
     miniLoop:
     for {
         resultsExeChan := make(chan testcase.TestCaseExecutionInfo, len(tcArray))
@@ -59,7 +57,6 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
             // the case has inputs and its parent's runstatus == Success (i.e. not failed)
             if tcExecution.TestResult == "Success" {
                 tcArrayT := ConstructChildTcInfosBasedOnParentTcName(jsonFileList, tcExecution.TcName(), "_outputs")
-                // fmt.Println("----- tcArrayT: ", tcArrayT)
                 for _, tcData := range tcArrayT {
                     tcaseExecution := testcase.TestCaseExecutionInfo {
                         TestCaseDataInfo: &tcData,
@@ -91,16 +88,12 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
             // (2). 
             RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
                     tcExecution.TestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
-            // fmt.Println("------------------")
             // (3). <--> for log write to file
             // set Priority to 1 for all
             repJson, _ := json.Marshal(tcExecution)
             // (4). put the execution log into resultstestResult
             logger.WriteExecutionResults(string(repJson), pStart, resultsDir)
-            // fmt.Println("------!!!------")
         }
-
-        // ShowNodes(root)
 
         // (5). execute the chilren, and so on
         statusReadyCount = 0
@@ -139,15 +132,12 @@ func ConstructChildTcInfosBasedOnParentRoot(jsonFileList []string, parentTcName 
         tcNames := GetTestCaseBasicBasedOnParentFromJsonFile(jsonFile, "root")
         if len(tcNames) > 0 {
             csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_dt")
-            // fmt.Println("tcNames: ", jsonFile, tcNames)
 
             if len(csvFileList) > 0 {
                 tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
             } else {
                 tcInfos = ConstructTcInfosBasedOnJson(jsonFile)
             }
-
-            // fmt.Println("tcInfos:", tcInfos, "\n")
             
             for _, tcData := range tcInfos {
                 tcArray = append(tcArray, tcData)
@@ -168,7 +158,6 @@ func ConstructChildTcInfosBasedOnParentTcName(jsonFileList []string, parentTcNam
         //
         if len(tcNames) > 0 {
             csvFileList := GetTestCaseBasicInputsFileNameFromJsonFile(jsonFile)
-            //
             // if has inputs -> if has *_dt -> use json
             if len(csvFileList) > 0 && CheckFilesExistence(csvFileList) {
                 tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
@@ -210,12 +199,8 @@ func GetTestCaseBasicBasedOnParentFromJsonFile(filePath string, parentName strin
     var tcNames []string
     // Note: as we can not ensure if the field inputs and its value will on the same line, so use : as delimiter
     strList := strings.Split(string(contents), ":")
-    // fmt.Println("strList - root: ", strList[0], strList)
     for ii, value := range strList {
         if strings.Contains(value, `"parentTestCase"`) {
-            // "ParentTestCase-001": {
-            //     "priority": "10",
-            //     "parentTestCase": "root",
             parentStr := strings.Split(strList[ii + 1], ",")[0]
             parentStr = strings.TrimSpace(strings.Replace(parentStr, `"`, "", -1))
             // here do not use Contains, use equal exactly
@@ -237,7 +222,6 @@ func GetTestCaseBasicInputsFileNameFromJsonFile(filePath string) []string {
     var inputsFiles []string
     // Note: as we can not ensure if the field inputs and its value will on the same line, so use : as delimiter
     strList := strings.Split(string(contents), ":")
-    // fmt.Println("strList - inputs: ", strList)
     for ii, value := range strList {
         if strings.Contains(value, `"inputs"`) {
             fileStr := strings.Split(strList[ii + 1], ",")[0]

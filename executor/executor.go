@@ -33,20 +33,12 @@ import (
 
 
 func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo) { 
-    // (1), get the text path, default is ../data/*, then search all the sub-folder to get the test scripts
-    // to check the tcArray, if the case not distinct, report it to fix
+    // check the tcArray, if the case not distinct, report it to fix
     if len(tcArray) != len(GetTcNameSet(tcArray)) {
         fmt.Println("\n!! There are duplicated test case names, please make them distinct")
         os.Exit(1)
     }
     //
-    // myabe there needs a scheduler, for priority 1 (w or w/o dependency) -> priority 2 (w or w/o dependency), ...
-    // --
-    // How to impliment the case Dependency???
-    // Two big categories: 
-    // (1) case has No parent Dependency or successor Dependency, which can be scheduled concurrently
-    // (2) case has parent Dependency or successor Dependency, which has rules to be scheduled concurrently
-    // 
     root, _ := BuildTree(tcArray)
     fmt.Println("------------------")
     //
@@ -58,9 +50,8 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
     sort.Ints(prioritySet_Int)
     prioritySet = utils.ConvertIntArrayToStringArray(prioritySet_Int)
 
-    // If need to set the Concurrency MAX?
+    // Init
     InitNodesRunResult(root, "Ready")
-    // fmt.Println("------------------", root, &root)
 
     //
     fmt.Println("\n====> test cases execution starts!")
@@ -97,23 +88,19 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
                 // (2). 
                 RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
                     tcExecution.TestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
-                // fmt.Println("------------------")
                 // (3). <--> for log write to file
                 tcReportResults := tcExecution.TcReportResults()
                 repJson, _ := json.Marshal(tcReportResults)
-                // fmt.Println(string(repJson))
                 // (4). put the execution log into results
                 logger.WriteExecutionResults(string(repJson), pStart, resultsDir)
-                // fmt.Println("------!!!------")
             }
             // if tcTree has no node with "Ready" status, break the miniloop
             statusReadyCount = 0
             CollectNodeReadyStatus(root, priority)
-            // fmt.Println("------------------ statusReadyCount: ", statusReadyCount)
+            //
             if statusReadyCount == 0 {
                 break miniLoop
             }
-            // ShowNodes(root)
         }
         //
         CollectNodeStatusByPriority(root, p_index, priority)
@@ -155,7 +142,6 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
     }
     // ShowNodes(root)
     CollectOverallNodeStatus(root, len(prioritySet))
-    // fmt.Println("====> statusCountList final: ", statusCountList)
     //
     var successCount = statusCountList[len(prioritySet)][2]
     var failCount = statusCountList[len(prioritySet)][3]
@@ -180,21 +166,18 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
     fmt.Println("Execution Finished at: " + pEnd_time.String())
 
     // channel code, can be used for the overall success or fail indicator, especially for CI/CD
-    ch <- 1
+    ch <- failCount
 
 }
-
 
 
 func GetTcArray() []testcase.TestCaseDataInfo { 
     var tcArray []testcase.TestCaseDataInfo
 
-    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase + "/", ".json")
-    // fmt.Println("jsonFileList:", jsonFileList, "\n")
+    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
     // to ge the json and related data file, then get tc from them
     for _, jsonFile := range jsonFileList {
         csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_dt")
-        // fmt.Println("csvFileList:", csvFileList, "\n")
         //
         var tcInfos []testcase.TestCaseDataInfo
 
@@ -234,8 +217,6 @@ func GetCsvDataFilesForJsonFile(jsonFile string, suffix string) []string {
         csvFileName := strings.TrimRight(filepath.Base(csvFile), ".csv")
         jsonFileName := strings.TrimRight(filepath.Base(jsonFile), ".json")
         // Note: the json file realted data table files is pattern: jsonFileName + "_dt[*]"
-        
-        // if             
         if strings.Contains(csvFileName, jsonFileName + suffix) {
             csvFileList = append(csvFileList, csvFile)
         }
@@ -303,10 +284,20 @@ func ConstructTcInfosBasedOnJson(jsonFile string) []testcase.TestCaseDataInfo {
 
 
 func GetTcNameSet(tcArray []testcase.TestCaseDataInfo) []string {
-    // get the tcNames
     var tcNames []string
+
     for _, tcaseInfo := range tcArray {
-        tcNames = append(tcNames, tcaseInfo.TcName())
+        var ifExists bool
+        ifExists = false
+        for _, tcN := range tcNames {
+            if tcaseInfo.TcName() == tcN {
+                ifExists = true
+                break
+            }
+        } 
+        if ifExists == false {
+            tcNames = append(tcNames, tcaseInfo.TcName())
+        }   
     }
     return tcNames
 }
@@ -323,7 +314,7 @@ func GetPrioritySet(tcArray []testcase.TestCaseDataInfo) []string {
     var prioritySet []string
     for _, entry := range priorities {
         // uses 'value, ok := map[key]' to determine if map's key exists, if ok, then true
-        if _, value := keys[entry]; !value {
+        if _, ok := keys[entry]; !ok {
             keys[entry] = true
             prioritySet = append(prioritySet, entry)
         }
@@ -344,7 +335,7 @@ func GetTestCasesByPriority(prioritySet []string, tcArray []testcase.TestCaseDat
             }
         }
     }
-    // fmt.Println("classifications: ", classifications)
+
     return classifications
 }
 
@@ -376,41 +367,20 @@ func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string,
 }
 
 
-
-func GetTmpJsonDir(path string) string {
-    // check if the /tmp/go4api_wfasf exists, if exists, then rm first
-    os.RemoveAll("/tmp/" + path)
-    //
-    var resultsDir string
-    err := os.Mkdir("/tmp/" + path + "/", 0777)
-    if err != nil {
-      panic(err) 
-    } else {
-        resultsDir = "/tmp/" + path + "/"
-    }
-
-    return resultsDir
-}
-
-
-
 func GetFuzzTcArray() []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
 
-    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase + "/", ".json")
-    // fmt.Println("jsonFileList:", jsonFileList, "\n")
+    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
     // to ge the json and related data file, then get tc from them
     for _, jsonFile := range jsonFileList {
         csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_fuzz_dt")
-        // fmt.Println("csvFileList:", csvFileList, "\n")
         // to get the json test data directly (if not template) based on template (if template)
         // tcInfos: [[casename, priority, parentTestCase, ], ...]
         var tcInfos []testcase.TestCaseDataInfo
         if len(csvFileList) > 0 {
             tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
         }
-        // fmt.Println("tcInfos:", tcInfos, "\n")
-        
+
         for _, tcData := range tcInfos {
             tcArray = append(tcArray, tcData)
         }
@@ -423,12 +393,10 @@ func GetFuzzTcArray() []testcase.TestCaseDataInfo {
 func GetOriginMutationTcArray() []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
 
-    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase + "/", ".mutation")
-    // fmt.Println("jsonFileList:", jsonFileList, "\n")
+    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".mutation")
     // to ge the json and related data file, then get tc from them
     for _, jsonFile := range jsonFileList {
         csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_mutation_dt")
-        // fmt.Println("csvFileList:", csvFileList, "\n")
         // to get the json test data directly (if not template) based on template (if template)
         // tcInfos: [[casename, priority, parentTestCase, ], ...]
         var tcInfos []testcase.TestCaseDataInfo
@@ -437,8 +405,7 @@ func GetOriginMutationTcArray() []testcase.TestCaseDataInfo {
         } else {
             tcInfos = ConstructTcInfosBasedOnJson(jsonFile)
         }
-        // fmt.Println("tcInfos:", tcInfos, "\n")
-        
+
         for _, tcData := range tcInfos {
             tcArray = append(tcArray, tcData)
         }
