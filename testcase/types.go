@@ -15,7 +15,7 @@ import (
 
 // test case data type, includes testcase
 type TestCaseDataInfo struct {
-    TestCase TestCase
+    TestCase *TestCase
     JsonFilePath string
     CsvFile string
     CsvRow string
@@ -24,7 +24,7 @@ type TestCaseDataInfo struct {
 
 // test case execution type, includes testdata
 type TestCaseExecutionInfo struct {
-    TestCaseDataInfo TestCaseDataInfo
+    TestCaseDataInfo *TestCaseDataInfo
     TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
     ActualStatusCode int
     StartTime string
@@ -37,14 +37,14 @@ type TestCaseExecutionInfo struct {
 type TestCases []TestCase
 
 // test case type,
-type TestCase map[string]TestCaseBasics
+type TestCase map[string]*TestCaseBasics
 
 type TestCaseBasics struct {
     Priority string         `json:"priority"`
     ParentTestCase string   `json:"parentTestCase"`
     Inputs string           `json:"inputs"`
-    Request Request         `json:"request"`
-    Response Response       `json:"response"`
+    Request *Request         `json:"request"`
+    Response *Response       `json:"response"`
     Outputs []interface{}   `json:"outputs"`
 }
 

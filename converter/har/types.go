@@ -28,13 +28,13 @@ type Entries []Entry
 type Entry struct {
     startedDateTime string
     time float32
-    Request Request `json:"request"`
+    Request Request 
     Response Response
 }
 
 type Request struct {  
-    Method string `json:"method"`
-    Url string `json:"url"`
+    Method string 
+    Url string 
     HttpVersion string
     Headers []map[string]interface{}
     QueryString []map[string]interface{}

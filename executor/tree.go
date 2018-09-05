@@ -102,14 +102,14 @@ func BuildTree(tcArray []testcase.TestCaseDataInfo) (*tcNode, map[string]*tcNode
     // Step 1: add the root node
     rootTc := GetDummyRootTc()
     rootTcaseData := testcase.TestCaseDataInfo {
-        TestCase: rootTc,
+        TestCase: &rootTc,
         JsonFilePath: "",
         CsvFile: "",
         CsvRow: "",
     }
 
     rootTcaseExecution := testcase.TestCaseExecutionInfo {
-        TestCaseDataInfo: rootTcaseData,
+        TestCaseDataInfo: &rootTcaseData,
         TestResult: "",
         ActualStatusCode: 0,
         StartTime: "",
@@ -127,7 +127,7 @@ func BuildTree(tcArray []testcase.TestCaseDataInfo) (*tcNode, map[string]*tcNode
         // if parentTestCase name can be found in tree
         // tcRunResult is "" for init
         tcaseExecution := testcase.TestCaseExecutionInfo {
-            TestCaseDataInfo: tcData,
+            TestCaseDataInfo: &tcData,
             TestResult: "",
             ActualStatusCode: 0,
             StartTime: "",
@@ -164,7 +164,7 @@ func BuildTree(tcArray []testcase.TestCaseDataInfo) (*tcNode, map[string]*tcNode
             // fmt.Println("!!now try to add tc - 0: ", tc[0].(string), tcArrayNotTree, tc)
             // if parentTestCase name can be found in tree
             tcaseExecution := testcase.TestCaseExecutionInfo {
-                TestCaseDataInfo: tcData,
+                TestCaseDataInfo: &tcData,
                 TestResult: "",
                 ActualStatusCode: 0,
                 StartTime: "",
@@ -222,14 +222,14 @@ func SearchNode(node **tcNode, testCaseNmae string) **tcNode {
 
 
 func InitNodesRunResult(node *tcNode, runResult string) {
-    for _, n := range node.children {
+    for i, _ := range node.children {
         // check if the current tese case is parent to others, if yes, then refresh
-        if n.TestCaseExecutionInfo.ParentTestCase() == "root"{
-            n.TestCaseExecutionInfo.TestResult = "Ready"
+        if node.children[i].TestCaseExecutionInfo.ParentTestCase() == "root"{
+            node.children[i].TestCaseExecutionInfo.TestResult = "Ready"
         } else {
-            n.TestCaseExecutionInfo.TestResult = "ParentReady"
+            node.children[i].TestCaseExecutionInfo.TestResult = "ParentReady"
         }
-        InitNodesRunResult(n, "")
+        InitNodesRunResult(node.children[i], "")
     }
 }
 
@@ -240,21 +240,22 @@ func ScheduleNodes(node *tcNode, wg *sync.WaitGroup, priority string, resultsCha
     tick := 0
     max := cmd.Opt.ConcurrencyLimit
     //
-    for _, n := range node.children {
-        if priority == n.TestCaseExecutionInfo.Priority() && n.TestCaseExecutionInfo.TestResult == "Ready"{
+    // note: does data copy happen if use n but not node.children[i]?
+    for i, _ := range node.children {
+        if priority == node.children[i].TestCaseExecutionInfo.Priority() && node.children[i].TestCaseExecutionInfo.TestResult == "Ready"{
             wg.Add(1)
             // Note: to prevent to tcp connection, here set a max, then sleep for a while
             if tick % max == 0 {
                 time.Sleep(500 * time.Millisecond)
-                go api.HttpApi(wg, resultsChan, pStart, baseUrl, n.TestCaseExecutionInfo.TestCaseDataInfo, resultsDir)
+                go api.HttpApi(wg, resultsChan, pStart, baseUrl, *(node.children[i].TestCaseExecutionInfo.TestCaseDataInfo), resultsDir)
             } else {
-                go api.HttpApi(wg, resultsChan, pStart, baseUrl, n.TestCaseExecutionInfo.TestCaseDataInfo, resultsDir)
+                go api.HttpApi(wg, resultsChan, pStart, baseUrl, *(node.children[i].TestCaseExecutionInfo.TestCaseDataInfo), resultsDir)
             }
 
             tick = tick + 1
         }
         
-        ScheduleNodes(n, wg, priority, resultsChan, pStart, baseUrl, resultsDir)
+        ScheduleNodes(node.children[i], wg, priority, resultsChan, pStart, baseUrl, resultsDir)
     }
 }
 
@@ -270,33 +271,33 @@ func RefreshNodeAndDirectChilrenTcResult(node *tcNode, tcRunResult string, tcSta
     node.TestCaseExecutionInfo.EndTimeUnixNano = tcEndUnixNano
     node.TestCaseExecutionInfo.DurationUnixNano = tcEndUnixNano - tcStartUnixNano
 
-    for _, n := range node.children {
+    for i, _ := range node.children {
         if tcRunResult == "Fail"{
-            n.TestCaseExecutionInfo.TestResult = "ParentFailed"
+            node.children[i].TestCaseExecutionInfo.TestResult = "ParentFailed"
         } else if tcRunResult == "Success"{
-            n.TestCaseExecutionInfo.TestResult = "Ready"
+            node.children[i].TestCaseExecutionInfo.TestResult = "Ready"
         }
     }
 }
 
 func CollectNodeReadyStatus(node *tcNode, priority string) {
-    for _, n := range node.children {
-        if n.TestCaseExecutionInfo.Priority() == priority {
-            switch n.TestCaseExecutionInfo.TestResult { 
+    for i, _ := range node.children {
+        if node.children[i].TestCaseExecutionInfo.Priority() == priority {
+            switch node.children[i].TestCaseExecutionInfo.TestResult { 
                 case "Ready": 
                     statusReadyCount = statusReadyCount + 1
             }
         }
-        CollectNodeReadyStatus(n, priority)
+        CollectNodeReadyStatus(node.children[i], priority)
     }
 }
 
 func CollectNodeStatusByPriority(node *tcNode, p_index int, priority string) {
-    for _, n := range node.children {
-        if n.TestCaseExecutionInfo.Priority() == priority {
+    for i, _ := range node.children {
+        if node.children[i].TestCaseExecutionInfo.Priority() == priority {
             statusCountList[p_index][0] = statusCountList[p_index][0] + 1
 
-            switch n.TestCaseExecutionInfo.TestResult { 
+            switch node.children[i].TestCaseExecutionInfo.TestResult { 
                 case "Ready": 
                     statusCountList[p_index][1] = statusCountList[p_index][1] + 1
                 case "Success": 
@@ -306,19 +307,19 @@ func CollectNodeStatusByPriority(node *tcNode, p_index int, priority string) {
                 default: 
                     statusCountList[p_index][4] = statusCountList[p_index][4] + 1
                     // write the cases to tcNotExecutedList
-                    tcNotExecutedList = append(tcNotExecutedList, n.TestCaseExecutionInfo)
+                    tcNotExecutedList = append(tcNotExecutedList, node.children[i].TestCaseExecutionInfo)
                     
             }
         }
-        CollectNodeStatusByPriority(n, p_index, priority)
+        CollectNodeStatusByPriority(node.children[i], p_index, priority)
     }
 }
 
 func CollectOverallNodeStatus(node *tcNode, p_index int) {
-    for _, n := range node.children {
+    for i, _ := range node.children {
         statusCountList[p_index][0] = statusCountList[p_index][0] + 1
 
-        switch n.TestCaseExecutionInfo.TestResult { 
+        switch node.children[i].TestCaseExecutionInfo.TestResult { 
             case "Ready": 
                 statusCountList[p_index][1] = statusCountList[p_index][1] + 1
             case "Success": 
@@ -328,16 +329,16 @@ func CollectOverallNodeStatus(node *tcNode, p_index int) {
             default: 
                 statusCountList[p_index][4] = statusCountList[p_index][4] + 1
         }
-        CollectOverallNodeStatus(n, p_index)
+        CollectOverallNodeStatus(node.children[i], p_index)
     }
 }
 
 
 func ShowNodes(node *tcNode) {
     fmt.Println("\nNN P node:", node.TestCaseExecutionInfo.Priority(), node.TestCaseExecutionInfo.TcName(), node.TestCaseExecutionInfo.TestResult)
-    for _, n := range node.children {
+    for i, _ := range node.children {
         // fmt.Println("NN - C node:", &n, n)
-        ShowNodes(n)
+        ShowNodes(node.children[i])
     }
 }
 

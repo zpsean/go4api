@@ -25,279 +25,167 @@ func (tc *TestCase) TcName() string {
     var tcName string
     for key, _ := range *tc {
         tcName = key
+        break
     }
     return tcName
 }
 
-func (tc TestCase) Priority() string {
-    var priority string
-    for _, value := range tc {
-        priority = value.Priority
-    }
-    return priority
+func (tc *TestCase) Priority() string {
+    return (*tc)[tc.TcName()].Priority
 }
 
-func (tc TestCase) ParentTestCase() string {
-    var parentTestCase string
-    for _, value := range tc {
-        parentTestCase = value.ParentTestCase
-    }
-    return parentTestCase
+func (tc *TestCase) ParentTestCase() string {
+    return (*tc)[tc.TcName()].ParentTestCase
 }
 
-func (tc TestCase) Inputs() string {
-    var inputs string
-    for _, value := range tc {
-        inputs = value.Inputs
-    }
-    return inputs
+func (tc *TestCase) Inputs() string {
+    return (*tc)[tc.TcName()].Inputs
 }
 
-func (tc TestCase) Outputs() []interface{} {
-    var outputs []interface{}
-    for _, value := range tc {
-        outputs = value.Outputs
-    }
-    return outputs
+func (tc *TestCase) Outputs() []interface{} {
+    return (*tc)[tc.TcName()].Outputs
 }
 
 // !! ---------------------------------------
 // !! --- test case type - set
 // !! ---------------------------------------
-func (tc TestCase) SetPriority(newValue string) {
-    for _, value := range tc {
-        value.Priority = newValue
-    }
+func (tc *TestCase) SetPriority(newValue string) {
+    (*tc)[tc.TcName()].Priority = newValue
 }
 
-func (tc TestCase) SetParentTestCase(newValue string) {
-    for _, value := range tc {
-        value.ParentTestCase = newValue
-    }
+func (tc *TestCase) SetParentTestCase(newValue string) {
+    (*tc)[tc.TcName()].ParentTestCase = newValue
 }
 
-
-func (tc TestCase) SetInputs(newValue string) {
-    for _, value := range tc {
-        value.Inputs = newValue
-    }
+func (tc *TestCase) SetInputs(newValue string) {
+    (*tc)[tc.TcName()].Inputs = newValue
 }
 
-func (tc TestCase) SetOutputs(newValue []interface{}) {
-    for _, value := range tc {
-        value.Outputs = newValue
-    }
+func (tc *TestCase) SetOutputs(newValue []interface{}) {
+    (*tc)[tc.TcName()].Outputs = newValue
 }
 
-func (tc TestCase) SetRequestMethod (newValue string) {
-    for _, value := range tc {
-        value.Request.Method = newValue
-    }
+func (tc *TestCase) SetRequestMethod (newValue string) {
+    (*tc)[tc.TcName()].Request.Method = newValue
 }
 
-func (tc TestCase) SetRequestPath (newValue string) {
-    for _, value := range tc {
-        value.Request.Path = newValue
-    }
+func (tc *TestCase) SetRequestPath (newValue string) {
+    (*tc)[tc.TcName()].Request.Path = newValue
 }
 
 // request header
-func (tc TestCase) SetRequestHeader (key string, newValue string) {
-    for _, value := range tc {
-        // to check if the headers has the key
-        if _, ok := value.Request.Headers[key]; ok {
-            value.Request.Headers[key] = newValue
-        }
-        
+func (tc *TestCase) SetRequestHeader (key string, newValue string) {
+    // to check if the headers has the key
+    if _, ok := (*tc)[tc.TcName()].Request.Headers[key]; ok {
+        (*tc)[tc.TcName()].Request.Headers[key] = newValue
     }
 }
 
-func (tc TestCase) AddRequestHeader (key string, newValue string) {
+func (tc *TestCase) AddRequestHeader (key string, newValue string) {
     reqH := tc.ReqQueryString()
+    // if has key, value already
     if len(reqH) > 0 {
-        for _, value := range tc {
-            value.Request.Headers[key] = newValue
-        }
+        (*tc)[tc.TcName()].Request.Headers[key] = newValue
     }
+    // } else {
+        // need to init the headers make(map[]), otherwise, assign to nil map
+    // }
 }
 
-func (tc TestCase) DelRequestHeader (key string) {
-    for _, value := range tc {
-        delete(value.Request.Headers, key)
-    }
+func (tc *TestCase) DelRequestHeader (key string) {
+    delete((*tc)[tc.TcName()].Request.Headers, key)
 }
 
 // request query string
-func (tc TestCase) SetRequestQueryString (key string, newValue string) {
-    for _, value := range tc {
-        // to check if the QueryString has the key
-        if _, ok := value.Request.QueryString[key]; ok {
-            value.Request.QueryString[key] = newValue
-        }
+func (tc *TestCase) SetRequestQueryString (key string, newValue string) {
+    // to check if the QueryString has the key
+    if _, ok := (*tc)[tc.TcName()].Request.QueryString[key]; ok {
+        (*tc)[tc.TcName()].Request.QueryString[key] = newValue
     }
 }
 
-func (tc TestCase) AddRequestQueryString (key string, newValue string) {
+func (tc *TestCase) AddRequestQueryString (key string, newValue string) {
     // check if tc has QueryString
     reqQS := tc.ReqQueryString()
     if len(reqQS) > 0 {
-        for _, value := range tc {
-            value.Request.QueryString[key] = newValue
-        }
+        (*tc)[tc.TcName()].Request.QueryString[key] = newValue
     }
 }
 
-func (tc TestCase) DelRequestQueryString (key string) {
-    for _, value := range tc {
-        delete(value.Request.QueryString, key)
-    }
+func (tc *TestCase) DelRequestQueryString (key string) {
+    delete((*tc)[tc.TcName()].Request.QueryString, key)
 }
 
 
 // request query Payload??
 // Note: currently, if the post data is json, then the key is "text"
-func (tc TestCase) SetRequestPayload (key string, newValue string) {
-    for _, value := range tc {
-        value.Request.Payload[key] = newValue
-    }
+func (tc *TestCase) SetRequestPayload (key string, newValue string) {
+    (*tc)[tc.TcName()].Request.Payload[key] = newValue
 }
 
 
-func (tc TestCase) UpdateTcName (newKey string) TestCase {
-    for _, v := range tc {
-        // mTc -> testcase.TestCase
-        mTc := TestCase{}
+func (tc *TestCase) UpdateTcName (newKey string) {
+    mTc := TestCase{}
 
-        mTc[newKey] = v
-        tc = mTc
-    }
-    return tc
+    mTc[newKey] = (*tc)[tc.TcName()]
+    *tc = mTc
 }
 
 
-
-// !! ---------------------------------------
-// !! --- test case data type 
-// !! ---------------------------------------
-func (tcData TestCaseDataInfo) TcName() string {
-    return tcData.TestCase.TcName()
+// type Request struct
+func (tc *TestCase) ReqMethod() string {
+    return (*tc)[tc.TcName()].Request.Method
 }
 
-func (tcData TestCaseDataInfo) Priority() string {
-    return tcData.TestCase.Priority()
+func (tc *TestCase) ReqPath() string {
+    return (*tc)[tc.TcName()].Request.Path
 }
 
-func (tcData TestCaseDataInfo) ParentTestCase() string {
-    return tcData.TestCase.ParentTestCase()
+func (tc *TestCase) ReqHeaders() map[string]interface{} {
+    return (*tc)[tc.TcName()].Request.Headers
 }
 
 
-
-// test case execution type
-func (tcExecution TestCaseExecutionInfo) TcName() string {
-    return tcExecution.TestCaseDataInfo.TcName()
-}
-
-func (tcExecution TestCaseExecutionInfo) Priority() string {
-    return tcExecution.TestCaseDataInfo.Priority()
-}
-
-func (tcExecution TestCaseExecutionInfo) ParentTestCase() string {
-    return tcExecution.TestCaseDataInfo.ParentTestCase()
+func (tc *TestCase) ReqQueryString() map[string]interface{} {
+    return (*tc)[tc.TcName()].Request.QueryString
 }
 
 
-func (tcExecution TestCaseExecutionInfo) TestCase() TestCase {
-    return tcExecution.TestCaseDataInfo.TestCase
-}
-
-
-func (tcExecution TestCaseExecutionInfo) SetTestResult(value string) {
-    tcExecution.TestResult = value
-}
-
-
-// type Request struct {  
-//     Method string
-//     Path string
-//     Headers map[string]interface{}
-//     QueryString map[string]interface{}
-//     Payload map[string]interface{}
-// }
-
-func (tc TestCase) ReqMethod() string {
-    var reqMethod string
-    for _, value := range tc {
-        reqMethod = value.Request.Method
-    }
-    return reqMethod
-}
-
-func (tc TestCase) ReqPath() string {
-    var reqPath string
-    for _, value := range tc {
-        reqPath = value.Request.Path
-    }
-    return reqPath
-}
-
-func (tc TestCase) ReqHeaders() map[string]interface{} {
-    var reqHeaders map[string]interface{}
-    for _, value := range tc {
-        reqHeaders = value.Request.Headers
-    }
-    return reqHeaders
-}
-
-
-func (tc TestCase) ReqQueryString() map[string]interface{} {
-    var reqQueryString map[string]interface{}
-    for _, value := range tc {
-        reqQueryString = value.Request.QueryString
-    }
-    return reqQueryString
-}
-
-
-func (tc TestCase) ComposeReqQueryString() string {
+func (tc *TestCase) ComposeReqQueryString() string {
     var reqQueryString string
     i := 0
-    for _, value := range tc {
-        for qryKey, qryValue := range value.Request.QueryString {
-            if i == 0 {
-                reqQueryString = fmt.Sprint(qryKey) + "=" + fmt.Sprint(qryValue)
-            } else  {
-                reqQueryString = reqQueryString + "&" + fmt.Sprint(qryKey) + "=" + fmt.Sprint(qryValue)
-            }
-            i = i + 1
+    for qryKey, qryValue := range tc.ReqQueryString() {
+        if i == 0 {
+            reqQueryString = fmt.Sprint(qryKey) + "=" + fmt.Sprint(qryValue)
+        } else  {
+            reqQueryString = reqQueryString + "&" + fmt.Sprint(qryKey) + "=" + fmt.Sprint(qryValue)
         }
+        i = i + 1
     }
     return reqQueryString
 }
 
 // to encode the query, also avoid the impact if string itself contains char '&'
-func (tc TestCase) ComposeReqQueryStringEncode() string {
+func (tc *TestCase) ComposeReqQueryStringEncode() string {
     var reqQueryStringEncoded string
     i := 0
-    for _, value := range tc {
-        for qryKey, qryValue := range value.Request.QueryString {
-            if i == 0 {
-                reqQueryString := fmt.Sprint(qryKey) + "=" + fmt.Sprint(qryValue)
-                values, _ := url.ParseQuery(reqQueryString)
-                reqQueryStringEncoded = values.Encode()
-            } else  {
-                reqQueryString := fmt.Sprint(qryKey) + "=" + fmt.Sprint(qryValue)
-                values, _ := url.ParseQuery(reqQueryString)
-                reqQueryStringEncoded = reqQueryStringEncoded + "&" + values.Encode()
-            }
-            i = i + 1
+    for qryKey, qryValue := range tc.ReqQueryString() {
+        if i == 0 {
+            reqQueryString := fmt.Sprint(qryKey) + "=" + fmt.Sprint(qryValue)
+            values, _ := url.ParseQuery(reqQueryString)
+            reqQueryStringEncoded = values.Encode()
+        } else  {
+            reqQueryString := fmt.Sprint(qryKey) + "=" + fmt.Sprint(qryValue)
+            values, _ := url.ParseQuery(reqQueryString)
+            reqQueryStringEncoded = reqQueryStringEncoded + "&" + values.Encode()
         }
+        i = i + 1
     }
     return reqQueryStringEncoded
 }
 
 
-func (tc TestCase) UrlEncode(baseUrl string) string {
+func (tc *TestCase) UrlEncode(baseUrl string) string {
     urlStr := ""
     apiPath := tc.ReqPath()
 
@@ -324,7 +212,7 @@ func (tc TestCase) UrlEncode(baseUrl string) string {
 }
 
 
-func (tc TestCase) UrlRaw(baseUrl string) string {
+func (tc *TestCase) UrlRaw(baseUrl string) string {
     urlStr := ""
     apiPath := tc.ReqPath()
 
@@ -351,59 +239,70 @@ func (tc TestCase) UrlRaw(baseUrl string) string {
 }
 
 
-func (tc TestCase) ReqPayload() map[string]interface{} {
-    var reqPayload map[string]interface{}
-    for _, value := range tc {
-        reqPayload = value.Request.Payload
-    }
-    return reqPayload
+func (tc *TestCase) ReqPayload() map[string]interface{} {
+    return (*tc)[tc.TcName()].Request.Payload
 }
 
 
-func (tc TestCase) DelReqPayload (key string) {
-    for _, value := range tc {
-        delete(value.Request.Payload, key)
-    }
+func (tc *TestCase) DelReqPayload (key string) {
+    delete((*tc)[tc.TcName()].Request.Payload, key)
 }
 
 
-// type Response struct {  
-//     Status map[string]interface{}
-//     Headers map[string]interface{}
-//     Body map[string]interface{}
-// }
+// type Response struct
+func (tc *TestCase) RespStatus() map[string]interface{} {
+    return (*tc)[tc.TcName()].Response.Status
+}
 
+func (tc *TestCase) RespHeaders() map[string]interface{} {
+    return (*tc)[tc.TcName()].Response.Headers
+}
 
-func (tc TestCase) RespStatus() map[string]interface{} {
-    var reqStatus map[string]interface{}
-    for _, value := range tc {
-        reqStatus = value.Response.Status
-    }
-    return reqStatus
+func (tc *TestCase) RespBody() map[string]interface{} {
+    return (*tc)[tc.TcName()].Response.Body
+}
+
+// !! ---------------------------------------
+// !! --- test case data type 
+// !! ---------------------------------------
+func (tcData *TestCaseDataInfo) TcName() string {
+    return tcData.TestCase.TcName()
+}
+
+func (tcData *TestCaseDataInfo) Priority() string {
+    return tcData.TestCase.Priority()
+}
+
+func (tcData *TestCaseDataInfo) ParentTestCase() string {
+    return tcData.TestCase.ParentTestCase()
 }
 
 
-func (tc TestCase) RespHeaders() map[string]interface{} {
-    var reqHeaders map[string]interface{}
-    for _, value := range tc {
-        reqHeaders = value.Response.Headers
-    }
-    return reqHeaders
+// test case execution type
+func (tcExecution *TestCaseExecutionInfo) TcName() string {
+    return tcExecution.TestCaseDataInfo.TcName()
 }
 
-func (tc TestCase) RespBody() map[string]interface{} {
-    var reqBody map[string]interface{}
-    for _, value := range tc {
-        reqBody = value.Response.Body
-    }
-    return reqBody
+func (tcExecution *TestCaseExecutionInfo) Priority() string {
+    return tcExecution.TestCaseDataInfo.Priority()
 }
 
+func (tcExecution *TestCaseExecutionInfo) ParentTestCase() string {
+    return tcExecution.TestCaseDataInfo.ParentTestCase()
+}
+
+func (tcExecution *TestCaseExecutionInfo) TestCase() *TestCase {
+    return tcExecution.TestCaseDataInfo.TestCase
+}
+
+func (tcExecution *TestCaseExecutionInfo) SetTestResult(value string) {
+    tcExecution.TestResult = value
+}
 
 
 // for report
-func (tcExecution TestCaseExecutionInfo) TcConsoleResults() TcConsoleResults {
-    tcConsoleRes := TcConsoleResults { 
+func (tcExecution *TestCaseExecutionInfo) TcConsoleResults() *TcConsoleResults {
+    tcConsoleRes := &TcConsoleResults { 
         TcName: tcExecution.TcName(),
         Priority: tcExecution.Priority(),
         ParentTestCase: tcExecution.ParentTestCase(),
@@ -420,9 +319,8 @@ func (tcExecution TestCaseExecutionInfo) TcConsoleResults() TcConsoleResults {
 }
 
 
-
-func (tcExecution TestCaseExecutionInfo) TcReportResults() TcReportResults {
-    tcReportRes := TcReportResults { 
+func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
+    tcReportRes := &TcReportResults { 
         TcName: tcExecution.TcName(),
         Priority: tcExecution.Priority(),
         ParentTestCase: tcExecution.ParentTestCase(),

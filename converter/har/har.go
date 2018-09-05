@@ -44,18 +44,18 @@ func Convert () {
         g4AResponse := entry.Response.buildG4AResponse()
 
         //
-        tCase := make(map[string]testcase.TestCaseBasics)
+        tCase := make(map[string]*(testcase.TestCaseBasics))
         
-        tCaseBasics := testcase.TestCaseBasics{
+        tCaseBasics := testcase.TestCaseBasics {
             priority, 
             parentTestCase,
             inputs,
-            g4ARequest,
-            g4AResponse,
+            &g4ARequest,
+            &g4AResponse,
             []interface{}{},
         }
 
-        tCase[g4ATcName] = tCaseBasics
+        tCase[g4ATcName] = &tCaseBasics
 
         // tcJson, _ := json.Marshal(tCase)
         // fmt.Print(string(tcJson))

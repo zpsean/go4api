@@ -68,7 +68,7 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
                 // fmt.Println("----- tcArrayT: ", tcArrayT)
                 for _, tcData := range tcArrayT {
                     tcaseExecution := testcase.TestCaseExecutionInfo {
-                        TestCaseDataInfo: tcData,
+                        TestCaseDataInfo: &tcData,
                         TestResult: "",
                         ActualStatusCode: 0,
                         StartTime: "",
