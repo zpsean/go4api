@@ -44,39 +44,52 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     //
     defer wg.Done()
     //
-    tcName := tcData.TcName()
-    //
     start_time := time.Now()
     start := start_time.String()
     //
-    apiMethod := tcData.TestCase.ReqMethod()
+    actualStatusCode, actualHeader, actualBody := Run(baseUrl, tcData)
+    //
+    // (2). Expected response
+    expStatus := tcData.TestCase.RespStatus()
+    expHeader := tcData.TestCase.RespHeaders()
+    expBody := tcData.TestCase.RespBody()
+
+    // (3). compare
+    tcName := tcData.TcName()
+    testResult, TestMessages := Compare(tcName, actualStatusCode, actualHeader, actualBody, expStatus, expHeader, expBody)
+    //
+    end_time := time.Now()
+    end := end_time.String()
+    // fmt.Println(tcName + " end: ", end)
+
+    // (4). here to generate the outputs file if the Json has "outputs" field
+    WriteOutputsDataToFile(testResult, tcData, actualBody)
+
+    // get the TestCaseExecutionInfo
+    tcExecution := testcase.TestCaseExecutionInfo {
+        TestCaseDataInfo: &tcData,
+        TestResult: testResult,
+        ActualStatusCode: actualStatusCode,
+        StartTime: start,
+        EndTime: end,
+        TestMessages: TestMessages,
+        StartTimeUnixNano: start_time.UnixNano(),
+        EndTimeUnixNano: end_time.UnixNano(),
+        DurationUnixNano: end_time.UnixNano() - start_time.UnixNano(),
+    }
+
+    // (5). print to console
+    ReportConsole(tcExecution, actualBody)
+
+    // (6). write the channel to executor for scheduler and log
+    resultsExeChan <- tcExecution
+}
+
+
+func Run(baseUrl string, tcData testcase.TestCaseDataInfo) (int, http.Header, []byte) {
     urlStr := tcData.TestCase.UrlEncode(baseUrl)
     //
-    // request payload(body)
-    var reqPayload map[string]interface{}
-    reqPayload = tcData.TestCase.ReqPayload()
-    //
-    var bodyText *strings.Reader // init body
-    bodyMultipart := &bytes.Buffer{}
-    var boundary string
-    //
-    apiMethodSelector := apiMethod
-    // Note, has 3 conditions: text (json), form, or multipart file upload
-    for key, value := range reqPayload {
-        // case 1: multipart upload
-        if key == "filename" {
-            bodyMultipart, boundary, _ = PrepMultipart(cmd.Opt.Testresource + "/" + value.(string), "excel")
-            apiMethodSelector = "POSTMultipart"
-            break
-        }
-        // case 2: normal json
-        if key == "text" {
-            bodyText = PrepPostPayload(reqPayload)
-            break
-        }
-        // case 3: if Post, and the key does not have filename, text, then it would be PostForm
-        bodyText = PrepPostFormPayload(reqPayload)
-    }
+    apiMethodSelector, apiMethod, bodyText, bodyMultipart, boundary := GetPayloadInfo(tcData)
     //
     reqHeaders := make(map[string]interface{})
     reqHeaders = tcData.TestCase.ReqHeaders()
@@ -84,8 +97,6 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     if boundary != "" {
         reqHeaders["Content-Type"] = boundary
     }
-    // fmt.Println(tcName + " boundary: ", boundary)
-   
 
     // < !! ----------- !! >
     // the map for mapping the string and the related funciton to call
@@ -107,86 +118,84 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     } else {
         actualStatusCode, actualHeader, actualBody = protocal.CallHttpMethod(funcs, apiMethodSelector, urlStr, apiMethod, reqHeaders, bodyText)
         }
-    //
-    // (2). Expected response
-    expStatus := tcData.TestCase.RespStatus()
-    expHeader := tcData.TestCase.RespHeaders()
-    expBody := tcData.TestCase.RespBody()
-    // fmt.Println(actualStatusCode, actualHeader, actualBody)
 
-    // (3). compare
-    testResult, TestMessages := Compare(tcName, actualStatusCode, actualHeader, actualBody, expStatus, expHeader, expBody)
-    //
-    end_time := time.Now()
-    end := end_time.String()
-    // fmt.Println(tcName + " end: ", end)
-
-    // (4). here to generate the outputs file if the Json has "outputs" field
-    WriteOutputsDataToFile(testResult, tcData, actualBody)
-
-
-    // get the TestCaseExecutionInfo
-    tcExecution := testcase.TestCaseExecutionInfo {
-        TestCaseDataInfo: &tcData,
-        TestResult: testResult,
-        ActualStatusCode: actualStatusCode,
-        StartTime: start,
-        EndTime: end,
-        TestMessages: TestMessages,
-        StartTimeUnixNano: start_time.UnixNano(),
-        EndTimeUnixNano: end_time.UnixNano(),
-        DurationUnixNano: end_time.UnixNano() - start_time.UnixNano(),
-    }
-
-
-    // (5). print to console
-    tcReportResults := tcExecution.TcConsoleResults()
-    // repJson, _ := json.Marshal(tcReportResults)
-
-    if tcReportResults.TestResult == "Fail" {
-        length := len(string(actualBody))
-        out_len := 0
-        if length > 300 {
-            out_len = 300
-        } else {
-            out_len = length
-        }
-
-        fmt.Printf("\n%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
-            tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
-            tcReportResults.ActualStatusCode)
-
-        if tcReportResults.MutationInfo != nil {
-            fmt.Println(tcReportResults.MutationInfo)
-        }
-        
-        // fmt.Println(tcReportResults.MutationInfo)
-        fmt.Println(tcReportResults.TestMessages)
-        fmt.Println(string(actualBody)[0:out_len], "...")
-    } else {
-        fmt.Printf("\n%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
-            tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
-            tcReportResults.ActualStatusCode)
-
-        if tcReportResults.MutationInfo != nil {
-            fmt.Println(tcReportResults.MutationInfo)
-        }
-    }
-    
-    // (6). write the channel to executor for scheduler and log
-    // here can refactor to struct => done
-    
-    resultsExeChan <- tcExecution
-
+    return actualStatusCode, actualHeader, actualBody
 }
+
+
+func GetPayloadInfo (tcData testcase.TestCaseDataInfo) (string, string, *strings.Reader, *bytes.Buffer, string) {
+    apiMethod := tcData.TestCase.ReqMethod()
+    // request payload(body)
+    reqPayload := tcData.TestCase.ReqPayload()
+    //
+    var bodyText *strings.Reader // init body
+    bodyMultipart := &bytes.Buffer{}
+    boundary := ""
+    //
+    apiMethodSelector := apiMethod
+    // Note, has 3 conditions: text (json), form, or multipart file upload
+    for key, value := range reqPayload {
+        // case 1: multipart upload
+        if key == "filename" {
+            if string(cmd.Opt.Testresource[len(cmd.Opt.Testresource) - 1]) == "/" {
+                bodyMultipart, boundary, _ = PrepMultipart(cmd.Opt.Testresource + value.(string), "excel")
+            } else {
+                bodyMultipart, boundary, _ = PrepMultipart(cmd.Opt.Testresource + "/" + value.(string), "excel")
+            }
+            apiMethodSelector = "POSTMultipart"
+            break
+        }
+        // case 2: normal json
+        if key == "text" {
+            bodyText = PrepPostPayload(reqPayload)
+            break
+        }
+        // case 3: if Post, and the key does not have filename, text, then it would be PostForm
+        bodyText = PrepPostFormPayload(reqPayload)
+    }
+
+    return apiMethodSelector, apiMethod, bodyText, bodyMultipart, boundary
+}
+
 
 func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actualBody []byte, 
         expStatus map[string]interface{}, expHeader map[string]interface{}, expBody map[string]interface{}) (string, string) {
-
-    // the map for mapping the string and the related funciton to call
+    //
     var testResults []bool
-    var TestMessages []TestMessage
+    var testMessages []TestMessage
+    // status
+    testResultsS, testMessagesS := CompareStatus(actualStatusCode, expStatus)
+    testResults = append(testResults, testResultsS[0:]...)
+    testMessages = append(testMessages, testMessagesS[0:]...)
+    // headers
+    testResultsH, testMessagesH := CompareHeaders(actualHeader, expHeader)
+    testResults = append(testResults, testResultsH[0:]...)
+    testMessages = append(testMessages, testMessagesH[0:]...)
+    // body
+    testResultsB, testMessagesB := CompareBody(actualBody, expBody)
+    testResults = append(testResults, testResultsB[0:]...)
+    testMessages = append(testMessages, testMessagesB[0:]...)
 
+    // default finalResults
+    finalResults := "Success"
+
+    for key := range testResults {
+        if testResults[key] == false {
+            finalResults = "Fail"
+            break
+        }
+    }
+
+    testMessagesJson, _ := json.Marshal(testMessages)
+    testMessagesJsonStr := string(testMessagesJson)
+    
+    return finalResults, testMessagesJsonStr
+} 
+
+
+func CompareStatus(actualStatusCode int, expStatus map[string]interface{}) ([]bool, []TestMessage) {
+    var testResults []bool
+    var testMessages []TestMessage
     // status
     for assertionKey, expValue := range expStatus {
         // call the assertion function
@@ -199,13 +208,18 @@ func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actu
                     ExpValue: expValue,
                     ActualValue: actualStatusCode,
                 }
-            TestMessages = append(TestMessages, msg)
+            testMessages = append(testMessages, msg)
         }
         testResults = append(testResults, testResult)
     }
 
-    // header
-    // http.Header => map[string][]string
+    return testResults, testMessages
+} 
+
+func CompareHeaders(actualHeader http.Header, expHeader map[string]interface{}) ([]bool, []TestMessage) {
+    var testResults []bool
+    var testMessages []TestMessage
+    // headers
     for key, value := range expHeader {
         expHeader_sub := value.(map[string]interface{})
         //
@@ -222,12 +236,18 @@ func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actu
                     ExpValue: expValue,
                     ActualValue: actualValue,
                 }
-                TestMessages = append(TestMessages, msg)
+                testMessages = append(testMessages, msg)
             }
             testResults = append(testResults, testResult)
         } 
     }
 
+    return testResults, testMessages
+} 
+
+func CompareBody(actualBody []byte, expBody map[string]interface{}) ([]bool, []TestMessage) {
+    var testResults []bool
+    var testMessages []TestMessage
     // body
     for key, value := range expBody {
         // Note, the below statement does not work, if the key starts with $, such as $.#, maybe bug for gjson???
@@ -245,7 +265,7 @@ func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actu
                     ExpValue: expValue,
                     ActualValue: actualValue,
                 }
-                TestMessages = append(TestMessages, msg)
+                testMessages = append(testMessages, msg)
 
                 testResults = append(testResults, false)
             } else {
@@ -259,31 +279,15 @@ func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actu
                         ExpValue: expValue,
                         ActualValue: actualValue,
                     }
-                    TestMessages = append(TestMessages, msg)
+                    testMessages = append(testMessages, msg)
                 }
                 testResults = append(testResults, testResult)
             } 
         }
     }
 
-    // default finalResults
-    finalResults := "Success"
-
-    for key := range testResults {
-        if testResults[key] == false {
-            finalResults = "Fail"
-            // fmt.Println(tcName + " results", testResults, "final results: ", finalResults, testMessages)
-            break
-        }
-    }
-
-    
-    TestMessagesJson, _ := json.Marshal(TestMessages)
-    TestMessagesJsonStr := string(TestMessagesJson)
-    
-    return finalResults, TestMessagesJsonStr
-
-}  
+    return testResults, testMessages
+} 
 
 
 func PrepMultipart(path string, name string) (*bytes.Buffer, string, error) {
@@ -425,3 +429,37 @@ func WriteOutputsDataToFile(testResult string, tcData testcase.TestCaseDataInfo,
     }
 }
 
+func ReportConsole (tcExecution testcase.TestCaseExecutionInfo, actualBody []byte) {
+    tcReportResults := tcExecution.TcConsoleResults()
+    // repJson, _ := json.Marshal(tcReportResults)
+
+    if tcReportResults.TestResult == "Fail" {
+        length := len(string(actualBody))
+        out_len := 0
+        if length > 300 {
+            out_len = 300
+        } else {
+            out_len = length
+        }
+
+        fmt.Printf("\n%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
+            tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
+            tcReportResults.ActualStatusCode)
+
+        if tcReportResults.MutationInfo != nil {
+            fmt.Println(tcReportResults.MutationInfo)
+        }
+        
+        // fmt.Println(tcReportResults.MutationInfo)
+        fmt.Println(tcReportResults.TestMessages)
+        fmt.Println(string(actualBody)[0:out_len], "...")
+    } else {
+        fmt.Printf("\n%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
+            tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
+            tcReportResults.ActualStatusCode)
+
+        if tcReportResults.MutationInfo != nil {
+            fmt.Println(tcReportResults.MutationInfo)
+        }
+    }
+}
