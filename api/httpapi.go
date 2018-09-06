@@ -47,7 +47,7 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     start_time := time.Now()
     start := start_time.String()
     //
-    actualStatusCode, actualHeader, actualBody := Run(baseUrl, tcData)
+    actualStatusCode, actualHeader, actualBody := CallHttp(baseUrl, tcData)
     //
     // (2). Expected response
     expStatus := tcData.TestCase.RespStatus()
@@ -86,7 +86,7 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
 }
 
 
-func Run(baseUrl string, tcData testcase.TestCaseDataInfo) (int, http.Header, []byte) {
+func CallHttp(baseUrl string, tcData testcase.TestCaseDataInfo) (int, http.Header, []byte) {
     urlStr := tcData.TestCase.UrlEncode(baseUrl)
     //
     apiMethodSelector, apiMethod, bodyText, bodyMultipart, boundary := GetPayloadInfo(tcData)
@@ -99,24 +99,16 @@ func Run(baseUrl string, tcData testcase.TestCaseDataInfo) (int, http.Header, []
     }
 
     // < !! ----------- !! >
-    // the map for mapping the string and the related funciton to call
-    funcs := map[string]interface{} {
-        "GET": protocal.HttpGet,
-        "POST": protocal.HttpPost,
-        "POSTForm": protocal.HttpPostForm,
-        "POSTMultipart": protocal.HttpPostMultipart,
-        "PUT": protocal.HttpPut,
-    }
-
     // (1). Actual response
     var actualStatusCode int
     var actualHeader http.Header
     var actualBody []byte
-    // fmt.Println("----- to start call the http ------")
+    // 
+    var httpRestful protocal.HttpRestful
     if apiMethodSelector == "POSTMultipart" {
-        actualStatusCode, actualHeader, actualBody = protocal.CallHttpMethod(funcs, apiMethodSelector, urlStr, apiMethod, reqHeaders, bodyMultipart)    
+        actualStatusCode, actualHeader, actualBody = httpRestful.Request(urlStr, apiMethod, reqHeaders, bodyMultipart)    
     } else {
-        actualStatusCode, actualHeader, actualBody = protocal.CallHttpMethod(funcs, apiMethodSelector, urlStr, apiMethod, reqHeaders, bodyText)
+        actualStatusCode, actualHeader, actualBody = httpRestful.Request(urlStr, apiMethod, reqHeaders, bodyText)
         }
 
     return actualStatusCode, actualHeader, actualBody
@@ -251,8 +243,6 @@ func CompareBody(actualBody []byte, expBody map[string]interface{}) ([]bool, []T
     // body
     for key, value := range expBody {
         // Note, the below statement does not work, if the key starts with $, such as $.#, maybe bug for gjson???
-        // expBody_sub := expBodyJson.Get(key).Map()
-        // However, need to use value directly
         expBody_sub := value.(map[string]interface{})
         for assertionKey, expValue := range expBody_sub {
             // if path, then value - value, otherwise, key - value
