@@ -56,7 +56,7 @@ import (
 // (7) -> remove this node
 
 
-//------ mutation: if not normal char -> timestamp/data/time/...
+//------ mutation: if not normal char -> timestamp/date/time/...
 // (1) -> empty ("")
 // (2) -> blank (" ")
 // (3) -> valid time format (1970/01/01)
