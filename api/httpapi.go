@@ -104,11 +104,11 @@ func CallHttp(baseUrl string, tcData testcase.TestCaseDataInfo) (int, http.Heade
     var actualHeader http.Header
     var actualBody []byte
     // 
-    var httpRestful protocal.HttpRestful
+    httpRequest := protocal.HttpRestful{}
     if apiMethodSelector == "POSTMultipart" {
-        actualStatusCode, actualHeader, actualBody = httpRestful.Request(urlStr, apiMethod, reqHeaders, bodyMultipart)    
+        actualStatusCode, actualHeader, actualBody = httpRequest.Request(urlStr, apiMethod, reqHeaders, bodyMultipart)    
     } else {
-        actualStatusCode, actualHeader, actualBody = httpRestful.Request(urlStr, apiMethod, reqHeaders, bodyText)
+        actualStatusCode, actualHeader, actualBody = httpRequest.Request(urlStr, apiMethod, reqHeaders, bodyText)
         }
 
     return actualStatusCode, actualHeader, actualBody
