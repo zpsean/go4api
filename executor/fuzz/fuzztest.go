@@ -64,7 +64,7 @@ func PrepFuzzTest(pStart_time time.Time) {
         fuzzData := GenerateFuzzData(fuzzFile)
 
         GenerateFuzzValidDataFiles(fuzzFile, fuzzData)
-        GenerateFuzzInvalidDataFiles(fuzzFile, fuzzData)
+        // GenerateFuzzInvalidDataFiles(fuzzFile, fuzzData)
     }
     // (2). render the json using the fuzz dt(s)
     // fuzzTcArray := GetFuzzTcArray(options)
@@ -83,11 +83,12 @@ func GenerateFuzzData(fuzzFile string) FuzzData {
     for _, fieldDefinition := range fieldDefinitions {
         validValueMap := make(map[string][]interface{})
         invalidValueMap := make(map[string][]interface{})
-
-        fType := fieldDefinition.DetermineFuzzType()
         // call the rules to get values
-        validValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules(fType)
-        invalidValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules("FuzzCharInvalid")
+        fuzzValidType := fieldDefinition.DetermineFuzzValidType()
+        validValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules(fuzzValidType)
+        // invalid 
+        fuzzInvalidType := fieldDefinition.DetermineFuzzInvalidType()
+        invalidValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules(fuzzInvalidType)
         // append to slice
         validValueList = append(validValueList, validValueMap)
         invalidValueList = append(invalidValueList, invalidValueMap)
