@@ -153,7 +153,7 @@ func (mtD MutationDetails) DetermineMutationType() string {
                 default:
                     mType = "MInt"
                 }
-        case "float":
+        case "float", "float64":
             mType = "MFloat"
         case "bool":
             mType = "MBool"
