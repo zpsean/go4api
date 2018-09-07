@@ -71,8 +71,8 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
         mutatedTcArray = append(mutatedTcArray, mutatedTcArrayH[0:]...)
         
         // Payload
-        // mutatedTcArrayPL := MutateRequestPayload(originTcData, tcJson)
-        // mutatedTcArray = append(mutatedTcArray, mutatedTcArrayPL[0:]...)
+        mutatedTcArrayPL := MutateRequestPayload(originTcData, tcJson)
+        mutatedTcArray = append(mutatedTcArray, mutatedTcArrayPL[0:]...)
 
     }
     // fmt.Println("\nmutatedTcArray: ", mutatedTcArray
@@ -335,9 +335,10 @@ func MutateRequestPayload (originTcData testcase.TestCaseDataInfo, tcJson []byte
     var mutatedTcArray []testcase.TestCaseDataInfo
     for key, value := range originTcData.TestCase.ReqPayload() {
         if key == "text" {
-            sturctFieldsDisplay(value)
+            // sturctFieldsDisplay(value)
             // to loop over the struct
-            mutationDetailsSlice := getFieldsMutationDetails(value)
+            var mutationDetailsSlice []MutationDetails
+            mutationDetailsSlice = getFieldsMutationDetails(value)
             //
             // (1) set
             mSet := MutateSetRequestPayload(originTcData, tcJson, key, mutationDetailsSlice)
@@ -484,24 +485,30 @@ func sturctFieldsDisplay(value interface{}) {
         case reflect.Map: {
             // fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
             for key2, value2 := range reflect.ValueOf(value).Interface().(map[string]interface{}) {
-                // fmt.Println("key2, value2: ", key2, reflect.TypeOf(value2))
-                switch reflect.TypeOf(value2).Kind() {
-                    case reflect.String:
-                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                    case reflect.Int32:
-                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                    case reflect.Map:
-                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                        sturctFieldsDisplay(value2)
-                    case reflect.Array:
-                        // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
-                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                        sturctFieldsDisplay(value2)
-                    case reflect.Slice:
-                        // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
-                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                        sturctFieldsDisplay(value2)
+                fmt.Println("------> key2, value2: ", key2, value2, reflect.TypeOf(value2))
+                // note, to deal with <nil>
+                if value2 != nil {
+                    switch reflect.TypeOf(value2).Kind() {
+                        case reflect.String:
+                            fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                        case reflect.Int32:
+                            fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                        case reflect.Map:
+                            fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                            sturctFieldsDisplay(value2)
+                        case reflect.Array:
+                            // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
+                            fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                            sturctFieldsDisplay(value2)
+                        case reflect.Slice:
+                            // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
+                            fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
+                            sturctFieldsDisplay(value2)
+                    }
+                } else {
+                    fmt.Println("------> key2, value2: is nil ", key2, value2, reflect.TypeOf(value2))
                 }
+                
             }     
         }
         case reflect.Array, reflect.Slice: {
@@ -555,27 +562,36 @@ func sturctFieldsMutation(c chan MutationDetails, subPath []string, value interf
             // fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
             for key2, value2 := range reflect.ValueOf(value).Interface().(map[string]interface{}) {
                 // fmt.Println("key2, value2: ", key2, reflect.TypeOf(value2))
-                switch reflect.TypeOf(value2).Kind() {
-                    case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
-                        subPathNew := append(subPath, key2)
-                        output := make([]string, len(subPathNew))
-                        copy(output, subPathNew)
+                if value2 != nil {
+                    switch reflect.TypeOf(value2).Kind() {
+                        case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
+                            subPathNew := append(subPath, key2)
+                            output := make([]string, len(subPathNew))
+                            copy(output, subPathNew)
 
-                        mtD := MutationDetails{output, value2, reflect.TypeOf(value2).Kind().String(), "", []interface{}{}}
-                        c <- mtD
-                    case reflect.Map:
-                        subPathNew := append(subPath, key2)
-                        sturctFieldsMutation(c, subPathNew, value2)
-                    case reflect.Array, reflect.Slice:
-                        // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
-                        for _, v := range reflect.ValueOf(value2).Interface().([]interface{}) {
-                            switch reflect.TypeOf(v).Kind() {
-                                case reflect.Array, reflect.Slice, reflect.Map:
-                                    subPathNew := append(subPath, fmt.Sprint(key2))
-                                    sturctFieldsMutation(c, subPathNew, value2)
+                            mtD := MutationDetails{output, value2, reflect.TypeOf(value2).Kind().String(), "", []interface{}{}}
+                            c <- mtD
+                        case reflect.Map:
+                            subPathNew := append(subPath, key2)
+                            sturctFieldsMutation(c, subPathNew, value2)
+                        case reflect.Array, reflect.Slice:
+                            // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
+                            for _, v := range reflect.ValueOf(value2).Interface().([]interface{}) {
+                                switch reflect.TypeOf(v).Kind() {
+                                    case reflect.Array, reflect.Slice, reflect.Map:
+                                        subPathNew := append(subPath, fmt.Sprint(key2))
+                                        sturctFieldsMutation(c, subPathNew, value2)
+                                }
+                                break
                             }
-                            break
-                        }
+                    }
+                } else {
+                    subPathNew := append(subPath, key2)
+                    output := make([]string, len(subPathNew))
+                    copy(output, subPathNew)
+
+                    mtD := MutationDetails{output, nil, "", "", []interface{}{}}
+                    c <- mtD
                 }
             }     
         }
