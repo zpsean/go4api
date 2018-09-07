@@ -131,12 +131,12 @@ func MutateRequestQueryString (originTcData testcase.TestCaseDataInfo, tcJson []
     i = i + 1
     tcSuffix = "-M-QS-D-" + fmt.Sprint(i)
 
-    qSFullPath := "TestCase." + originTcData.TcName() + ".Request." + "QueryString"
+    qSFullPath := "TestCase." + originTcData.TcName() + ".request." + "queryString"
     mutatedTcJson, _ := sjson.Delete(string(tcJson), qSFullPath)
     mutationInfo = "Remove all querystring"
 
-    mTc = MutateGeneral([]byte(mutatedTcJson), mutationInfo, tcSuffix)
-    mutatedTcArray = append(mutatedTcArray, mTc)
+    mTcAddr := MutateGeneral([]byte(mutatedTcJson), mutationInfo, tcSuffix)
+    mutatedTcArray = append(mutatedTcArray, *mTcAddr)
 
     return mutatedTcArray
 }
@@ -190,12 +190,12 @@ func MutateRequestRequestHeader (originTcData testcase.TestCaseDataInfo, tcJson 
     i = i + 1
     tcSuffix = "-M-H-D-" + fmt.Sprint(i)
 
-    hFullPath := "TestCase." + originTcData.TcName() + ".Request." + "Headers"
+    hFullPath := "TestCase." + originTcData.TcName() + ".request." + "headers"
     mutatedTcJson, _ := sjson.Delete(string(tcJson), hFullPath)
     mutationInfo = "Remove all headers"
 
-    mTc = MutateGeneral([]byte(mutatedTcJson), mutationInfo, tcSuffix)
-    mutatedTcArray = append(mutatedTcArray, mTc)
+    mTcAddr := MutateGeneral([]byte(mutatedTcJson), mutationInfo, tcSuffix)
+    mutatedTcArray = append(mutatedTcArray, *mTcAddr)
 
     return mutatedTcArray
 }
@@ -227,7 +227,7 @@ func MutateRequestPayload (originTcData testcase.TestCaseDataInfo, tcJson []byte
             for _, mutationDetails := range mutationDetailsSlice {
                 // set the value
                 plPath := key + "." + strings.Join(mutationDetails.FieldPath, ".")
-                plFullPath := "TestCase." + originTcData.TcName() + ".Request.Payload" + "." + plPath
+                plFullPath := "TestCase." + originTcData.TcName() + ".request.payload" + "." + plPath
 
                 // mutate the value based on rules
                 // (1). get values 
@@ -243,14 +243,14 @@ func MutateRequestPayload (originTcData testcase.TestCaseDataInfo, tcJson []byte
 
                     mutatedTcJson, _ := sjson.Set(string(tcJson), plFullPath, mutatedValue)
 
-                    mutationInfo := fmt.Sprint(mutationDetails) + "," + fmt.Sprint(mutationDetails.CurrValue) + ", `" + fmt.Sprint(mutatedValue) + "`"
-
+                    mutationInfo := fmt.Sprint(mutationDetails) + ", `" + fmt.Sprint(mutationDetails.CurrValue) + "`, `" + fmt.Sprint(mutatedValue) + "`"
+                    
                     mTc := MutateGeneral([]byte(mutatedTcJson), mutationInfo, tcSuffix)
-                    mutatedTcArray = append(mutatedTcArray, mTc)
+                    // rrJson, _ := json.Marshal(*mTc)
+                    mutatedTcArray = append(mutatedTcArray, *mTc)
                 }
 
                 // add new node
-                
 
             }
             // (2). add new node, for each node level
@@ -289,14 +289,14 @@ func MutateRequestPayload (originTcData testcase.TestCaseDataInfo, tcJson []byte
                 tcSuffix = "-M-PL-D-" + fmt.Sprint(i)
 
                 plPath := key + "." + pathStr
-                plFullPath := "TestCase." + originTcData.TcName() + ".Request.Payload" + "." + plPath
+                plFullPath := "TestCase." + originTcData.TcName() + ".request.payload" + "." + plPath
 
                 mutatedTcJson, _ := sjson.Delete(string(tcJson), plFullPath)
                 
                 mutationInfo := "Remove payload value on node: " + pathStr
 
                 mTc := MutateGeneral([]byte(mutatedTcJson), mutationInfo, tcSuffix)
-                mutatedTcArray = append(mutatedTcArray, mTc)
+                mutatedTcArray = append(mutatedTcArray, *mTc)
 
             }
 
@@ -304,15 +304,13 @@ func MutateRequestPayload (originTcData testcase.TestCaseDataInfo, tcJson []byte
             i = i + 1
             tcSuffix = "-M-PL-D-" + fmt.Sprint(i)
 
-            plFullPath := "TestCase." + originTcData.TcName() + ".Request." + "Payload." + key
+            plFullPath := "TestCase." + originTcData.TcName() + ".request.payload." + key
             // mutatedTcJson, _ := sjson.Delete(string(tcJson), plFullPath)
             mutatedTcJson, _ := sjson.Set(string(tcJson), plFullPath, "")
             mutationInfo := "Remove whole post body"
 
             mTc := MutateGeneral([]byte(mutatedTcJson), mutationInfo, tcSuffix)
-            mutatedTcArray = append(mutatedTcArray, mTc)
-
-            
+            mutatedTcArray = append(mutatedTcArray, *mTc)
         }
     }
     return mutatedTcArray
@@ -386,7 +384,6 @@ func MutateAddRequestQueryString (tcJson []byte, mutationInfo interface{}, key s
 
     originTcName := mTcData.TcName()
     mTcData.TestCase.UpdateTcName(originTcName + suffix)
-
     mTcData.TestCase.AddRequestQueryString(key, value)
 
     mTcData.MutationInfo = mutationInfo
@@ -401,7 +398,6 @@ func MutateDelRequestQueryString (tcJson []byte, mutationInfo string, key string
 
     originTcName := mTcData.TcName()
     mTcData.TestCase.UpdateTcName(originTcName + suffix)
-
     mTcData.TestCase.DelRequestQueryString(key)
 
     mTcData.MutationInfo = mutationInfo
@@ -411,17 +407,18 @@ func MutateDelRequestQueryString (tcJson []byte, mutationInfo string, key string
 
 
 //
-func MutateGeneral (tcJson []byte, mutationInfo interface{}, suffix string) testcase.TestCaseDataInfo {
+func MutateGeneral (tcJson []byte, mutationInfo interface{}, suffix string) *testcase.TestCaseDataInfo {
     var mTcData testcase.TestCaseDataInfo
     json.Unmarshal(tcJson, &mTcData)
 
     // change the tc name
     originTcName := mTcData.TcName()
     mTcData.TestCase.UpdateTcName(originTcName + suffix)
-
     mTcData.MutationInfo = mutationInfo
 
-    return mTcData
+    // rrJson, _ := json.Marshal(mTcData)
+
+    return &mTcData
 }
 
 

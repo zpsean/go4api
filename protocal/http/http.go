@@ -58,6 +58,7 @@ func (httpRestful HttpRestful) Request(urlStr string, apiMethod string, reqHeade
     defer response.Body.Close()
 
     body, _ := ioutil.ReadAll(response.Body)
+    // fmt.Print("-------> body: ", reqBody, string(body))
 
     return response.StatusCode, response.Header, body
 }

@@ -126,9 +126,10 @@ func (tc *TestCase) SetRequestPayload (key string, newValue string) {
 
 func (tc *TestCase) UpdateTcName (newKey string) {
     mTc := TestCase{}
-
     mTc[newKey] = (*tc)[tc.TcName()]
-    *tc = mTc
+
+    delete(*tc, tc.TcName())
+    (*tc)[newKey] = mTc[newKey]
 }
 
 
