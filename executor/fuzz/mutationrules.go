@@ -365,4 +365,56 @@ func MIntR7 (currValue interface{}, fieldType string, fieldSubType string) inter
 }
 
 
+// < --------------- Float ------------->
+func MFloatR1 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := math.E
+    return mutatedValue
+}
+
+func MFloatR2 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := 1.1
+    return mutatedValue
+}
+
+func MFloatR3 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := -1.1
+    return mutatedValue
+}
+
+func MFloatR4 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := math.MaxFloat32
+    return mutatedValue
+}
+
+func MFloatR5 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := math.SmallestNonzeroFloat32
+    return mutatedValue
+}
+
+func MFloatR6 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := math.MaxFloat64
+    return mutatedValue
+}
+
+func MFloatR7 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := math.SmallestNonzeroFloat64
+    return mutatedValue
+}
+
+
+// < --------------- Bool ------------->
+func MBoolR1 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := true
+    return mutatedValue
+}
+
+func MBoolR2 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := false
+    return mutatedValue
+}
+
+func MBoolR3 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    mutatedValue := 0
+    return mutatedValue
+}
 
