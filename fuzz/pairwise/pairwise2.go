@@ -8,7 +8,7 @@
  *
  */
  
-package fuzz
+package pairwise
 
 import (
     "fmt"
@@ -24,7 +24,6 @@ import (
 // Here uses the algorithm 2
 // Warning: after testing, this algorithm has performance issue, whil also can not result minimal set of pairwise test data (case)
 
-
 // Below is for pairwise data
 type PairWises struct {
     PairWises map[string][]PairWise
@@ -37,24 +36,14 @@ type PairWise struct {
     PwValues []interface{}
 }
 
-
 // -------------------------------------------------------------
 
-func GetPairWiseValid(fuzzData FuzzData, PwLength int) {
-    var combins [][]interface{}
-    for _, validDataMap := range fuzzData.ValidData {
-        for _, validList := range validDataMap {
-            // fmt.Println("validList: ", key, validList)
-            combins = append(combins, validList)
-        }
-    }
-    fmt.Println("combins length", len(combins), "")
-
+func GetPairWise2(validVectors [][]interface{}, pwLength int) {
     //
     c := make(chan []interface{})
     go func(c chan []interface{}) {
         defer close(c)
-        combinsSliceString(c, []interface{}{}, combins)
+        combinsSliceInterface(c, []interface{}{}, validVectors)
     }(c)
 
     var combinsFullValid[][]interface{}
@@ -66,10 +55,10 @@ func GetPairWiseValid(fuzzData FuzzData, PwLength int) {
     
     // to get the combinations like [1 1][1 2][1 3] ...
     var pwLen int
-    if PwLength > len(combins) {
-        pwLen = len(combins)
+    if pwLength > len(validVectors) {
+        pwLen = len(validVectors)
     } else {
-        pwLen = PwLength
+        pwLen = pwLength
     }
     //
     var indexSlice []int
@@ -290,40 +279,30 @@ func (pw PairWise) ContainsVectorIndex (pos int) bool {
 }
 
 
-
-func GetPairWiseValid22(fuzzData FuzzData, PwLength int) {
-    var combins [][]interface{}
-    for _, validDataMap := range fuzzData.ValidData {
-        for _, validList := range validDataMap {
-            // fmt.Println("validList: ", key, validList)
-            combins = append(combins, validList)
-        }
-    }
-    fmt.Println("combins length", len(combins), "")
-
+func GetPairWise22(validVectors [][]interface{}, pwLength int) {
     // init -----------------
     var indexSlice []int
-    for i, _ := range combins {
+    for i, _ := range validVectors {
         indexSlice = append(indexSlice, i)
     }
     // to get the combinations like [1 1][1 2][1 3] ...
     var pwLen int
-    if PwLength > len(combins) {
-        pwLen = len(combins)
+    if pwLength > len(validVectors) {
+        pwLen = len(validVectors)
     } else {
-        pwLen = PwLength
+        pwLen = pwLength
     }
     indexCombs := combinationsInt(indexSlice, pwLen)
-    GetPairWise12(indexCombs, combins, PwLength)
+    GetPairWise12(indexCombs, validVectors, pwLength)
 }
 
-func GetPairWise12 (indexCombs chan []int, combins [][]interface{}, PwLength int) {
+func GetPairWise12 (indexCombs chan []int, combins [][]interface{}, pwLength int) {
     var pairWises PairWises
     mapp := make(map[string][]PairWise)
 
     for indexPair := range indexCombs {
         var pairWise PairWise
-        pairWise.PwLength = PwLength
+        pairWise.PwLength = pwLength
         pairWise.PwVectorIndices = indexPair
         
         var combins_pw_index_slice [][]interface{}
@@ -342,7 +321,7 @@ func GetPairWise12 (indexCombs chan []int, combins [][]interface{}, PwLength int
         c := make(chan []interface{})
         go func(c chan []interface{}) {
             defer close(c)
-            combinsSliceString(c, []interface{}{}, combins_pw_index_slice)
+            combinsSliceInterface(c, []interface{}{}, combins_pw_index_slice)
         }(c)
 
         fmt.Println("c: ", c, len(c))
@@ -363,7 +342,6 @@ func GetPairWise12 (indexCombs chan []int, combins [][]interface{}, PwLength int
             pairWise.PwValues = pairwiseValue
             fmt.Println("pairwiseValue length: ", pairwiseValue, i)
 
-
             ///
             str := ""
             for _, ind_value := range indexPair {
@@ -378,15 +356,5 @@ func GetPairWise12 (indexCombs chan []int, combins [][]interface{}, PwLength int
     fmt.Println("pairWises length: ", pairWises)
     // return pairWises
 }
-
-// func GeneratePairWiseTestData () {
-//     // now we have the informations about:
-//     // 1. pairwise length (N), the test case length (M)
-//     // 2. the pairWises, which is grouped by sub-combinations
-//     // 3. the total number of the sub-combinations
-
-// }
-
-
 
 

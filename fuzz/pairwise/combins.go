@@ -8,45 +8,34 @@
  *
  */
  
-package fuzz
+package pairwise
 
 import (
     // "fmt"
 )
 
-///
-func GetCombinationValid(fuzzData FuzzData) [][]interface{} {
-    var combins [][]interface{}
-    for _, validDataMap := range fuzzData.ValidData {
-        for _, validList := range validDataMap {
-            // fmt.Println("validList: ", key, validList)
-            combins = append(combins, validList)
-        }
-    }
-
-    // Note: hard-code pairWiseLength = 2 first, as currently the pairwise.go works for 2 well, will improve
-    pairWiseLength := 2 
+//
+func GetPairWiseValid(validVectors [][]interface{}, pwLength int) [][]interface{} {
     var validTcData [][]interface{}
 
     // need to consiber the len(combins) = 1 / = 2 / > 2
-    if len(combins) >= pairWiseLength {
+    if len(validVectors) >= pwLength {
         c := make(chan []interface{})
 
         go func(c chan []interface{}) {
             defer close(c)
-            GetPairWise(c, combins, 2)
+            GetPairWise(c, validVectors, 2)
         }(c)
 
         for tcData := range c {
             validTcData = append(validTcData, tcData)
         }
-    } else if len(combins) == 1{
-        for _, item := range combins[0] {
+    } else if len(validVectors) == 1{
+        for _, item := range validVectors[0] {
             var itemSlice []interface{}
             itemSlice = append(itemSlice, item)
             validTcData = append(validTcData, itemSlice)
         }
-            
     }
 
     return validTcData
@@ -54,31 +43,15 @@ func GetCombinationValid(fuzzData FuzzData) [][]interface{} {
 
 
 // -- for the fuzz data
-func GetCombinationInvalid(fuzzData FuzzData) [][]interface{} {
-    var validCombins [][]interface{}
-    for _, validDataMap := range fuzzData.ValidData {
-        for _, validList := range validDataMap {
-            // fmt.Println("validList: ", key, validList)
-            validCombins = append(validCombins, validList)
-        }
-    }
-
-    var invalidCombins [][]interface{}
-    for _, invalidDataMap := range fuzzData.InvalidData {
-        for _, invalidList := range invalidDataMap {
-            // fmt.Println("invalidList: ", key, invalidList)
-            invalidCombins = append(invalidCombins, invalidList)
-        }
-    }
-
+func GetCombinationInvalid(validVectors [][]interface{}, invalidVectors [][]interface{}, pwLength int) [][]interface{} {
     // to ensure each negative value will be combined with each positive value(s)
     var invalidTcData [][]interface{}
-    for i, _ := range invalidCombins {
+    for i, _ := range invalidVectors {
         var tcData []interface{}
         if i == 0 {
-            tcData = append(tcData, invalidCombins[0][0])
-            for j := i + 1; j < len(validCombins); j++ {
-                tcData = append(tcData, validCombins[j][0])
+            tcData = append(tcData, invalidVectors[0][0])
+            for j := i + 1; j < len(validVectors); j++ {
+                tcData = append(tcData, validVectors[j][0])
             }
         }
 
@@ -86,7 +59,6 @@ func GetCombinationInvalid(fuzzData FuzzData) [][]interface{} {
         break
     }
     
-
     return invalidTcData
 }
 
@@ -95,7 +67,6 @@ func GetCombinationInvalid(fuzzData FuzzData) [][]interface{} {
 // permutations('ABCD', 2)   AB AC AD BA BC BD CA CB CD DA DB DC
 // combinations('ABCD', 2)   AB AC AD BC BD CD
 // combinations_with_replacement('ABCD', 2)   AA AB AC AD BB BC BD CC CD DD
-
 
 // func GenerateCombinations(alphabet string, length int) <-chan string {
 //     c := make(chan string)
@@ -113,7 +84,6 @@ func GetCombinationInvalid(fuzzData FuzzData) [][]interface{} {
 
 //     return c // Return the channel to the calling function
 // }
-
 
 // combinations([]int{1, 2, 3, 4}, 2) =>
 // [1 2]
@@ -229,15 +199,14 @@ func combinsInt(c chan []int, combin []int, data []int, length int) {
 }
 
 
-func combinsSliceString(c chan []interface{}, combin []interface{}, data [][]interface{}) {  
+func combinsSliceInterface(c chan []interface{}, combin []interface{}, data [][]interface{}) {  
     if len(data) > 1 {
         var newCombin []interface{}
         for _, i_v := range data[0] {
             newCombin = append(combin, i_v)
 
-            combinsSliceString(c, newCombin, data[1:])
+            combinsSliceInterface(c, newCombin, data[1:])
         }
-
     } else if len(data) == 1 {
         for _, j_v := range data[0] {
             output := make([]interface{}, len(combin))
