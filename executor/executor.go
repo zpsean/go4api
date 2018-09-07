@@ -16,6 +16,12 @@ import (
     "os"
     "sort"
     "sync"
+    "path/filepath"
+    "strings"
+    "io/ioutil"
+    "strconv"
+    "encoding/json"
+
     "go4api/cmd"
     "go4api/testcase"
     "go4api/ui"     
@@ -23,12 +29,7 @@ import (
     "go4api/ui/style"                                                                                                                                
     "go4api/utils"
     "go4api/utils/texttmpl"
-    "path/filepath"
-    "strings"
-    "io/ioutil"
-    "strconv"
     "go4api/logger"
-    "encoding/json"
 )
 
 
