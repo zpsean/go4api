@@ -92,7 +92,6 @@ func WalkPath(searchDir string, extension string) ([]string, error) {
     return fileList, nil
 }
 
-
 func FileCopy(src string, dest string, info os.FileInfo) error {
     f, err := os.Create(dest)
     if err != nil {
@@ -156,8 +155,6 @@ func ConvertStringArrayToIntArray(stringArray []string) []int {
 
     return intArray
 }
-
-
 
 func GenerateFileBasedOnVarAppend(strVar string, filePath string) {
     outFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)

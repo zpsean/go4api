@@ -15,7 +15,7 @@ import (
     "time"
     "os"
     "go4api/cmd"
-    "go4api/executor/fuzz"
+    "go4api/fuzz"
 )
 
 func Dispatch(ch chan int, pStart_time time.Time) { 
