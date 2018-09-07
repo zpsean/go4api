@@ -49,7 +49,7 @@ func (fD FieldDefinition) DetermineFuzzValidType() string {
                 default:
                     fuzzType = "FIntValid"
                 }
-        case "float":
+        case "float", "float64":
             fuzzType = "FFloatValid"
         case "bool":
             fuzzType = "FBoolValid"
@@ -90,7 +90,7 @@ func (fD FieldDefinition) DetermineFuzzInvalidType() string {
                 default:
                     fuzzType = "FIntInvalid"
                 }
-        case "float":
+        case "float", "float64":
             fuzzType = "FFloatInvalid"
         case "bool":
             fuzzType = "FBoolInvalid"
