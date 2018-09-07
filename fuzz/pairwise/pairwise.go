@@ -8,7 +8,7 @@
  *
  */
  
-package fuzz
+package pairwise
 
 import (
     "fmt"
@@ -58,7 +58,6 @@ func GetPairWise(c chan []interface{} ,combins [][]interface{}, PwLength int) {
     // for debug loop
     loopDepth := 0
     for {
-
         returnedTestCaseData := allPairs.NextPairWiseTestCaseData()
 
         if len(returnedTestCaseData) == 0 {
@@ -347,7 +346,7 @@ func GetMaxPairWiseCombinationNumber(combs [][]interface{}, PwLength int) int {
         c := make(chan []interface{})
         go func(c chan []interface{}) {
             defer close(c)
-            combinsSliceString(c, []interface{}{}, combins_pw_index_slice)
+            combinsSliceInterface(c, []interface{}{}, combins_pw_index_slice)
         }(c)
 
         // can not use len(c) to get the channel length, as len(c) is always 0 here, why?

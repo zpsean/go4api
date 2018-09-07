@@ -11,15 +11,16 @@
 package fuzz
 
 import (                                                                                                                                             
-    // "os"
     "time"
     "fmt"
     "strings"
     "strconv"
     "encoding/json"
     "path/filepath"
+    
     "go4api/cmd"
-    "go4api/utils"  
+    "go4api/utils"
+    "go4api/fuzz/pairwise"
 )
 
 // valid, invalid data may have more than one field, but the map itself can not ensure the key sequence
@@ -120,18 +121,17 @@ func GenerateFuzzValidDataFiles(fuzzFile string, fuzzData FuzzData) {
     }
     utils.GenerateFileBasedOnVarOverride(validHeaderStr + "\n", outputsFile)
 
-    // this is to get the combinations, maybe use pairwise
-    combValid := GetCombinationValid(fuzzData)
+    // this is to get the combinations, set use pairwise length = 2
+    tcDataSlice := GetValidTcData(fuzzData, 2)
     //
     i := 0
     tcid := ""
-    for _, subCombValid := range combValid {
+    for _, tcData := range tcDataSlice {
         i = i + 1
         tcid = "valid" + strconv.Itoa(i)
 
-        fmt.Println("subCombValid -- : ", subCombValid, len(subCombValid))
         combStr := ""
-        for ii, item := range subCombValid {
+        for ii, item := range tcData {
             if ii == 0 {
                 combStr = combStr + fmt.Sprint(item)
             } else{
@@ -155,17 +155,16 @@ func GenerateFuzzInvalidDataFiles(fuzzFile string, fuzzData FuzzData) {
     }
     utils.GenerateFileBasedOnVarOverride(invalidHeaderStr + "\n", outputsFile)
 
-    combInvalid := GetCombinationInvalid(fuzzData)
+    tcDataSlice := GetInvalidTcData(fuzzData, 2)
     //
     i := 0
     tcid := ""
-    for _, subCombInvalid := range combInvalid {
+    for _, tcData := range tcDataSlice {
         i = i + 1
         tcid = "invalid" + strconv.Itoa(i)
 
-        fmt.Println("subCombInvalid: ", subCombInvalid, len(subCombInvalid))
         combStr := ""
-        for ii, item := range subCombInvalid {
+        for ii, item := range tcData {
             if ii == 0 {
                 combStr = combStr + fmt.Sprint(item)
             } else{
@@ -174,6 +173,46 @@ func GenerateFuzzInvalidDataFiles(fuzzFile string, fuzzData FuzzData) {
         }
         utils.GenerateFileBasedOnVarAppend(tcid + "," + combStr + "\n", outputsFile)  
     }
+}
+
+func GetValidVectors(fuzzData FuzzData) [][]interface{} {
+    var validVectors [][]interface{}
+    for _, validDataMap := range fuzzData.ValidData {
+        for _, validList := range validDataMap {
+            validVectors = append(validVectors, validList)
+        }
+    }
+
+    return validVectors
+}
+
+func GetInvalidVectors(fuzzData FuzzData) [][]interface{} {
+    var invalidVectors [][]interface{}
+    for _, invalidDataMap := range fuzzData.InvalidData {
+        for _, invalidList := range invalidDataMap {
+            invalidVectors = append(invalidVectors, invalidList)
+        }
+    }
+    return invalidVectors
+}
+
+
+func GetValidTcData(fuzzData FuzzData, pwLength int) [][]interface{} {
+    validVectors := GetValidVectors(fuzzData)
+
+    validTcData := pairwise.GetPairWiseValid(validVectors, pwLength)
+
+    return validTcData
+}
+
+
+func GetInvalidTcData(fuzzData FuzzData, pwLength int) [][]interface{} {
+    validVectors := GetValidVectors(fuzzData)
+    invalidVectors := GetInvalidVectors(fuzzData)
+
+    invalidTcData := pairwise.GetCombinationInvalid(validVectors, invalidVectors, pwLength)
+
+    return invalidTcData
 }
 
 

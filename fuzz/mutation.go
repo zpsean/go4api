@@ -10,15 +10,12 @@
 
 package fuzz
 
-import (                                                                                                                                             
-    // "os"
-    // "time"
+import ( 
     "fmt"
-    // "path/filepath"
     "strings"
-    // "strconv"
     "reflect"
     "encoding/json"
+
     "go4api/testcase"
     // gjson "github.com/tidwall/gjson"
     sjson "github.com/tidwall/sjson"
