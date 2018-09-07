@@ -18,7 +18,6 @@ import (
     "path/filepath"
     "encoding/csv"
     "strconv"
-    gjson "github.com/tidwall/gjson"
 )
 
 func GetCurrentDir() string{
@@ -69,18 +68,6 @@ func GetJsonFromFile(filePath string) string {
     }
 
     return string(fd)
-}
-
-func GetBaseUrlFromConfig(filePath string, jsonKey string) string {
-    resJson := GetJsonFromFile(filePath)
-
-    value := gjson.Parse(resJson).Get(jsonKey).Get("baseUrl")
-
-    if value.Value() == nil {
-        panic(value)
-    }
-
-    return value.String()
 }
 
 

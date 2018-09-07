@@ -15,7 +15,6 @@ import (
     "time"
     "os"
     "go4api/cmd"
-    "go4api/utils"
     "go4api/executor/fuzz"
 )
 
@@ -60,16 +59,11 @@ func Dispatch(ch chan int, pStart_time time.Time) {
 
 
 func GetBaseUrl(opt cmd.Options) string {
-    testenv := cmd.Opt.TestEnv
     baseUrl := ""
     if cmd.Opt.BaseUrl != "" {
         baseUrl = cmd.Opt.BaseUrl
     } else {
-        _, err := os.Stat(cmd.Opt.Testconfig + "/config.json")
-        // fmt.Println("err: ", err)
-        if err == nil {
-            baseUrl = utils.GetBaseUrlFromConfig(cmd.Opt.Testconfig + "/config.json", testenv) 
-        }
+        baseUrl = cmd.GetBaseUrlFromConfig() 
     }
     if baseUrl == "" {
         fmt.Println("Warning: baseUrl is not set")
