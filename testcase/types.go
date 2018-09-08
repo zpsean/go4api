@@ -42,7 +42,7 @@ type TestCase map[string]*TestCaseBasics
 type TestCaseBasics struct {
     Priority string         `json:"priority"`
     ParentTestCase string   `json:"parentTestCase"`
-    Inputs string           `json:"inputs"`
+    Inputs []interface{}     `json:"inputs"`
     Request *Request         `json:"request"`
     Response *Response       `json:"response"`
     Outputs []interface{}   `json:"outputs"`

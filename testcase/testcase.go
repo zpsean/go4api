@@ -38,7 +38,7 @@ func (tc *TestCase) ParentTestCase() string {
     return (*tc)[tc.TcName()].ParentTestCase
 }
 
-func (tc *TestCase) Inputs() string {
+func (tc *TestCase) Inputs() []interface{} {
     return (*tc)[tc.TcName()].Inputs
 }
 
@@ -58,7 +58,7 @@ func (tc *TestCase) SetParentTestCase(newValue string) {
 }
 
 func (tc *TestCase) SetInputs(newValue string) {
-    (*tc)[tc.TcName()].Inputs = newValue
+    (*tc)[tc.TcName()].Inputs = append((*tc)[tc.TcName()].Inputs, newValue)
 }
 
 func (tc *TestCase) SetOutputs(newValue []interface{}) {

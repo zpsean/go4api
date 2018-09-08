@@ -60,7 +60,7 @@ func Convert () {
     		i = i + 1
     		g4ATcName := "Swagger2-" + method + "-" + urlPath + "-" + strconv.Itoa(i)
 
-    		priority, parentTestCase, inputs, _ := pathDetails.buildG4ATcGeneralInfo()
+    		priority, parentTestCase, _, _ := pathDetails.buildG4ATcGeneralInfo()
 
     		g4ARequest := pathDetails.buildG4ARequest()
     		g4ARequest.Method = strings.ToUpper(method)
@@ -74,7 +74,7 @@ func Convert () {
 		    tCaseBasics := testcase.TestCaseBasics{
 		        priority, 
 		        parentTestCase,
-		        inputs,
+		        []interface{}{},
 		        &g4ARequest,
 		        &g4AResponse,
 		        []interface{}{},

@@ -1,0 +1,232 @@
+{
+  "log": {
+    "version": "1.2",
+    "creator": {
+      "name": "WebInspector",
+      "version": "537.36"
+    },
+    "pages": [
+      {
+        "startedDateTime": "2018-09-08T12:03:31.774Z",
+        "id": "page_1",
+        "title": "https://api.douban.com/v2/movie/subject/1292052",
+        "pageTimings": {
+          "onContentLoad": 425.60099996626377,
+          "onLoad": 456.0720003210008
+        }
+      }
+    ],
+    "entries": [
+      {
+        "startedDateTime": "2018-09-08T12:03:31.773Z",
+        "time": 417.51524808770046,
+        "request": {
+          "method": "GET",
+          "url": "https://api.douban.com/v2/movie/subject/1292052",
+          "httpVersion": "HTTP/1.1",
+          "headers": [
+            {
+              "name": "Host",
+              "value": "api.douban.com"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Cache-Control",
+              "value": "max-age=0"
+            },
+            {
+              "name": "Upgrade-Insecure-Requests",
+              "value": "1"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
+            },
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip, deflate, br"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7"
+            },
+            {
+              "name": "Cookie",
+              "value": "gr_user_id=8808592b-b4b4-4466-9be4-ffe95a8c138a; _vwo_uuid_v2=3BDFA287302DBBA4951D9F706F77A070|4f5038fee2b5f71ca515273336962dee; __utmz=30149280.1527295172.115.49.utmcsr=baidu|utmccn=(organic)|utmcmd=organic; __utmc=30149280; viewed=\"11577300_27016236_26907929_10558892_26859123_25911182_27044219_6424904_25723064_26765979\"; ll=\"118318\"; bid=-SUmtVGK4ug; _pk_id.100001.7f16=dac84c44aeae4cfc.1533516112.1.1533516112.1533516112.; __utma=30149280.1362087807.1501474065.1534509991.1535409345.122"
+            }
+          ],
+          "queryString": [],
+          "cookies": [
+            {
+              "name": "gr_user_id",
+              "value": "8808592b-b4b4-4466-9be4-ffe95a8c138a",
+              "expires": null,
+              "httpOnly": false,
+              "secure": false
+            },
+            {
+              "name": "_vwo_uuid_v2",
+              "value": "3BDFA287302DBBA4951D9F706F77A070|4f5038fee2b5f71ca515273336962dee",
+              "expires": null,
+              "httpOnly": false,
+              "secure": false
+            },
+            {
+              "name": "__utmz",
+              "value": "30149280.1527295172.115.49.utmcsr=baidu|utmccn=(organic)|utmcmd=organic",
+              "expires": null,
+              "httpOnly": false,
+              "secure": false
+            },
+            {
+              "name": "__utmc",
+              "value": "30149280",
+              "expires": null,
+              "httpOnly": false,
+              "secure": false
+            },
+            {
+              "name": "viewed",
+              "value": "\"11577300_27016236_26907929_10558892_26859123_25911182_27044219_6424904_25723064_26765979\"",
+              "expires": null,
+              "httpOnly": false,
+              "secure": false
+            },
+            {
+              "name": "ll",
+              "value": "\"118318\"",
+              "expires": null,
+              "httpOnly": false,
+              "secure": false
+            },
+            {
+              "name": "bid",
+              "value": "-SUmtVGK4ug",
+              "expires": null,
+              "httpOnly": false,
+              "secure": false
+            },
+            {
+              "name": "_pk_id.100001.7f16",
+              "value": "dac84c44aeae4cfc.1533516112.1.1533516112.1533516112.",
+              "expires": null,
+              "httpOnly": false,
+              "secure": false
+            },
+            {
+              "name": "__utma",
+              "value": "30149280.1362087807.1501474065.1534509991.1535409345.122",
+              "expires": null,
+              "httpOnly": false,
+              "secure": false
+            }
+          ],
+          "headersSize": 962,
+          "bodySize": 0
+        },
+        "response": {
+          "status": 200,
+          "statusText": "OK",
+          "httpVersion": "HTTP/1.1",
+          "headers": [
+            {
+              "name": "Date",
+              "value": "Sat, 08 Sep 2018 12:03:32 GMT"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "name": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Keep-Alive",
+              "value": "timeout=30"
+            },
+            {
+              "name": "Vary",
+              "value": "Accept-Encoding"
+            },
+            {
+              "name": "X-Ratelimit-Remaining2",
+              "value": "95"
+            },
+            {
+              "name": "X-Ratelimit-Limit2",
+              "value": "100"
+            },
+            {
+              "name": "Expires",
+              "value": "Sun, 1 Jan 2006 01:00:00 GMT"
+            },
+            {
+              "name": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "name": "Cache-Control",
+              "value": "must-revalidate, no-cache, private"
+            },
+            {
+              "name": "X-DAE-Node",
+              "value": "anson17"
+            },
+            {
+              "name": "X-DAE-App",
+              "value": "movie"
+            },
+            {
+              "name": "Server",
+              "value": "dae"
+            },
+            {
+              "name": "X-Frame-Options",
+              "value": "SAMEORIGIN"
+            },
+            {
+              "name": "Content-Encoding",
+              "value": "gzip"
+            }
+          ],
+          "cookies": [],
+          "content": {
+            "size": 5422,
+            "mimeType": "application/json",
+            "compression": 3703
+          },
+          "redirectURL": "",
+          "headersSize": 468,
+          "bodySize": 1719,
+          "_transferSize": 2187
+        },
+        "cache": {},
+        "timings": {
+          "blocked": 2.0672479997240005,
+          "dns": -1,
+          "ssl": -1,
+          "connect": -1,
+          "send": 0.08499999999999996,
+          "wait": 407.61399998942017,
+          "receive": 7.74900009855628,
+          "_blocked_queueing": 1.2479997240006924
+        },
+        "serverIPAddress": "154.8.131.171",
+        "connection": "5448777",
+        "pageref": "page_1"
+      }
+    ]
+  }
+}

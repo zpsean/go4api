@@ -38,7 +38,7 @@ func Convert () {
     // Note, if cnovert a bunch of files, the sequence need to use global sequence to avoid duplicate tcnames
     for i, entry := range har["log"].Entries {
         g4ATcName := entry.buildG4ATcName(i)
-        priority, parentTestCase, inputs, _ := entry.buildG4ATcGeneralInfo()
+        priority, parentTestCase, _, _ := entry.buildG4ATcGeneralInfo()
 
         g4ARequest := entry.Request.buildG4ARequest()
         g4AResponse := entry.Response.buildG4AResponse()
@@ -49,7 +49,7 @@ func Convert () {
         tCaseBasics := testcase.TestCaseBasics {
             priority, 
             parentTestCase,
-            inputs,
+            []interface{}{},
             &g4ARequest,
             &g4AResponse,
             []interface{}{},
