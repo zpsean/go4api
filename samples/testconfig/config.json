@@ -1,0 +1,11 @@
+{
+    "DEV": {
+    	"baseUrl": "https://api.douban.com"
+    },
+	"QA": {
+    	"baseUrl": "https://api.douban.com"
+    },
+    "UAT": {
+    	"baseUrl": "https://api.douban.com"
+    }
+}

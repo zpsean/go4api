@@ -1,0 +1,598 @@
+[
+	{
+		"Swagger2-get-/store/inventory-1": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "GET",
+				"path": "/store/inventory",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-post-/user/createWithList-2": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "POST",
+				"path": "/user/createWithList",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-get-/pet/findByTags-3": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "GET",
+				"path": "/pet/findByTags",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {
+					"tags": ""
+				},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-get-/pet/{petId}-4": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "GET",
+				"path": "/pet/{petId}",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-post-/pet/{petId}-5": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "POST",
+				"path": "/pet/{petId}",
+				"headers": {
+					"Content-Type": "application/x-www-form-urlencoded"
+				},
+				"queryString": {},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-delete-/pet/{petId}-6": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "DELETE",
+				"path": "/pet/{petId}",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-post-/pet/{petId}/uploadImage-7": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "POST",
+				"path": "/pet/{petId}/uploadImage",
+				"headers": {
+					"Content-Type": "multipart/form-data"
+				},
+				"queryString": {},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-post-/user/createWithArray-8": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "POST",
+				"path": "/user/createWithArray",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-get-/pet/findByStatus-9": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "GET",
+				"path": "/pet/findByStatus",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {
+					"status": ""
+				},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-post-/store/order-10": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "POST",
+				"path": "/store/order",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {},
+				"payload": {
+					"text": {
+						"complete": true,
+						"id": 0,
+						"petId": 0,
+						"quantity": 0,
+						"shipDate": "",
+						"status": ""
+					}
+				}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-get-/user/logout-11": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "GET",
+				"path": "/user/logout",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-put-/pet-12": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "PUT",
+				"path": "/pet",
+				"headers": {
+					"Content-Type": "application/json;application/xml"
+				},
+				"queryString": {},
+				"payload": {
+					"text": {
+						"category": {
+							"id": 0,
+							"name": ""
+						},
+						"id": 0,
+						"name": "",
+						"photoUrls": [
+							""
+						],
+						"status": "",
+						"tags": [
+							{
+								"id": 0,
+								"name": ""
+							}
+						]
+					}
+				}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-post-/pet-13": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "POST",
+				"path": "/pet",
+				"headers": {
+					"Content-Type": "application/json;application/xml"
+				},
+				"queryString": {},
+				"payload": {
+					"text": {
+						"category": {
+							"id": 0,
+							"name": ""
+						},
+						"id": 0,
+						"name": "",
+						"photoUrls": [
+							""
+						],
+						"status": "",
+						"tags": [
+							{
+								"id": 0,
+								"name": ""
+							}
+						]
+					}
+				}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-get-/store/order/{orderId}-14": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "GET",
+				"path": "/store/order/{orderId}",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-delete-/store/order/{orderId}-15": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "DELETE",
+				"path": "/store/order/{orderId}",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-post-/user-16": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "POST",
+				"path": "/user",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {},
+				"payload": {
+					"text": {
+						"email": "",
+						"firstName": "",
+						"id": 0,
+						"lastName": "",
+						"password": "",
+						"phone": "",
+						"userStatus": 0,
+						"username": ""
+					}
+				}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-get-/user/login-17": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "GET",
+				"path": "/user/login",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {
+					"password": "",
+					"username": ""
+				},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-get-/user/{username}-18": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "GET",
+				"path": "/user/{username}",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-put-/user/{username}-19": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "PUT",
+				"path": "/user/{username}",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {},
+				"payload": {
+					"text": {
+						"email": "",
+						"firstName": "",
+						"id": 0,
+						"lastName": "",
+						"password": "",
+						"phone": "",
+						"userStatus": 0,
+						"username": ""
+					}
+				}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	},
+	{
+		"Swagger2-delete-/user/{username}-20": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "DELETE",
+				"path": "/user/{username}",
+				"headers": {
+					"Content-Type": ""
+				},
+				"queryString": {},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": {
+					"Content-Type": "application/xml;application/json"
+				},
+				"body": null
+			},
+			"outputs": []
+		}
+	}
+]

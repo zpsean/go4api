@@ -1,0 +1,34 @@
+[
+	{
+		"Har-GET-1292052-0": {
+			"priority": "1",
+			"parentTestCase": "root",
+			"inputs": [],
+			"request": {
+				"method": "GET",
+				"path": "https://api.douban.com/v2/movie/subject/1292052",
+				"headers": {
+					"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+					"Accept-Encoding": "gzip, deflate, br",
+					"Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"Cache-Control": "max-age=0",
+					"Connection": "keep-alive",
+					"Cookie": "gr_user_id=8808592b-b4b4-4466-9be4-ffe95a8c138a; _vwo_uuid_v2=3BDFA287302DBBA4951D9F706F77A070|4f5038fee2b5f71ca515273336962dee; __utmz=30149280.1527295172.115.49.utmcsr=baidu|utmccn=(organic)|utmcmd=organic; __utmc=30149280; viewed=\"11577300_27016236_26907929_10558892_26859123_25911182_27044219_6424904_25723064_26765979\"; ll=\"118318\"; bid=-SUmtVGK4ug; _pk_id.100001.7f16=dac84c44aeae4cfc.1533516112.1.1533516112.1533516112.; __utma=30149280.1362087807.1501474065.1534509991.1535409345.122",
+					"Host": "api.douban.com",
+					"Upgrade-Insecure-Requests": "1",
+					"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36"
+				},
+				"queryString": {},
+				"payload": {}
+			},
+			"response": {
+				"status": {
+					"Equals": 200
+				},
+				"headers": null,
+				"body": null
+			},
+			"outputs": []
+		}
+	}
+]

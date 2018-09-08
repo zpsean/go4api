@@ -176,4 +176,34 @@ func GenerateFileBasedOnVarOverride(strVar string, filePath string) {
 
     outFile.WriteString(strVar)
 }
+
+
+func GenerateCsvFileBasedOnVarAppend(strVarSlice []string, filePath string) {
+    outFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+    if err != nil {
+       panic(err) 
+    }
+
+    defer outFile.Close()
+    // UTF-8 BOM
+    // outFile.WriteString("\xEF\xBB\xBF")
+    w := csv.NewWriter(outFile)
+    w.Write(strVarSlice)
+    // 
+    w.Flush()
+}
+
+func GenerateCsvFileBasedOnVarOverride(strVarSlice []string, filePath string) {
+    outFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+    if err != nil {
+       panic(err) 
+    }
+    defer outFile.Close()
+    // UTF-8 BOM
+    // outFile.WriteString("\xEF\xBB\xBF")
+    w := csv.NewWriter(outFile)
+    w.Write(strVarSlice)
+    // 
+    w.Flush()
+}
     

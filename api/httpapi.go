@@ -20,14 +20,16 @@ import (
     "path/filepath"
     "io"
     "net/http"     
-    "net/url"     
+    "net/url"  
+    "strings"
+    "encoding/json"
+
     "go4api/cmd"
     "go4api/testcase"                                                                                                                               
     "go4api/utils"
     "go4api/assertion"
     "go4api/protocal/http"
-    "strings"
-    "encoding/json"
+    
     gjson "github.com/tidwall/gjson"
 )
 
@@ -38,6 +40,15 @@ type TestMessage struct {
     ActualValue  interface{}
 }
 
+const CLR_0 = "\x1b[30;1m"
+const CLR_R = "\x1b[31;1m"
+const CLR_G = "\x1b[32;1m"
+const CLR_Y = "\x1b[33;1m"
+const CLR_B = "\x1b[34;1m"
+const CLR_M = "\x1b[35;1m"
+const CLR_C = "\x1b[36;1m"
+const CLR_W = "\x1b[37;1m"
+const CLR_N = "\x1b[0m"
 
 func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionInfo, pStart string, baseUrl string, 
         tcData testcase.TestCaseDataInfo, resultsDir string) {
@@ -411,10 +422,12 @@ func WriteOutputsDataToFile(testResult string, tcData testcase.TestCaseDataInfo,
             jsonFileName := strings.TrimRight(filepath.Base(tcData.JsonFilePath), ".json")
             outputsFile := filepath.Join(filepath.Dir(tcData.JsonFilePath), jsonFileName + "_outputs.csv")
             // write csv header
-            utils.GenerateFileBasedOnVarOverride(strings.Join(keyStrList, ",") + "\n", outputsFile)
+            // utils.GenerateFileBasedOnVarOverride(strings.Join(keyStrList, ",") + "\n", outputsFile)
+            utils.GenerateCsvFileBasedOnVarOverride(keyStrList, outputsFile)
 
             // write csv data
-            utils.GenerateFileBasedOnVarAppend(strings.Join(valueStrList, ",") + "\n", outputsFile)
+            // utils.GenerateFileBasedOnVarAppend(strings.Join(valueStrList, ",") + "\n", outputsFile)
+            utils.GenerateCsvFileBasedOnVarAppend(valueStrList, outputsFile)
         }
     }
 }
@@ -432,9 +445,9 @@ func ReportConsole (tcExecution testcase.TestCaseExecutionInfo, actualBody []byt
             out_len = length
         }
 
-        fmt.Printf("\n%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
+        fmt.Printf("\n%s%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d%s\n", CLR_R, tcReportResults.TcName , tcReportResults.Priority, tcReportResults.ParentTestCase, 
             tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
-            tcReportResults.ActualStatusCode)
+            tcReportResults.ActualStatusCode, CLR_N)
 
         if tcReportResults.MutationInfo != nil {
             fmt.Println(tcReportResults.MutationInfo)
@@ -444,9 +457,9 @@ func ReportConsole (tcExecution testcase.TestCaseExecutionInfo, actualBody []byt
         fmt.Println(tcReportResults.TestMessages)
         fmt.Println(string(actualBody)[0:out_len], "...")
     } else {
-        fmt.Printf("\n%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d\n", tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
+        fmt.Printf("\n%s%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d%s\n", CLR_G, tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
             tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
-            tcReportResults.ActualStatusCode)
+            tcReportResults.ActualStatusCode, CLR_N)
 
         if tcReportResults.MutationInfo != nil {
             fmt.Println(tcReportResults.MutationInfo)

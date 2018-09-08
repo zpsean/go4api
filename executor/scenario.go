@@ -234,3 +234,23 @@ func GetTestCaseBasicInputsFileNameFromJsonFile(filePath string) []string {
     }
     return inputsFiles
 }
+
+
+func GetTestCaseBasicInputsSliceFilesFromJsonFile(filePath string) []string {
+    // as the raw Jsonfile itself is template, may not be valid json fomat, before rendered by data
+    contents := utils.GetContentFromFile(filePath)
+
+    var inputsFiles []string
+    // Note: as we can not ensure if the field inputs and its value will on the same line, so use : as delimiter
+    strList := strings.Split(string(contents), ":")
+    for ii, value := range strList {
+        if strings.Contains(value, `"inputs"`) {
+            fileStr := strings.Split(strList[ii + 1], ",")[0]
+            inputsFileBaseName := strings.TrimSpace(strings.Replace(fileStr, `"`, "", -1))
+            if inputsFileBaseName != "" {
+                inputsFiles = append(inputsFiles, filepath.Join(filepath.Dir(filePath), inputsFileBaseName))
+            }
+        }
+    }
+    return inputsFiles
+}

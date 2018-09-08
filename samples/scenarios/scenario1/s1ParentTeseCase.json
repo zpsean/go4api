@@ -1,0 +1,45 @@
+[
+  {
+    "s1ParentTestCase-001": {
+      "priority": "1",
+      "parentTestCase": "root",
+      "inputs": "",
+      "request": {
+        "method": "GET",
+        "path": "https://api.douban.com/v2/movie/top250",
+        "headers": {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36"
+        },
+        "queryString": {
+          "pageIndex": "1",
+          "pageSize": "12"
+        }
+      },
+      "response": {
+        "status": {
+          "Equals": 200
+        },
+        "headers": {
+          "Content-Type": {
+            "Contains": "application/json"
+          }
+        },
+        "body": {
+          "start": {
+            "GreaterOrEquals": 0
+          },
+          "$.subjects.#": {
+            "Equals": 20
+          },
+          "total": {
+            "Equals": 250
+          },
+          "title": {
+            "Contains": "豆瓣电影Top250"
+          }
+        }
+      },
+      "outputs": [{"title": "$.subjects.0.title"}, {"count1": "$.subjects.#"}, {"count2": 20}]
+    }
+  }
+]
