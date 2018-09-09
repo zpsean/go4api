@@ -57,19 +57,44 @@ Note: You can prepare many many test cases based on below examples to let go4api
 
 ### Your testing workspace will like below:
 ```js
-├── testhome
-│   ├── testconfig
-│   │   └── testconfig.json
-│   ├── testdata
-│   │   ├── FirstTeseCase.json
-│   │   ├── SecondTeseCase.json
-│   │   ├── SecondTeseCase_dt1.csv
-│   │   └── SecondTeseCase_dt2.csv
-│   └── testresource
-│       ├── excelforupload.xlsx
-│       └── image.png
-└── testresults
-    └── 2018-08-06\ 10:55:55.853034228\ +0800\ CST\ m=+0.001557642
+samples/
+├── conversion
+│   ├── har_sample.json
+│   ├── har_sample.json.out.json
+│   ├── swagger_sample.json
+│   └── swagger_sample.json.out.json
+├── fuzz
+│   ├── FuzzTeseCase.fuzz
+│   └── FuzzTeseCase.json
+├── mutation
+│   └── MutationTeseCase.json
+├── scenarios
+│   └── scenario1
+│       ├── s1ChildChildChildTeseCase.json
+│       ├── s1ChildChildTeseCase.json
+│       ├── s1ChildTeseCase.json
+│       ├── s1ParentTeseCase.json
+│       └── temp
+│           ├── _join.csv
+│           ├── s1ParentTestCase_out.csv
+│           └── s1ParentTestCase_out2.csv
+├── testconfig
+│   └── config.json
+├── testdata
+│   └── Demo
+│       ├── FirstTeseCase.json
+│       ├── SecondTeseCase.json
+│       ├── SecondTeseCase_dt1.csv
+│       └── SecondTeseCase_dt2.csv
+└── testresource
+    └── swagger.json
+
+testresults/
+└── 2018-09-10\ 00:38:54.245729368\ +0800\ CST\ m=+0.001813557
+    ├── 2018-09-10\ 00:38:54.245729368\ +0800\ CST\ m=+0.001813557.log
+    ├── index.html
+    ├── js
+    └── style
 ```
 
 ### A simple case, with hard-coded Json:
