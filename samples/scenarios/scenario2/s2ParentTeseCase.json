@@ -54,12 +54,12 @@
           "filename": "s2parenttestcase_out2.csv",
           "format": "csv",
           "data": {
-            "title": ["$.subjects.0.title"],
-            "title2": ["$.subjects.0.title", "--", "$.subjects.1.title"],
-            "count1": ["$.subjects.#"],
-            "count2": [20],
-            "count3": [["20", "30"]],
-            "count4": [[20, 30]]
+            "title_2": ["$.subjects.0.title"],
+            "title2_2": ["$.subjects.0.title", "--", "$.subjects.1.title"],
+            "count1_2": ["$.subjects.#"],
+            "count2_2": [20],
+            "count3_2": [["20", "30"]],
+            "count4_2": [[20, 30]]
           }
         }
       ]

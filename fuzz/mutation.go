@@ -16,7 +16,7 @@ import (
     "reflect"
     "encoding/json"
 
-    "go4api/testcase"
+    "go4api/lib/testcase"
     // gjson "github.com/tidwall/gjson"
     sjson "github.com/tidwall/sjson"
 )

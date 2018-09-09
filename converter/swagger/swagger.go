@@ -23,7 +23,7 @@ import (
     "encoding/json"
     "go4api/cmd"
     "go4api/utils"
-    "go4api/testcase" 
+    "go4api/lib/testcase" 
     // gjson "github.com/tidwall/gjson"
     sjson "github.com/tidwall/sjson"
 )

@@ -21,7 +21,7 @@ import (
     "path/filepath"
     
     "go4api/cmd"
-    "go4api/testcase"
+    "go4api/lib/testcase"
     "go4api/utils"
     "go4api/logger"
 )
