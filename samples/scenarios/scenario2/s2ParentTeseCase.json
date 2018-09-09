@@ -1,6 +1,6 @@
 [
   {
-    "s1ParentTestCase-001": {
+    "s2ParentTestCase-001": {
       "priority": "1",
       "parentTestCase": "root",
       "inputs": [],
@@ -41,13 +41,25 @@
       },
       "outputs": [
         {
-          "filename": "s1ParentTestCase_out.csv",
+          "filename": "s2parenttestcase_out.csv",
           "format": "csv",
           "data": {
             "title": ["$.subjects.0.title"],
             "title2": ["$.subjects.0.title", "$.subjects.1.title"],
             "count1": ["$.subjects.#"],
             "count2": [20]
+          }
+        },
+        {
+          "filename": "s2parenttestcase_out2.csv",
+          "format": "csv",
+          "data": {
+            "title": ["$.subjects.0.title"],
+            "title2": ["$.subjects.0.title", "--", "$.subjects.1.title"],
+            "count1": ["$.subjects.#"],
+            "count2": [20],
+            "count3": [["20", "30"]],
+            "count4": [[20, 30]]
           }
         }
       ]

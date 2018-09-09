@@ -7,7 +7,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
  */
- 
+
 package api
 
 import (
@@ -17,7 +17,6 @@ import (
     "os"
     "bytes"
     "mime/multipart"
-    "path/filepath"
     "io"
     "net/http"     
     "net/url"  
@@ -26,11 +25,8 @@ import (
 
     "go4api/cmd"
     "go4api/testcase"                                                                                                                               
-    "go4api/utils"
     "go4api/assertion"
     "go4api/protocal/http"
-    
-    gjson "github.com/tidwall/gjson"
 )
 
 type TestMessage struct {  
@@ -370,67 +366,6 @@ func PrepPostFormPayload(reqPayload map[string]interface{}) *strings.Reader {
     return body
 }
 
-func GetActualValueBasedOnExpKeyAndActualBody(key string, actualBody []byte) interface{} {
-    var actualValue interface{}
-    // if key starts with "$.", it represents the path, for xml, json
-    // if key == "text", it is plain text, represents its valu is the whole returned body
-    //
-    // parse it based on the json by default, need add logic for xml, and other format
-
-    if key[0:2] == "$." {
-        value := gjson.Get(string(actualBody), key[2:])
-        actualValue = value.Value()
-    } else {
-        value := gjson.Get(string(actualBody), key)
-        actualValue = value.Value()
-    }
-
-    // fmt.Println("actualValue: ", actualValue)
-    return actualValue
-}
-
-
-func WriteOutputsDataToFile(testResult string, tcData testcase.TestCaseDataInfo, actualBody []byte) {
-    var expOutputs []interface{}
-
-    if testResult == "Success" {
-        expOutputs = tcData.TestCase.Outputs()
-        if len(expOutputs) > 0 {
-            // get the actual value from actual body based on the fields in json outputs
-            var keyStrList []string
-            var valueStrList []string
-            //
-            for _, itemMap := range expOutputs {
-                // item is {}
-                for key, value := range itemMap.(map[string]interface{}) {
-                    // for csv header
-                    keyStrList = append(keyStrList, key)
-                    //
-                    if fmt.Sprint(value)[0:2] == "$." {
-                        actualValue := GetActualValueBasedOnExpKeyAndActualBody(fmt.Sprint(value), actualBody)
-                        if actualValue == nil {
-                            valueStrList = append(valueStrList, "")
-                        } else {
-                            valueStrList = append(valueStrList, fmt.Sprint(actualValue))
-                        }
-                    } else {
-                        valueStrList = append(valueStrList, fmt.Sprint(value))
-                    }
-                }
-            }
-            // get the full path of outputsfile
-            jsonFileName := strings.TrimRight(filepath.Base(tcData.JsonFilePath), ".json")
-            outputsFile := filepath.Join(filepath.Dir(tcData.JsonFilePath), jsonFileName + "_outputs.csv")
-            // write csv header
-            // utils.GenerateFileBasedOnVarOverride(strings.Join(keyStrList, ",") + "\n", outputsFile)
-            utils.GenerateCsvFileBasedOnVarOverride(keyStrList, outputsFile)
-
-            // write csv data
-            // utils.GenerateFileBasedOnVarAppend(strings.Join(valueStrList, ",") + "\n", outputsFile)
-            utils.GenerateCsvFileBasedOnVarAppend(valueStrList, outputsFile)
-        }
-    }
-}
 
 func ReportConsole (tcExecution testcase.TestCaseExecutionInfo, actualBody []byte) {
     tcReportResults := tcExecution.TcConsoleResults()

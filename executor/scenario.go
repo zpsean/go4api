@@ -16,6 +16,7 @@ import (
     "fmt"
     "sync"
     "strings"
+    "regexp"
     "encoding/json"
     "path/filepath"
     
@@ -130,7 +131,7 @@ func ConstructChildTcInfosBasedOnParentRoot(jsonFileList []string, parentTcName 
     var tcInfos []testcase.TestCaseDataInfo
 
     for _, jsonFile := range jsonFileList {
-        tcNames := GetTestCaseBasicBasedOnParentFromJsonFile(jsonFile, "root")
+        tcNames := GetBasicParentTestCaseInfosPerFile(jsonFile, "root")
         if len(tcNames) > 0 {
             csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_dt")
 
@@ -155,10 +156,10 @@ func ConstructChildTcInfosBasedOnParentTcName(jsonFileList []string, parentTcNam
     var tcInfos []testcase.TestCaseDataInfo
 
     for _, jsonFile := range jsonFileList {
-        tcNames := GetTestCaseBasicBasedOnParentFromJsonFile(jsonFile, parentTcName)
+        tcNames := GetBasicParentTestCaseInfosPerFile(jsonFile, parentTcName)
         //
         if len(tcNames) > 0 {
-            csvFileList := GetTestCaseBasicInputsFileNameFromJsonFile(jsonFile)
+            csvFileList := GetBasicInputsFilesPerFile(jsonFile)
             // if has inputs -> if has *_dt -> use json
             if len(csvFileList) > 0 && CheckFilesExistence(csvFileList) {
                 tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
@@ -193,64 +194,134 @@ func CheckFilesExistence(csvFileList []string) bool {
 }
 
 
-func GetTestCaseBasicBasedOnParentFromJsonFile(filePath string, parentName string) []string {
+func GetBasicParentTestCaseInfosPerFile(filePath string, parentName string) []string {
     // as the raw Jsonfile itself is template, may not be valid json fomat, before rendered by data
-    contents := utils.GetContentFromFile(filePath)
+    contentsBytes := utils.GetContentFromFile(filePath)
+    contents := string(contentsBytes)
+    // add some space a make regexp works well
+    contents = strings.Replace(contents, `[`, "[ ", -1)
+    contents = strings.Replace(contents, `{`, "{ ", -1)
 
     var tcNames []string
-    // Note: as we can not ensure if the field inputs and its value will on the same line, so use : as delimiter
-    strList := strings.Split(string(contents), ":")
-    for ii, value := range strList {
+    var parentTcInfos []string
+
+    reg := regexp.MustCompile(`[\p{L}\w\pP]+`)
+    wordSlice := reg.FindAllString(contents, -1)
+
+    parentPos := 0
+    for i, value := range wordSlice {
         if strings.Contains(value, `"parentTestCase"`) {
-            parentStr := strings.Split(strList[ii + 1], ",")[0]
-            parentStr = strings.TrimSpace(strings.Replace(parentStr, `"`, "", -1))
-            // here do not use Contains, use equal exactly
-            if strings.EqualFold(parentStr, parentName) {
-                parentStr := strings.Split(strList[ii - 2], ",")[0]
-                str := strings.Split(parentStr, `"`)[len(strings.Split(parentStr, `"`)) - 2]
-                tcNames = append(tcNames, str)
-            } 
+            parentPos = i
+            parentTcInfos = append(parentTcInfos, wordSlice[parentPos + 1])
+        }
+        if i == parentPos {
+            continue
         }
     }
-    return tcNames
+    //
+    priorityPos := 0
+    for i, value := range wordSlice {
+        if strings.Contains(value, `"priority"`) {
+            priorityPos = i
+            tcNames = append(tcNames, wordSlice[priorityPos - 2])
+        }
+        if i == priorityPos {
+            continue
+        }
+    }
+    //
+    for i, _ := range parentTcInfos {
+        parentTcInfos[i] = strings.Replace(parentTcInfos[i], `"`, "", -1)
+        parentTcInfos[i] = strings.Replace(parentTcInfos[i], `,`, "", -1)
+        parentTcInfos[i] = strings.Replace(parentTcInfos[i], ` `, "", -1)
+    }
+    for i, _ := range tcNames {
+        tcNames[i] = strings.Replace(tcNames[i], `"`, "", -1)
+        tcNames[i] = strings.Replace(tcNames[i], `,`, "", -1)
+        tcNames[i] = strings.Replace(tcNames[i], ` `, "", -1)
+        tcNames[i] = strings.Replace(tcNames[i], `:`, "", -1)
+    }
+
+    var tcNamesMatchParent []string
+    for i, _ := range tcNames {
+        if parentTcInfos[i] == parentName {
+            tcNamesMatchParent = append(tcNamesMatchParent, tcNames[i])
+        }
+    }
+    // fmt.Println("parentTcInfos 2: ", parentTcInfos, tcNames, tcNamesMatchParent)
+    return tcNamesMatchParent
 }
 
 
-func GetTestCaseBasicInputsFileNameFromJsonFile(filePath string) []string {
-    // as the raw Jsonfile itself is template, may not be valid json fomat, before rendered by data
-    contents := utils.GetContentFromFile(filePath)
+func GetBasicInputsFilesPerFile(filePath string) []string {
+    fileInputsInfos := GetBasicInputsInfos(filePath)
+    inputsFiles := GenerateInputsFiles(filePath, fileInputsInfos[0])
+    fmt.Println("-- :", filePath, inputsFiles)
+    return inputsFiles
+}
 
-    var inputsFiles []string
-    // Note: as we can not ensure if the field inputs and its value will on the same line, so use : as delimiter
-    strList := strings.Split(string(contents), ":")
-    for ii, value := range strList {
+func GetBasicInputsInfos(filePath string) [][]string {
+    // as the raw Jsonfile itself is template, may not be valid json fomat, before rendered by data
+    contentsBytes := utils.GetContentFromFile(filePath)
+    contents := string(contentsBytes)
+    // add some space a make regexp works well
+    contents = strings.Replace(contents, `[`, "[ ", -1)
+    contents = strings.Replace(contents, `{`, "{ ", -1)
+
+    var inputsInfos []string
+    var fileInputsInfos [][]string
+    var inputsPosSlice []int
+
+    reg := regexp.MustCompile(`[\p{L}\w\pP]+`)
+    wordSlice := reg.FindAllString(contents, -1)
+
+    for i, value := range wordSlice {
         if strings.Contains(value, `"inputs"`) {
-            fileStr := strings.Split(strList[ii + 1], ",")[0]
-            inputsFileBaseName := strings.TrimSpace(strings.Replace(fileStr, `"`, "", -1))
-            if inputsFileBaseName != "" {
-                inputsFiles = append(inputsFiles, filepath.Join(filepath.Dir(filePath), inputsFileBaseName))
-            }
+            inputsPosSlice = append(inputsPosSlice, i)
         }
     }
+    for _, inputsPos := range inputsPosSlice {
+        for ii := inputsPos + 1; ; ii ++ {
+            v := strings.Replace(wordSlice[ii], `"`, "", -1)
+            v = strings.Replace(v, `[`, "", -1)
+            v = strings.Replace(v, `]`, "", -1)
+            v = strings.Replace(v, `,`, "", -1)
+            v = strings.Replace(v, ` `, "", -1)
+            if len(v) > 0 {
+                inputsInfos = append(inputsInfos, v)
+                // fmt.Println(v)
+            }
+            if strings.Contains(wordSlice[ii], `]`) {
+                break
+            }
+        }
+        fileInputsInfos = append(fileInputsInfos, inputsInfos)
+    }
+
+    return fileInputsInfos
+}
+
+
+func GenerateInputsFiles (filePath string, inputsInfos []string) []string {
+    var inputsFiles []string
+    for _, value := range inputsInfos {  
+        inputsFiles = append(inputsFiles, filepath.Join(filepath.Dir(filePath), value))
+        break
+    }
+    fmt.Println("inputsInfos: ", inputsInfos, inputsFiles)
     return inputsFiles
 }
 
 
-func GetTestCaseBasicInputsSliceFilesFromJsonFile(filePath string) []string {
-    // as the raw Jsonfile itself is template, may not be valid json fomat, before rendered by data
-    contents := utils.GetContentFromFile(filePath)
-
+func GenerateInputsFileWithConsolidatedData (filePath string, inputsInfos []string) []string {
     var inputsFiles []string
-    // Note: as we can not ensure if the field inputs and its value will on the same line, so use : as delimiter
-    strList := strings.Split(string(contents), ":")
-    for ii, value := range strList {
-        if strings.Contains(value, `"inputs"`) {
-            fileStr := strings.Split(strList[ii + 1], ",")[0]
-            inputsFileBaseName := strings.TrimSpace(strings.Replace(fileStr, `"`, "", -1))
-            if inputsFileBaseName != "" {
-                inputsFiles = append(inputsFiles, filepath.Join(filepath.Dir(filePath), inputsFileBaseName))
-            }
-        }
+    for _, value := range inputsInfos {  
+        inputsFiles = append(inputsFiles, filepath.Join(filepath.Dir(filePath), value))
+        break
     }
+    fmt.Println("inputsInfos: ", inputsInfos, inputsFiles)
     return inputsFiles
 }
+
+
+

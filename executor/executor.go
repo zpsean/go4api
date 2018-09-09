@@ -268,6 +268,7 @@ func ConstructTcInfosBasedOnJson(jsonFile string) []testcase.TestCaseDataInfo {
     var tcases testcase.TestCases
     resJson, _ := ioutil.ReadAll(outTempJson)
     json.Unmarshal([]byte(resJson), &tcases)
+    // fmt.Println("resJson: ", string(resJson), tcases)
     // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
      for i, _ := range tcases {
         // populate the testcase.TestCaseDataInfo

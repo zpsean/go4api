@@ -42,7 +42,7 @@ func (tc *TestCase) Inputs() []interface{} {
     return (*tc)[tc.TcName()].Inputs
 }
 
-func (tc *TestCase) Outputs() []interface{} {
+func (tc *TestCase) Outputs() []*OutputsDetails {
     return (*tc)[tc.TcName()].Outputs
 }
 
@@ -61,9 +61,9 @@ func (tc *TestCase) SetInputs(newValue string) {
     (*tc)[tc.TcName()].Inputs = append((*tc)[tc.TcName()].Inputs, newValue)
 }
 
-func (tc *TestCase) SetOutputs(newValue []interface{}) {
-    (*tc)[tc.TcName()].Outputs = newValue
-}
+// func (tc *TestCase) SetOutputs(newValue []interface{}) {
+//     (*tc)[tc.TcName()].Outputs = newValue
+// }
 
 func (tc *TestCase) SetRequestMethod (newValue string) {
     (*tc)[tc.TcName()].Request.Method = newValue
@@ -298,6 +298,19 @@ func (tcExecution *TestCaseExecutionInfo) TestCase() *TestCase {
 
 func (tcExecution *TestCaseExecutionInfo) SetTestResult(value string) {
     tcExecution.TestResult = value
+}
+
+//outputs
+func (tcOutDetails *OutputsDetails) GetOutputsDetailsFileName() string {
+    return (*tcOutDetails).FileName
+}
+
+func (tcOutDetails *OutputsDetails) GetOutputsDetailsFormat() string {
+    return (*tcOutDetails).Format
+}
+
+func (tcOutDetails *OutputsDetails) GetOutputsDetailsData() map[string][]interface{} {
+    return (*tcOutDetails).Data
 }
 
 

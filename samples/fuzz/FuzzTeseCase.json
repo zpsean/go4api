@@ -1,8 +1,8 @@
 [
   {
-    "s1ChildChildTestCase-001": {
+    "FuzzTestCase-001": {
       "priority": "1",
-      "parentTestCase": "s1ChildTestCase-001",
+      "parentTestCase": "s1ParentTestCase-001",
       "inputs": [],
       "request": {
         "method": "GET",
@@ -29,8 +29,7 @@
             "Contains": "{{.title}}"
           }
         }
-      },
-      "outputs": [{"title": "childchild"}]
+      }
     }
   }
 ]
