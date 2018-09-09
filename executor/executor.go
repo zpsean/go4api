@@ -23,7 +23,7 @@ import (
     "encoding/json"
 
     "go4api/cmd"
-    "go4api/testcase"
+    "go4api/lib/testcase"
     "go4api/ui"     
     "go4api/ui/js"  
     "go4api/ui/style"                                                                                                                                

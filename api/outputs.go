@@ -18,7 +18,7 @@ import (
     "path/filepath"
     "encoding/json"
 
-    "go4api/testcase"
+    "go4api/lib/testcase"
     "go4api/utils"
     
     gjson "github.com/tidwall/gjson"
