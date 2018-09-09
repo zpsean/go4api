@@ -45,7 +45,7 @@ type TestCaseBasics struct {
     Inputs []interface{}     `json:"inputs"`
     Request *Request         `json:"request"`
     Response *Response       `json:"response"`
-    Outputs []interface{}   `json:"outputs"`
+    Outputs []*OutputsDetails   `json:"outputs"`
 }
 
 type Request struct {  
@@ -56,11 +56,16 @@ type Request struct {
     Payload map[string]interface{}      `json:"payload"`
 }
 
-
 type Response struct {  
     Status map[string]interface{}   `json:"status"`
     Headers map[string]interface{}  `json:"headers"`
     Body map[string]interface{}     `json:"body"`
+}
+
+type OutputsDetails struct {
+    FileName string
+    Format string
+    Data map[string][]interface{}
 }
 
 // for report format 

@@ -3,7 +3,7 @@
     "s1ChildTestCase-001": {
       "priority": "1",
       "parentTestCase": "s1ParentTestCase-001",
-      "inputs": "s1ParentTeseCase_outputs.csv",
+      "inputs": ["s1ParentTestCase_out.csv", "join", "s1ParentTestCase_out.csv"],
       "request": {
         "method": "GET",
         "path": "https://api.douban.com/v2/movie/subject/1292052",

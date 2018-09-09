@@ -77,7 +77,7 @@ func Convert () {
 		        []interface{}{},
 		        &g4ARequest,
 		        &g4AResponse,
-		        []interface{}{},
+		        []*testcase.OutputsDetails{},
 		    }
 		    //
 		    tCase[g4ATcName] = &tCaseBasics

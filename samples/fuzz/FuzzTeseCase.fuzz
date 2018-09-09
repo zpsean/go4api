@@ -1,0 +1,20 @@
+[
+    {
+        "FieldName": "title0",
+        "FieldType": "Char",
+        "FieldSubType": "Numeric",            
+        "FieldMin": 0,
+        "FieldMax": 20,
+        "ArrayRaw": "",
+        "Default": "abc"
+    },
+    {
+        "FieldName": "title1",
+        "FieldType": "Char",
+        "FieldSubType": "Numeric",            
+        "FieldMin": 0,
+        "FieldMax": 20,
+        "ArrayRaw": "",
+        "Default": "abc"
+    }
+]
