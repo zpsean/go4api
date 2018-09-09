@@ -11,6 +11,7 @@
 package api
 
 import (
+    "os"
     "fmt"
     "strings"
     "reflect"
@@ -36,7 +37,10 @@ func WriteOutputsDataToFile(testResult string, tcData testcase.TestCaseDataInfo,
                 var valueStrList []string
                 // item is {}
                 // (1). get the full path of outputsfile
-                outputsFile := filepath.Join(filepath.Dir(tcData.JsonFilePath), expOutputs[i].GetOutputsDetailsFileName())
+                os.RemoveAll(tcData.JsonFilePath + "/temp")
+                tempDir := utils.CreateTempDir(tcData.JsonFilePath)
+
+                outputsFile := filepath.Join(tempDir, expOutputs[i].GetOutputsDetailsFileName())
                 // (2). get the outputsfile format
                 // outputsFileFormat := expOutputs[i].GetOutputsDetailsFormat()
                 // (3). get the outputsfile data
