@@ -206,4 +206,41 @@ func GenerateCsvFileBasedOnVarOverride(strVarSlice []string, filePath string) {
     // 
     w.Flush()
 }
-    
+
+
+func CreateTempDir (filePath string) string {
+    err := os.MkdirAll(filepath.Dir(filePath) + "/temp", 0777)
+    if err != nil {
+      panic(err) 
+    }
+
+    return filepath.Dir(filePath) + "/temp"
+}
+
+func CheckFilesExistence(fileList []string) bool {
+    ifExist := true
+
+    for _, filePath := range fileList {
+        _, err := os.Stat(filePath)
+        if err != nil {
+            ifExist = false
+            break
+        }
+    }
+
+    return ifExist
+}
+
+func CheckFileExistence(filePath string) bool {
+    ifExist := true
+
+    _, err := os.Stat(filePath)
+    if err != nil {
+        ifExist = false
+    }
+
+    return ifExist
+}
+
+
+

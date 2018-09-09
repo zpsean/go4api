@@ -49,6 +49,16 @@
             "count1": ["$.subjects.#"],
             "count2": [20]
           }
+        },
+        {
+          "filename": "s1ParentTestCase_out2.csv",
+          "format": "csv",
+          "data": {
+            "title_2": ["$.subjects.0.title"],
+            "title2_2": ["$.subjects.0.title", "$.subjects.1.title"],
+            "count1_2": ["$.subjects.#"],
+            "count2_2": [20]
+          }
         }
       ]
     }

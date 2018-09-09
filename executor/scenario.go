@@ -161,7 +161,7 @@ func ConstructChildTcInfosBasedOnParentTcName(jsonFileList []string, parentTcNam
         if len(tcNames) > 0 {
             csvFileList := GetBasicInputsFilesPerFile(jsonFile)
             // if has inputs -> if has *_dt -> use json
-            if len(csvFileList) > 0 && CheckFilesExistence(csvFileList) {
+            if len(csvFileList) > 0 && utils.CheckFilesExistence(csvFileList) {
                 tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
             } else if len(GetCsvDataFilesForJsonFile(jsonFile, "_dt")) > 0 {
                 tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, GetCsvDataFilesForJsonFile(jsonFile, "_dt"))
@@ -176,21 +176,6 @@ func ConstructChildTcInfosBasedOnParentTcName(jsonFileList []string, parentTcNam
     }
 
     return tcArray
-}
-
-func CheckFilesExistence(csvFileList []string) bool {
-    ifExist := true
-
-    for _, csvFile := range csvFileList {
-        _, err := os.Stat(csvFile)
-        if err != nil {
-            fmt.Println("!!Error: " + csvFile + " does not exist.\n")
-            ifExist = false
-            break
-        }
-    }
-
-    return ifExist
 }
 
 
@@ -256,6 +241,9 @@ func GetBasicParentTestCaseInfosPerFile(filePath string, parentName string) []st
 func GetBasicInputsFilesPerFile(filePath string) []string {
     fileInputsInfos := GetBasicInputsInfos(filePath)
     inputsFiles := GenerateInputsFiles(filePath, fileInputsInfos[0])
+
+    GenerateInputsFileWithConsolidatedData(filePath, fileInputsInfos[0])
+
     fmt.Println("-- :", filePath, inputsFiles)
     return inputsFiles
 }
@@ -304,8 +292,11 @@ func GetBasicInputsInfos(filePath string) [][]string {
 
 func GenerateInputsFiles (filePath string, inputsInfos []string) []string {
     var inputsFiles []string
+    
     for _, value := range inputsInfos {  
-        inputsFiles = append(inputsFiles, filepath.Join(filepath.Dir(filePath), value))
+        tempDir := filepath.Dir(filePath) + "/temp"
+
+        inputsFiles = append(inputsFiles, filepath.Join(tempDir, value))
         break
     }
     fmt.Println("inputsInfos: ", inputsInfos, inputsFiles)
@@ -313,15 +304,88 @@ func GenerateInputsFiles (filePath string, inputsInfos []string) []string {
 }
 
 
-func GenerateInputsFileWithConsolidatedData (filePath string, inputsInfos []string) []string {
-    var inputsFiles []string
-    for _, value := range inputsInfos {  
-        inputsFiles = append(inputsFiles, filepath.Join(filepath.Dir(filePath), value))
-        break
+// to implements the operator: union, join, append for inputs files    
+func GenerateInputsFileWithConsolidatedData (filePath string, inputsInfos []string) {
+    // inputsInfos => ["s1ParentTestCase_out.csv", "join", "s1ParentTestCase_out.csv"]
+    // var inputsFiles []string
+    // 1. len(inputsInfos)
+    if len(inputsInfos) > 0 {
+        if len(inputsInfos) % 2 != 1 {
+            fmt.Println("!! Error, inputs contents error, please check")
+            os.Exit(1)
+        }
+        for i := 1; i <= len(inputsInfos) / 2; i ++ {
+            operator := strings.ToLower(inputsInfos[2 * (i - 1) + 1])
+            if operator != "union" && operator != "join" && operator != "append" {
+                fmt.Println("!! Error, inputs operator error, please check")
+                os.Exit(1)
+            }
+        }
+        // loop the inputsInfos and apply operator
+        inputsMap := make(map[string]interface{})
+        // init inputsMap
+        tempDir := filepath.Dir(filePath) + "/temp"
+        csvRows := utils.GetCsvFromFile(filepath.Join(tempDir, inputsInfos[0]))
+        // suppose we have only one row here
+        for _, csvRow := range csvRows {
+            for i, _ := range csvRow {
+                inputsMap[csvRows[0][i]] = csvRows[1][i]
+            }
+        }
+        //
+        for i := 1; i <= len(inputsInfos) / 2; i ++ {
+            operator := strings.ToLower(inputsInfos[2 * (i - 1) + 1])
+            tempDir := filepath.Dir(filePath) + "/temp"
+
+            switch operator {
+                // case "union": 
+                case "join": 
+                    inputsMapLatter := make(map[string]interface{})
+                    csvRowsLatter := utils.GetCsvFromFile(filepath.Join(tempDir, inputsInfos[i + 1]))
+                    // suppose we have only one row here
+                    for _, csvRow := range csvRowsLatter {
+                        for i, _ := range csvRow {
+                            inputsMapLatter[csvRowsLatter[0][i]] = csvRowsLatter[1][i]
+                        }
+                    }
+                    inputsMap = mergeMaps(inputsMap, inputsMapLatter)
+                    // ==> 
+                    joinedFile := filepath.Join(tempDir, "_join.csv")
+                    writeMapToCsv(inputsMap, joinedFile)
+
+                // case "append":
+            }
+        }
     }
-    fmt.Println("inputsInfos: ", inputsInfos, inputsFiles)
-    return inputsFiles
+    // return inputsFiles
 }
+
+
+func mergeMaps (inputsMap map[string]interface{}, inputsMapLatter map[string]interface{}) map[string]interface{} {
+    for k, v := range inputsMapLatter {
+        inputsMap[k] = v
+    }
+
+    return inputsMap
+}
+
+func writeMapToCsv (inputsMap map[string]interface{}, joinedFile string) {
+    var keyStrList []string
+    var valueStrList []string
+
+    for key, value := range inputsMap {
+        // for csv header
+        keyStrList = append(keyStrList, key)
+        // for cav data
+        valueStrList = append(valueStrList, value.(string))
+    }
+    // write csv header
+    utils.GenerateCsvFileBasedOnVarOverride(keyStrList, joinedFile)
+    // write csv data
+    utils.GenerateCsvFileBasedOnVarAppend(valueStrList, joinedFile)
+}
+
+
 
 
 
