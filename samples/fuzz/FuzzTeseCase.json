@@ -1,6 +1,6 @@
 [
   {
-    "FuzzTestCase-001": {
+    "FuzzTestCase-{{.tcid}}": {
       "priority": "1",
       "parentTestCase": "s1ParentTestCase-001",
       "inputs": [],
