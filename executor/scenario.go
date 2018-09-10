@@ -24,6 +24,7 @@ import (
     "go4api/lib/testcase"
     "go4api/utils"
     "go4api/logger"
+    "go4api/lib/csv"
 )
 
 
@@ -80,7 +81,6 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
                     }
                 }
             }
-                
             // (1). tcName, testResult, the search result is saved to *findNode
             c := make(chan *tcNode)
             go func(c chan *tcNode) {
@@ -106,9 +106,6 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
             break miniLoop
         }
     }
-
-    // ShowNodes(root)
-
     // CollectOverallNodeStatus(root, len(prioritySet))
 
     // generate the html report based on template, and results data
@@ -149,7 +146,6 @@ func ConstructChildTcInfosBasedOnParentRoot(jsonFileList []string, parentTcName 
 
     return tcArray
 }
-
 
 func ConstructChildTcInfosBasedOnParentTcName(jsonFileList []string, parentTcName string, dataTableSuffix string) []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
@@ -240,11 +236,12 @@ func GetBasicParentTestCaseInfosPerFile(filePath string, parentName string) []st
 
 func GetBasicInputsFilesPerFile(filePath string) []string {
     fileInputsInfos := GetBasicInputsInfos(filePath)
-    inputsFiles := GenerateInputsFiles(filePath, fileInputsInfos[0])
+    // suppose one child tc per file
+    // inputsFiles := GenerateInputsFiles(filePath, fileInputsInfos[0])
+    // test the gcsv
+    inputsFiles := GenerateInputsFileWithConsolidatedData(filePath, fileInputsInfos[0])
 
-    GenerateInputsFileWithConsolidatedData(filePath, fileInputsInfos[0])
-
-    fmt.Println("-- :", filePath, inputsFiles)
+    // fmt.Println("--> :", filePath, inputsFiles, fileInputsInfos[0])
     return inputsFiles
 }
 
@@ -292,11 +289,12 @@ func GetBasicInputsInfos(filePath string) [][]string {
 
 func GenerateInputsFiles (filePath string, inputsInfos []string) []string {
     var inputsFiles []string
-    
+
     for _, value := range inputsInfos {  
         tempDir := filepath.Dir(filePath) + "/temp"
 
         inputsFiles = append(inputsFiles, filepath.Join(tempDir, value))
+        //just use the first one, temp solution
         break
     }
     fmt.Println("inputsInfos: ", inputsInfos, inputsFiles)
@@ -304,69 +302,67 @@ func GenerateInputsFiles (filePath string, inputsInfos []string) []string {
 }
 
 
-// to implements the operator: union, join, append for inputs files    
-func GenerateInputsFileWithConsolidatedData (filePath string, inputsInfos []string) {
+// to apply the csv operator: union, join, append for inputs files    
+func GenerateInputsFileWithConsolidatedData (filePath string, inputsInfos []string) []string {
     // inputsInfos => ["s1ParentTestCase_out.csv", "join", "s1ParentTestCase_out.csv"]
-    // var inputsFiles []string
+    var inputsFiles []string
     // 1. len(inputsInfos)
-    if len(inputsInfos) > 0 {
-        if len(inputsInfos) % 2 != 1 {
-            fmt.Println("!! Error, inputs contents error, please check")
-            os.Exit(1)
-        }
-        for i := 1; i <= len(inputsInfos) / 2; i ++ {
-            operator := strings.ToLower(inputsInfos[2 * (i - 1) + 1])
-            if operator != "union" && operator != "join" && operator != "append" {
-                fmt.Println("!! Error, inputs operator error, please check")
+    switch {
+        case len(inputsInfos) == 0:
+            inputsFiles = []string{}
+        case len(inputsInfos) == 1:
+            inputsFiles = []string{inputsInfos[0]}
+        case len(inputsInfos) > 1:
+            if len(inputsInfos) % 2 != 1 {
+                fmt.Println("!! Error, inputs contents error, please check")
                 os.Exit(1)
             }
-        }
-        // loop the inputsInfos and apply operator
-        inputsMap := make(map[string]interface{})
-        // init inputsMap
-        tempDir := filepath.Dir(filePath) + "/temp"
-        csvRows := utils.GetCsvFromFile(filepath.Join(tempDir, inputsInfos[0]))
-        // suppose we have only one row here
-        for _, csvRow := range csvRows {
-            for i, _ := range csvRow {
-                inputsMap[csvRows[0][i]] = csvRows[1][i]
+            for i := 1; i <= len(inputsInfos) / 2; i ++ {
+                operator := strings.ToLower(inputsInfos[2 * (i - 1) + 1])
+                if operator != "union" && operator != "join" && operator != "append" {
+                    fmt.Println("!! Error, inputs operator error, please check")
+                    os.Exit(1)
+                }
             }
-        }
-        //
-        for i := 1; i <= len(inputsInfos) / 2; i ++ {
-            operator := strings.ToLower(inputsInfos[2 * (i - 1) + 1])
+            //
             tempDir := filepath.Dir(filePath) + "/temp"
 
-            switch operator {
-                // case "union": 
-                case "join": 
-                    inputsMapLatter := make(map[string]interface{})
-                    csvRowsLatter := utils.GetCsvFromFile(filepath.Join(tempDir, inputsInfos[i + 1]))
-                    // suppose we have only one row here
-                    for _, csvRow := range csvRowsLatter {
-                        for i, _ := range csvRow {
-                            inputsMapLatter[csvRowsLatter[0][i]] = csvRowsLatter[1][i]
-                        }
-                    }
-                    inputsMap = mergeMaps(inputsMap, inputsMapLatter)
-                    // ==> 
-                    joinedFile := filepath.Join(tempDir, "_join.csv")
-                    writeMapToCsv(inputsMap, joinedFile)
+            var leftCsvPtr *gcsv.Gcsv
+            // init the leftCsvPtr with first file
+            leftFile := filepath.Join(tempDir, inputsInfos[0])
+            lContentBytes := utils.GetContentFromFile(leftFile)
+            leftCsv := gcsv.GetCsv(string(lContentBytes))
+            leftCsvPtr = &leftCsv
 
-                // case "append":
+            for i := 1; i <= len(inputsInfos) / 2; i ++ {
+                operator := strings.ToLower(inputsInfos[2 * (i - 1) + 1])
+                //
+                rightFile := filepath.Join(tempDir, inputsInfos[2 * (i - 1) + 2])
+                rContentBytes := utils.GetContentFromFile(rightFile)
+                //
+                switch operator {
+                    case "union":
+                        leftCsvPtr.Union(string(rContentBytes))
+                    case "join":
+                        leftCsvPtr.Join(string(rContentBytes))
+                    case "append":
+                        leftCsvPtr.Append(string(rContentBytes))
+                }
             }
-        }
+            inputsFiles = []string{tempDir + "/cosolidated.csv"}
+            
+            writeGcsvToCsv(leftCsvPtr, inputsFiles[0])
     }
-    // return inputsFiles
+    return inputsFiles
 }
 
-
-func mergeMaps (inputsMap map[string]interface{}, inputsMapLatter map[string]interface{}) map[string]interface{} {
-    for k, v := range inputsMapLatter {
-        inputsMap[k] = v
+func writeGcsvToCsv (gcsvPtr *gcsv.Gcsv, outFile string) {
+    // header
+    utils.GenerateCsvFileBasedOnVarOverride(gcsvPtr.Header, outFile)
+    // data
+    for i, _ := range gcsvPtr.DataRows {
+        utils.GenerateCsvFileBasedOnVarAppend(gcsvPtr.DataRows[i], outFile)
     }
-
-    return inputsMap
 }
 
 func writeMapToCsv (inputsMap map[string]interface{}, joinedFile string) {
