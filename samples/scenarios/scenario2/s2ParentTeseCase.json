@@ -61,6 +61,26 @@
             "count3_2": [["20", "30"]],
             "count4_2": [[20, 30]]
           }
+        },
+        {
+          "filename": "s2parenttestcase_out3.csv",
+          "format": "csv",
+          "data": {
+            "title": ["$.subjects.0.title"],
+            "title2": ["$.subjects.0.title", "$.subjects.1.title"],
+            "count1": ["$.subjects.#"],
+            "count2": [20]
+          }
+        },
+        {
+          "filename": "s2parenttestcase_out4.csv",
+          "format": "csv",
+          "data": {
+            "title": ["$.subjects.0.title"],
+            "title2": ["$.subjects.0.title", "$.subjects.1.title"],
+            "count1": ["$.subjects.#"],
+            "count2": [20]
+          }
         }
       ]
     }
