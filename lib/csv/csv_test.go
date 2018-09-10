@@ -21,7 +21,7 @@ func Test_GetCsv(t *testing.T) {
 
     csvcontents := `h1,h2,h3
     d11,d12,d13
-    d21,d22,d23`
+    d21,12,d23`
     gcsv := GetCsv(csvcontents)
 
     fmt.Println("gcsv: ", gcsv)
@@ -30,7 +30,79 @@ func Test_GetCsv(t *testing.T) {
     fmt.Println("gcsv: ", gcsv.FieldsCount)
     fmt.Println("gcsv: ", gcsv.DataRowsCount)
 
+    if gcsv.FieldsCount != 3 || gcsv.DataRowsCount != 2 {
+        t.Fatalf("csv load unexpected")
+    }
+
+    fmt.Println("\n--> test finished")
+}
+
+func Test_GetCsv2(t *testing.T) {
+    fmt.Println("\n--> test started")
+
+    csvcontents := `h1,h2,h3`
+    gcsv := GetCsv(csvcontents)
+
+    fmt.Println("gcsv: ", gcsv)
+    fmt.Println("gcsv: ", gcsv.Header)
+    fmt.Println("gcsv: ", gcsv.DataRows)
+    fmt.Println("gcsv: ", gcsv.FieldsCount)
+    fmt.Println("gcsv: ", gcsv.DataRowsCount)
+
+    if gcsv.FieldsCount != 3 || gcsv.DataRowsCount != 0 {
+        t.Fatalf("csv load unexpected")
+    }
+
+    fmt.Println("\n--> test finished")
+}
+
+func Test_Join(t *testing.T) {
+    fmt.Println("\n--> test started")
+
+    gcsvcontents := `h1,h2,h3
+    d11,d12,d13
+    d21,12,d23`
+    gcsv := GetCsv(gcsvcontents)
+
+    lcsvcontents := `h1,h2,h3
+    e11,e12,e13
+    e21,23,e23`
+
+    fmt.Println("gcsv: ", gcsv)
+
+    gcsv.Join(lcsvcontents)
+    
+    fmt.Println("gcsv: ", gcsv)
+    fmt.Println("gcsv: ", gcsv.DataRows[0])
+
+    if gcsv.FieldsCount != 6 {
+        t.Fatalf("csv joined FieldsCount not correct, header")
+    }
+    if len(gcsv.DataRows) != 4 {
+        t.Fatalf("csv joined FieldsCount not correct, datarows")
+    }
+
     fmt.Println("\n--> test finished")
 }
 
 
+func Test_Union(t *testing.T) {
+    fmt.Println("\n--> test started")
+
+    gcsvcontents := `h1,h2,h3
+    d11,d12,d13
+    d21,12,d23`
+    gcsv := GetCsv(gcsvcontents)
+
+    lcsvcontents := `h1,h2,h3
+    e11,e12,e13
+    e21,23,e23`
+
+    fmt.Println("gcsv: ", gcsv)
+
+    gcsv.Union(lcsvcontents)
+
+    fmt.Println("gcsv: ", gcsv)
+
+    fmt.Println("\n--> test finished")
+}
