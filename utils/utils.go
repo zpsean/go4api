@@ -31,7 +31,6 @@ func GetCurrentDir() string{
     return currentDir
 }
 
-
 func GetCsvFromFile(filePath string) [][]string {
     fi,err := ioutil.ReadFile(filePath)
     if err != nil {
@@ -42,8 +41,6 @@ func GetCsvFromFile(filePath string) [][]string {
 
     return csvRows
 }
-
-
 
 func GetContentFromFile(filePath string) []byte {
     fi,err := ioutil.ReadFile(filePath)
@@ -69,7 +66,6 @@ func GetJsonFromFile(filePath string) string {
 
     return string(fd)
 }
-
 
 // for the dir and sub-dir
 func WalkPath(searchDir string, extension string) ([]string, error) {

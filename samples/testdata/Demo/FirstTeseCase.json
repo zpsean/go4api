@@ -3,7 +3,7 @@
     "FirstTestCase-001": {
       "priority": "9",
       "parentTestCase": "root",
-      "inputs": "",
+      "inputs": [],
       "request": {
         "method": "GET",
         "path": "https://api.douban.com/v2/movie/top250",
@@ -27,17 +27,7 @@
         "body": {
           "start": {
             "GreaterOrEquals": "0"
-          },
-          "$.count": {
-            "Equals": 20
-          },
-          "total": {
-            "Equals": false
-          },
-          "title": {
-            "Contains": "豆瓣电影Top250"
           }
-        }
       },
       "outputs": []
     }

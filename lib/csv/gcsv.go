@@ -157,6 +157,7 @@ func (gcsv *Gcsv) Append (latterCsv string) {
                         // conver the []string to string format
                         tempBytes, _ := json.Marshal(tempSlice)
                         gcsv.DataRows[i][mSlice[0]] = string(tempBytes)
+                    // !!! Note: here missed the type check for latterCsv
                 }
             // string
             } else {

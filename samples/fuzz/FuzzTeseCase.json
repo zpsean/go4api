@@ -2,13 +2,15 @@
   {
     "FuzzTestCase-{{.tcid}}": {
       "priority": "1",
-      "parentTestCase": "s1ParentTestCase-001",
+      "parentTestCase": "root",
       "inputs": [],
       "request": {
         "method": "GET",
         "path": "https://api.douban.com/v2/movie/subject/1292052",
         "headers": {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36"
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36",
+          "title0": "{{.title0}}", 
+          "title1": "{{.title1}}"
         },
         "queryString": {
           "pageIndex": "1",
