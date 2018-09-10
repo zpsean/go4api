@@ -17,14 +17,13 @@ import (
     "strings"
     // "io"
     "bytes"
-    "go4api/utils"
     "text/template"
     "path/filepath"
     "time"
     // "strconv"
     // "bufio"
-    // simplejson "github.com/bitly/go-simplejson"
     
+    "go4api/utils"
 )
 
 func GetTemplateFromString() {
