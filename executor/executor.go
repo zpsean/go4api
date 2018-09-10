@@ -28,7 +28,7 @@ import (
     "go4api/ui/js"  
     "go4api/ui/style"                                                                                                                                
     "go4api/utils"
-    "go4api/utils/texttmpl"
+    "go4api/texttmpl"
     "go4api/logger"
 )
 
@@ -168,7 +168,6 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
 
     // channel code, can be used for the overall success or fail indicator, especially for CI/CD
     ch <- failCount
-
 }
 
 
@@ -342,33 +341,6 @@ func GetTestCasesByPriority(prioritySet []string, tcArray []testcase.TestCaseDat
 }
 
 
-
-func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time) {
-    // read the resource under /ui/*
-    // fmt.Println("ui: ", ui.Index_template)
-
-    // copy the value of var Index to file
-    utils.GenerateFileBasedOnVarOverride(ui.Index, resultsDir + "index.html")
-
-    //
-    err := os.MkdirAll(resultsDir + "js", 0777)
-    if err != nil {
-      panic(err) 
-    }
-    // copy the value of var js.Js to file
-    texttmpl.GenerateHtmlJsCSSFromTemplateAndVar(js.Results, pStart_time, pEnd_time, resultsDir, resultsDir + pStart + ".log")
-    //
-    utils.GenerateFileBasedOnVarOverride(js.Js, resultsDir + "js/go4api.js")
-    //
-    err = os.MkdirAll(resultsDir + "style", 0777)
-    if err != nil {
-      panic(err) 
-    }
-    // copy the value of var style.Style to file
-    utils.GenerateFileBasedOnVarOverride(style.Style, resultsDir + "style/go4api.css")
-}
-
-
 func GetFuzzTcArray() []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
 
@@ -395,7 +367,7 @@ func GetFuzzTcArray() []testcase.TestCaseDataInfo {
 func GetOriginMutationTcArray() []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
 
-    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".mutation")
+    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
     // to ge the json and related data file, then get tc from them
     for _, jsonFile := range jsonFileList {
         csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_mutation_dt")
@@ -414,4 +386,29 @@ func GetOriginMutationTcArray() []testcase.TestCaseDataInfo {
     }
 
     return tcArray
+}
+
+func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time) {
+    // read the resource under /ui/*
+    // copy the value of var Index to file
+    utils.GenerateFileBasedOnVarOverride(ui.Index, resultsDir + "index.html")
+    // (0)
+    err := os.MkdirAll(resultsDir + "js", 0777)
+    if err != nil {
+      panic(err) 
+    }
+    // (1). get js/reslts.js
+    logResultsFile := resultsDir + pStart + ".log"
+    jsResults := resultsDir + "/js/reslts.js"
+    //
+    texttmpl.GenerateHtmlJsCSSFromTemplateAndVar(js.Results, pStart_time, pEnd_time, jsResults, logResultsFile)
+    // (2). get js/go4api.js
+    utils.GenerateFileBasedOnVarOverride(js.Js, resultsDir + "js/go4api.js")
+    //
+    err = os.MkdirAll(resultsDir + "style", 0777)
+    if err != nil {
+      panic(err) 
+    }
+    // (3). get style/go4api.css
+    utils.GenerateFileBasedOnVarOverride(style.Style, resultsDir + "style/go4api.css")
 }
