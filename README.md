@@ -30,35 +30,34 @@ Features
 - **Support Scenario Testing**: when APIs have data dependency and exchange
 - **Convert HAR file / Swagger API file**
 
-More information, refer to wiki [wiki](https://github.com/zpsean/go4api/wiki).
+More information, refer to [wiki](https://github.com/zpsean/go4api/wiki).
 
-Install
+Install and Run
 ------
 
-### Mac: Using the binary package
+### Option 1: Mac: Using the binary package, Run
 
 Grab a prebuilt binary from [the Releases page](https://github.com/zpsean/go4api/releases).
 
 Copy the binary in your _PATH_ to run go4api from any location.
 
 
-### Build from source
+### Option 2: Build from source, Run
 To build from source you need **[Go](https://golang.org/doc/install)** (1.10 or newer). Follow these instructions:
 
 - Run `go get github.com/zpsean/go4api` which will:
   - git clone the repo and put the source in `$GOPATH/src/github.com/zpsean/go4api`
   - build a `go4api` binary and put it in `$GOPATH/bin`
 - Make sure you have `$GOPATH/bin` in your PATH
-- You can now run go4api using `$./go4api`
+- You can now run go4api using `$./go4api ...`
 
 
-### Run from source
+### Option 3: Run from source
 To run from source you need **[Go](https://golang.org/doc/install)** (1.10 or newer). Follow these instructions:
 
 - Run `go get github.com/zpsean/go4api` which will:
   - git clone the repo and put the source in `$GOPATH/src/github.com/zpsean/go4api`
   - Move to the path: `cd $GOPATH/src/github.com/zpsean/go4api`
-  - 
 - Make sure you have `$GOPATH` in your PATH
 - You can now run go4api using `$go run main.go ...`
 
@@ -67,7 +66,7 @@ Quick start
 
 Note: You can prepare many many test cases based on below examples to let go4api run for you.
 
-### Your testing workspace will like below:
+### Your testing workspace may like below:
 ```js
 samples/
 ├── conversion
