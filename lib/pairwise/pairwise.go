@@ -14,6 +14,8 @@ import (
     "fmt"
     "sort"
     "reflect"
+
+    combins "go4api/lib/combination"
 )
 
 // -------------------------------------------------------------------------
@@ -209,7 +211,7 @@ func (pairs PairsStorage) Length() int {
 // sequence -> [PwLength]item, which has been choseen for the next test data (case)
 func (pairs PairsStorage) AddSequence(sequence []interface{}) {
     for i := 0; i < pairs.PwLength; i++ {
-        for combination := range combinationsInterface(sequence, i + 1) {
+        for combination := range combins.CombinationsInterface(sequence, i + 1) {
             pairs.AddCombination(combination)
         }
     }     
@@ -328,7 +330,7 @@ func GetMaxPairWiseCombinationNumber(combs [][]interface{}, PwLength int) int {
     } else {
         pwLen = PwLength
     }
-    indexCombs := combinationsInt(indexSlice, pwLen)
+    indexCombs := combins.CombinationsInt(indexSlice, pwLen)
     //
     totalNumber := 0
     //
@@ -346,7 +348,7 @@ func GetMaxPairWiseCombinationNumber(combs [][]interface{}, PwLength int) int {
         c := make(chan []interface{})
         go func(c chan []interface{}) {
             defer close(c)
-            combinsSliceInterface(c, []interface{}{}, combins_pw_index_slice)
+            combins.CombinsSliceInterface(c, []interface{}{}, combins_pw_index_slice)
         }(c)
 
         // can not use len(c) to get the channel length, as len(c) is always 0 here, why?
@@ -492,7 +494,7 @@ func (allPairs AllPairs) resortWorkingArray (chosenValuesArr []interface{}, num 
             // fmt.Println("---> tempChosen : ", chosenValuesArr, item, tempChosen)
 
             var setPairIds [][]interface{}
-            for z := range combinationsInterface(tempChosen, i + 1) {
+            for z := range combins.CombinationsInterface(tempChosen, i + 1) {
                 var idss []interface{}
                 for _, item := range z {
                     idss = append(idss, item.(Item).Id)

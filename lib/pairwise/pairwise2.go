@@ -14,6 +14,8 @@ import (
     "fmt"
     "reflect"
     "sync"
+
+    combs "go4api/lib/combination"
 )
 
 // -------------------------------------------------------------------------
@@ -43,7 +45,7 @@ func GetPairWise2(validVectors [][]interface{}, pwLength int) {
     c := make(chan []interface{})
     go func(c chan []interface{}) {
         defer close(c)
-        combinsSliceInterface(c, []interface{}{}, validVectors)
+        combs.CombinsSliceInterface(c, []interface{}{}, validVectors)
     }(c)
 
     var combinsFullValid[][]interface{}
@@ -66,7 +68,7 @@ func GetPairWise2(validVectors [][]interface{}, pwLength int) {
         indexSlice = append(indexSlice, i)
     }
 
-    indexCombs := combinationsInt(indexSlice, pwLen)
+    indexCombs := combs.CombinationsInt(indexSlice, pwLen)
     var indexPW [][]int
     combLen := 0
     for value := range indexCombs {
@@ -292,7 +294,7 @@ func GetPairWise22(validVectors [][]interface{}, pwLength int) {
     } else {
         pwLen = pwLength
     }
-    indexCombs := combinationsInt(indexSlice, pwLen)
+    indexCombs := combs.CombinationsInt(indexSlice, pwLen)
     GetPairWise12(indexCombs, validVectors, pwLength)
 }
 
@@ -321,7 +323,7 @@ func GetPairWise12 (indexCombs chan []int, combins [][]interface{}, pwLength int
         c := make(chan []interface{})
         go func(c chan []interface{}) {
             defer close(c)
-            combinsSliceInterface(c, []interface{}{}, combins_pw_index_slice)
+            combs.CombinsSliceInterface(c, []interface{}{}, combins_pw_index_slice)
         }(c)
 
         fmt.Println("c: ", c, len(c))
