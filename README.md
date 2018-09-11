@@ -64,7 +64,7 @@ To run from source you need **[Go](https://golang.org/doc/install)** (1.10 or ne
 Quick start
 -----------
 
-Note: You can prepare many many test cases based on below examples to let go4api run for you.
+Note: You can prepare many many test cases based on below examples to let Go4Api run for you.
 
 ### Your testing workspace may like below:
 ```js
