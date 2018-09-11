@@ -138,13 +138,13 @@ testresults/
           }
         },
         "body": {
-          "start": {
+          "$.start": {
             "GreaterOrEquals": 0
           },
           "$.subjects.#": {
             "Equals": 20
           },
-          "total": {
+          "$.total": {
             "Equals": 250
           },
           "$.subjects.0.title": {

@@ -21,41 +21,41 @@ var actualBody []byte
 
 func init() {
     actualBodyS := `
-                    {
-                        "count": 20,
-                        "start": 0,
-                        "total": 250,
-                        "subjects": [{
-                                "rating": {
-                                    "max": 10,
-                                    "average": 9.6,
-                                    "stars": "50",
-                                    "min": 0
-                                },
-                                "title": "肖申克的救赎"
-                            },
-                            {
-                                "rating": {
-                                    "max": 10,
-                                    "average": 9.5,
-                                    "stars": "50",
-                                    "min": 0
-                                },
-                                "title": "霸王别姬"
-                            },
-                            {
-                                "rating": {
-                                    "max": 10,
-                                    "average": 9.4,
-                                    "stars": "50",
-                                    "min": 0
-                                },
-                                "title": "这个杀手不太冷"
-                            }
-                        ],
-                        "title": "豆瓣电影Top250"
-                    }
-                    `
+        {
+            "count": 20,
+            "start": 0,
+            "total": 250,
+            "subjects": [{
+                    "rating": {
+                        "max": 10,
+                        "average": 9.6,
+                        "stars": "50",
+                        "min": 0
+                    },
+                    "title": "肖申克的救赎"
+                },
+                {
+                    "rating": {
+                        "max": 10,
+                        "average": 9.5,
+                        "stars": "50",
+                        "min": 0
+                    },
+                    "title": "霸王别姬"
+                },
+                {
+                    "rating": {
+                        "max": 10,
+                        "average": 9.4,
+                        "stars": "50",
+                        "min": 0
+                    },
+                    "title": "这个杀手不太冷"
+                }
+            ],
+            "title": "豆瓣电影Top250"
+        }`
+                    
     actualBody = []byte(actualBodyS)
 }
 
