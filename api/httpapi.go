@@ -253,7 +253,7 @@ func CompareBody(actualBody []byte, expBody map[string]interface{}) ([]bool, []T
         expBody_sub := value.(map[string]interface{})
         for assertionKey, expValue := range expBody_sub {
             // if path, then value - value, otherwise, key - value
-            actualValue := GetActualValueBasedOnExpKeyAndActualBody(key, actualBody)
+            actualValue := GetActualValueByJsonPath(key, actualBody)
             // check the value gotten
             if actualValue == nil {
                 msg := TestMessage {
