@@ -25,23 +25,23 @@
           }
         },
         "body": {
-          "start": {
+          "$.start": {
             "GreaterOrEquals": 0
           },
           "$.subjects.#": {
             "Equals": 20
           },
-          "total": {
+          "$.total": {
             "Equals": 250
           },
-          "title": {
+          "$.title": {
             "Contains": "豆瓣电影Top250"
           }
         }
       },
       "outputs": [
         {
-          "filename": "s2parenttestcase_out.csv",
+          "filename": "s2ParentTestCase_out.csv",
           "format": "csv",
           "data": {
             "title": ["$.subjects.0.title"],
@@ -51,19 +51,23 @@
           }
         },
         {
-          "filename": "s2parenttestcase_out2.csv",
+          "filename": "s2ParentTestCase_out2.csv",
           "format": "csv",
           "data": {
-            "title_2": ["$.subjects.0.title"],
-            "title2_2": ["$.subjects.0.title", "--", "$.subjects.1.title"],
+            "title_2": ["$.subjects.#.title"],
+            "title2_2": ["+", "$.subjects.0.title", "--", "$.subjects.1.title"],
             "count1_2": ["$.subjects.#"],
             "count2_2": [20],
             "count3_2": [["20", "30"]],
-            "count4_2": [[20, 30]]
+            "count4_2": [[20, 35]],
+            "count5_2": [30, 40],
+            "count6_2": ["40", "50"],
+            "count7_2": [],
+            "count8_2": [[]]
           }
         },
         {
-          "filename": "s2parenttestcase_out3.csv",
+          "filename": "s2ParentTestCase_out3.csv",
           "format": "csv",
           "data": {
             "title": ["$.subjects.0.title"],
@@ -73,7 +77,7 @@
           }
         },
         {
-          "filename": "s2parenttestcase_out4.csv",
+          "filename": "s2ParentTestCase_out4.csv",
           "format": "csv",
           "data": {
             "title": ["$.subjects.0.title"],
