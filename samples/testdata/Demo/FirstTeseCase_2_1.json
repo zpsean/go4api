@@ -1,8 +1,8 @@
 [
   {
-    "FirstTestCase-001": {
+    "FirstTestCase-001-2-1": {
       "priority": "1",
-      "parentTestCase": "root",
+      "parentTestCase": "FirstTestCase-001",
       "inputs": [],
       "request": {
         "method": "GET",
