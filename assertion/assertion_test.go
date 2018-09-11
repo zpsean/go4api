@@ -84,6 +84,27 @@ func Test_Equals6(t *testing.T) {
     }
 }
 
+// func Test_Equals7(t *testing.T) {
+//     aa := `
+//         {
+//             "a": 123,
+//             "b": null
+//         }`
+//     var BB map[string]interface{}
+
+//     json.Unmarshal([]byte(aa), &BB)
+
+//     actualValue := nil // not work
+//     expValue := BB.b
+
+//     res := Equals(actualValue, expValue)
+
+//     if res == true {
+//         t.Fatalf("Equals null failed")
+//     }
+// }
+
+
 func Test_Contains(t *testing.T) {
     actualValue := "abcde"
     expValue := "abc"

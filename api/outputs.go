@@ -54,7 +54,7 @@ func WriteOutputsDataToFile(testResult string, tcData testcase.TestCaseDataInfo,
             } 
         }
     } else {
-        fmt.Println("Warning: test execution failed, no ouuputs file!")
+        // fmt.Println("Warning: test execution failed, no outputs file!")
     }
 }
 

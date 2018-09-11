@@ -61,7 +61,18 @@ func VerifyTypes(actualValue interface{}, expValue interface{}) string {
     actResult := gjson.Parse(act)
     expResult := gjson.Parse(exp)
 
-    if actResult.Type == expResult.Type {
+    // as get Go nil, for JSON null, need special care, two possibilities:
+    // p1: expResult -> null, but can not find out actualValue, go set it to nil, i.e. null (assertion -> false)
+    // p2: expResult -> null, actualValue can be founc, and its value --> null (assertion -> true)
+    // but here can not distinguish them
+
+    if actualValue == nil || expValue == nil {
+        if actualValue != nil || expValue != nil {
+            return "false"
+        } else {
+            return "true"
+        }
+    } else if actResult.Type == expResult.Type {
         return "true"
     } else {
         return "false"

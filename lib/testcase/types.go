@@ -29,11 +29,21 @@ type TestCaseExecutionInfo struct {
     ActualStatusCode int
     StartTime string
     EndTime string
-    TestMessages string
+    TestMessages []*TestMessage
     StartTimeUnixNano int64
     EndTimeUnixNano int64
     DurationUnixNano int64
 }
+
+type TestMessage struct {  
+    Assertion string
+    FieldName interface{}
+    AssertionKey  interface{}
+    ExpValue interface{}
+    ActualValue  interface{}
+}
+
+//
 type TestCases []TestCase
 
 // test case type,
@@ -81,7 +91,7 @@ type TcReportResults struct {
     ActualStatusCode int
     StartTime string
     EndTime string
-    TestMessages string
+    TestMessages []*TestMessage
     StartTimeUnixNano int64
     EndTimeUnixNano int64
     DurationUnixNano int64
@@ -98,6 +108,6 @@ type TcConsoleResults struct {
     MutationInfo interface{}
     TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
     ActualStatusCode int
-    TestMessages string
+    TestMessages []*TestMessage
 }
 

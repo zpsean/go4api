@@ -117,7 +117,7 @@ func BuildTree(tcArray []testcase.TestCaseDataInfo) (*tcNode, map[string]*tcNode
         ActualStatusCode: 0,
         StartTime: "",
         EndTime: "",
-        TestMessages: "",
+        TestMessages: []*testcase.TestMessage{},
         StartTimeUnixNano: 0,
         EndTimeUnixNano: 0,
         DurationUnixNano: 0,
@@ -133,7 +133,7 @@ func BuildTree(tcArray []testcase.TestCaseDataInfo) (*tcNode, map[string]*tcNode
             ActualStatusCode: 0,
             StartTime: "",
             EndTime: "",
-            TestMessages: "",
+            TestMessages: []*testcase.TestMessage{},
             StartTimeUnixNano: 0,
             EndTimeUnixNano: 0,
             DurationUnixNano: 0,
@@ -164,7 +164,7 @@ func BuildTree(tcArray []testcase.TestCaseDataInfo) (*tcNode, map[string]*tcNode
                 ActualStatusCode: 0,
                 StartTime: "",
                 EndTime: "",
-                TestMessages: "",
+                TestMessages: []*testcase.TestMessage{},
                 StartTimeUnixNano: 0,
                 EndTimeUnixNano: 0,
                 DurationUnixNano: 0,
@@ -245,7 +245,7 @@ func ScheduleNodes(node *tcNode, wg *sync.WaitGroup, priority string, resultsCha
 }
 
 
-func RefreshNodeAndDirectChilrenTcResult(node *tcNode, tcRunResult string, tcStart string, tcEnd string, tcRunMessage string, 
+func RefreshNodeAndDirectChilrenTcResult(node *tcNode, tcRunResult string, tcStart string, tcEnd string, tcRunMessage []*testcase.TestMessage, 
         tcStartUnixNano int64, tcEndUnixNano int64) {
     // fmt.Println("ccc the node to be refreshed: ", node, &node)
     node.TestCaseExecutionInfo.TestResult = tcRunResult

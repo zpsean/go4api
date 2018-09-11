@@ -82,7 +82,7 @@ func Equals(actualValue interface{}, expValue interface{}) bool {
     
 
 func Contains(actualValue interface{}, expValue interface{}) bool {
-    if VerifyTypes(actualValue, expValue) == "true" {
+    if VerifyTypes(actualValue, expValue) == "true"{
         if strings.Contains(GetValue(actualValue).(string), GetValue(expValue).(string)) {
             return true
         } else {

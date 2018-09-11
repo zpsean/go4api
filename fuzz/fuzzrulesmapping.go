@@ -38,6 +38,7 @@ func FuzzRulesMapping(key string) []interface{} {
             FCharValidR2, 
             FCharValidR3,
         },
+        
     }
 
     return RulesMapping[key]

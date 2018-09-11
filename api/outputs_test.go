@@ -53,7 +53,8 @@ func init() {
                     "title": "这个杀手不太冷"
                 }
             ],
-            "title": "豆瓣电影Top250"
+            "title": "豆瓣电影Top250",
+            "dummykeyfornull": null
         }`
                     
     actualBody = []byte(actualBodyS)
@@ -178,6 +179,22 @@ func Test_GetActualValueByJsonPath5(t *testing.T) {
 
     if res != key {
         t.Fatalf("Error, look up failed")
+    }
+    fmt.Println("\n--> test finished")
+}
+
+func Test_GetActualValueByJsonPath6(t *testing.T) {
+    fmt.Println("\n--> test started")
+
+    key := "$.dummykeyfornull"
+
+    res := GetActualValueByJsonPath(key, actualBody)
+    fmt.Println("==>", res)
+
+    if res != nil {
+        t.Fatalf("Error, dummykeyfornull look up failed")
+    } else {
+        t.Log("Error, dummykeyfornull look up passed")
     }
     fmt.Println("\n--> test finished")
 }
