@@ -14,54 +14,6 @@ import (
     // "fmt"
 )
 
-//
-func GetPairWiseValid(validVectors [][]interface{}, pwLength int) [][]interface{} {
-    var validTcData [][]interface{}
-
-    // need to consiber the len(combins) = 1 / = 2 / > 2
-    if len(validVectors) >= pwLength {
-        c := make(chan []interface{})
-
-        go func(c chan []interface{}) {
-            defer close(c)
-            GetPairWise(c, validVectors, 2)
-        }(c)
-
-        for tcData := range c {
-            validTcData = append(validTcData, tcData)
-        }
-    } else if len(validVectors) == 1{
-        for _, item := range validVectors[0] {
-            var itemSlice []interface{}
-            itemSlice = append(itemSlice, item)
-            validTcData = append(validTcData, itemSlice)
-        }
-    }
-
-    return validTcData
-}
-
-
-// -- for the fuzz data
-func GetCombinationInvalid(validVectors [][]interface{}, invalidVectors [][]interface{}, pwLength int) [][]interface{} {
-    // to ensure each negative value will be combined with each positive value(s)
-    var invalidTcData [][]interface{}
-    for i, _ := range invalidVectors {
-        var tcData []interface{}
-        if i == 0 {
-            tcData = append(tcData, invalidVectors[0][0])
-            for j := i + 1; j < len(validVectors); j++ {
-                tcData = append(tcData, validVectors[j][0])
-            }
-        }
-
-        invalidTcData = append(invalidTcData, tcData)
-        break
-    }
-    
-    return invalidTcData
-}
-
 // Refer to Python:
 // product('ABCD', repeat=2)   AA AB AC AD BA BB BC BD CA CB CC CD DA DB DC DD => cartesian product
 // permutations('ABCD', 2)   AB AC AD BA BC BD CA CB CD DA DB DC
@@ -136,20 +88,19 @@ func combinationsInterface(list []interface{}, length int) (c chan []interface{}
     return
 }
 
-
-func GenerateCombinationsString(data []string, length int) <-chan []string {  
+// [a b c d] ==> [[a a] [a b] [a c] [a d] [b a] [b b] [b c] [b d] [c a] [c b] [c c] [c d] [d a] [d b] [d c] [d d]]
+func GenerateProductString(data []string, length int) <-chan []string {  
     c := make(chan []string)
     go func(c chan []string) {
         defer close(c)
-        combinsString(c, []string{}, data, length)
+        productString(c, []string{}, data, length)
     }(c)
     return c
 }
 
-
-func combinsString(c chan []string, combin []string, data []string, length int) {  
+func productString(c chan []string, combin []string, data []string, length int) {  
     // Check if we reached the length limit
-    // If so, we just return without adding anything
+    // If so, just return without adding anything
     if length <= 0 {
         return
     }
@@ -162,26 +113,26 @@ func combinsString(c chan []string, combin []string, data []string, length int) 
             copy(output, newCombin)
             c <- output
         }
-        combinsString(c, newCombin, data, length - 1)
+        productString(c, newCombin, data, length - 1)
     }
 }
 
 
-// GenerateCombinationsInt([]int{1,2,3,4}, 2) =>
+// GenerateCombinationsInt([]int{1,2,3,4}, 2) ==> 
 // [1 1][1 2][1 3][1 4][2 1][2 2][2 3][2 4][3 1][3 2][3 3][3 4][4 1][4 2][4 3][4 4]
-func GenerateCombinationsInt(data []int, length int) <-chan []int {  
+func GenerateProductInt(data []int, length int) <-chan []int {  
     c := make(chan []int)
     go func(c chan []int) {
         defer close(c)
-        combinsInt(c, []int{}, data, length)
+        productInt(c, []int{}, data, length)
     }(c)
     return c
 }
 
 
-func combinsInt(c chan []int, combin []int, data []int, length int) {  
+func productInt(c chan []int, combin []int, data []int, length int) {  
     // Check if we reached the length limit
-    // If so, we just return without adding anything
+    // If so, just return without adding anything
     if length <= 0 {
         return
     }
@@ -194,11 +145,12 @@ func combinsInt(c chan []int, combin []int, data []int, length int) {
             copy(output, newCombin)
             c <- output
         }
-        combinsInt(c, newCombin, data, length - 1)
+        productInt(c, newCombin, data, length - 1)
     }
 }
 
-
+// example:
+// [[1 2 3 4] [5 6 7 8]] ==> [[1 5] [1 6] [1 7] [1 8] [2 5] [2 6] [2 7] [2 8] [3 5] [3 6] [3 7] [3 8] [4 5] [4 6] [4 7] [4 8]]
 func combinsSliceInterface(c chan []interface{}, combin []interface{}, data [][]interface{}) {  
     if len(data) > 1 {
         var newCombin []interface{}

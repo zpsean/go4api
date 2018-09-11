@@ -26,15 +26,15 @@
         },
         "body": {
           "start": {
-            "GreaterOrEquals": "0"
+            "GreaterOrEquals": 0
           },
           "$.count": {
             "Equals": 20
           },
-          "total": {
+          "$.total": {
             "Equals": false
           },
-          "title": {
+          "$.title": {
             "Contains": "豆瓣电影Top250"
           }
         }

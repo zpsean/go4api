@@ -64,7 +64,6 @@ func VerifyTypes(actualValue interface{}, expValue interface{}) string {
     if actResult.Type == expResult.Type {
         return "true"
     } else {
-        
         return "false"
     }
 }

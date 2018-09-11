@@ -20,7 +20,7 @@ import (
     
     "go4api/cmd"
     "go4api/utils"
-    "go4api/fuzz/pairwise"
+    "go4api/lib/pairwise"
 )
 
 // valid, invalid data may have more than one field, but the map itself can not ensure the key sequence
@@ -200,7 +200,7 @@ func GetInvalidVectors(fuzzData FuzzData) [][]interface{} {
 func GetValidTcData(fuzzData FuzzData, pwLength int) [][]interface{} {
     validVectors := GetValidVectors(fuzzData)
 
-    validTcData := pairwise.GetPairWiseValid(validVectors, pwLength)
+    validTcData := GetPairWiseValid(validVectors, pwLength)
 
     return validTcData
 }
@@ -210,10 +210,57 @@ func GetInvalidTcData(fuzzData FuzzData, pwLength int) [][]interface{} {
     validVectors := GetValidVectors(fuzzData)
     invalidVectors := GetInvalidVectors(fuzzData)
 
-    invalidTcData := pairwise.GetCombinationInvalid(validVectors, invalidVectors, pwLength)
+    invalidTcData := GetCombinationInvalid(validVectors, invalidVectors, pwLength)
 
     return invalidTcData
 }
 
+
+///
+func GetPairWiseValid(validVectors [][]interface{}, pwLength int) [][]interface{} {
+    var validTcData [][]interface{}
+
+    // need to consiber the len(combins) = 1 / = 2 / > 2
+    if len(validVectors) >= pwLength {
+        c := make(chan []interface{})
+
+        go func(c chan []interface{}) {
+            defer close(c)
+            pairwise.GetPairWise(c, validVectors, 2)
+        }(c)
+
+        for tcData := range c {
+            validTcData = append(validTcData, tcData)
+        }
+    } else if len(validVectors) == 1{
+        for _, item := range validVectors[0] {
+            var itemSlice []interface{}
+            itemSlice = append(itemSlice, item)
+            validTcData = append(validTcData, itemSlice)
+        }
+    }
+
+    return validTcData
+}
+
+// -- for the fuzz data
+func GetCombinationInvalid(validVectors [][]interface{}, invalidVectors [][]interface{}, pwLength int) [][]interface{} {
+    // to ensure each negative value will be combined with each positive value(s)
+    var invalidTcData [][]interface{}
+    for i, _ := range invalidVectors {
+        var tcData []interface{}
+        if i == 0 {
+            tcData = append(tcData, invalidVectors[0][0])
+            for j := i + 1; j < len(validVectors); j++ {
+                tcData = append(tcData, validVectors[j][0])
+            }
+        }
+
+        invalidTcData = append(invalidTcData, tcData)
+        break
+    }
+    
+    return invalidTcData
+}
 
 
