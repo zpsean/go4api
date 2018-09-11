@@ -65,7 +65,7 @@ func PrepFuzzTest(pStart_time time.Time) {
         fuzzData := GenerateFuzzData(fuzzFile)
 
         GenerateFuzzValidDataFiles(fuzzFile, fuzzData)
-        // GenerateFuzzInvalidDataFiles(fuzzFile, fuzzData)
+        GenerateFuzzInvalidDataFiles(fuzzFile, fuzzData)
     }
     // (2). render the json using the fuzz dt(s)
     // fuzzTcArray := GetFuzzTcArray(options)
@@ -216,7 +216,7 @@ func GetInvalidTcData(fuzzData FuzzData, pwLength int) [][]interface{} {
 }
 
 
-///
+//
 func GetPairWiseValid(validVectors [][]interface{}, pwLength int) [][]interface{} {
     var validTcData [][]interface{}
 
@@ -247,20 +247,43 @@ func GetPairWiseValid(validVectors [][]interface{}, pwLength int) [][]interface{
 func GetCombinationInvalid(validVectors [][]interface{}, invalidVectors [][]interface{}, pwLength int) [][]interface{} {
     // to ensure each negative value will be combined with each positive value(s)
     var invalidTcData [][]interface{}
+
+    max := getMaxLenVector(validVectors)
+
     for i, _ := range invalidVectors {
-        var tcData []interface{}
-        if i == 0 {
-            tcData = append(tcData, invalidVectors[0][0])
-            for j := i + 1; j < len(validVectors); j++ {
-                tcData = append(tcData, validVectors[j][0])
+        for j, _ := range invalidVectors[i] { 
+            // loop the validVectors
+            for jj := 0; jj < max; jj++ {
+                tcData := make([]interface{}, len(validVectors))
+                for k := 0; k < len(validVectors); k++ {
+                    if i != k {
+                        if jj < len(validVectors[k]) - 1 {
+                            tcData[k] = validVectors[k][jj]
+                        } else {
+                            // using the first one for valid vector
+                            tcData[k] = validVectors[k][0]
+                        }
+                    }
+                }
+                tcData[i] = invalidVectors[i][j]  
+                invalidTcData = append(invalidTcData, tcData)
             }
         }
-
-        invalidTcData = append(invalidTcData, tcData)
-        break
     }
     
     return invalidTcData
 }
+
+func getMaxLenVector (vectors [][]interface{}) int {
+    max := 0
+    for i, _ := range vectors {
+        if len(vectors[i]) > max {
+            max = len(vectors[i])
+        }
+    }
+    return max
+}
+
+
 
 

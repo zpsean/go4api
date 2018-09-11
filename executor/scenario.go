@@ -64,7 +64,7 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
                         ActualStatusCode: 0,
                         StartTime: "",
                         EndTime: "",
-                        TestMessages: "",
+                        TestMessages: []*testcase.TestMessage{},
                         StartTimeUnixNano: 0,
                         EndTimeUnixNano: 0,
                         DurationUnixNano: 0,
