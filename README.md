@@ -17,7 +17,7 @@ Menu
 - [Install](#install)
 - [Quick Start](#quick-start)
 - [CheatSheet](#cheatsheet)
-- [v1.0 Target](#v1target)
+- [v1.0 Target](#v10-target)
 - [Need help or want to contribute?](#need-help-or-want-to-contribute)
 
 Features
@@ -30,6 +30,7 @@ Features
 - **Support Scenario Testing**: when APIs have data dependency and exchange
 - **Convert HAR file / Swagger API file**
 
+More information, refer to wiki [wiki](https://github.com/zpsean/go4api/wiki).
 
 Install
 ------
@@ -48,7 +49,18 @@ To build from source you need **[Go](https://golang.org/doc/install)** (1.10 or 
   - git clone the repo and put the source in `$GOPATH/src/github.com/zpsean/go4api`
   - build a `go4api` binary and put it in `$GOPATH/bin`
 - Make sure you have `$GOPATH/bin` in your PATH
-- You can now run go4api using `go4api`
+- You can now run go4api using `$./go4api`
+
+
+### Run from source
+To run from source you need **[Go](https://golang.org/doc/install)** (1.10 or newer). Follow these instructions:
+
+- Run `go get github.com/zpsean/go4api` which will:
+  - git clone the repo and put the source in `$GOPATH/src/github.com/zpsean/go4api`
+  - Move to the path: `cd $GOPATH/src/github.com/zpsean/go4api`
+  - 
+- Make sure you have `$GOPATH` in your PATH
+- You can now run go4api using `$go run main.go ...`
 
 Quick start
 -----------
