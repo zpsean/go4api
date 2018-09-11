@@ -64,17 +64,16 @@ func VerifyTypes(actualValue interface{}, expValue interface{}) string {
     if actResult.Type == expResult.Type {
         return "true"
     } else {
-        // fmt.Println("!!! Error: the actualValue and expValue have different types, can not compare: ", actResult.Type, expResult.Type)
+        
         return "false"
     }
 }
-
 
 func GetValue(value interface{}) interface {} {
     val, _ := GetRawJsonResult(value)
 
     valResult := gjson.Parse(val)
-    // fmt.Println("valResult.Value():", reflect.TypeOf(valResult.Value()))
+
     return valResult.Value()
 }
 

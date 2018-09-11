@@ -205,9 +205,11 @@ func GreaterOrEquals(actualValue interface{}, expValue interface{}) bool {
 // b may be a simple concrete type liek string, number, boolean, null, etc. or other complex type like array, json, etc. 
 func Match(actualValue interface{}, expPattern interface{}) bool {
     if VerifyTypes(actualValue, expPattern) == "true" {
-        ind, _ := regexp.MatchString(GetValue(actualValue).(string), GetValue(expPattern).(string))
 
-        if ind {
+        reg := regexp.MustCompile(expPattern.(string))
+        resSlice := reg.FindAllString(actualValue.(string), -1)
+
+        if resSlice != nil {
             return true
         } else {
             return false
