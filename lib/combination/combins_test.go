@@ -8,7 +8,7 @@
  *
  */
 
-package pairwise
+package combins
 
 import (
     "fmt"
@@ -16,13 +16,13 @@ import (
     // "encoding/csv"
 )
 
-func Test_combinationsInt(t *testing.T) {
+func Test_CombinationsInt(t *testing.T) {
     var res [][]int
 
     list := []int{1, 2, 3, 4}
     length := 2
 
-    c := combinationsInt(list, length)
+    c := CombinationsInt(list, length)
 
     for value := range c {
         res = append(res, value)
@@ -37,13 +37,13 @@ func Test_combinationsInt(t *testing.T) {
 }
 
 
-func Test_combinationsInt2(t *testing.T) {
+func Test_CombinationsInt2(t *testing.T) {
     var res [][]int
 
     list := []int{1, 2, 3, 4}
     length := 4
 
-    c := combinationsInt(list, length)
+    c := CombinationsInt(list, length)
 
     for value := range c {
         res = append(res, value)
@@ -57,13 +57,13 @@ func Test_combinationsInt2(t *testing.T) {
     }
 }
 
-func Test_combinationsInt3(t *testing.T) {
+func Test_CombinationsInt3(t *testing.T) {
     var res [][]int
 
     list := []int{1, 2, 3, 4}
     length := 1
 
-    c := combinationsInt(list, length)
+    c := CombinationsInt(list, length)
 
     for value := range c {
         res = append(res, value)
@@ -78,13 +78,13 @@ func Test_combinationsInt3(t *testing.T) {
 }
 
 //
-func Test_combinationsInterface(t *testing.T) {
+func Test_CombinationsInterface(t *testing.T) {
     var res [][]interface{}
 
     list := []interface{}{1, 2, 3, 4}
     length := 3
 
-    c := combinationsInterface(list, length)
+    c := CombinationsInterface(list, length)
 
     for value := range c {
         res = append(res, value)
@@ -150,7 +150,7 @@ func Test_combinsSliceInterface(t *testing.T) {
     c := make(chan []interface{})
     go func(c chan []interface{}) {
         defer close(c)
-        combinsSliceInterface(c, []interface{}{}, data)
+        CombinsSliceInterface(c, []interface{}{}, data)
     }(c)
 
     for value := range c {
@@ -177,7 +177,7 @@ func Test_combinsSliceInterface2(t *testing.T) {
     c := make(chan []interface{})
     go func(c chan []interface{}) {
         defer close(c)
-        combinsSliceInterface(c, []interface{}{}, data)
+        CombinsSliceInterface(c, []interface{}{}, data)
     }(c)
 
     for value := range c {
@@ -203,7 +203,7 @@ func Test_combinsSliceInterface3(t *testing.T) {
     c := make(chan []interface{})
     go func(c chan []interface{}) {
         defer close(c)
-        combinsSliceInterface(c, []interface{}{}, data)
+        CombinsSliceInterface(c, []interface{}{}, data)
     }(c)
 
     for value := range c {

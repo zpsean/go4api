@@ -8,7 +8,7 @@
  *
  */
  
-package pairwise
+package combins
 
 import (
     // "fmt"
@@ -44,7 +44,7 @@ import (
 // [2 3]
 // [2 4]
 // [3 4]
-func combinationsInt(list []int, length int) (c chan []int) {
+func CombinationsInt(list []int, length int) (c chan []int) {
     c = make(chan []int)
     go func() {
         defer close(c)
@@ -57,7 +57,7 @@ func combinationsInt(list []int, length int) (c chan []int) {
                 return
             default:
                 for i := 0; i < len(list); i++ {
-                    for sub_comb := range combinationsInt(list[i + 1:], length - 1) {
+                    for sub_comb := range CombinationsInt(list[i + 1:], length - 1) {
                         c <- append([]int{list[i]}, sub_comb...)
                     }
                 }
@@ -66,7 +66,7 @@ func combinationsInt(list []int, length int) (c chan []int) {
     return
 }
 
-func combinationsInterface(list []interface{}, length int) (c chan []interface{}) {
+func CombinationsInterface(list []interface{}, length int) (c chan []interface{}) {
     c = make(chan []interface{})
     go func() {
         defer close(c)
@@ -79,7 +79,7 @@ func combinationsInterface(list []interface{}, length int) (c chan []interface{}
                 return
             default:
                 for i := 0; i < len(list); i++ {
-                    for sub_comb := range combinationsInterface(list[i + 1:], length - 1) {
+                    for sub_comb := range CombinationsInterface(list[i + 1:], length - 1) {
                         c <- append([]interface{}{list[i]}, sub_comb...)
                     }
                 }
@@ -93,12 +93,12 @@ func GenerateProductString(data []string, length int) <-chan []string {
     c := make(chan []string)
     go func(c chan []string) {
         defer close(c)
-        productString(c, []string{}, data, length)
+        ProductString(c, []string{}, data, length)
     }(c)
     return c
 }
 
-func productString(c chan []string, combin []string, data []string, length int) {  
+func ProductString(c chan []string, combin []string, data []string, length int) {  
     // Check if we reached the length limit
     // If so, just return without adding anything
     if length <= 0 {
@@ -113,7 +113,7 @@ func productString(c chan []string, combin []string, data []string, length int) 
             copy(output, newCombin)
             c <- output
         }
-        productString(c, newCombin, data, length - 1)
+        ProductString(c, newCombin, data, length - 1)
     }
 }
 
@@ -124,13 +124,13 @@ func GenerateProductInt(data []int, length int) <-chan []int {
     c := make(chan []int)
     go func(c chan []int) {
         defer close(c)
-        productInt(c, []int{}, data, length)
+        ProductInt(c, []int{}, data, length)
     }(c)
     return c
 }
 
 
-func productInt(c chan []int, combin []int, data []int, length int) {  
+func ProductInt(c chan []int, combin []int, data []int, length int) {  
     // Check if we reached the length limit
     // If so, just return without adding anything
     if length <= 0 {
@@ -145,19 +145,19 @@ func productInt(c chan []int, combin []int, data []int, length int) {
             copy(output, newCombin)
             c <- output
         }
-        productInt(c, newCombin, data, length - 1)
+        ProductInt(c, newCombin, data, length - 1)
     }
 }
 
 // example:
 // [[1 2 3 4] [5 6 7 8]] ==> [[1 5] [1 6] [1 7] [1 8] [2 5] [2 6] [2 7] [2 8] [3 5] [3 6] [3 7] [3 8] [4 5] [4 6] [4 7] [4 8]]
-func combinsSliceInterface(c chan []interface{}, combin []interface{}, data [][]interface{}) {  
+func CombinsSliceInterface(c chan []interface{}, combin []interface{}, data [][]interface{}) {  
     if len(data) > 1 {
         var newCombin []interface{}
         for _, i_v := range data[0] {
             newCombin = append(combin, i_v)
 
-            combinsSliceInterface(c, newCombin, data[1:])
+            CombinsSliceInterface(c, newCombin, data[1:])
         }
     } else if len(data) == 1 {
         for _, j_v := range data[0] {
