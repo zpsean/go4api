@@ -89,6 +89,7 @@ func GenerateFuzzData(fuzzFile string) FuzzData {
         validValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules(fuzzValidType)
         // invalid 
         fuzzInvalidType := fieldDefinition.DetermineFuzzInvalidType()
+        fmt.Println("fuzzInvalidType: ", fuzzInvalidType)
         invalidValueMap[fieldDefinition.FieldName] = fieldDefinition.CallFuzzRules(fuzzInvalidType)
         // append to slice
         validValueList = append(validValueList, validValueMap)
@@ -210,6 +211,8 @@ func GetInvalidTcData(fuzzData FuzzData, pwLength int) [][]interface{} {
     validVectors := GetValidVectors(fuzzData)
     invalidVectors := GetInvalidVectors(fuzzData)
 
+    fmt.Println("--> validVectors: ", validVectors)
+    fmt.Println("--> invalidVectors: ", invalidVectors)
     invalidTcData := GetCombinationInvalid(validVectors, invalidVectors, pwLength)
 
     return invalidTcData
@@ -257,7 +260,7 @@ func GetCombinationInvalid(validVectors [][]interface{}, invalidVectors [][]inte
                 tcData := make([]interface{}, len(validVectors))
                 for k := 0; k < len(validVectors); k++ {
                     if i != k {
-                        if jj < len(validVectors[k]) - 1 {
+                        if jj <= len(validVectors[k]) - 1 {
                             tcData[k] = validVectors[k][jj]
                         } else {
                             // using the first one for valid vector
