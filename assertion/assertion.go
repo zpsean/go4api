@@ -22,7 +22,9 @@ import (
 
 //
 func CallAssertion(name string, params ... interface{}) bool {
-    if !ValidateCallParams(name, params) {
+    if ifBothNil(params) {
+        return true
+    } else if !ValidateCallParams(name, params) {
         return false
     } else {
         f := reflect.ValueOf(assertionMapping[name].AssertionFunc)
