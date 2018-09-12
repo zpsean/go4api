@@ -13,48 +13,38 @@ package assertion
 import (
     "fmt"
     "testing"
-    // "encoding/csv"
+    "reflect"
 )
 
-// <------ GetType() ------>
-func Test_GetType(t *testing.T) {
-    value := "abcde"
-    res := GetType(value)
+// <--------- GetRawJsonResult() ------------>
+func Test_GetRawJsonResult(t *testing.T) {
+    value := "abcd"
+    res := GetRawJsonResult(value)
 
-    fmt.Println("res: ", res, fmt.Sprint(res))
-    if res != "String" {
-        t.Fatalf("GetType failed")
+    fmt.Println("res: ", res, reflect.TypeOf(res), fmt.Sprint(res), value, reflect.TypeOf(value), fmt.Sprint(value))
+    if res != `"abcd"` {
+        t.Fatalf("GetRawJsonResult failed")
     }
 }
 
-func Test_GetType2(t *testing.T) {
+func Test_GetRawJsonResult2(t *testing.T) {
     value := 1234
-    res := GetType(value)
+    res := GetRawJsonResult(value)
 
-    fmt.Println("res: ", res, fmt.Sprint(res))
-    if res != "Number" {
-        t.Fatalf("GetType failed")
+    fmt.Println("res: ", res, reflect.TypeOf(res), fmt.Sprint(res), value, reflect.TypeOf(value), fmt.Sprint(value))
+    if res != "1234" {
+        t.Fatalf("GetRawJsonResult failed")
     }
 }
 
-func Test_GetType3(t *testing.T) {
-    value := 1234.12
-    res := GetType(value)
+func Test_GetRawJsonResult3(t *testing.T) {
+    aa := make([]interface{}, 1)
+    aa[0] = 2
 
-    fmt.Println("res: ", res, fmt.Sprint(res))
-    if res != "Number" {
-        t.Fatalf("GetType failed")
-    }
-}
+    a := aa[0]
 
-func Test_GetType4(t *testing.T) {
-    value := true
-    res := GetType(value)
-
-    fmt.Println("res: ", res, fmt.Sprint(res))
-    if res != "True" {
-        t.Fatalf("GetType failed")
-    }
+    fmt.Println(a)
+    fmt.Println(float64(a.(int)))
 }
 
 // <--------- ValidateCallParams() ------------>
@@ -80,4 +70,15 @@ func Test_ValidateCallParams2(t *testing.T) {
     }
 }
 
+
+func Test_ValidateCallParams3(t *testing.T) {
+    name := "Contains"
+    values := []interface{}{1234.12, 12}
+    res := ValidateCallParams(name, values)
+
+    fmt.Println("res: ", res, fmt.Sprint(res))
+    if res != true {
+        t.Fatalf("ValidateCallParams failed")
+    }
+}
 
