@@ -11,8 +11,9 @@
 package assertion
 
 import (
-    // "fmt"
+    "fmt"
     "testing"
+    "reflect"
     // "encoding/csv"
 )
 
@@ -65,6 +66,20 @@ func Test_Equals4(t *testing.T) {
 }
 
 func Test_Equals5(t *testing.T) {
+    var actualValue int
+    actualValue = 123
+    var expValue float64
+    expValue = 123
+    res := Equals(actualValue, expValue)
+
+    if res != true {
+        t.Fatalf("Equals float64 failed")
+    } else {
+        t.Log("Equals float64 test passed")
+    } 
+}
+
+func Test_Equals6(t *testing.T) {
     actualValue := true
     expValue := true
     res := Equals(actualValue, expValue)
@@ -74,7 +89,7 @@ func Test_Equals5(t *testing.T) {
     }  
 }
 
-func Test_Equals6(t *testing.T) {
+func Test_Equals7(t *testing.T) {
     actualValue := true
     expValue := false
     res := Equals(actualValue, expValue)
@@ -84,27 +99,56 @@ func Test_Equals6(t *testing.T) {
     }
 }
 
-// func Test_Equals7(t *testing.T) {
-//     aa := `
-//         {
-//             "a": 123,
-//             "b": null
-//         }`
-//     var BB map[string]interface{}
+func Test_Equals8(t *testing.T) {
+    actualValue := []int{1,2,3}
+    expValue := []int{1,2,3}
 
-//     json.Unmarshal([]byte(aa), &BB)
+    res := Equals(actualValue, expValue)
 
-//     actualValue := nil // not work
-//     expValue := BB.b
+    if res != true {
+        t.Fatalf("Equals Slice failed")
+    }
+}
 
-//     res := Equals(actualValue, expValue)
+func Test_Equals9(t *testing.T) {
+    actualValue := []int{1,2,33}
+    expValue := []int{1,2,3}
 
-//     if res == true {
-//         t.Fatalf("Equals null failed")
-//     }
-// }
+    res := Equals(actualValue, expValue)
+
+    if res != false {
+        t.Fatalf("Equals Slice failed")
+    }
+}
+
+func Test_Equals10(t *testing.T) {
+    actualValue := []interface{}{1,2,3}
+    expValue := []interface{}{"1","2","3"}
+
+    // res := Equals(actualValue, expValue)
+    res := reflect.DeepEqual(actualValue, expValue)
+    fmt.Println("actualValue, expValue: ", res, reflect.TypeOf(res), actualValue, expValue)
+
+    if res != false {
+        t.Fatalf("Equals Slice failed")
+    }
+}
+
+func Test_Equals11(t *testing.T) {
+    actualValue := []interface{}{"1","2","3"}
+    expValue := []interface{}{"1","2","3"}
+
+    // res := Equals(actualValue, expValue)
+    res := reflect.DeepEqual(actualValue, expValue)
+    fmt.Println("actualValue, expValue: ", res, reflect.TypeOf(res), actualValue, expValue)
+
+    if res != true {
+        t.Fatalf("Equals Slice failed")
+    }
+}
 
 
+// <------->
 func Test_Contains(t *testing.T) {
     actualValue := "abcde"
     expValue := "abc"

@@ -22,6 +22,10 @@ import (
 
 //
 func CallAssertion(name string, params ... interface{}) bool {
+    if !ValidateCallName(name) {
+        return false
+    }
+
     if ifBothNil(params) {
         return true
     } else if !ValidateCallParams(name, params) {
@@ -43,36 +47,55 @@ func CallAssertion(name string, params ... interface{}) bool {
 
 // for both String and Numeric
 func Equals(actualValue interface{}, expValue interface{}) bool {
-    switch reflect.TypeOf(GetValue(actualValue)).String() {
-        case "float64": {
-            if GetValue(actualValue).(float64) == GetValue(expValue).(float64) {
+    switch reflect.TypeOf(actualValue).Kind().String() {
+        case "int", "float64": {
+            var actualValueConverted float64
+            var expValueConverted float64
+
+            if reflect.TypeOf(actualValue).String() == "int" {
+                actualValueConverted = float64(actualValue.(int))
+            } else {
+                actualValueConverted = actualValue.(float64)
+            }
+
+            if reflect.TypeOf(expValue).String() == "int" {
+                expValueConverted = float64(expValue.(int))
+            } else {
+                expValueConverted = expValue.(float64)
+            }
+            //
+            if actualValueConverted == expValueConverted {
                 return true
             } else {
                 return false
             }
         }
         case "string": {
-            if GetValue(actualValue).(string) == GetValue(expValue).(string) {
+            if actualValue.(string) == expValue.(string) {
                 return true
             } else {
                 return false
             }
         }
         case "bool": {
-            if GetValue(actualValue).(bool) == GetValue(expValue).(bool) {
+            if actualValue.(bool) == expValue.(bool) {
                 return true
             } else {
                 return false
             }
         }
         default:
-            return false
+            if reflect.DeepEqual(actualValue, expValue) {
+                return true
+            } else {
+                return false
+            }
     } 
 }   
     
 
 func Contains(actualValue interface{}, expValue interface{}) bool {
-    if strings.Contains(GetValue(actualValue).(string), GetValue(expValue).(string)) {
+    if strings.Contains(actualValue.(string), expValue.(string)) {
         return true
     } else {
         return false
@@ -80,7 +103,7 @@ func Contains(actualValue interface{}, expValue interface{}) bool {
 }
 
 func StartsWith(actualValue interface{}, expValue interface{}) bool {
-    if strings.HasPrefix(GetValue(actualValue).(string), GetValue(expValue).(string)) {
+    if strings.HasPrefix(actualValue.(string), expValue.(string)) {
         return true
     } else {
         return false
@@ -88,7 +111,7 @@ func StartsWith(actualValue interface{}, expValue interface{}) bool {
 }
 
 func EndsWith(actualValue interface{}, expValue interface{}) bool {
-    if strings.HasSuffix(GetValue(actualValue).(string), GetValue(expValue).(string)) {
+    if strings.HasSuffix(actualValue.(string), expValue.(string)) {
         return true
     } else {
         return false
@@ -96,35 +119,11 @@ func EndsWith(actualValue interface{}, expValue interface{}) bool {
 }
 
 func NotEquals(actualValue interface{}, expValue interface{}) bool {
-    switch reflect.TypeOf(GetValue(actualValue)).String() {
-        case "float64": {
-            if GetValue(actualValue).(float64) != GetValue(expValue).(float64) {
-                return true
-            } else {
-                return false
-            }
-        }
-        case "string": {
-            if GetValue(actualValue).(string) != GetValue(expValue).(string) {
-                return true
-            } else {
-                return false
-            }
-        }
-        case "bool": {
-            if GetValue(actualValue).(bool) != GetValue(expValue).(bool) {
-                return true
-            } else {
-                return false
-            }
-        }
-        default:
-            return false
-    }
+    return !reflect.DeepEqual(actualValue, expValue)
 }
 
 func Less(actualValue interface{}, expValue interface{}) bool {
-    if GetValue(actualValue).(float64) < GetValue(expValue).(float64) {
+    if actualValue.(float64) < expValue.(float64) {
         return true
     } else {
         return false
@@ -132,7 +131,7 @@ func Less(actualValue interface{}, expValue interface{}) bool {
 }
 
 func LessOrEquals(actualValue interface{}, expValue interface{}) bool {
-    if GetValue(actualValue).(float64) <= GetValue(expValue).(float64) {
+    if actualValue.(float64) <= expValue.(float64) {
         return true
     } else {
         return false
@@ -140,7 +139,7 @@ func LessOrEquals(actualValue interface{}, expValue interface{}) bool {
 }
 
 func Greater(actualValue interface{}, expValue interface{}) bool {
-    if GetValue(actualValue).(float64) > GetValue(expValue).(float64) {
+    if actualValue.(float64) > expValue.(float64) {
         return true
     } else {
         return false
@@ -148,19 +147,14 @@ func Greater(actualValue interface{}, expValue interface{}) bool {
 }
 
 func GreaterOrEquals(actualValue interface{}, expValue interface{}) bool {
-    if GetValue(actualValue).(float64) >= GetValue(expValue).(float64) {
+    if actualValue.(float64) >= expValue.(float64) {
         return true
     } else {
         return false
     }
 }
 
-
-// For regrex, Match function, for value - value match 
-// a is the key, wold be path, like: $.headers.Content-Type, $.body.resource[0], $.body.resource.count, etc. 
-// a may be a simple concrete type liek string, number, boolean, null, etc. or other complex type like array, json, etc.
-// b is the value, wold be regrex expression, like: application\\/json, ^\\d{4}-\\d{2}-\\d{2}$, etc.
-// b may be a simple concrete type liek string, number, boolean, null, etc. or other complex type like array, json, etc. 
+// for regrex
 func Match(actualValue interface{}, expPattern interface{}) bool {
     reg := regexp.MustCompile(expPattern.(string))
     resSlice := reg.FindAllString(actualValue.(string), -1)

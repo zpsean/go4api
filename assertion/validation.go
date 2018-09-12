@@ -13,17 +13,12 @@ package assertion
 import (
     "fmt"
     "strings"
+    "reflect"
     "encoding/json"
-
-    gjson "github.com/tidwall/gjson"
 )
 
-// ==> there are two options to deal with the types and values:
-// Option 1: use the pakcage reflect to get the type, and determine if they are comparable, then compare
-// Option 2: to get the raw data first, then determine if they are: string, number, bool, null and Raw (json), then compare
-
-// after trying the Option 1, now prefer to use Option 2
-
+// use the pakcage reflect to get the type, and determine if they are comparable, then compare
+// ----
 // JSON Schema defines the following basic types:
 // string
 // Numeric -> float64
@@ -31,6 +26,14 @@ import (
 // null
 // object (raw)
 // array (raw)
+
+func ValidateCallName (name string) bool {
+    if _, ok := assertionMapping[name]; ok {
+        return true
+    } else {
+        return false
+    }
+}
 
 func ValidateCallParams (name string, params []interface{}) bool {
     if len(params) != 2 {
@@ -48,10 +51,15 @@ func ValidateCallParams (name string, params []interface{}) bool {
         }
     } 
     // (2). no nil, if two type match
-    typeAct := GetType(params[0])
-    typeExp := GetType(params[1])
+    typeAct := reflect.TypeOf(params[0]).Kind().String()
+    typeExp := reflect.TypeOf(params[1]).Kind().String()
 
-    if typeAct != typeExp {
+    // consider the type int, float64, they are comparable
+    if typeAct == "int" && typeExp == "float64" {
+        return true
+    } else if typeAct == "float64" && typeExp == "int" {
+        return true
+    } else if typeAct != typeExp {
         return false
     }
     // (3). no nil, if type matches with the mapping
@@ -63,7 +71,7 @@ func ValidateCallParams (name string, params []interface{}) bool {
             break
         }
     }
- 
+
     return ifMatch
 }
 
@@ -86,27 +94,12 @@ func ifBothNil (params []interface{}) bool {
     }
 }
 
-func GetValue (value interface{}) interface {} {
-    val, _ := GetRawJsonResult(value)
-
-    valResult := gjson.Parse(val)
-
-    return valResult.Value()
-}
-
-func GetType (value interface{}) string {
-    rawRes, _ := GetRawJsonResult(value)
-    gjsonRes := gjson.Parse(rawRes)
-
-    return fmt.Sprint(gjsonRes.Type)
-}
-
-func GetRawJsonResult (value interface{}) (string, error) {
+func GetRawJsonResult (value interface{}) string {
     // to get the raw json string using json.Marshal
     byteValue, err := json.Marshal(value)
     if err != nil {
-        return "", err
+        return ""
     }
 
-    return string(byteValue), err
+    return string(byteValue)
 }
