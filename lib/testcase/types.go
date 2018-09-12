@@ -36,11 +36,12 @@ type TestCaseExecutionInfo struct {
 }
 
 type TestMessage struct {  
-    Assertion string
+    AssertionResults string
+    ReponsePart string // Status, Headers, Body
     FieldName interface{}
     AssertionKey  interface{}
-    ExpValue interface{}
     ActualValue  interface{}
+    ExpValue interface{}
 }
 
 //

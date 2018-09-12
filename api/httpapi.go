@@ -18,6 +18,7 @@ import (
     "bytes"
     "mime/multipart"
     "io"
+    // "reflect"
     "net/http"     
     "net/url"  
     "strings"
@@ -28,7 +29,6 @@ import (
     "go4api/assertion"
     "go4api/protocal/http"
 )
-
 
 const CLR_0 = "\x1b[30;1m"
 const CLR_R = "\x1b[31;1m"
@@ -178,7 +178,6 @@ func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actu
             break
         }
     }
-
     // testMessagesJson, _ := json.Marshal(testMessages)
     // testMessagesJsonStr := string(testMessagesJson)
     
@@ -191,33 +190,13 @@ func CompareStatus(actualStatusCode int, expStatus map[string]interface{}) ([]bo
     var testMessages []*testcase.TestMessage
     // status
     for assertionKey, expValue := range expStatus {
-        if expValue == nil {
-            msg := testcase.TestMessage {
-                Assertion: "Failed",
-                FieldName: "status",
-                AssertionKey:  assertionKey,
-                ExpValue: expValue,
-                ActualValue: actualStatusCode,
-            }
-            testMessages = append(testMessages, &msg)
+        actualValue := actualStatusCode
+        key := "status"
 
-            testResults = append(testResults, false)
-        } else {
-            // call the assertion function
-            testResult := assertion.CallAssertion(assertionKey, actualStatusCode, expValue)
-            // fmt.Println("--> expStatus", assertionKey, actualStatusCode, expValue, reflect.TypeOf(actualStatusCode), reflect.TypeOf(expValue), testResult)
-            if testResult == false {
-                msg := testcase.TestMessage {
-                        Assertion: "Failed",
-                        FieldName: "status",
-                        AssertionKey:  assertionKey,
-                        ExpValue: expValue,
-                        ActualValue: actualStatusCode,
-                    }
-                testMessages = append(testMessages, &msg)
-            }
-            testResults = append(testResults, testResult)
-        }
+        testRes, msg := compareCommon("Status", key, assertionKey, actualValue, expValue)
+        
+        testMessages = append(testMessages, msg)
+        testResults = append(testResults, testRes)
     }
 
     return testResults, testMessages
@@ -234,33 +213,10 @@ func CompareHeaders(actualHeader http.Header, expHeader map[string]interface{}) 
             // as the http.Header has structure, so that here need to assert if the expValue in []string
             actualValue := strings.Join(actualHeader[key], ",")
 
-            if expValue == nil {
-                msg := testcase.TestMessage {
-                    Assertion: "Failed",
-                    FieldName: key,
-                    AssertionKey:  assertionKey,
-                    ExpValue: expValue,
-                    ActualValue: actualValue,
-                }
-                testMessages = append(testMessages, &msg)
+            testRes, msg := compareCommon("Headers", key, assertionKey, actualValue, expValue)
 
-                testResults = append(testResults, false)
-            } else {
-                // call the assertion function
-                testResult := assertion.CallAssertion(assertionKey, actualValue, expValue)
-                // fmt.Println("-> expHeader_sub", key, assertionKey, actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue.Value()), testResult)
-                if testResult == false {
-                    msg := testcase.TestMessage {
-                        Assertion: "Failed",
-                        FieldName: key,
-                        AssertionKey:  assertionKey,
-                        ExpValue: expValue,
-                        ActualValue: actualValue,
-                    }
-                    testMessages = append(testMessages, &msg)
-                }
-                testResults = append(testResults, testResult)
-            }
+            testMessages = append(testMessages, msg)
+            testResults = append(testResults, testRes)
         } 
     }
 
@@ -272,50 +228,66 @@ func CompareBody(actualBody []byte, expBody map[string]interface{}) ([]bool, []*
     var testMessages []*testcase.TestMessage
     // body
     for key, value := range expBody {
-        // Note, the below statement does not work, if the key starts with $, such as $.#, maybe bug for gjson???
         expBody_sub := value.(map[string]interface{})
+
         for assertionKey, expValue := range expBody_sub {
             // if path, then value - value, otherwise, key - value
             actualValue := GetActualValueByJsonPath(key, actualBody)
-            // as get Go nil, for JSON null, need special care, two possibilities:
-            // p1: expResult -> null, but can not find out actualValue, go set it to nil, i.e. null (assertion -> false)
-            // p2: expResult -> null, actualValue can be founc, and its value --> null (assertion -> true)
-            // but here can not distinguish them
-            if actualValue == nil || expValue == nil {
-                if actualValue != nil || expValue != nil {
-                    msg := testcase.TestMessage {
-                        Assertion: "Failed",
-                        FieldName: key,
-                        AssertionKey:  assertionKey,
-                        ExpValue: expValue,
-                        ActualValue: actualValue,
-                    }
-                    testMessages = append(testMessages, &msg)
+            
+            testRes, msg := compareCommon("Body", key, assertionKey, actualValue, expValue)
 
-                    testResults = append(testResults, false)
-                }
-            } else {
-                // call the assertion function
-                // fmt.Println("-> expBody_sub", key, assertionKey, actualValue, expValue)
-                testResult := assertion.CallAssertion(assertionKey, actualValue, expValue)
-                // fmt.Println("-> expBody_sub", key, assertionKey, actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue), testResult)
-                if testResult == false {
-                    msg := testcase.TestMessage {
-                        Assertion: "Failed",
-                        FieldName: key,
-                        AssertionKey:  assertionKey,
-                        ExpValue: expValue,
-                        ActualValue: actualValue,
-                    }
-                    testMessages = append(testMessages, &msg)
-                }
-                testResults = append(testResults, testResult)
-            }
+            testMessages = append(testMessages, msg)
+            testResults = append(testResults, testRes)
         }
     }
 
     return testResults, testMessages
 } 
+
+func compareCommon (reponsePart string, key string, assertionKey string, actualValue interface{}, expValue interface{}) (bool, *testcase.TestMessage) {
+    // Note: As get Go nil, for JSON null, need special care, two possibilities:
+    // p1: expResult -> null, but can not find out actualValue, go set it to nil, i.e. null (assertion -> false)
+    // p2: expResult -> null, actualValue can be founc, and its value --> null (assertion -> true)
+    // but here can not distinguish them
+    assertionResults := ""
+    var testRes bool
+
+    if actualValue == nil || expValue == nil {
+        // if only one nil
+        if actualValue != nil || expValue != nil {
+            assertionResults = "Failed"
+            testRes = false
+        // both nil
+        } else {
+            assertionResults = "Success"
+            testRes = true
+        }
+    // no nil
+    } else {
+        // call the assertion function
+        testResult := assertion.CallAssertion(assertionKey, actualValue, expValue)
+        // fmt.Println("--->", key, assertionKey, actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue), testResult)
+        if testResult == false {
+            assertionResults = "Failed"
+            testRes = false
+        } else {
+            assertionResults = "Success"
+            testRes = true
+        }
+    }
+    //
+    msg := testcase.TestMessage {
+        AssertionResults: assertionResults,
+        ReponsePart: reponsePart,
+        FieldName: key,
+        AssertionKey:  assertionKey,
+        ActualValue: actualValue,
+        ExpValue: expValue,   
+    }
+
+    return testRes, &msg
+}
+
 
 func PrepMultipart(path string, name string) (*bytes.Buffer, string, error) {
     fp, err := os.Open(path) 
@@ -419,8 +391,12 @@ func ReportConsole (tcExecution testcase.TestCaseExecutionInfo, actualBody []byt
         }
         
         // fmt.Println(tcReportResults.MutationInfo)
-        testMessages, _ := json.Marshal(tcReportResults.TestMessages)
-        fmt.Println(string(testMessages))
+
+        // by default, print failed field in testMessages
+        failedTM := filterTestMessages(tcReportResults.TestMessages)
+        failedTMBytes, _ := json.Marshal(failedTM)
+        fmt.Println(string(failedTMBytes))
+
         fmt.Println(string(actualBody)[0:out_len], "...")
     } else {
         fmt.Printf("\n%s%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d%s\n", CLR_G, tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
@@ -432,3 +408,16 @@ func ReportConsole (tcExecution testcase.TestCaseExecutionInfo, actualBody []byt
         }
     }
 }
+
+func filterTestMessages (testMessages []*testcase.TestMessage) []*testcase.TestMessage {
+    var failedTM []*testcase.TestMessage
+    for i, _ := range testMessages {
+        if testMessages[i].AssertionResults == "Failed" {
+            failedTM = append(failedTM, testMessages[i])
+        }
+    }
+
+    return failedTM
+}
+
+

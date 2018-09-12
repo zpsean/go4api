@@ -37,11 +37,7 @@ func ValidateCallParams (name string, params []interface{}) bool {
         fmt.Println("!! Warning, the number of params is not adapted, false", len(params), params)
         return false
     }
-    // (1). if nil
-    // Note: As get Go nil, for JSON null, need special care, two possibilities:
-    // p1: expResult -> null, but can not find out actualValue, go set it to nil, i.e. null (assertion -> false)
-    // p2: expResult -> null, actualValue can be founc, and its value --> null (assertion -> true)
-    // but here can not distinguish them
+    // (1). nil, if match
     if params[0] == nil || params[1] == nil {
         if params[0] != nil || params[1] != nil {
             // only one nil
@@ -67,8 +63,27 @@ func ValidateCallParams (name string, params []interface{}) bool {
             break
         }
     }
-
+ 
     return ifMatch
+}
+
+func ifBothNil (params []interface{}) bool {
+    // (1). if nil
+    // Note: As get Go nil, for JSON null, need special care, two possibilities:
+    // p1: expResult -> null, but can not find out actualValue, go set it to nil, i.e. null (assertion -> false)
+    // p2: expResult -> null, actualValue can be founc, and its value --> null (assertion -> true)
+    // but here can not distinguish them
+    if params[0] == nil || params[1] == nil {
+        if params[0] != nil || params[1] != nil {
+            // only one nil
+            return false
+        } else {
+            // both nil
+            return true
+        }
+    } else {
+        return false
+    }
 }
 
 func GetValue (value interface{}) interface {} {

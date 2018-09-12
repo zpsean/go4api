@@ -23,18 +23,18 @@ type AssertionDetails struct {
 var assertionMapping = make(map[string]*AssertionDetails)
 
 func init() {
-    assertionMapping["Equals"] = &AssertionDetails{"Equals", Equals, []string{"string", "float64", "bool", "true", "false"}}
+    assertionMapping["Equals"] = &AssertionDetails{"Equals", Equals, []string{"string", "number", "float64", "bool", "true", "false"}}
 
     assertionMapping["Contains"] = &AssertionDetails{"Contains", Contains, []string{"string"}}
     assertionMapping["StartsWith"] = &AssertionDetails{"StartsWith", StartsWith, []string{"string"}}
     assertionMapping["EndsWith"] = &AssertionDetails{"EndsWith", EndsWith, []string{"string"}}
 
-    assertionMapping["NotEquals"] = &AssertionDetails{"NotEquals", NotEquals, []string{"string", "float64", "bool", "true", "false"}}
+    assertionMapping["NotEquals"] = &AssertionDetails{"NotEquals", NotEquals, []string{"string", "number", "float64", "bool", "true", "false"}}
 
-    assertionMapping["Less"] = &AssertionDetails{"Less", Less, []string{"float64"}}
-    assertionMapping["LessOrEquals"] = &AssertionDetails{"LessOrEquals", LessOrEquals, []string{"float64"}}
-    assertionMapping["Greater"] = &AssertionDetails{"Greater", Greater, []string{"float64"}}
-    assertionMapping["GreaterOrEquals"] = &AssertionDetails{"GreaterOrEquals", GreaterOrEquals, []string{"float64"}}
+    assertionMapping["Less"] = &AssertionDetails{"Less", Less, []string{"float64", "number"}}
+    assertionMapping["LessOrEquals"] = &AssertionDetails{"LessOrEquals", LessOrEquals, []string{"float64", "number"}}
+    assertionMapping["Greater"] = &AssertionDetails{"Greater", Greater, []string{"float64", "number"}}
+    assertionMapping["GreaterOrEquals"] = &AssertionDetails{"GreaterOrEquals", GreaterOrEquals, []string{"float64", "number"}}
 
     assertionMapping["Match"] = &AssertionDetails{"Match", Match, []string{"string"}}
 }
