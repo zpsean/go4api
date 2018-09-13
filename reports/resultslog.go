@@ -8,15 +8,12 @@
  *
  */
 
-package logger
+package reports
 
 import (
-    // "fmt"
 	"os"
-	// "log"
-	// "io/ioutil"
-	// "go4api/utils"
 )
+
 
 func WriteExecutionResults(resultString string, pStart string, resultsDir string) {
     // Note: potential bug, as maybe to much write happens at a time
@@ -28,3 +25,5 @@ func WriteExecutionResults(resultString string, pStart string, resultsDir string
  
     file.WriteString(resultString + "\n")
 }
+
+

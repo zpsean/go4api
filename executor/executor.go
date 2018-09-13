@@ -23,13 +23,10 @@ import (
     "encoding/json"
 
     "go4api/cmd"
-    "go4api/lib/testcase"
-    "go4api/ui"     
-    "go4api/ui/js"  
-    "go4api/ui/style"                                                                                                                                
     "go4api/utils"
+    "go4api/lib/testcase"
     "go4api/texttmpl"
-    "go4api/logger"
+    "go4api/reports"
 )
 
 
@@ -93,7 +90,7 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
                 tcReportResults := tcExecution.TcReportResults()
                 repJson, _ := json.Marshal(tcReportResults)
                 // (4). put the execution log into results
-                logger.WriteExecutionResults(string(repJson), pStart, resultsDir)
+                reports.WriteExecutionResults(string(repJson), pStart, resultsDir)
             }
             // if tcTree has no node with "Ready" status, break the miniloop
             statusReadyCount = 0
@@ -119,7 +116,7 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
                 tcReportResults := tcExecution.TcReportResults()
                 repJson, _ := json.Marshal(tcReportResults)
                 //
-                logger.WriteExecutionResults(string(repJson), pStart, resultsDir)
+                reports.WriteExecutionResults(string(repJson), pStart, resultsDir)
                 // to console
             }
         }
@@ -161,7 +158,7 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
     // time.Sleep(1 * time.Second)
     pEnd_time := time.Now()
     //
-    GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time)
+    reports.GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time)
     //
     fmt.Println("Report Generated at: " + resultsDir + "index.html")
     fmt.Println("Execution Finished at: " + pEnd_time.String())
@@ -388,27 +385,4 @@ func GetOriginMutationTcArray() []testcase.TestCaseDataInfo {
     return tcArray
 }
 
-func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time) {
-    // read the resource under /ui/*
-    // copy the value of var Index to file
-    utils.GenerateFileBasedOnVarOverride(ui.Index, resultsDir + "index.html")
-    // (0)
-    err := os.MkdirAll(resultsDir + "js", 0777)
-    if err != nil {
-      panic(err) 
-    }
-    // (1). get js/reslts.js
-    logResultsFile := resultsDir + pStart + ".log"
-    jsResults := resultsDir + "/js/reslts.js"
-    //
-    texttmpl.GenerateHtmlJsCSSFromTemplateAndVar(js.Results, pStart_time, pEnd_time, jsResults, logResultsFile)
-    // (2). get js/go4api.js
-    utils.GenerateFileBasedOnVarOverride(js.Js, resultsDir + "js/go4api.js")
-    //
-    err = os.MkdirAll(resultsDir + "style", 0777)
-    if err != nil {
-      panic(err) 
-    }
-    // (3). get style/go4api.css
-    utils.GenerateFileBasedOnVarOverride(style.Style, resultsDir + "style/go4api.css")
-}
+

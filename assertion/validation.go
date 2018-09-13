@@ -54,7 +54,7 @@ func ValidateCallParams (name string, params []interface{}) bool {
     typeAct := reflect.TypeOf(params[0]).Kind().String()
     typeExp := reflect.TypeOf(params[1]).Kind().String()
 
-    fmt.Println("typeAct, typeExp: ", typeAct, typeExp)
+    // fmt.Println("typeAct, typeExp: ", typeAct, typeExp)
 
     // consider the type int, float64, they are comparable
     if typeAct == "int" && typeExp == "float64" {
