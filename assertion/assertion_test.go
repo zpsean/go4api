@@ -232,8 +232,139 @@ func Test_GreaterOrEquals2(t *testing.T) {
 }
 
 
+func Test_GreaterOrEquals3(t *testing.T) {
+     var actualValue int
+    actualValue = 1234.0
+    var expValue float64
+    expValue = 1234.4
+
+    res := GreaterOrEquals(actualValue, expValue)
+
+    if res == true {
+        t.Fatalf("GreaterOrEquals failed")
+    }
+}
+
+func Test_Greater(t *testing.T) {
+     var actualValue int
+    actualValue = 1234.0
+    var expValue float64
+    expValue = 1234.4
+
+    res := Greater(actualValue, expValue)
+
+    if res == true {
+        t.Fatalf("Greater failed")
+    }
+}
+
+// item in slice
+func Test_In(t *testing.T) {
+    var actualValue int
+    actualValue = 1
+
+    expValue := []interface{}{1, 2, 3}
+
+    res := In(actualValue, expValue)
+
+    if res != true {
+        t.Fatalf("In failed")
+    }
+}
+
+func Test_In2(t *testing.T) {
+    var actualValue int
+    actualValue = 11
+
+    expValue := []interface{}{1, 2, 3}
+
+    res := In(actualValue, expValue)
+
+    if res != false {
+        t.Fatalf("In failed")
+    }
+}
+
+func Test_NotIn(t *testing.T) {
+    var actualValue int
+    actualValue = 1
+
+    expValue := []interface{}{1, 2, 3}
+
+    res := NotIn(actualValue, expValue)
+
+    if res != false {
+        t.Fatalf("NotIn failed")
+    }
+}
+
+func Test_NotIn2(t *testing.T) {
+    var actualValue int
+    actualValue = 11
+
+    expValue := []interface{}{1, 2, 3}
+
+    res := NotIn(actualValue, expValue)
+
+    if res != true {
+        t.Fatalf("NotIn failed")
+    }
+}
 
 
+func Test_Has(t *testing.T) {
+    actualValue := []interface{}{1, 2, 3}
+
+    var expValue int
+    expValue = 1
+
+    res := Has(actualValue, expValue)
+
+    if res != true {
+        t.Fatalf("In failed")
+    }
+}
+
+func Test_Has2(t *testing.T) {
+    actualValue := []interface{}{1, 2, 3}
+
+    var expValue int
+    expValue = 11
+
+    res := Has(actualValue, expValue)
+
+    if res != false {
+        t.Fatalf("In failed")
+    }
+}
+
+func Test_NotHas(t *testing.T) {
+    actualValue := []interface{}{1, 2, 3}
+
+    var expValue int
+    expValue = 1
+
+    res := NotHas(actualValue, expValue)
+
+    if res != false {
+        t.Fatalf("In failed")
+    }
+}
+
+func Test_NotHas2(t *testing.T) {
+    actualValue := []interface{}{1, 2, 3}
+
+    var expValue int
+    expValue = 11
+
+    res := NotHas(actualValue, expValue)
+
+    if res != true {
+        t.Fatalf("In failed")
+    }
+}
+
+// match
 func Test_Match(t *testing.T) {
     actualValue := "abcde"
     expPattern := `[a-z]+`
