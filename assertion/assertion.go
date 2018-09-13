@@ -21,7 +21,7 @@ import (
 )
 
 //
-func CallAssertion(name string, params ... interface{}) bool {
+func CallAssertion (name string, params ... interface{}) bool {
     if !ValidateCallName(name) {
         return false
     }
@@ -37,7 +37,7 @@ func CallAssertion(name string, params ... interface{}) bool {
         for k, param := range params {
             in[k] = reflect.ValueOf(param)
         }
-        
+
         result := f.Call(in)
 
         return result[0].Interface().(bool)
@@ -46,24 +46,11 @@ func CallAssertion(name string, params ... interface{}) bool {
 
 
 // for both String and Numeric
-func Equals(actualValue interface{}, expValue interface{}) bool {
+func Equals (actualValue interface{}, expValue interface{}) bool {
     switch reflect.TypeOf(actualValue).Kind().String() {
         case "int", "float64": {
-            var actualValueConverted float64
-            var expValueConverted float64
+            actualValueConverted, expValueConverted := convertIntToFloat64 (actualValue, expValue)
 
-            if reflect.TypeOf(actualValue).String() == "int" {
-                actualValueConverted = float64(actualValue.(int))
-            } else {
-                actualValueConverted = actualValue.(float64)
-            }
-
-            if reflect.TypeOf(expValue).String() == "int" {
-                expValueConverted = float64(expValue.(int))
-            } else {
-                expValueConverted = expValue.(float64)
-            }
-            //
             if actualValueConverted == expValueConverted {
                 return true
             } else {
@@ -92,9 +79,32 @@ func Equals(actualValue interface{}, expValue interface{}) bool {
             }
     } 
 }   
-    
 
-func Contains(actualValue interface{}, expValue interface{}) bool {
+func convertIntToFloat64 (actualValue interface{}, expValue interface{}) (float64, float64) {
+    var actualValueConverted float64
+    var expValueConverted float64
+
+    if reflect.TypeOf(actualValue).String() == "int" {
+        actualValueConverted = float64(actualValue.(int))
+    } else {
+        actualValueConverted = actualValue.(float64)
+    }
+
+    if reflect.TypeOf(expValue).String() == "int" {
+        expValueConverted = float64(expValue.(int))
+    } else {
+        expValueConverted = expValue.(float64)
+    }
+
+    return actualValueConverted, expValueConverted
+}
+
+func NotEquals (actualValue interface{}, expValue interface{}) bool {
+    return !reflect.DeepEqual(actualValue, expValue)
+}
+
+// string
+func Contains (actualValue interface{}, expValue interface{}) bool {
     if strings.Contains(actualValue.(string), expValue.(string)) {
         return true
     } else {
@@ -102,7 +112,7 @@ func Contains(actualValue interface{}, expValue interface{}) bool {
     }
 }
 
-func StartsWith(actualValue interface{}, expValue interface{}) bool {
+func StartsWith (actualValue interface{}, expValue interface{}) bool {
     if strings.HasPrefix(actualValue.(string), expValue.(string)) {
         return true
     } else {
@@ -110,7 +120,7 @@ func StartsWith(actualValue interface{}, expValue interface{}) bool {
     }
 }
 
-func EndsWith(actualValue interface{}, expValue interface{}) bool {
+func EndsWith (actualValue interface{}, expValue interface{}) bool {
     if strings.HasSuffix(actualValue.(string), expValue.(string)) {
         return true
     } else {
@@ -118,44 +128,86 @@ func EndsWith(actualValue interface{}, expValue interface{}) bool {
     }
 }
 
-func NotEquals(actualValue interface{}, expValue interface{}) bool {
-    return !reflect.DeepEqual(actualValue, expValue)
-}
-
-func Less(actualValue interface{}, expValue interface{}) bool {
-    if actualValue.(float64) < expValue.(float64) {
+// float
+func Less (actualValue interface{}, expValue interface{}) bool {
+    actualValueConverted, expValueConverted := convertIntToFloat64 (actualValue, expValue)
+    
+    if actualValueConverted < expValueConverted {
         return true
     } else {
         return false
     }
 }
 
-func LessOrEquals(actualValue interface{}, expValue interface{}) bool {
-    if actualValue.(float64) <= expValue.(float64) {
+func LessOrEquals (actualValue interface{}, expValue interface{}) bool {
+    actualValueConverted, expValueConverted := convertIntToFloat64 (actualValue, expValue)
+    
+    if actualValueConverted <= expValueConverted {
         return true
     } else {
         return false
     }
 }
 
-func Greater(actualValue interface{}, expValue interface{}) bool {
-    if actualValue.(float64) > expValue.(float64) {
+func Greater (actualValue interface{}, expValue interface{}) bool {
+    actualValueConverted, expValueConverted := convertIntToFloat64 (actualValue, expValue)
+    
+    if actualValueConverted > expValueConverted {
         return true
     } else {
         return false
     }
 }
 
-func GreaterOrEquals(actualValue interface{}, expValue interface{}) bool {
-    if actualValue.(float64) >= expValue.(float64) {
+func GreaterOrEquals (actualValue interface{}, expValue interface{}) bool {
+    actualValueConverted, expValueConverted := convertIntToFloat64 (actualValue, expValue)
+    
+    if actualValueConverted >= expValueConverted {
         return true
     } else {
         return false
     }
+}
+
+// In, NotIn, Has, NotHas
+func In (actualValue interface{}, expValue interface{}) bool {
+    var ifIn bool
+
+    for _, value := range reflect.ValueOf(expValue).Interface().([]interface{}) {
+        if CallAssertion("Equals", actualValue, value) {
+            ifIn = true
+            break
+        }
+    }
+
+    return ifIn
+}
+
+func NotIn (actualValue interface{}, expValue interface{}) bool {
+    return !In(actualValue, expValue)
+}
+
+
+func Has (actualValue interface{}, expValue interface{}) bool {
+    var ifHas bool
+
+    for _, value := range reflect.ValueOf(actualValue).Interface().([]interface{}) {
+        if CallAssertion("Equals", value, expValue) {
+            ifHas = true
+            break
+        }
+    }
+
+    return ifHas
+}
+
+func NotHas (actualValue interface{}, expValue interface{}) bool {
+    return !Has(actualValue, expValue)
+
 }
 
 // for regrex
-func Match(actualValue interface{}, expPattern interface{}) bool {
+func Match (actualValue interface{}, expPattern interface{}) bool {
     reg := regexp.MustCompile(expPattern.(string))
     resSlice := reg.FindAllString(actualValue.(string), -1)
 

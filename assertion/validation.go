@@ -50,18 +50,53 @@ func ValidateCallParams (name string, params []interface{}) bool {
             return true
         }
     } 
-    // (2). no nil, if two type match
+    // (2). no nil, if two type assertable
     typeAct := reflect.TypeOf(params[0]).Kind().String()
     typeExp := reflect.TypeOf(params[1]).Kind().String()
+
+    fmt.Println("typeAct, typeExp: ", typeAct, typeExp)
 
     // consider the type int, float64, they are comparable
     if typeAct == "int" && typeExp == "float64" {
         return true
     } else if typeAct == "float64" && typeExp == "int" {
         return true
-    } else if typeAct != typeExp {
-        return false
     }
+
+    // consider slice
+    switch typeAct {
+        case "slice":
+            switch typeExp {
+                case "slice": 
+                    return true
+                case "string", "int", "float64", "bool":
+                    lowerName := strings.ToLower(name)
+                    if lowerName == "has" || lowerName == "nothas" {
+                        return true
+                    } else {
+                        return false
+                    }
+                default:
+                    return false
+            }
+        case "string", "int", "float64", "bool":
+            switch typeExp {
+                case "slice": 
+                    lowerName := strings.ToLower(name)
+                    if lowerName == "in" || lowerName == "notin" {
+                        return true
+                    } else {
+                        return false
+                    }
+                case "string", "int", "float64", "bool":
+                    if typeAct != typeExp {
+                        return false
+                    }
+                default:
+                    return false
+            }
+    }
+ 
     // (3). no nil, if type matches with the mapping
     ifMatch := false
 

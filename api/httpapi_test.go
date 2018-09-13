@@ -95,3 +95,64 @@ func Test_compareCommon6(t *testing.T) {
     }
 }
 
+// in, notin, has, nothas
+func Test_compareCommon7(t *testing.T) {
+    var actualValue int
+    actualValue = 1
+
+    expValue := []interface{}{1, 2, 3}
+
+    res, _ := compareCommon("", "", "In", actualValue, expValue)
+
+    if res != true {
+        t.Fatalf("compareCommon test failed")
+    } else {
+        t.Log("compareCommon test passed")
+    }
+}
+
+func Test_compareCommon8(t *testing.T) {
+    var actualValue string
+    actualValue = "1"
+
+    expValue := []interface{}{1, 2, 3}
+
+    res, _ := compareCommon("", "", "In", actualValue, expValue)
+
+    if res != false {
+        t.Fatalf("compareCommon test failed")
+    } else {
+        t.Log("compareCommon test passed")
+    }
+}
+
+func Test_compareCommon9(t *testing.T) {
+    actualValue := []interface{}{1, 2, 3}
+
+    var expValue int
+    expValue = 1
+
+    res, _ := compareCommon("", "", "Has", actualValue, expValue)
+
+    if res != true {
+        t.Fatalf("compareCommon test failed")
+    } else {
+        t.Log("compareCommon test passed")
+    }
+}
+
+
+func Test_compareCommon10(t *testing.T) {
+    actualValue := []interface{}{1, 2, 3}
+
+    var expValue string
+    expValue = "1"
+
+    res, _ := compareCommon("", "", "Has", actualValue, expValue)
+
+    if res != false {
+        t.Fatalf("compareCommon test failed")
+    } else {
+        t.Log("compareCommon test passed")
+    }
+}

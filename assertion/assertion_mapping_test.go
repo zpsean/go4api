@@ -21,7 +21,7 @@ func Test_init(t *testing.T) {
         fmt.Println("AssertionMapping: ", value)
     }
     
-    if len(assertionMapping) != 10 {
+    if len(assertionMapping) != 14 {
         t.Fatalf("init failed")
     } else {
         t.Log("init test passed")
