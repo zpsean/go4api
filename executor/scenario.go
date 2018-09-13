@@ -21,7 +21,7 @@ import (
     "go4api/cmd"
     "go4api/lib/testcase"
     "go4api/utils"
-    "go4api/logger"
+    "go4api/reports"
     "go4api/lib/csv"
 )
 
@@ -91,7 +91,7 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
             // set Priority to 1 for all
             repJson, _ := json.Marshal(tcExecution)
             // (4). put the execution log into resultstestResult
-            logger.WriteExecutionResults(string(repJson), pStart, resultsDir)
+            reports.WriteExecutionResults(string(repJson), pStart, resultsDir)
         }
 
         // (5). execute the chilren, and so on
@@ -109,7 +109,7 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
     // time.Sleep(1 * time.Second)
     pEnd_time := time.Now()
     //
-    GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time)
+    reports.GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time)
     //
     fmt.Println("---------------------------------------------------------------------------")
     fmt.Println("Report Generated at: " + resultsDir + "index.html")

@@ -44,33 +44,4 @@ func init() {
     assertionMapping["Match"] = &AssertionDetails{"Match", Match, []string{"string"}}
 }
 
-// To support assertion here:
-// if response body is xml: [key, using xpath] [operator, like Equals, ...] [value, can use regrex]
-// if response body is html: [key, using xpath, css] [operator, like Equals, ...] [value, can use regrex]
-// if response body is json: [key] [operator, like Equals, ...] [value, can use regrex]
-
-// for String:
-// Equals
-// Contains
-// StartsWith
-// EndsWith
-
-// for Numeric:
-// Equals
-// NotEquals
-// Less
-// LessOrEquals
-// Greater
-// GreaterOrEquals
-
-// for Bool (true, false):
-// Equals
-// NotEquals
-
-// for general regrex
-// Match
-
-
-
-
 
