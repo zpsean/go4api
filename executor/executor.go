@@ -47,20 +47,15 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
     prioritySet_Int := utils.ConvertStringArrayToIntArray(prioritySet)
     sort.Ints(prioritySet_Int)
     prioritySet = utils.ConvertIntArrayToStringArray(prioritySet_Int)
-
     // Init
+    InitVariables(prioritySet)
     InitNodesRunResult(root, "Ready")
-
     //
     fmt.Println("\n====> test cases execution starts!")
-    statusReadyCount = 0
-    // init the status count list
-    statusCountList = make([][]int, len(prioritySet) + 1)
-    for i := range statusCountList {
-        statusCountList[i] = make([]int, 5)
-    }
-    //
-    for p_index, priority := range prioritySet {
+
+    logFilePtr := reports.OpenExecutionResultsLogFile(resultsDir + pStart + ".log")
+    
+    for _, priority := range prioritySet {
         tcArrayPriority := classifications[priority]
         fmt.Println("====> Priority " + priority + " starts!")
         
@@ -90,70 +85,50 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
                 tcReportResults := tcExecution.TcReportResults()
                 repJson, _ := json.Marshal(tcReportResults)
                 // (4). put the execution log into results
-                reports.WriteExecutionResults(string(repJson), pStart, resultsDir)
+                reports.WriteExecutionResults(string(repJson), logFilePtr)
             }
             // if tcTree has no node with "Ready" status, break the miniloop
             statusReadyCount = 0
-            CollectNodeReadyStatus(root, priority)
+            CollectNodeReadyStatusByPriority(root, priority)
             //
             if statusReadyCount == 0 {
                 break miniLoop
             }
         }
-        //
-        CollectNodeStatusByPriority(root, p_index, priority)
+        CollectNodeStatusByPriority(root, priority)
 
         // (5). also need to put out the cases which has not been executed (i.e. not Success, Fail)
         notRunTime := time.Now()
-        for _, tcExecution := range tcNotExecutedList {
-            // [casename, priority, parentTestCase, ...], tc, jsonFile, csvFile, row in csv
-            if tcExecution.Priority() == priority {
-                // set some dummy time for the tc not executed
-                tcExecution.StartTimeUnixNano =notRunTime.UnixNano()
-                tcExecution.EndTimeUnixNano = notRunTime.UnixNano()
-                tcExecution.DurationUnixNano = notRunTime.UnixNano() - notRunTime.UnixNano()
+        for i, _ := range tcNotExecutedByPriority[priority] {
+            for _, tcExecution := range tcNotExecutedByPriority[priority][i] {
+                // [casename, priority, parentTestCase, ...], tc, jsonFile, csvFile, row in csv
+                if tcExecution.Priority() == priority {
+                    // set some dummy time for the tc not executed
+                    tcExecution.StartTimeUnixNano =notRunTime.UnixNano()
+                    tcExecution.EndTimeUnixNano = notRunTime.UnixNano()
+                    tcExecution.DurationUnixNano = notRunTime.UnixNano() - notRunTime.UnixNano()
 
-                tcReportResults := tcExecution.TcReportResults()
-                repJson, _ := json.Marshal(tcReportResults)
-                //
-                reports.WriteExecutionResults(string(repJson), pStart, resultsDir)
-                // to console
+                    tcReportResults := tcExecution.TcReportResults()
+                    repJson, _ := json.Marshal(tcReportResults)
+                    //
+                    reports.WriteExecutionResults(string(repJson), logFilePtr)
+                    // to console
+                }
             }
         }
-        
-        //
-        var successCount = statusCountList[p_index][2]
-        var failCount = statusCountList[p_index][3]
-        //
-        fmt.Println("---------------------------------------------------------------------------")
-        fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(len(tcArrayPriority)) + " Cases in template -----")
-        fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(statusCountList[p_index][0]) + " Cases put onto tcTree -----")
-        fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(statusCountList[p_index][0] - successCount - failCount) + " Cases Skipped (Not Executed, due to Parent Failed) -----")
-        fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(successCount + failCount) + " Cases Executed -----")
-        fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(successCount) + " Cases Success -----")
-        fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(failCount) + " Cases Fail -----")
-        fmt.Println("---------------------------------------------------------------------------")
+        // report to console
+        reports.ReportConsoleByPriority(len(tcArrayPriority), priority, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
 
-        fmt.Println("====> Priority " + priority + " ended! ")
+        fmt.Println("====> Priority " + priority + " ended!")
+        fmt.Println("")
         // sleep for debug
-        time.Sleep(500 * time.Millisecond)
+        // time.Sleep(500 * time.Millisecond)
     }
-    // ShowNodes(root)
-    CollectOverallNodeStatus(root, len(prioritySet))
-    //
-    var successCount = statusCountList[len(prioritySet)][2]
-    var failCount = statusCountList[len(prioritySet)][3]
-    //
-    fmt.Println("---------------------------------------------------------------------------")
-    fmt.Println("----- Total " + strconv.Itoa(len(tcArray)) + " Cases in template -----")
-    fmt.Println("----- Total " + strconv.Itoa(statusCountList[len(prioritySet)][0]) + " Cases put onto tcTree -----")
-    fmt.Println("----- Total " + strconv.Itoa(statusCountList[len(prioritySet)][0] - successCount - failCount) + " Cases Skipped (Not Executed, due to Parent Failed) -----")
-    fmt.Println("----- Total " + strconv.Itoa(successCount + failCount) + " Cases Executed -----")
-    fmt.Println("----- Total " + strconv.Itoa(successCount) + " Cases Success -----")
-    fmt.Println("----- Total " + strconv.Itoa(failCount) + " Cases Fail -----")
-    fmt.Println("---------------------------------------------------------------------------")
+    logFilePtr.Close()
 
-
+    CollectOverallNodeStatus(root, "Overall")
+    reports.ReportConsoleByPriority(len(tcArray), "Overall", statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    
     // generate the html report based on template, and results data
     // time.Sleep(1 * time.Second)
     pEnd_time := time.Now()
@@ -164,7 +139,7 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
     fmt.Println("Execution Finished at: " + pEnd_time.String())
 
     // channel code, can be used for the overall success or fail indicator, especially for CI/CD
-    ch <- failCount
+    ch <- statusCountByPriority["Overall"]["Fail"]
 }
 
 

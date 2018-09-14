@@ -27,7 +27,7 @@ import (
 
 func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string) {
     jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
-    fmt.Println("Scenario jsonFileList:", cmd.Opt.IfScenario, jsonFileList, "")
+    // fmt.Println("Scenario jsonFileList:", cmd.Opt.IfScenario, jsonFileList, "")
 
     var tcArray []testcase.TestCaseDataInfo
 
@@ -39,7 +39,10 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
     root, _ := BuildTree(tcArray)
 
     // (3). then execute them, genrate the outputs if have
+    prioritySet := []string{"1"}
+    InitVariables(prioritySet)
     InitNodesRunResult(root, "Ready")
+    logFilePtr := reports.OpenExecutionResultsLogFile(resultsDir + pStart + ".log")
   
     miniLoop:
     for {
@@ -88,22 +91,23 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
             RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
                     tcExecution.TestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
             // (3). <--> for log write to file
-            // set Priority to 1 for all
-            repJson, _ := json.Marshal(tcExecution)
-            // (4). put the execution log into resultstestResult
-            reports.WriteExecutionResults(string(repJson), pStart, resultsDir)
+            tcReportResults := tcExecution.TcReportResults()
+            repJson, _ := json.Marshal(tcReportResults)
+            reports.WriteExecutionResults(string(repJson), logFilePtr)
         }
-
-        // (5). execute the chilren, and so on
+        // (4). execute the chilren, and so on
         statusReadyCount = 0
-        CollectNodeReadyStatus(root, "1")
+        CollectNodeReadyStatusByPriority(root, "1")
 
         // no more child cases can be added, then break
         if statusReadyCount == 0 {
             break miniLoop
         }
     }
-    // CollectOverallNodeStatus(root, len(prioritySet))
+    logFilePtr.Close()
+    
+    CollectOverallNodeStatus(root, "Overall")
+    reports.ReportConsoleByPriority(len(tcArray), "Overall", statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
 
     // generate the html report based on template, and results data
     // time.Sleep(1 * time.Second)
@@ -116,7 +120,7 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
     fmt.Println("Execution Finished at: " + pEnd_time.String())
     
     // channel code, can be used for the overall success or fail indicator, especially for CI/CD
-    ch <- 1
+    ch <- statusCountByPriority["Overall"]["Fail"]
 }
 
 
