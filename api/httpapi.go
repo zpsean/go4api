@@ -72,7 +72,7 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     }
 
     // (5). print to console
-    reports.ReportConsole(tcExecution, actualBody)
+    reports.ReportConsoleByTc(tcExecution, actualBody)
 
     // (6). write the channel to executor for scheduler and log
     resultsExeChan <- tcExecution

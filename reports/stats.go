@@ -14,3 +14,22 @@ import (
 
 )
 
+// type ExecutionStatusCount map[string]*ByPriorityDetails
+
+// type ByPriorityDetails struct {
+// 	Priority string
+// 	TcExecutedList []testcase.TestCaseExecutionInfo
+// 	TcNotExecutedList []testcase.TestCaseExecutionInfo
+// }
+
+
+type ByPriorityReports struct {
+	Priority string
+	ByStatusCount map[string]int
+	TcCount int
+	TcExecutionDurationMax float64
+	TcExecutionDurationMin float64
+}
+
+// each priority
+// status count

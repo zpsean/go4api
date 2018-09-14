@@ -27,16 +27,33 @@ type tcNode struct{
     children []*tcNode // for child
 }
 
+
 var (
     tcTree = map[string]*tcNode{}
     root *tcNode
 
     statusReadyCount int
-    statusCountList [][]int
-    tcNotExecutedList []testcase.TestCaseExecutionInfo
+
+    statusCountByPriority = map[string]map[string]int{} 
+    tcExecutedByPriority = map[string]map[string][]*testcase.TestCaseExecutionInfo{}
+    tcNotExecutedByPriority = map[string]map[string][]*testcase.TestCaseExecutionInfo{}
 )
 
-//
+func InitVariables(prioritySet []string) {
+    statusReadyCount = 0
+
+    for _, priority := range prioritySet {
+        // Ready, Success, Fail, ParentFailed
+        statusCountByPriority[priority] = map[string]int{}
+        tcExecutedByPriority[priority] = map[string][]*testcase.TestCaseExecutionInfo{}
+        tcNotExecutedByPriority[priority] = map[string][]*testcase.TestCaseExecutionInfo{}
+    }
+
+    statusCountByPriority["Overall"] = map[string]int{}
+    tcExecutedByPriority["Overall"] = map[string][]*testcase.TestCaseExecutionInfo{}
+    tcNotExecutedByPriority["Overall"] = map[string][]*testcase.TestCaseExecutionInfo{}
+}
+
 func GetDummyRootTc() testcase.TestCase {
     var rootTc testcase.TestCase
     str := `{
@@ -265,7 +282,7 @@ func RefreshNodeAndDirectChilrenTcResult(node *tcNode, tcRunResult string, tcSta
     }
 }
 
-func CollectNodeReadyStatus(node *tcNode, priority string) {
+func CollectNodeReadyStatusByPriority(node *tcNode, priority string) {
     for i, _ := range node.children {
         if node.children[i].TestCaseExecutionInfo.Priority() == priority {
             switch node.children[i].TestCaseExecutionInfo.TestResult { 
@@ -273,48 +290,49 @@ func CollectNodeReadyStatus(node *tcNode, priority string) {
                     statusReadyCount = statusReadyCount + 1
             }
         }
-        CollectNodeReadyStatus(node.children[i], priority)
+        CollectNodeReadyStatusByPriority(node.children[i], priority)
     }
 }
 
-func CollectNodeStatusByPriority(node *tcNode, p_index int, priority string) {
+func CollectNodeStatusByPriority(node *tcNode, priority string) {
     for i, _ := range node.children {
         if node.children[i].TestCaseExecutionInfo.Priority() == priority {
-            statusCountList[p_index][0] = statusCountList[p_index][0] + 1
+            statusCountByPriority[priority]["Total"] += 1
+            tcExecutedByPriority[priority]["Total"] = append(tcExecutedByPriority[priority]["Total"], &(node.children[i].TestCaseExecutionInfo))
 
             switch node.children[i].TestCaseExecutionInfo.TestResult { 
                 case "Ready": 
-                    statusCountList[p_index][1] = statusCountList[p_index][1] + 1
+                    statusCountByPriority[priority]["Ready"] += 1
                 case "Success": 
-                    statusCountList[p_index][2] = statusCountList[p_index][2] + 1  
+                    statusCountByPriority[priority]["Success"] += 1
                 case "Fail":
-                    statusCountList[p_index][3] = statusCountList[p_index][3] + 1 
+                    statusCountByPriority[priority]["Fail"] += 1
                 default: 
-                    statusCountList[p_index][4] = statusCountList[p_index][4] + 1
-                    // write the cases to tcNotExecutedList
-                    tcNotExecutedList = append(tcNotExecutedList, node.children[i].TestCaseExecutionInfo)
-                    
+                    statusCountByPriority[priority]["ParentFailed"] += 1
+                    tcNotExecutedByPriority[priority]["ParentFailed"] = append(tcNotExecutedByPriority[priority]["ParentFailed"], &(node.children[i].TestCaseExecutionInfo))
             }
         }
-        CollectNodeStatusByPriority(node.children[i], p_index, priority)
+        CollectNodeStatusByPriority(node.children[i], priority)
     }
 }
 
-func CollectOverallNodeStatus(node *tcNode, p_index int) {
+func CollectOverallNodeStatus(node *tcNode, key string) {
     for i, _ := range node.children {
-        statusCountList[p_index][0] = statusCountList[p_index][0] + 1
+        statusCountByPriority[key]["Total"] += 1
+        tcExecutedByPriority[key]["Total"] = append(tcExecutedByPriority[key]["Total"], &(node.children[i].TestCaseExecutionInfo))
 
         switch node.children[i].TestCaseExecutionInfo.TestResult { 
             case "Ready": 
-                statusCountList[p_index][1] = statusCountList[p_index][1] + 1
+                statusCountByPriority[key]["Ready"] += 1
             case "Success": 
-                statusCountList[p_index][2] = statusCountList[p_index][2] + 1  
+                statusCountByPriority[key]["Success"] += 1
             case "Fail":
-                statusCountList[p_index][3] = statusCountList[p_index][3] + 1 
+                statusCountByPriority[key]["Fail"] += 1
             default: 
-                statusCountList[p_index][4] = statusCountList[p_index][4] + 1
+                statusCountByPriority[key]["ParentFailed"] += 1
+                tcNotExecutedByPriority[key]["ParentFailed"] = append(tcNotExecutedByPriority[key]["ParentFailed"], &(node.children[i].TestCaseExecutionInfo))
         }
-        CollectOverallNodeStatus(node.children[i], p_index)
+        CollectOverallNodeStatus(node.children[i], key)
     }
 }
 
@@ -326,7 +344,6 @@ func ShowNodes(node *tcNode) {
         ShowNodes(node.children[i])
     }
 }
-
 
 
 func RemoveArrayItem(sourceArray []testcase.TestCaseDataInfo, tcData testcase.TestCaseDataInfo) []testcase.TestCaseDataInfo {
