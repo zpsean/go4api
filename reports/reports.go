@@ -44,6 +44,8 @@ func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string,
     // --------
 
     utils.GenerateFileBasedOnVarOverride(ui.Index, resultsDir + "index.html")
+    utils.GenerateFileBasedOnVarOverride(ui.Graphic, resultsDir + "graphic.html")
+    utils.GenerateFileBasedOnVarOverride(ui.Details, resultsDir + "details.html")
     // (0)
     err := os.MkdirAll(resultsDir + "js", 0777)
     if err != nil {
@@ -72,6 +74,8 @@ func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string,
       panic(err) 
     }
     utils.GenerateFileBasedOnVarOverride(style.Style, resultsDir + "style/go4api.css")
+
+    utils.GenerateFileBasedOnVarOverride(style.Logo, resultsDir + "style/logo.png")
 }
 
 func GetResultsJs (pStart_time time.Time, pEnd_time time.Time, logResultsFile string) *texttmpl.ResultsJs {
