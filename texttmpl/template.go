@@ -17,10 +17,23 @@ import (
     "strings"
     "bytes"
     "text/template"
-    "time"
+    // "time"
 
     "go4api/utils"
 )
+
+type ResultsJs struct {
+    PStart_time int64
+    PStart   string
+    PEnd_time int64
+    PEnd  string
+    TcReportStr string
+}
+
+type StatsJs struct {
+    StatsStr string
+}
+
 
 func GetTemplateFromString() {
     type Inventory struct {
@@ -36,16 +49,9 @@ func GetTemplateFromString() {
     }
 }
 
-type ResultsJs struct {
-    PStart_time int64
-    PStart   string
-    PEnd_time int64
-    PEnd  string
-    TcReportStr string
-}
 
-func GenerateHtmlJsCSSFromTemplateAndVar(strVar string, pStart_time time.Time, pEnd_time time.Time, jsResults string, logResultsFile string) {
-    outFile, err := os.OpenFile(jsResults, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+func GenerateStatsJs(strVar string, targetFile string, statsJs *StatsJs, logResultsFile string) {
+    outFile, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
     if err != nil {
        panic(err) 
     }
@@ -53,34 +59,27 @@ func GenerateHtmlJsCSSFromTemplateAndVar(strVar string, pStart_time time.Time, p
     //
     tmpl := template.Must(template.New("HtmlJsCss").Parse(strVar))
 
-    resultsJs := GetResultsJs(pStart_time, pEnd_time, logResultsFile)
-
-    err = tmpl.Execute(outFile, resultsJs)
+    err = tmpl.Execute(outFile, *statsJs)
     if err != nil {
       panic(err) 
     }
 }
 
-func GetResultsJs (pStart_time time.Time, pEnd_time time.Time, logResultsFile string) *ResultsJs {
-    // get the data from the log results file, used for ui
-    var tcReportStr string
-
-    jsonLinesBytes := utils.GetContentFromFile(logResultsFile)
-    jsonLines := string(jsonLinesBytes)
-    //
-    jsonLines = strings.Replace(jsonLines, "\n", ",", strings.Count(jsonLines, "\n") - 1)
-    tcReportStr = `[` + jsonLines + `]`        
-    //
-    resultsJs := &ResultsJs {
-        PStart_time: pStart_time.UnixNano(), 
-        PStart: `"` + pStart_time.String() + `"`, 
-        PEnd_time: pEnd_time.UnixNano(), 
-        PEnd: `"` + pEnd_time.String() + `"`, 
-        TcReportStr: tcReportStr,
+func GenerateResultsJs(strVar string, targetFile string, resultsJs *ResultsJs, logResultsFile string) {
+    outFile, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+    if err != nil {
+       panic(err) 
     }
-     
-    return resultsJs
+    defer outFile.Close()
+    //
+    tmpl := template.Must(template.New("HtmlJsCss").Parse(strVar))
+
+    err = tmpl.Execute(outFile, *resultsJs)
+    if err != nil {
+      panic(err) 
+    }
 }
+
 
 func GenerateJsonBasedOnTemplateAndCsv(jsonFilePath string, csvHeader []string, csvRow []string) *bytes.Buffer {
     jsonTemplateBytes := utils.GetContentFromFile(jsonFilePath)

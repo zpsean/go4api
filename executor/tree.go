@@ -27,7 +27,6 @@ type tcNode struct{
     children []*tcNode // for child
 }
 
-
 var (
     tcTree = map[string]*tcNode{}
     root *tcNode
@@ -41,17 +40,26 @@ var (
 
 func InitVariables(prioritySet []string) {
     statusReadyCount = 0
+    StatusKeys := []string{"Ready", "Success", "Fail", "ParentFailed"}
 
     for _, priority := range prioritySet {
-        // Ready, Success, Fail, ParentFailed
         statusCountByPriority[priority] = map[string]int{}
         tcExecutedByPriority[priority] = map[string][]*testcase.TestCaseExecutionInfo{}
         tcNotExecutedByPriority[priority] = map[string][]*testcase.TestCaseExecutionInfo{}
+        
+        for _, status := range StatusKeys {
+            statusCountByPriority[priority][status] = 0
+        }
+        
     }
 
     statusCountByPriority["Overall"] = map[string]int{}
     tcExecutedByPriority["Overall"] = map[string][]*testcase.TestCaseExecutionInfo{}
     tcNotExecutedByPriority["Overall"] = map[string][]*testcase.TestCaseExecutionInfo{}
+
+    for _, status := range StatusKeys {
+        statusCountByPriority["Overall"][status] = 0
+    }
 }
 
 func GetDummyRootTc() testcase.TestCase {

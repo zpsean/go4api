@@ -17,6 +17,7 @@ var Index = `<!DOCTYPE html>
     <link href="style/go4api.css" rel="stylesheet" type="text/css"/>
     <script type="text/javascript" src="js/go4api.js"></script>
     <script type="text/javascript" src="js/reslts.js"></script>
+    <script type="text/javascript" src="js/stats.js"></script>
     <title>Go4Api Stats</title>
 </head>
 
