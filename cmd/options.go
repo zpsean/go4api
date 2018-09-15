@@ -98,7 +98,7 @@ Usage:
   go4api [command] [options]
 
 Available Commands:
-  run         Start a load test
+  run         Start a test
   convert     Convert a HAR file / Swagger API file to a go4api Json test case
 
 Command: run

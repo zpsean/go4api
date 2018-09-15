@@ -10,10 +10,6 @@
 
 package js
 
-var Results = `
-var pStartUnixNano = {{.PStart_time}}
-var pStart = {{.PStart}}
-var pEndUnixNano = {{.PEnd_time}}
-var pEnd = {{.PEnd}}
-var tcResults = {{.TcReportStr}}
+var Stats = `
+var stats = {{.StatsStr}}
 `

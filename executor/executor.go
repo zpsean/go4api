@@ -41,7 +41,7 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
     fmt.Println("------------------")
     //
     prioritySet := GetPrioritySet(tcArray)
-    classifications := GetTestCasesByPriority(prioritySet, tcArray)
+    _, tcClassifedCountMap := GetTestCasesByPriority(prioritySet, tcArray)
     // Note, before starting execution, needs to sort the priorities_set first by priority
     // Note: here is a bug, as the sort results is 1, 10, 11, 2, 3, etc. => fixed
     prioritySet_Int := utils.ConvertStringArrayToIntArray(prioritySet)
@@ -56,7 +56,6 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
     logFilePtr := reports.OpenExecutionResultsLogFile(resultsDir + pStart + ".log")
     
     for _, priority := range prioritySet {
-        tcArrayPriority := classifications[priority]
         fmt.Println("====> Priority " + priority + " starts!")
         
         miniLoop:
@@ -96,28 +95,11 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
             }
         }
         CollectNodeStatusByPriority(root, priority)
-
         // (5). also need to put out the cases which has not been executed (i.e. not Success, Fail)
-        notRunTime := time.Now()
-        for i, _ := range tcNotExecutedByPriority[priority] {
-            for _, tcExecution := range tcNotExecutedByPriority[priority][i] {
-                // [casename, priority, parentTestCase, ...], tc, jsonFile, csvFile, row in csv
-                if tcExecution.Priority() == priority {
-                    // set some dummy time for the tc not executed
-                    tcExecution.StartTimeUnixNano =notRunTime.UnixNano()
-                    tcExecution.EndTimeUnixNano = notRunTime.UnixNano()
-                    tcExecution.DurationUnixNano = notRunTime.UnixNano() - notRunTime.UnixNano()
+        WriteNotNotExecutedToLog(priority, logFilePtr)
 
-                    tcReportResults := tcExecution.TcReportResults()
-                    repJson, _ := json.Marshal(tcReportResults)
-                    //
-                    reports.WriteExecutionResults(string(repJson), logFilePtr)
-                    // to console
-                }
-            }
-        }
         // report to console
-        reports.ReportConsoleByPriority(len(tcArrayPriority), priority, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+        reports.ReportConsoleByPriority(tcClassifedCountMap[priority], priority, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
 
         fmt.Println("====> Priority " + priority + " ended!")
         fmt.Println("")
@@ -127,13 +109,14 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
     logFilePtr.Close()
 
     CollectOverallNodeStatus(root, "Overall")
-    reports.ReportConsoleByPriority(len(tcArray), "Overall", statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    reports.ReportConsoleOverall(len(tcArray), "Overall", statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
     
     // generate the html report based on template, and results data
     // time.Sleep(1 * time.Second)
     pEnd_time := time.Now()
     //
-    reports.GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time)
+    reports.GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time, 
+        tcClassifedCountMap, len(tcArray), statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
     //
     fmt.Println("Report Generated at: " + resultsDir + "index.html")
     fmt.Println("Execution Finished at: " + pEnd_time.String())
@@ -142,6 +125,26 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
     ch <- statusCountByPriority["Overall"]["Fail"]
 }
 
+
+func WriteNotNotExecutedToLog(priority string, logFilePtr *os.File) {
+    notRunTime := time.Now()
+    for i, _ := range tcNotExecutedByPriority[priority] {
+        for _, tcExecution := range tcNotExecutedByPriority[priority][i] {
+            // [casename, priority, parentTestCase, ...], tc, jsonFile, csvFile, row in csv
+            if tcExecution.Priority() == priority {
+                // set some dummy time for the tc not executed
+                tcExecution.StartTimeUnixNano = notRunTime.UnixNano()
+                tcExecution.EndTimeUnixNano = notRunTime.UnixNano()
+                tcExecution.DurationUnixNano = notRunTime.UnixNano() - notRunTime.UnixNano()
+
+                tcReportResults := tcExecution.TcReportResults()
+                repJson, _ := json.Marshal(tcReportResults)
+                //
+                reports.WriteExecutionResults(string(repJson), logFilePtr)
+            }
+        }
+    }
+}
 
 func GetTcArray() []testcase.TestCaseDataInfo { 
     var tcArray []testcase.TestCaseDataInfo
@@ -298,18 +301,21 @@ func GetPrioritySet(tcArray []testcase.TestCaseDataInfo) []string {
 
 
 
-func GetTestCasesByPriority(prioritySet []string, tcArray []testcase.TestCaseDataInfo) map[string][]testcase.TestCaseDataInfo {
+func GetTestCasesByPriority(prioritySet []string, tcArray []testcase.TestCaseDataInfo) (map[string][]testcase.TestCaseDataInfo, map[string]int) {
     // build the map
-    classifications := make(map[string][]testcase.TestCaseDataInfo)
+    tcClassifedMap := make(map[string][]testcase.TestCaseDataInfo)
+    tcClassifedCountMap := make(map[string]int)
+
     for _, entry := range prioritySet {
         for _, tcaseData := range tcArray {
             if entry == tcaseData.Priority() {
-                classifications[entry] = append(classifications[entry], tcaseData)
+                tcClassifedMap[entry] = append(tcClassifedMap[entry], tcaseData)
+                tcClassifedCountMap[entry] += 1
             }
         }
     }
 
-    return classifications
+    return tcClassifedMap, tcClassifedCountMap
 }
 
 

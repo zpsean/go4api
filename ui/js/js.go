@@ -11,20 +11,15 @@
 package js
 
 var Js = `
-function tabPageControl(n)
-{
-for (var i = 0; i < tabTitles.cells.length; i++)
-{
-tabTitles.cells[i].className = "tabTitleUnSelected";
-}
-tabTitles.cells[n].className = "tabTitleSelected";
+function tabPageControl(n) {
+	for (var i = 0; i < tabTitles.cells.length; i++) {
+		tabTitles.cells[i].className = "tabTitleUnSelected";
+	}
+	tabTitles.cells[n].className = "tabTitleSelected";
 
-for (var i = 0; i < tabPagesContainer.tBodies.length; i++)
-{
-tabPagesContainer.tBodies[i].className = "tabPageUnSelected";
+	for (var i = 0; i < tabPagesContainer.tBodies.length; i++) {
+		tabPagesContainer.tBodies[i].className = "tabPageUnSelected";
+	}
+	tabPagesContainer.tBodies[n].className = "tabPageSelected";
 }
-tabPagesContainer.tBodies[n].className = "tabPageSelected";
-}
-
-
 `

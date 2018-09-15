@@ -15,6 +15,7 @@ import (
 	"os"
     "time"
     "strconv"
+    "strings"
     "encoding/json"
 
     "go4api/lib/testcase"
@@ -36,31 +37,63 @@ const CLR_W = "\x1b[37;1m"
 const CLR_N = "\x1b[0m"
 
 
-func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time) {
-    // read the resource under /ui/*
-    // copy the value of var Index to file
+func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time,
+        tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
+        tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
+        tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) {
+    // --------
+
     utils.GenerateFileBasedOnVarOverride(ui.Index, resultsDir + "index.html")
     // (0)
     err := os.MkdirAll(resultsDir + "js", 0777)
     if err != nil {
       panic(err) 
     }
-    // (1). get js/reslts.js
     logResultsFile := resultsDir + pStart + ".log"
-    jsResults := resultsDir + "/js/reslts.js"
-    //
-    texttmpl.GenerateHtmlJsCSSFromTemplateAndVar(js.Results, pStart_time, pEnd_time, jsResults, logResultsFile)
+
+    statsFile := resultsDir + "/js/stats.js"
+    tcStats := GetStats(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    statsJs := tcStats.PrepStatsReport()
+
+    texttmpl.GenerateStatsJs(js.Stats, statsFile, statsJs, logResultsFile)
+
+    // (1). get js/reslts.js
+    resultsFile := resultsDir + "/js/reslts.js"
+    resultsJs := GetResultsJs(pStart_time, pEnd_time, logResultsFile)
+
+    texttmpl.GenerateResultsJs(js.Results, resultsFile, resultsJs, logResultsFile)
+    
     // (2). get js/go4api.js
     utils.GenerateFileBasedOnVarOverride(js.Js, resultsDir + "js/go4api.js")
-    //
+    
+    // (3). get style/go4api.css
     err = os.MkdirAll(resultsDir + "style", 0777)
     if err != nil {
       panic(err) 
     }
-    // (3). get style/go4api.css
     utils.GenerateFileBasedOnVarOverride(style.Style, resultsDir + "style/go4api.css")
 }
 
+func GetResultsJs (pStart_time time.Time, pEnd_time time.Time, logResultsFile string) *texttmpl.ResultsJs {
+    // get the data from the log results file, used for ui
+    var tcReportStr string
+
+    jsonLinesBytes := utils.GetContentFromFile(logResultsFile)
+    jsonLines := string(jsonLinesBytes)
+    //
+    jsonLines = strings.Replace(jsonLines, "\n", ",", strings.Count(jsonLines, "\n") - 1)
+    tcReportStr = `[` + jsonLines + `]`        
+    //
+    resultsJs := texttmpl.ResultsJs {
+        PStart_time: pStart_time.UnixNano(), 
+        PStart: `"` + pStart_time.String() + `"`, 
+        PEnd_time: pEnd_time.UnixNano(), 
+        PEnd: `"` + pEnd_time.String() + `"`, 
+        TcReportStr: tcReportStr,
+    }
+     
+    return &resultsJs
+}
 
 func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo, actualBody []byte) {
     tcReportResults := tcExecution.TcConsoleResults()
@@ -107,36 +140,38 @@ func ReportConsoleByPriority (totalTc int, priority string, statusCountByPriorit
         tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
         tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) {
     // ---
+    var totalCount = statusCountByPriority[priority]["Total"]
     var successCount = statusCountByPriority[priority]["Success"]
     var failCount = statusCountByPriority[priority]["Fail"]
     var skipCount = statusCountByPriority[priority]["ParentFailed"]
     //
-    fmt.Println("---------------------------------------------------------------------------")
-    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(totalTc) + " Cases in template -----")
-    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(statusCountByPriority[priority]["Total"]) + " Cases put onto tcTree -----")
-    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(skipCount) + " Cases Skipped (Not Executed, due to Parent Failed) -----")
-    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(successCount + failCount) + " Cases Executed -----")
-    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(successCount) + " Cases Success -----")
-    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(failCount) + " Cases Fail -----")
-    fmt.Println("---------------------------------------------------------------------------")
+    fmt.Println("---------------------------------------------------------------------------------")
+    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(totalTc) + " Cases in Source")
+    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(totalCount) + " Cases recognized from template")
+    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(successCount + failCount) + " Cases Executed")
+    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(successCount) + " Cases Success")
+    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(failCount) + " Cases Fail")
+    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(skipCount) + " Cases Skipped (Not Executed, due to Parent Failed)")
+    fmt.Println("---------------------------------------------------------------------------------")
 }
 
 func ReportConsoleOverall (totalTc int, key string, statusCountByPriority map[string]map[string]int, 
         tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
         tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) {
     // ---
+    var totalCount = statusCountByPriority[key]["Total"]
     var successCount = statusCountByPriority[key]["Success"]
     var failCount = statusCountByPriority[key]["Fail"]
     var skipCount = statusCountByPriority[key]["ParentFailed"]
     //
-    fmt.Println("---------------------------------------------------------------------------")
-    fmt.Println("----- " + key + ": " + strconv.Itoa(totalTc) + " Cases in template -----")
-    fmt.Println("----- " + key + ": " + strconv.Itoa(statusCountByPriority[key]["Total"]) + " Cases put onto tcTree -----")
-    fmt.Println("----- " + key + ": " + strconv.Itoa(skipCount) + " Cases Skipped (Not Executed, due to Parent Failed) -----")
-    fmt.Println("----- " + key + ": " + strconv.Itoa(successCount + failCount) + " Cases Executed -----")
-    fmt.Println("----- " + key + ": " + strconv.Itoa(successCount) + " Cases Success -----")
-    fmt.Println("----- " + key + ": " + strconv.Itoa(failCount) + " Cases Fail -----")
-    fmt.Println("---------------------------------------------------------------------------")
+    fmt.Println("---------------------------------------------------------------------------------")
+    fmt.Println("----- " + key + ": " + strconv.Itoa(totalTc) + " Cases in Source")
+    fmt.Println("----- " + key + ": " + strconv.Itoa(totalCount) + " Cases recognized from template")
+    fmt.Println("----- " + key + ": " + strconv.Itoa(successCount + failCount) + " Cases Executed")
+    fmt.Println("----- " + key + ": " + strconv.Itoa(successCount) + " Cases Success")
+    fmt.Println("----- " + key + ": " + strconv.Itoa(failCount) + " Cases Fail")
+    fmt.Println("----- " + key + ": " + strconv.Itoa(skipCount) + " Cases Skipped (Not Executed, due to Parent Failed)")
+    fmt.Println("---------------------------------------------------------------------------------")
 }
 
 func filterTestMessages (testMessages []*testcase.TestMessage) []*testcase.TestMessage {

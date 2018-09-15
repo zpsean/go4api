@@ -72,12 +72,11 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
                         EndTimeUnixNano: 0,
                         DurationUnixNano: 0,
                     }
-
                     ifAdded := AddNode(tcaseExecution)
                     if ifAdded && true {
-                        fmt.Println("----- Child added: ", tcData.TcName())
+                        fmt.Println("-> Child added: ", tcData.TcName())
                     } else {
-                        fmt.Println("----- Child not added: ", tcData.TcName())
+                        fmt.Println("-> Child not added: ", tcData.TcName())
                     }
                 }
             }
@@ -107,13 +106,14 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
     logFilePtr.Close()
     
     CollectOverallNodeStatus(root, "Overall")
-    reports.ReportConsoleByPriority(len(tcArray), "Overall", statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    reports.ReportConsoleOverall(statusCountByPriority["Overall"]["Total"], "Overall", statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
 
     // generate the html report based on template, and results data
     // time.Sleep(1 * time.Second)
     pEnd_time := time.Now()
     //
-    reports.GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time)
+    reports.GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time, 
+        map[string]int{}, statusCountByPriority["Overall"]["Total"], statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
     //
     fmt.Println("---------------------------------------------------------------------------")
     fmt.Println("Report Generated at: " + resultsDir + "index.html")
