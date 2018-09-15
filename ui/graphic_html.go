@@ -161,7 +161,7 @@ var Graphic = `
       </div>
   </div>
   <div class="foot">
-      <a href="https://github.com/zpsean/go4api" title="Go4Api Home Page"><img alt="Go4Api" src="style/logo-gatling.jpg"/></a>
+      <a href="https://github.com/zpsean/go4api" title="Go4Api Home Page"><img alt="Go4Api" src="style/logo.png"/></a>
   </div>
 </body>
 </html>
