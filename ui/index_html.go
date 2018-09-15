@@ -88,6 +88,11 @@ var Index = `
 
                       <div class="schema p_right">
                         <div id="priority_1_percentage"></div>
+                        <svg width="100px" height="100px" viewBox="0 0 100 100">
+                          <circle r="25" cx="50" cy="50" fill="none" stroke="#399C2B" stroke-width="50" stroke-dasharray="16 158" />
+                          <circle r="25" cx="50" cy="50" fill="none" stroke="#9A4324" stroke-width="50" stroke-dasharray="48 158" stroke-dashoffset="-16"/>
+                          <circle r="25" cx="50" cy="50" fill="none" stroke="#9C9CB2" stroke-width="50" stroke-dasharray="79 158" stroke-dashoffset="-64"/>
+                        </svg>
                       </div>
 
                       <div class="schema p_left">
@@ -120,7 +125,7 @@ var Index = `
       </div>
   </div>
   <div class="foot">
-      <a href="https://github.com/zpsean/go4api" title="Go4Api Home Page"><img alt="Go4Api" src="style/logo-gatling.jpg"/></a>
+      <a href="https://github.com/zpsean/go4api" title="Go4Api Home Page"><img alt="Go4Api" src="style/logo.png"/></a>
   </div>
 </body>
 </html>

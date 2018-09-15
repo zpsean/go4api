@@ -15,9 +15,10 @@ import (
     "os"
     "io"
     "strings"
+    "strconv"
     "path/filepath"
     "encoding/csv"
-    "strconv"
+    "encoding/base64"
 )
 
 func GetCurrentDir() string{
@@ -203,6 +204,24 @@ func GenerateCsvFileBasedOnVarOverride(strVarSlice []string, filePath string) {
     w.Flush()
 }
 
+func GeneratePicture(bytesVar []byte, filePath string) {
+    outFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+    if err != nil {
+       panic(err) 
+    }
+    defer outFile.Close()
+
+    outFile.Write(bytesVar)
+}
+
+func DecodeBase64(b64 string) []byte {
+    sDec, err := base64.StdEncoding.DecodeString(b64)
+    if err != nil {
+       panic(err) 
+    }
+
+    return sDec
+}
 
 func CreateTempDir (filePath string) string {
     err := os.MkdirAll(filepath.Dir(filePath) + "/temp", 0777)
