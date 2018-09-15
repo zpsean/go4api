@@ -11,7 +11,7 @@
 package reports
 
 import (
- 	"fmt"
+ 	// "fmt"
  	"encoding/json"
 
 	"go4api/lib/testcase"
@@ -78,8 +78,6 @@ func GetStats (tcClassifedCountMap map[string]int, totalTc int, statusCountByPri
     	StatusStats: statusStats,
     	StatusStatsPercentage: statusStatsPercentage,
     }
-    statsJson, _ := json.MarshalIndent(tcStats, "", "\t")
-    fmt.Println(string(statsJson))
 
     return tcStats
 }
