@@ -29,8 +29,6 @@ var Details = `
       </div>
       <div class="main">
           <div class="skeleton">
-              <h1>Go4Api Executions</h1>
-              
               <div class="content">
                   <div class="sous-menu">
                       <div class="item "><a href="index.html">Overview</a></div>
@@ -38,10 +36,10 @@ var Details = `
                       <div class="item selected"><a id="details_link" href="details.html">Details</a></div>
 
                       <script type="text/javascript">
-                        var timestamp = 1523957748602;
-                        var runStartHumanDate = moment(timestamp).format("YYYY-MM-DD HH:mm:ss Z");
-                        document.writeln("<p class='sim_desc' title='"+ runStartHumanDate +", duration : 1 seconds' data-content=''>");
-                        document.writeln("<b>" + runStartHumanDate + ", duration : 10 seconds </b>");
+                        // var timestamp = 1523957748602;
+                        // var runStartHumanDate = moment(timestamp).format("YYYY-MM-DD HH:mm:ss Z");
+                        document.writeln("<p class='sim_desc' title='" +"Started at 2018-xx-xx, duration : 10 seconds' data-content=''>");
+                        document.writeln("<b>" + "Started at 2018-xx-xx, duration : 10 seconds </b>");
                         document.writeln("</p>");
                       </script>
                   </div>
@@ -49,8 +47,14 @@ var Details = `
 
                   <div class="content-in">
                     <div>
-                        <div id="search" class="search">Search</div>
-                        <input type="text" name="search_text" value="Please enter search text here">
+                        <select>
+                          <option value ="Priority">Priority</option>
+                          <option value ="Case ID">Case ID</option>
+                          <option value="ParentTestCase">ParentTestCase</option>
+                          <option value="Status">Status</option>
+                        </select>
+
+                        <input type="text" size="50" name="search_text" value="Please enter search text here">
                         <button type="button">Search!</button>
                     </div>
 
@@ -135,7 +139,7 @@ var Details = `
       </div>
   </div>
   <div class="foot">
-      <a href="https://github.com/zpsean/go4api" title="Go4Api Home Page"><img alt="Go4Api" src="style/logo.png"/></a>
+      <a href="https://github.com/zpsean/go4api" title="Go4Api Home Page"><img alt="Go4Api" src="style/logosmall.png"/></a>
   </div>
 </body>
 </html>
