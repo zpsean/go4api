@@ -75,7 +75,10 @@ func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string,
     }
     utils.GenerateFileBasedOnVarOverride(style.Style, resultsDir + "style/go4api.css")
 
-    bytes := utils.DecodeBase64(style.Logo)
+    bytes := utils.DecodeBase64(style.LogoSmall)
+    utils.GeneratePicture(bytes, resultsDir + "style/logosmall.png")
+
+    bytes = utils.DecodeBase64(style.Logo)
     utils.GeneratePicture(bytes, resultsDir + "style/logo.png")
 
     bytes = utils.DecodeBase64(style.ArrowRight)
