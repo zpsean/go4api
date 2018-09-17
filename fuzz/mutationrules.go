@@ -12,12 +12,13 @@ package fuzz
 
 import (                                                                                                                                             
     // "os"
-    // "time"
+    "time"
     "fmt"
     "math"
     "reflect"
     // "path/filepath"
     "strings"
+    "math/rand"
     // "strconv"
     // "go4api/utils"  
 )
@@ -124,6 +125,8 @@ import (
 // (2) -> add new key/value
 // (3) -> remove key/value (one each time)
 // (4) -> remove key/value (all)
+
+var nilNull *int
 
 //
 func (mtD MutationDetails) DetermineMutationType() string {
@@ -418,3 +421,241 @@ func MBoolR3 (currValue interface{}, fieldType string, fieldSubType string) inte
     return mutatedValue
 }
 
+// < --------------- Array ------------->
+// blank []
+func MArrayR1(currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue []interface{}
+
+    return mutatedValue
+}
+
+// remove one (random)
+func MArrayR2(currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue []interface{}
+    lenght := len(reflect.ValueOf(currValue).Interface().([]interface{}))
+    if lenght > 0 {
+        rand.Seed(time.Now().UnixNano())
+        randInt := rand.Intn(lenght)
+
+        for i, v := range reflect.ValueOf(currValue).Interface().([]interface{}) {
+            if i != randInt {
+                mutatedValue = append(mutatedValue, v)
+            }
+        }
+    }
+    return mutatedValue
+}
+
+// just keep one item (random)
+func MArrayR3(currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue []interface{}
+    lenght := len(reflect.ValueOf(currValue).Interface().([]interface{}))
+    if lenght > 0 {
+        rand.Seed(time.Now().UnixNano())
+        randInt := rand.Intn(lenght)
+
+        for i, v := range reflect.ValueOf(currValue).Interface().([]interface{}) {
+            if i == randInt {
+                mutatedValue = append(mutatedValue, v)
+                break
+            }
+        }
+    }
+    return mutatedValue
+}
+
+// repeat one item (random)
+func MArrayR4 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue []interface{}
+    lenght := len(reflect.ValueOf(currValue).Interface().([]interface{}))
+    if lenght > 0 {
+        rand.Seed(time.Now().UnixNano())
+        randInt := rand.Intn(lenght)
+
+        for i, v := range reflect.ValueOf(currValue).Interface().([]interface{}) {
+            if i == randInt {
+                mutatedValue = append(mutatedValue, v)
+            }
+            mutatedValue = append(mutatedValue, v)
+        }
+    }
+    return mutatedValue
+}
+
+// append one but another type, if int, then append string item, vice verse
+func MArrayR5 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue []interface{}
+    lenght := len(reflect.ValueOf(currValue).Interface().([]interface{}))
+    if lenght > 0 {
+        // currValueSlice := reflect.ValueOf(currValue).Interface().([]interface{})
+        for _, v := range reflect.ValueOf(currValue).Interface().([]interface{}) {
+            mutatedValue = append(mutatedValue, v)
+        }
+ 
+        switch reflect.TypeOf(mutatedValue[0]).Kind() {
+            case reflect.Int:
+                mutatedValue = append(mutatedValue, "123")
+            case reflect.String:
+                mutatedValue = append(mutatedValue, 124)
+            default:
+                mutatedValue = append(mutatedValue, "125")
+        }
+    }
+    return mutatedValue
+}
+
+// replace one (random) but another type, if int, then append string item, vice verse
+func MArrayR6 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue []interface{}
+    lenght := len(reflect.ValueOf(currValue).Interface().([]interface{}))
+    if lenght > 0 {
+        for _, v := range reflect.ValueOf(currValue).Interface().([]interface{}) {
+            mutatedValue = append(mutatedValue, v)
+        }
+ 
+        rand.Seed(time.Now().UnixNano())
+        randInt := rand.Intn(lenght)
+
+        switch reflect.TypeOf(mutatedValue[0]).Kind() {
+            case reflect.Int:
+                mutatedValue[randInt] = "123"
+            case reflect.String:
+                mutatedValue[randInt] = 124
+            default:
+                mutatedValue[randInt] = "125"
+        }
+    }
+    return mutatedValue
+}
+
+// replace one (random) to nil (i.e. json null)
+func MArrayR7 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue []interface{}
+    lenght := len(reflect.ValueOf(currValue).Interface().([]interface{}))
+    if lenght > 0 {
+        for _, v := range reflect.ValueOf(currValue).Interface().([]interface{}) {
+            mutatedValue = append(mutatedValue, v)
+        }
+ 
+        rand.Seed(time.Now().UnixNano())
+        randInt := rand.Intn(lenght)
+
+        mutatedValue[randInt] = nilNull
+    }
+    return mutatedValue
+}
+
+// replace one (random) to bool - true
+func MArrayR8 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue []interface{}
+    lenght := len(reflect.ValueOf(currValue).Interface().([]interface{}))
+    if lenght > 0 {
+        for _, v := range reflect.ValueOf(currValue).Interface().([]interface{}) {
+            mutatedValue = append(mutatedValue, v)
+        }
+ 
+        rand.Seed(time.Now().UnixNano())
+        randInt := rand.Intn(lenght)
+
+        mutatedValue[randInt] = true
+    }
+    return mutatedValue
+}
+
+// replace one (random) to bool - false
+func MArrayR9 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue []interface{}
+    lenght := len(reflect.ValueOf(currValue).Interface().([]interface{}))
+    if lenght > 0 {
+        for _, v := range reflect.ValueOf(currValue).Interface().([]interface{}) {
+            mutatedValue = append(mutatedValue, v)
+        }
+ 
+        rand.Seed(time.Now().UnixNano())
+        randInt := rand.Intn(lenght)
+
+        mutatedValue[randInt] = false
+    }
+    return mutatedValue
+}
+
+// set the [] has only item nil (i.e. json null)
+func MArrayR10 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue []interface{}
+    mutatedValue = append(mutatedValue, nilNull)
+
+    return mutatedValue
+}
+
+// set the [] has only item int
+func MArrayR11 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue []interface{}
+    mutatedValue = append(mutatedValue, 123)
+
+    return mutatedValue
+}
+
+// set the [] has only item string
+func MArrayR12 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue []interface{}
+    mutatedValue = append(mutatedValue, "123")
+
+    return mutatedValue
+}
+
+// set the [] has only item bool - true
+func MArrayR13 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue []interface{}
+    mutatedValue = append(mutatedValue, true)
+
+    return mutatedValue
+}
+
+// set the [] has only item bool - false
+func MArrayR14 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue []interface{}
+    mutatedValue = append(mutatedValue, false)
+
+    return mutatedValue
+}
+
+
+// set the [] to int
+func MArrayR15 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue interface{}
+    mutatedValue = 123
+
+    return mutatedValue
+}
+
+// set the [] to string
+func MArrayR16 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue interface{}
+    mutatedValue = "123"
+
+    return mutatedValue
+}
+
+// set the [] to bool - true
+func MArrayR17 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue interface{}
+    mutatedValue = true
+
+    return mutatedValue
+}
+
+// set the [] to bool - false
+func MArrayR18 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue interface{}
+    mutatedValue = false
+
+    return mutatedValue
+}
+
+// set the [] to nil (i.e. json null)
+func MArrayR19 (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue interface{}
+    mutatedValue = nilNull
+
+    return mutatedValue
+}
