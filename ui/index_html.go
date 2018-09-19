@@ -34,6 +34,8 @@ var Index = `
                       <div class="item selected"><a href="index.html">Overview</a></div>
                       <div class="item "><a id="graphic_link" href="graphic.html">Graphic</a></div>
                       <div class="item "><a id="details_link" href="details.html">Details</a></div>
+                      <div class="item "><a id="mutation_link" href="mutation.html">Mutation</a></div>
+                      <div class="item "><a id="fuzz_link" href="fuzz.html">Fuzz</a></div>
 
                       <script type="text/javascript">
                         // var timestamp = 1523957748602;

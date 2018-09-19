@@ -80,6 +80,7 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
 
 
 func CallHttp(baseUrl string, tcData testcase.TestCaseDataInfo) (int, http.Header, []byte) {
+    // urlStr := tcData.TestCase.UrlRaw(baseUrl)
     urlStr := tcData.TestCase.UrlEncode(baseUrl)
     //
     apiMethodSelector, apiMethod, bodyText, bodyMultipart, boundary := GetPayloadInfo(tcData)
