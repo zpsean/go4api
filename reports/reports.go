@@ -18,6 +18,7 @@ import (
     "strings"
     "encoding/json"
 
+    "go4api/cmd"
     "go4api/lib/testcase"
     "go4api/ui"     
     "go4api/ui/js"  
@@ -46,6 +47,8 @@ func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string,
     utils.GenerateFileBasedOnVarOverride(ui.Index, resultsDir + "index.html")
     utils.GenerateFileBasedOnVarOverride(ui.Graphic, resultsDir + "graphic.html")
     utils.GenerateFileBasedOnVarOverride(ui.Details, resultsDir + "details.html")
+    utils.GenerateFileBasedOnVarOverride(ui.Fuzz, resultsDir + "fuzz.html")
+    utils.GenerateFileBasedOnVarOverride(ui.Mutation, resultsDir + "mutation.html")
     // (0)
     err := os.MkdirAll(resultsDir + "js", 0777)
     if err != nil {
@@ -126,7 +129,7 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo, actualBody [
             tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
             tcReportResults.ActualStatusCode, CLR_N)
 
-        if tcReportResults.MutationInfo != nil {
+        if cmd.Opt.IfMutation {
             fmt.Println(tcReportResults.MutationInfo)
         }
         
@@ -143,7 +146,7 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo, actualBody [
             tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
             tcReportResults.ActualStatusCode, CLR_N)
 
-        if tcReportResults.MutationInfo != nil {
+        if cmd.Opt.IfMutation {
             fmt.Println(tcReportResults.MutationInfo)
         }
     }

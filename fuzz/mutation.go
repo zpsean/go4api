@@ -111,7 +111,8 @@ func MutateSetRequestHeader (originTcData testcase.TestCaseDataInfo, tcJson []by
         for _, mutatedValue := range mutatedValues {
             i = i + 1
             tcSuffix = "-M-H-S-" + fmt.Sprint(i)
-            mutationInfo := "Update/Set header key: " + key + ", `" + fmt.Sprint(mutationDetails.CurrValue) + "`, `" + fmt.Sprint(mutatedValue) + "`"
+            mutationInfo := "Update/Set header key: " + key + ", `" + fmt.Sprint(mutationDetails.CurrValue) + "`, `" + fmt.Sprint(mutatedValue.MutatedValue) + "`" +
+                "\nUsing Mutation Rule: " + mutatedValue.MutationRule
             
             //-- set new info to mutated tc
             var mTcData testcase.TestCaseDataInfo
@@ -121,7 +122,7 @@ func MutateSetRequestHeader (originTcData testcase.TestCaseDataInfo, tcJson []by
             mTcData.TestCase.SetPriority(fmt.Sprint(1))
             mTcData.MutationInfo = mutationInfo
 
-            mTcData.TestCase.SetRequestHeader(key, fmt.Sprint(mutatedValue))
+            mTcData.TestCase.SetRequestHeader(key, fmt.Sprint(mutatedValue.MutatedValue))
             //
             mutatedTcArray = append(mutatedTcArray, mTcData)
         }
@@ -236,7 +237,8 @@ func MutateSetRequestQueryString (originTcData testcase.TestCaseDataInfo, tcJson
         for _, mutatedValue := range mutatedValues {
             i = i + 1
             tcSuffix = "-M-QS-S-" + fmt.Sprint(i)
-            mutationInfo := "Update/Set header key: " + key + ", `" + fmt.Sprint(mutationDetails.CurrValue) + "`, `" + fmt.Sprint(mutatedValue) + "`"
+            mutationInfo := "Update/Set header key: " + key + ", `" + fmt.Sprint(mutationDetails.CurrValue) + "`, `" + fmt.Sprint(mutatedValue.MutatedValue) + "`" +
+                "\nUsing Mutation Rule: " + mutatedValue.MutationRule
 
             //-- set new info to mutated tc
             var mTcData testcase.TestCaseDataInfo
@@ -246,7 +248,7 @@ func MutateSetRequestQueryString (originTcData testcase.TestCaseDataInfo, tcJson
             mTcData.TestCase.SetPriority(fmt.Sprint(5))
             mTcData.MutationInfo = mutationInfo
 
-            mTcData.TestCase.SetRequestQueryString(key, fmt.Sprint(mutatedValue))
+            mTcData.TestCase.SetRequestQueryString(key, fmt.Sprint(mutatedValue.MutatedValue))
             //
             mutatedTcArray = append(mutatedTcArray, mTcData)
         }
@@ -373,8 +375,10 @@ func MutateSetRequestPayload (originTcData testcase.TestCaseDataInfo, tcJson []b
             i = i + 1
             tcSuffix := "-M-PL-S-" + fmt.Sprint(i)
 
-            mutatedTcJson, _ := sjson.Set(string(tcJson), plFullPath, mutatedValue)
-            mutationInfo := fmt.Sprint(mutationDetails) + ", `" + fmt.Sprint(mutationDetails.CurrValue) + "`, `" + fmt.Sprint(mutatedValue) + "`"
+            mutatedTcJson, _ := sjson.Set(string(tcJson), plFullPath, mutatedValue.MutatedValue)
+            mDJsonByte, _ := json.Marshal(mutationDetails)
+            mutationInfo := fmt.Sprint(string(mDJsonByte)) + ", `" + fmt.Sprint(mutationDetails.CurrValue) + "`, `" + fmt.Sprint(mutatedValue.MutatedValue) + "`" +
+                "\nUsing Mutation Rule: " + mutatedValue.MutationRule
             //
             var mTcData testcase.TestCaseDataInfo
             json.Unmarshal([]byte(mutatedTcJson), &mTcData)

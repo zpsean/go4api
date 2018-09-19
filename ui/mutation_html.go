@@ -10,7 +10,7 @@
 
 package ui
 
-var Details = `
+var Mutation = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -33,8 +33,8 @@ var Details = `
                   <div class="sous-menu">
                       <div class="item "><a href="index.html">Overview</a></div>
                       <div class="item "><a id="graphic_link" href="graphic.html">Graphic</a></div>
-                      <div class="item selected"><a id="details_link" href="details.html">Details</a></div>
-                      <div class="item "><a id="mutation_link" href="mutation.html">Mutation</a></div>
+                      <div class="item "><a id="details_link" href="details.html">Details</a></div>
+                      <div class="item selected"><a id="mutation_link" href="mutation.html">Mutation</a></div>
                       <div class="item "><a id="fuzz_link" href="fuzz.html">Fuzz</a></div>
 
                       <script type="text/javascript">
@@ -89,51 +89,6 @@ var Details = `
                           </div>
                       </div>
                     </div>
-
-
-
-                      <table border="1" id="testTble" class="test-table">
-                            <col width="20" />
-                            <col width="20" />
-                            <col width="200" />
-                            <col width="200" />
-                            <col width="50" />
-                            <col width="250" />
-                            <col width="250" />
-                            <tr style='text-align: left'>
-                                <th>#</th>
-                                <th>Priority</th>
-                                <th>Case ID</th>
-                                <th>ParentTestCase</th>
-                                <th>Status</th>
-                                <th>Case File</th>
-                                <th>Message</th>
-                            </tr>
-                            
-                            <script type="text/javascript">
-                                for (var i = 0;i < tcResults.length; i++)
-                                {
-                                    var newTr = testTble.insertRow();
-                                    
-                                    var newTd0 = newTr.insertCell();
-                                    var newTd1 = newTr.insertCell();
-                                    var newTd2 = newTr.insertCell();
-                                    var newTd3 = newTr.insertCell();
-                                    var newTd4 = newTr.insertCell();
-                                    var newTd5 = newTr.insertCell();
-                                    var newTd6 = newTr.insertCell();
-                             
-                                    newTd0.innerText= i + 1;
-                                    newTd1.innerText = tcResults[i].Priority;
-                                    newTd2.innerText = tcResults[i].TcName;
-                                    newTd3.innerText = tcResults[i].ParentTestCase;
-                                    newTd4.innerText = tcResults[i].TestResult;
-                                    newTd5.innerText = tcResults[i].JsonFilePath + " / " + tcResults[i].CsvFile  + " / " + tcResults[i].CsvRow;
-                                    newTd6.innerText = JSON.stringify(tcResults[i].TestMessages, null, 4);
-                                }
-                            </script>
-
-                        </table>
 
                   </div>
               </div>
