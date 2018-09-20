@@ -19,11 +19,6 @@ import (
 )
 
 
-type TcStats struct {
-	StatusStats map[string]map[string]int
-	StatusStatsPercentage map[string]map[string]float64
-}
-
 var (
 	tcStats TcStats
 
@@ -80,5 +75,49 @@ func GetStats (tcClassifedCountMap map[string]int, totalTc int, statusCountByPri
     }
 
     return tcStats
+}
+
+
+func GetStatsJson (tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
+    tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
+    tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) *texttmpl.StatsJs {
+	
+	//-----
+	statsJsonBytes, _ := json.MarshalIndent(statusCountByPriority, "", "\t")
+
+	tcStatsReport := texttmpl.StatsJs {
+		StatsStr: string(statsJsonBytes),
+	}
+
+	return &tcStatsReport
+}
+
+
+func GetExecutedJson (tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
+    tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
+    tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) *texttmpl.StatsJs {
+	
+	//-----
+	statsJsonBytes, _ := json.MarshalIndent(tcExecutedByPriority, "", "\t")
+
+	tcStatsReport := texttmpl.StatsJs {
+		StatsStr: string(statsJsonBytes),
+	}
+
+	return &tcStatsReport
+}
+
+func GetNotExecutedJson (tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
+    tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
+    tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) *texttmpl.StatsJs {
+	
+	//-----
+	statsJsonBytes, _ := json.MarshalIndent(tcNotExecutedByPriority, "", "\t")
+
+	tcStatsReport := texttmpl.StatsJs {
+		StatsStr: string(statsJsonBytes),
+	}
+
+	return &tcStatsReport
 }
 

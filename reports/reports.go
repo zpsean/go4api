@@ -37,18 +37,44 @@ const CLR_C = "\x1b[36;1m"
 const CLR_W = "\x1b[37;1m"
 const CLR_N = "\x1b[0m"
 
+var (
+    ExecutionResultSlice []*testcase.TcReportResults
+)
 
 func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time,
         tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
         tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
         tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) {
     // --------
+    // html
+    GenerateHtml(resultsDir)
+    
+    // js
+    GenerateJs(resultsDir, pStart_time, pStart, pEnd_time, tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    
+    // style
+    GenerateStyle(resultsDir, pStart_time, pStart, pEnd_time, tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
 
+    //
+    statsJsonBytes, _ := json.MarshalIndent(ExecutionResultSlice, "", "\t")
+    fmt.Println("ExecutionResultSlice: ", string(statsJsonBytes))
+}
+
+
+func GenerateHtml (resultsDir string) {
     utils.GenerateFileBasedOnVarOverride(ui.Index, resultsDir + "index.html")
     utils.GenerateFileBasedOnVarOverride(ui.Graphic, resultsDir + "graphic.html")
     utils.GenerateFileBasedOnVarOverride(ui.Details, resultsDir + "details.html")
     utils.GenerateFileBasedOnVarOverride(ui.Fuzz, resultsDir + "fuzz.html")
     utils.GenerateFileBasedOnVarOverride(ui.Mutation, resultsDir + "mutation.html")
+}
+
+
+func GenerateJs (resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time,
+        tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
+        tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
+        tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) {
+    // --------
     // (0)
     err := os.MkdirAll(resultsDir + "js", 0777)
     if err != nil {
@@ -57,10 +83,24 @@ func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string,
     logResultsFile := resultsDir + pStart + ".log"
 
     statsFile := resultsDir + "/js/stats.js"
-    tcStats := GetStats(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
-    statsJs := tcStats.PrepStatsReport()
+    statsJson := GetStatsJson(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    texttmpl.GenerateStatsJs(js.Stats, statsFile, statsJson, logResultsFile)
 
-    texttmpl.GenerateStatsJs(js.Stats, statsFile, statsJs, logResultsFile)
+
+    statsFile = resultsDir + "/js/executed.js"
+    executedJson := GetExecutedJson(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    texttmpl.GenerateStatsJs(js.Executed, statsFile, executedJson, logResultsFile)
+
+
+    statsFile = resultsDir + "/js/noexecuted.js"
+    notexecutedJson := GetNotExecutedJson(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    texttmpl.GenerateStatsJs(js.NotExecuted, statsFile, notexecutedJson, logResultsFile)
+
+
+    statsFile = resultsDir + "/js/mutationstats.js"
+    mutationStats := GetMutationStatsJson(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    texttmpl.GenerateStatsJs(js.MutationStats, statsFile, mutationStats, logResultsFile)
+
 
     // (1). get js/reslts.js
     resultsFile := resultsDir + "/js/reslts.js"
@@ -70,9 +110,16 @@ func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string,
     
     // (2). get js/go4api.js
     utils.GenerateFileBasedOnVarOverride(js.Js, resultsDir + "js/go4api.js")
-    
-    // (3). get style/go4api.css
-    err = os.MkdirAll(resultsDir + "style", 0777)
+
+}
+
+
+func GenerateStyle (resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time,
+        tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
+        tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
+        tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) {
+    // --------
+    err := os.MkdirAll(resultsDir + "style", 0777)
     if err != nil {
       panic(err) 
     }
@@ -90,6 +137,7 @@ func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string,
     bytes = utils.DecodeBase64(style.ArrowDown)
     utils.GeneratePicture(bytes, resultsDir + "style/arrow_down.png")
 }
+
 
 func GetResultsJs (pStart_time time.Time, pEnd_time time.Time, logResultsFile string) *texttmpl.ResultsJs {
     // get the data from the log results file, used for ui
