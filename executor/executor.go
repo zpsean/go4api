@@ -82,6 +82,8 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
                     tcExecution.TestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
                 // (3). <--> for log write to file
                 tcReportResults := tcExecution.TcReportResults()
+                reports.ExecutionResultSlice = append(reports.ExecutionResultSlice, tcReportResults)
+
                 repJson, _ := json.Marshal(tcReportResults)
                 // (4). put the execution log into results
                 reports.WriteExecutionResults(string(repJson), logFilePtr)
@@ -138,6 +140,8 @@ func WriteNotNotExecutedToLog(priority string, logFilePtr *os.File) {
                 tcExecution.DurationUnixNano = notRunTime.UnixNano() - notRunTime.UnixNano()
 
                 tcReportResults := tcExecution.TcReportResults()
+                reports.ExecutionResultSlice = append(reports.ExecutionResultSlice, tcReportResults)
+                
                 repJson, _ := json.Marshal(tcReportResults)
                 //
                 reports.WriteExecutionResults(string(repJson), logFilePtr)

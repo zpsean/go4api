@@ -84,10 +84,13 @@ type TcReportResults struct {
     TcName string 
     Priority string
     ParentTestCase string
+    Path string
+    Method string
     JsonFilePath string
     CsvFile string
     CsvRow string
     MutationInfo interface{}
+    MutationMethod string
     TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
     ActualStatusCode int
     StartTime string

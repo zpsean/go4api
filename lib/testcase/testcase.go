@@ -278,6 +278,13 @@ func (tcData *TestCaseDataInfo) ParentTestCase() string {
     return tcData.TestCase.ParentTestCase()
 }
 
+func (tcData *TestCaseDataInfo) ReqMethod() string {
+    return tcData.TestCase.ReqMethod()
+}
+
+func (tcData *TestCaseDataInfo) ReqPath() string {
+    return tcData.TestCase.ReqPath()
+}
 
 // test case execution type
 func (tcExecution *TestCaseExecutionInfo) TcName() string {
@@ -290,6 +297,14 @@ func (tcExecution *TestCaseExecutionInfo) Priority() string {
 
 func (tcExecution *TestCaseExecutionInfo) ParentTestCase() string {
     return tcExecution.TestCaseDataInfo.ParentTestCase()
+}
+
+func (tcExecution *TestCaseExecutionInfo) ReqMethod() string {
+    return tcExecution.TestCaseDataInfo.ReqMethod()
+}
+
+func (tcExecution *TestCaseExecutionInfo) ReqPath() string {
+    return tcExecution.TestCaseDataInfo.ReqPath()
 }
 
 func (tcExecution *TestCaseExecutionInfo) TestCase() *TestCase {
@@ -338,6 +353,8 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
         TcName: tcExecution.TcName(),
         Priority: tcExecution.Priority(),
         ParentTestCase: tcExecution.ParentTestCase(),
+        Path: tcExecution.ReqPath(),
+        Method: tcExecution.ReqMethod(),
         JsonFilePath: tcExecution.TestCaseDataInfo.JsonFilePath,
         CsvFile: tcExecution.TestCaseDataInfo.CsvFile,
         CsvRow: tcExecution.TestCaseDataInfo.CsvRow,

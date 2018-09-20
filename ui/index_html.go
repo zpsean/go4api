@@ -85,9 +85,9 @@ var Index = `
                               </table>
 
                               <script type="text/javascript">
-                                    for (var k in stats.StatusStats)
+                                    for (var k in stats)
                                     {
-                                        for (var kk in stats.StatusStats[k])
+                                      for (var kk in stats[k])
                                         {
                                           if (kk == "Success" || kk == "Fail" || kk == "ParentFailed")
                                           {
@@ -105,17 +105,17 @@ var Index = `
                                      
                                             newTd0.innerText = k;
                                             newTd1.innerText = kk
-                                            newTd2.innerText = stats.StatusStats[k][kk];
-                                            newTd3.innerText = stats.StatusStats[k][kk];
-                                            newTd4.innerText = stats.StatusStats[k][kk];
-                                            newTd5.innerText = stats.StatusStats[k][kk];
-                                            newTd6.innerText = stats.StatusStats[k][kk];
-                                            newTd7.innerText = stats.StatusStats[k][kk];
-                                            newTd8.innerText = stats.StatusStats[k][kk];
+                                            newTd2.innerText = stats[k][kk];
+                                            newTd3.innerText = stats[k][kk];
+                                            newTd4.innerText = stats[k][kk];
+                                            newTd5.innerText = stats[k][kk];
+                                            newTd6.innerText = stats[k][kk];
+                                            newTd7.innerText = stats[k][kk];
+                                            newTd8.innerText = stats[k][kk];
                                           }
                                         } 
                                     }
-                                </script>
+                              </script>
 
                           </div>
                       </div>

@@ -20,6 +20,8 @@ var Mutation = `
     <script type="text/javascript" src="js/go4api.js"></script>
     <script type="text/javascript" src="js/reslts.js"></script>
     <script type="text/javascript" src="js/stats.js"></script>
+    <script type="text/javascript" src="js/executed.js"></script>
+    <script type="text/javascript" src="js/notexecuted.js"></script>
   <title>Go4Api Reports</title>
 </head>
 <body>
@@ -71,12 +73,14 @@ var Mutation = `
                               <thead>
                                   <tr>
                                       <th id="col-1" class="header sortable"><span>#</span></th>
-                                      <th id="col-2" class="header sortable"><span>Priority</span></th>
-                                      <th id="col-3" class="header sortable"><span>Case ID</span></th>
-                                      <th id="col-4" class="header sortable"><span>Status</span></th>
-                                      <th id="col-5" class="header sortable"><span>ParentTestCase</span></th>
-                                      <th id="col-6" class="header sortable"><span>Case Data</span></th>
-                                      <th id="col-7" class="header sortable"><span>Message</span></th>
+                                      <th id="col-2" class="header sortable"><span>HTTP URL</span></th>
+                                      <th id="col-2" class="header sortable"><span>HTTP Method</span></th>
+                                      <th id="col-3" class="header sortable"><span>Mutation Part</span></th>
+                                      <th id="col-4" class="header sortable"><span>Mutation Method</span></th>
+                                      <th id="col-4" class="header sortable"><span>HTTP Status</span></th>
+                                      <th id="col-5" class="header sortable"><span>Test Status</span></th>
+                                      <th id="col-6" class="header sortable"><span>Count</span></th>
+                                      <th id="col-7" class="header sortable"><span>Mutation Message</span></th>
                                   </tr>
                               </thead>
                               <tbody></tbody>
@@ -86,6 +90,43 @@ var Mutation = `
                               <table id="container_statistics_body" class="statistics-in extensible-geant">
                                   <tbody></tbody>
                               </table>
+
+
+                              <script type="text/javascript">
+                                for (var i = 0;i < tcResults.length; i++)
+                                  {
+                                    {
+                                      for (var kk in stats[k])
+                                        {
+                                          if (kk == "Success" || kk == "Fail")
+                                          {
+                                            var newTr = container_statistics_body.insertRow();
+                                            
+                                            var newTd0 = newTr.insertCell();
+                                            var newTd1 = newTr.insertCell();
+                                            var newTd2 = newTr.insertCell();
+                                            var newTd3 = newTr.insertCell();
+                                            var newTd4 = newTr.insertCell();
+                                            var newTd5 = newTr.insertCell();
+                                            var newTd6 = newTr.insertCell();
+                                            var newTd7 = newTr.insertCell();
+                                            var newTd8 = newTr.insertCell();
+                                     
+                                            newTd0.innerText = k;
+                                            newTd1.innerText = "http://10.202.128.78/api/admin/login"
+                                            newTd2.innerText = "POST"
+                                            newTd3.innerText = "headers";
+                                            newTd4.innerText = "Update / Set"
+                                            newTd5.innerText = "200"
+                                            newTd6.innerText = kk;
+                                            newTd7.innerText = stats[k][kk];
+                                            newTd8.innerText = "message"
+                                          }
+                                        } 
+                                    }
+                              </script>
+
+
                           </div>
                       </div>
                     </div>
