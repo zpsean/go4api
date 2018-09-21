@@ -56,8 +56,12 @@ func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string,
     GenerateStyle(resultsDir, pStart_time, pStart, pEnd_time, tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
 
     //
-    statsJsonBytes, _ := json.MarshalIndent(ExecutionResultSlice, "", "\t")
-    fmt.Println("ExecutionResultSlice: ", string(statsJsonBytes))
+    // statsJsonBytes, _ := json.MarshalIndent(ExecutionResultSlice, "", "\t")
+    // fmt.Println("ExecutionResultSlice: ", string(statsJsonBytes))
+    GetMutationDetailsJson(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    fmt.Println("")
+    GetMutationStatsJson2(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+
 }
 
 
@@ -178,7 +182,7 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo, actualBody [
             tcReportResults.ActualStatusCode, CLR_N)
 
         if cmd.Opt.IfMutation {
-            fmt.Println(tcReportResults.MutationInfo)
+            fmt.Println(tcReportResults.MutationInfoStr)
         }
         
         // fmt.Println(tcReportResults.MutationInfo)
@@ -195,7 +199,7 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo, actualBody [
             tcReportResults.ActualStatusCode, CLR_N)
 
         if cmd.Opt.IfMutation {
-            fmt.Println(tcReportResults.MutationInfo)
+            fmt.Println(tcReportResults.MutationInfoStr)
         }
     }
 }

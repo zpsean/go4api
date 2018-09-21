@@ -23,7 +23,7 @@ type MutationStats struct {
 	HttpUrl string
 	HttpMethod string
 	MutationPart string
-	MutationMethod string
+	MutationRule string
 	HttpStatus int
 	TestStatus string 
 	Count int
@@ -33,7 +33,7 @@ type MutationDetails struct {
 	HttpUrl string
 	HttpMethod string
 	MutationPart string
-	MutationMethod string
+	MutationRule string
 	HttpStatus int
 	TestStatus string 
 	MutationMessage string

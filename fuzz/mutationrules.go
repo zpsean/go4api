@@ -22,6 +22,8 @@ import (
     "math/rand"
     // "strconv"
     // "go4api/utils"  
+
+    // "go4api/lib/testcase"
 )
 
 // JSON Schema defines the following basic types:
@@ -128,8 +130,8 @@ import (
 // (4) -> remove key/value (all)
 
 type MutatedValue struct {
-    MutatedValue interface{}
     MutationRule string
+    MutatedValue interface{}
 }
 
 var (

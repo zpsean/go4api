@@ -19,7 +19,11 @@ type TestCaseDataInfo struct {
     JsonFilePath string
     CsvFile string
     CsvRow string
-    MutationInfo interface{}
+    MutationArea string
+    MutationCategory string
+    MutationRule string
+    MutationInfoStr interface{}
+    MutationInfo MutationInfo
 }
 
 // test case execution type, includes testdata
@@ -79,6 +83,14 @@ type OutputsDetails struct {
     Data map[string][]interface{}
 }
 
+type MutationInfo struct {
+    FieldPath []string
+    CurrValue interface{}
+    FieldType string // the json supported types
+    FieldSubType string  // like ip/email/phone/etc.
+    MutatedValue interface{}
+}
+
 // for report format 
 type TcReportResults struct { 
     TcName string 
@@ -89,8 +101,10 @@ type TcReportResults struct {
     JsonFilePath string
     CsvFile string
     CsvRow string
+    MutationArea string
+    MutationCategory string
+    MutationRule string
     MutationInfo interface{}
-    MutationMethod string
     TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
     ActualStatusCode int
     StartTime string
@@ -109,7 +123,7 @@ type TcConsoleResults struct {
     JsonFilePath string
     CsvFile string
     CsvRow string
-    MutationInfo interface{}
+    MutationInfoStr interface{}
     TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
     ActualStatusCode int
     TestMessages []*TestMessage
