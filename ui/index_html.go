@@ -10,8 +10,7 @@
 
 package ui
 
-var Index = `
-<!DOCTYPE html>
+var Index = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -20,6 +19,7 @@ var Index = `
     <script type="text/javascript" src="js/go4api.js"></script>
     <script type="text/javascript" src="js/reslts.js"></script>
     <script type="text/javascript" src="js/stats.js"></script>
+    <script type="text/javascript" src="js/Chart.bundle.min.js"></script>
   <title>Go4Api Reports</title>
 </head>
 <body>  
@@ -34,6 +34,7 @@ var Index = `
                       <div class="item selected"><a href="index.html">Overview</a></div>
                       <div class="item "><a id="graphic_link" href="graphic.html">Graphic</a></div>
                       <div class="item "><a id="details_link" href="details.html">Details</a></div>
+                      <div class="item "><a id="mindex_link" href="mindex.html">MutationOverview</a></div>
                       <div class="item "><a id="mutation_link" href="mutation.html">Mutation</a></div>
                       <div class="item "><a id="fuzz_link" href="fuzz.html">Fuzz</a></div>
 
@@ -51,6 +52,18 @@ var Index = `
                     <div class="article">
 
                       <div class="statistics extensible-geant collapsed">
+                          <div class="schema p_right">
+                            <div id="priority_2_percentage">
+                              <canvas id="myChart" width="100" height="100"></canvas>
+                            </div>
+                          </div>
+
+                          <div class="schema p_left">
+                            <div id="priority_2_line" class="p_left">
+                              <canvas id="myChart2" width="100" height="30"></canvas>
+                            </div>
+                          </div>
+
                           <div class="title">
                               <div id="statistics_title" class="title_collapsed">Statistics</div>
                           </div>
@@ -85,9 +98,9 @@ var Index = `
                               </table>
 
                               <script type="text/javascript">
-                                    for (var k in stats)
+                                    for (var k in stats1)
                                     {
-                                      for (var kk in stats[k])
+                                      for (var kk in stats1[k])
                                         {
                                           if (kk == "Success" || kk == "Fail" || kk == "ParentFailed")
                                           {
@@ -105,54 +118,33 @@ var Index = `
                                      
                                             newTd0.innerText = k;
                                             newTd1.innerText = kk
-                                            newTd2.innerText = stats[k][kk];
-                                            newTd3.innerText = stats[k][kk];
-                                            newTd4.innerText = stats[k][kk];
-                                            newTd5.innerText = stats[k][kk];
-                                            newTd6.innerText = stats[k][kk];
-                                            newTd7.innerText = stats[k][kk];
-                                            newTd8.innerText = stats[k][kk];
+                                            newTd2.innerText = stats1[k][kk];
+                                            newTd3.innerText = stats1[k][kk];
+                                            newTd4.innerText = stats1[k][kk];
+                                            newTd5.innerText = stats1[k][kk];
+                                            newTd6.innerText = stats1[k][kk];
+                                            newTd7.innerText = stats1[k][kk];
+                                            newTd8.innerText = stats1[k][kk];
                                           }
                                         } 
                                     }
                               </script>
-
                           </div>
                       </div>
 
 
                       <div class="schema p_right">
-                        <div id="priority_1_percentage"></div>
-                        <svg width="100px" height="100px" viewBox="0 0 100 100">
-                          <circle r="25" cx="50" cy="50" fill="none" stroke="#399C2B" stroke-width="50" stroke-dasharray="16 158" />
-                          <circle r="25" cx="50" cy="50" fill="none" stroke="#9A4324" stroke-width="50" stroke-dasharray="48 158" stroke-dashoffset="-16"/>
-                          <circle r="25" cx="50" cy="50" fill="none" stroke="#9C9CB2" stroke-width="50" stroke-dasharray="79 158" stroke-dashoffset="-64"/>
-                        </svg>
-                      </div>
-
-                      <div class="schema p_left">
-                        <div id="priority_1_line" class="p_left">
-
-                          <svg width="600" height="200" id="miniSVG_1" version="1.1" xmlns="http://www.w3.org/2000/svg">
-                            <line x1="40" y1="40" x2="40" y2="200" style="stroke:rgb(99,99,99);stroke-width:2"/>
-                            <line x1="40" y1="200" x2="500" y2="200" style="stroke:rgb(99,99,99);stroke-width:2"/>
-                          </svg>
-
+                        <div id="priority_2_percentage">
+                          <canvas id="myChart3" width="100" height="100"></canvas>
                         </div>
                       </div>
 
-
-                      <div class="schema p_right">
-                        <div id="priority_2_percentage"></div>
-                      </div>
-
                       <div class="schema p_left">
-                        <div id="priority_2_line" class="p_left"></div>
+                        <div id="priority_2_line" class="p_left">
+                          <canvas id="myChart4" width="100" height="30"></canvas>
+                        </div>
                       </div>
 
-                      <div class="schema geant">
-                        <div id="container" class="geant"></div>
-                      </div>
 
                     </div>
                   </div>
@@ -163,6 +155,192 @@ var Index = `
   <div class="foot">
       <a href="https://github.com/zpsean/go4api" title="Go4Api Home Page"><img alt="Go4Api" src="style/logosmall.png"/></a>
   </div>
+
+
+  <script>
+    var tcCountArray = new Array(3)
+    tcCountArray[0] = stats1.Overall.Fail
+    tcCountArray[1] = stats1.Overall.Success
+    tcCountArray[2] = stats1.Overall.ParentFailed
+
+    var data = {
+            labels: [
+                "Fail",
+                "Success",
+                "ParentFailed"
+            ],
+            datasets: [
+                {
+                    data: tcCountArray,
+                    backgroundColor: [
+                        "#FF6384",
+                        "#36A2EB",
+                        "#FFCE56"
+                    ],
+                    hoverBackgroundColor: [
+                        "#FF6384",
+                        "#36A2EB",
+                        "#FFCE56"
+                    ]
+                }]
+        };
+    // Get the context of the canvas element we want to select
+    var ctx = document.getElementById("myChart").getContext("2d");
+    var myBarChart = new Chart(ctx, {
+                                        type: 'pie',
+                                        data: data,
+                                        options: {
+                                            title: {
+                                              display: true,
+                                              text: 'Overall Executions'
+                                            }
+                                        }
+                                });
+  </script>
+
+
+  <script>
+    var resultLabel = [];
+    for (var i in stats2) {
+      startDate = new Date(stats2[i].ReportKey)
+      str = startDate.getHours() + ":" + startDate.getMinutes() + ":" + startDate.getSeconds()
+      resultLabel.push(str)
+    }
+
+    var resultDataSuccess = [];
+    var resultDataFail = [];
+    for (var i in stats2) {
+      resultDataSuccess.push(stats2_success[i].Count)
+      resultDataFail.push(stats2_fail[i].Count)
+    }
+
+    console.log(resultDataSuccess)
+    console.log(resultDataFail)
+
+    var ctx = document.getElementById("myChart2").getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: resultLabel,
+            datasets: [{
+                label: '# of TestCase Started - Success',
+                data: resultDataFail,
+                backgroundColor: "#36A2EB",
+                borderColor: [
+                    'rgba(255,99,132,1)'
+                ],
+                borderWidth: 1
+            },
+            {
+                label: '# of TestCase Started - Fail',
+                data: resultDataSuccess,
+                backgroundColor: "#FF6384",
+                borderColor: [
+                    'rgba(255,99,132,1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            title: {
+              display: true,
+              text: 'Overall Executions'
+            },
+            scales: {
+              xAxes: [{
+                stacked: true,
+              }],
+              yAxes: [{
+                stacked: true
+              }]
+            }
+        }
+    });
+  </script>
+
+
+  <script>
+    var tcCountArray = new Array(3)
+    tcCountArray[0] = stats1.Overall.Fail
+    tcCountArray[1] = stats1.Overall.Success
+    tcCountArray[2] = stats1.Overall.ParentFailed
+
+    var data = {
+            labels: [
+                "Fail",
+                "Success",
+                "ParentFailed"
+            ],
+            datasets: [
+                {
+                    data: tcCountArray,
+                    backgroundColor: [
+                        "#FF6384",
+                        "#36A2EB",
+                        "#FFCE56"
+                    ],
+                    hoverBackgroundColor: [
+                        "#FF6384",
+                        "#36A2EB",
+                        "#FFCE56"
+                    ]
+                }]
+        };
+    // Get the context of the canvas element we want to select
+    var ctx = document.getElementById("myChart3").getContext("2d");
+    var myBarChart = new Chart(ctx, {
+                                        type: 'pie',
+                                        data: data,
+                                        options: {
+                                            title: {
+                                              display: true,
+                                              text: 'Overall Executions'
+                                            }
+                                        }
+                                });
+  </script>
+
+
+  <script>
+    var resultLabel = [];
+    for (var i in stats2) {
+      startDate = new Date(stats2[i].ReportKey)
+      str = startDate.getHours() + ":" + startDate.getMinutes() + ":" + startDate.getSeconds()
+      resultLabel.push(str)
+    }
+
+    console.log(resultLabel)
+
+    var resultData = [];
+    for (var i in stats2) {
+      resultData.push(stats2[i].Count)
+    }
+
+    console.log(resultData)
+
+    var ctx = document.getElementById("myChart4").getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: resultLabel,
+            datasets: [{
+                label: '# of TestCase Started',
+                data: resultData,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero:true
+                    }
+                }]
+            }
+        }
+    });
+  </script>
+
 </body>
 </html>
 `

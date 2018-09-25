@@ -12,12 +12,19 @@ package reports
 
 import (
  	// "fmt"
+ 	// "strconv"
  	"encoding/json"
 
 	"go4api/lib/testcase"
 	"go4api/texttmpl"
+
+	. "github.com/ahmetb/go-linq"
 )
 
+type ReportsStats struct {
+    ReportKey interface{}
+    Count int
+}
 
 var (
 	tcStats TcStats
@@ -34,87 +41,174 @@ func InitVariables(statusCountByPriority map[string]map[string]int) {
 }
 
 
-func (tcStats *TcStats) PrepStatsReport () *texttmpl.StatsJs {
-	statsJsonBytes, _ := json.MarshalIndent(tcStats, "", "\t")
-
-	tcStatsReport := texttmpl.StatsJs {
-		StatsStr: string(statsJsonBytes),
-	}
-
-	return &tcStatsReport
-}
-
-
-func GetStats (tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
-    tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
-    tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) TcStats {
-
-	InitVariables(statusCountByPriority)
-
-	for key, _ := range statusCountByPriority {
-		for k, v := range statusCountByPriority[key] {
-		    statusStats[key][k] = v
-
-		    if len(tcClassifedCountMap) == 0 {
-		    	statusStats[key]["TotalInSource"] = 0
-		    } else {
-		    	statusStats[key]["TotalInSource"] = statusCountByPriority[key]["Total"]
-		    }
-		    
-		    if statusCountByPriority[key]["Total"] > 0 {
-		    	statusStatsPercentage[key][k] = float64(v) / float64(statusCountByPriority[key]["Total"])
-		    } else {
-		    	statusStatsPercentage[key][k] = 0
-			}
-		}
-    }
-
-    tcStats = TcStats {
-    	StatusStats: statusStats,
-    	StatusStatsPercentage: statusStatsPercentage,
-    }
-
-    return tcStats
-}
-
-
-func GetStatsJson (tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
-    tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
-    tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) *texttmpl.StatsJs {
-	
-	//-----
+func Get_Stats_1 (statusCountByPriority map[string]map[string]int) []byte {
 	statsJsonBytes, _ := json.MarshalIndent(statusCountByPriority, "", "\t")
 
-	tcStatsReport := texttmpl.StatsJs {
-		StatsStr: string(statsJsonBytes),
-	}
+	return statsJsonBytes
+}
 
-	return &tcStatsReport
+func Get_Stats_2 () []Group {
+    // type ReportsStuct struct {
+    //     StartTimeUnixM int64
+    // }
+    var ExecutionStartSlice []int64
+    for i, _ := range ExecutionResultSlice {
+        ExecutionStartSlice = append(ExecutionStartSlice, (ExecutionResultSlice[i].StartTimeUnixNano / 1000 / 1000 / 1000) * 1000)
+    }
+
+    var query []Group
+
+    From(ExecutionStartSlice).GroupByT(
+        func(item int64) int64 { 
+            return item
+        },
+        func(item int64) int { return 1 },
+    ).OrderByT(
+        func(g Group) int64 { return g.Key.(int64)},
+    ).ToSlice(&query)
+
+    return query
 }
 
 
-func GetExecutedJson (tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
-    tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
-    tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) *texttmpl.StatsJs {
-	
-	//-----
+func Get_Stats_2_Success () []Group {
+    var ExecutionStartSlice []int64
+    for i, _ := range ExecutionResultSlice {
+        if ExecutionResultSlice[i].TestResult == "Success" {
+            ExecutionStartSlice = append(ExecutionStartSlice, (ExecutionResultSlice[i].StartTimeUnixNano / 1000 / 1000 / 1000) * 1000)
+        }
+    }
+
+    var query []Group
+
+    From(ExecutionStartSlice).GroupByT(
+        func(item int64) int64 { 
+            return item
+        },
+        func(item int64) int { return 1 },
+    ).OrderByT(
+        func(g Group) int64 { return g.Key.(int64)},
+    ).ToSlice(&query)
+
+    return query
+}
+
+func Get_Stats_2_Fail () []Group {
+    var ExecutionStartSlice []int64
+    for i, _ := range ExecutionResultSlice {
+        if ExecutionResultSlice[i].TestResult == "Fail" {
+            ExecutionStartSlice = append(ExecutionStartSlice, (ExecutionResultSlice[i].StartTimeUnixNano / 1000 / 1000 / 1000) * 1000)
+        }
+    }
+
+    var query []Group
+
+    From(ExecutionStartSlice).GroupByT(
+        func(item int64) int64 { 
+            return item
+        },
+        func(item int64) int { return 1 },
+    ).OrderByT(
+        func(g Group) int64 { return g.Key.(int64)},
+    ).ToSlice(&query)
+
+    return query
+}
+
+func PrintStatsGroup (query []Group) []ReportsStats {
+    var reportsStatsSlice []ReportsStats
+
+    for _, q := range query {
+        ii := 0
+        for range q.Group {
+            ii += 1
+        }
+
+        reportsStats := ReportsStats {
+            ReportKey: q.Key,
+            Count: ii,
+        }
+        reportsStatsSlice = append(reportsStatsSlice, reportsStats)
+    }
+    return reportsStatsSlice
+}
+
+func ToOrderStatsGroup (reportsStatsTotalSlice []ReportsStats, reportsStatsSlice []ReportsStats) []ReportsStats {
+    var reportsStatsOrdered []ReportsStats
+
+    for i, _ := range reportsStatsTotalSlice {
+        inx := -1
+        for j, _ := range reportsStatsSlice {
+            if reportsStatsTotalSlice[i].ReportKey == reportsStatsSlice[j].ReportKey {
+                inx = j
+                continue
+            }
+        }
+        if inx != -1 {
+            reportsStats := ReportsStats {
+                ReportKey: reportsStatsTotalSlice[i].ReportKey,
+                Count: reportsStatsSlice[inx].Count,
+            }
+            reportsStatsOrdered = append(reportsStatsOrdered, reportsStats)
+        } else {
+            reportsStats := ReportsStats {
+                ReportKey: reportsStatsTotalSlice[i].ReportKey,
+                Count: 0,
+            }
+            reportsStatsOrdered = append(reportsStatsOrdered, reportsStats)
+        }
+    }
+
+    return reportsStatsOrdered
+}
+
+func GetStatsJson(statusCountByPriority map[string]map[string]int) []string {
+    var reJsons []string
+
+    reJson := Get_Stats_1(statusCountByPriority)
+    reJsons = append(reJsons, string(reJson))
+
+    query := Get_Stats_2()
+    reportsStatsTotalSlice := PrintStatsGroup(query)
+    reJson, _ = json.Marshal(reportsStatsTotalSlice)
+    reJsons = append(reJsons, string(reJson))
+    // fmt.Println("=====> reportsStatsSlice: ", string(reJson))
+
+    query = Get_Stats_2_Success()
+    reportsStatsSuccessSlice := PrintStatsGroup(query)
+
+    reportsStatsSuccessSliceOrdered := ToOrderStatsGroup(reportsStatsTotalSlice, reportsStatsSuccessSlice)
+
+    reJson, _ = json.Marshal(reportsStatsSuccessSliceOrdered)
+    reJsons = append(reJsons, string(reJson))
+    // fmt.Println("=====> reportsStatsSlice: ", string(reJson))
+
+    query = Get_Stats_2_Fail()
+    reportsStatsFailSlice := PrintStatsGroup(query)
+
+    reportsStatsFailSliceOrdered := ToOrderStatsGroup(reportsStatsTotalSlice, reportsStatsFailSlice)
+
+    reJson, _ = json.Marshal(reportsStatsFailSliceOrdered)
+    reJsons = append(reJsons, string(reJson))
+
+    return reJsons
+}
+
+
+func GetExecutedJson (tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) *texttmpl.DetailsJs {
 	statsJsonBytes, _ := json.MarshalIndent(tcExecutedByPriority, "", "\t")
 
-	tcStatsReport := texttmpl.StatsJs {
+	tcStatsReport := texttmpl.DetailsJs {
 		StatsStr: string(statsJsonBytes),
 	}
 
 	return &tcStatsReport
 }
 
-func GetNotExecutedJson (tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
-    tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
-    tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) *texttmpl.StatsJs {
-	
-	//-----
+func GetNotExecutedJson (tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) *texttmpl.DetailsJs {
 	statsJsonBytes, _ := json.MarshalIndent(tcNotExecutedByPriority, "", "\t")
 
-	tcStatsReport := texttmpl.StatsJs {
+	tcStatsReport := texttmpl.DetailsJs {
 		StatsStr: string(statsJsonBytes),
 	}
 

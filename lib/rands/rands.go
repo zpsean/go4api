@@ -8,7 +8,7 @@
  *
  */
  
-package fuzz
+package rands
 
 import (
     // "fmt"

@@ -8,7 +8,7 @@
  *
  */
 
-package fuzz
+package mutation
 
 import (
     "fmt"

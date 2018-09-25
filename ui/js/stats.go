@@ -11,5 +11,11 @@
 package js
 
 var Stats = `
-var stats = {{.StatsStr}}
+var stats1 = {{.StatsStr_1}}
+
+var stats2 = {{.StatsStr_2}}
+
+var stats2_success = {{.StatsStr_Success}}
+
+var stats2_fail = {{.StatsStr_Fail}}
 `

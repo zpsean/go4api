@@ -14,8 +14,10 @@ import (
     "fmt"
     "time"
     "os"
+
     "go4api/cmd"
-    "go4api/fuzz"
+    "go4api/fuzz/fuzz"
+    "go4api/fuzz/mutation"
 )
 
 func Dispatch(ch chan int, pStart_time time.Time) { 
@@ -38,7 +40,7 @@ func Dispatch(ch chan int, pStart_time time.Time) {
 
             // fmt.Println("\noriginMutationTcArray: ", originMutationTcArray)
             // to mutate 
-            mutatedTcArray := fuzz.MutateTcArray(originMutationTcArray)
+            mutatedTcArray := mutation.MutateTcArray(originMutationTcArray)
             // fmt.Println("\nmutatedTcArray: ", mutatedTcArray)
             Run(ch, pStart_time, pStart, baseUrl, resultsDir, mutatedTcArray)
         } else if cmd.Opt.IfFuzzTest {

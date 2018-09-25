@@ -30,8 +30,21 @@ type ResultsJs struct {
     TcReportStr string
 }
 
-type StatsJs struct {
+type DetailsJs struct {
     StatsStr string
+}
+
+type StatsJs struct {
+    StatsStr_1 string
+    StatsStr_2 string
+    StatsStr_Success string
+    StatsStr_Fail string
+}
+
+type MStatsJs struct {
+    StatsStr_1 string
+    StatsStr_2 string
+    StatsStr_3 string
 }
 
 
@@ -50,7 +63,7 @@ func GetTemplateFromString() {
 }
 
 
-func GenerateStatsJs(strVar string, targetFile string, statsJs *StatsJs, logResultsFile string) {
+func GenerateDetailsJs(strVar string, targetFile string, detailsJs *DetailsJs, logResultsFile string) {
     outFile, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
     if err != nil {
        panic(err) 
@@ -59,7 +72,7 @@ func GenerateStatsJs(strVar string, targetFile string, statsJs *StatsJs, logResu
     //
     tmpl := template.Must(template.New("HtmlJsCss").Parse(strVar))
 
-    err = tmpl.Execute(outFile, *statsJs)
+    err = tmpl.Execute(outFile, *detailsJs)
     if err != nil {
       panic(err) 
     }
@@ -80,6 +93,50 @@ func GenerateResultsJs(strVar string, targetFile string, resultsJs *ResultsJs, l
     }
 }
 
+
+func GenerateStatsJs(strVar string, targetFile string, resultsJs []string, logResultsFile string) {
+    outFile, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+    if err != nil {
+       panic(err) 
+    }
+    defer outFile.Close()
+    //
+    tmpl := template.Must(template.New("HtmlJsCss").Parse(strVar))
+
+    statsJs := StatsJs {
+        StatsStr_1: resultsJs[0],
+        StatsStr_2: resultsJs[1],
+        StatsStr_Success: resultsJs[2],
+        StatsStr_Fail: resultsJs[3],
+    }
+
+    err = tmpl.Execute(outFile, statsJs)
+    if err != nil {
+      panic(err) 
+    }
+}
+
+
+func GenerateMutationResultsJs(strVar string, targetFile string, resultsJs []string, logResultsFile string) {
+    outFile, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+    if err != nil {
+       panic(err) 
+    }
+    defer outFile.Close()
+    //
+    tmpl := template.Must(template.New("HtmlJsCss").Parse(strVar))
+
+    mStatsJs := MStatsJs {
+        StatsStr_1: resultsJs[0],
+        StatsStr_2: resultsJs[1],
+        StatsStr_3: resultsJs[2],
+    }
+
+    err = tmpl.Execute(outFile, mStatsJs)
+    if err != nil {
+      panic(err) 
+    }
+}
 
 func GenerateJsonBasedOnTemplateAndCsv(jsonFilePath string, csvHeader []string, csvRow []string) *bytes.Buffer {
     jsonTemplateBytes := utils.GetContentFromFile(jsonFilePath)
