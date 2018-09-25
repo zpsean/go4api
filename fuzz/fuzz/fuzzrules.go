@@ -19,6 +19,8 @@ import (
     "strings"
     // "strconv"
     // "go4api/utils"  
+
+    "go4api/lib/rands"
 )
 
 // fuzz - random - valid
@@ -127,29 +129,29 @@ func (fieldDefinition FieldDefinition) CallFuzzRules(key string) []interface{} {
 // -------- for the fuzz data based on the field definition -----
 // to get the fuzz data table files with naming FCase_fuzz_dt_valid.csv / FCase_fuzz_dt_invalid.csv
 
-// valid fieldMin, RandStringRunes
+// valid fieldMin, rands.RandStringRunes
 func FCharValidR1(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
-    value := RandStringRunes(fieldMin)
+    value := rands.RandStringRunes(fieldMin)
 
     return value
 }
 
 func FCharValidR2(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
     // if fieldMin + 1 < fieldMax
-    value := RandStringRunes(fieldMin + 1)
+    value := rands.RandStringRunes(fieldMin + 1)
 
     return value
 }
 
 func FCharValidR3(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
-    value := RandStringRunes(fieldMax)
+    value := rands.RandStringRunes(fieldMax)
 
     return value
 }
 
 func FCharValidR4(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
     // if fieldMin < fieldMax - 1
-    value := RandStringRunes(fieldMax - 1)
+    value := rands.RandStringRunes(fieldMax - 1)
 
     return value
 }
@@ -157,7 +159,7 @@ func FCharValidR4(fieldName string, fieldType string, fieldMin int, fieldMax int
 // invalid
 func FCharInvalidR1(fieldName string, fieldType string, fieldMin int, fieldMax int) interface{} {
     // if fieldMin < fieldMax - 1
-    value := RandStringRunes(fieldMax + 1)
+    value := rands.RandStringRunes(fieldMax + 1)
 
     return value
 }

@@ -11,135 +11,134 @@
 package reports
 
 import (
- 	"fmt"
+ 	// "fmt"
  	"encoding/json"
-	"go4api/texttmpl"
 
+	// "go4api/texttmpl"
 	"go4api/lib/testcase"
 
     . "github.com/ahmetb/go-linq"
 )
 
-
-func GetMutationStats () []*MutationStats{
-	var mutationStatsSlice []*MutationStats
-
-	for i, _ := range ExecutionResultSlice {
-	    tcReportRes := &MutationStats { 
-	    	HttpUrl: ExecutionResultSlice[i].Path,
-			HttpMethod: ExecutionResultSlice[i].Method,
-			MutationPart: "Headers",
-			MutationRule: ExecutionResultSlice[i].MutationRule,
-			HttpStatus: ExecutionResultSlice[i].ActualStatusCode,
-			TestStatus: ExecutionResultSlice[i].TestResult,
-		}
-
-		mutationStatsSlice = append(mutationStatsSlice, tcReportRes)
-	}
-
-	return mutationStatsSlice
+type ReportsMStats struct {
+    ReportKey interface{}
+    Count int
 }
 
 
-func GetMutationStatsJson (tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
-    tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
-    tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) *texttmpl.StatsJs {
-	
-	//-----
-	mutationStatsSlice := GetMutationStats()
-
-	statsJsonBytes, _ := json.MarshalIndent(mutationStatsSlice, "", "\t")
-
-	tcStatsReport := texttmpl.StatsJs {
-		StatsStr: string(statsJsonBytes),
-	}
-
-	return &tcStatsReport
-}
-
-
-func GetMutationDetailsJson (tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
-    tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
-    tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) {
-	
-	//-----
-	//Exclude duplicates.
-    var noduplicates []*testcase.TcReportResults
-
-    type AA struct {
-    	HttpUrl string
-    	HttpMethod string
-    	MutationPart string
-    	MutationCategory string
-    	// MutationRule string
-    	HttpStatus int
-    	TestStatus string
+func GetMStats_1 () []Group {
+    type ReportsStuct struct {
+        Path string
+        Method string
+        // MutationArea string
+        // MutationCategory string
+        // MutationRule string
+        ActualStatusCode int
+        // TestResult string
     }
 
-
-    From(ExecutionResultSlice).
-        DistinctByT(
-            func(item *testcase.TcReportResults) AA { return AA{item.Path, item.Method, item.MutationArea, item.MutationCategory, item.ActualStatusCode, item.TestResult } },
-        ).
-        ToSlice(&noduplicates)
-
-    for _, item := range noduplicates {
-        // fmt.Println(product.Path, product.Method, product.ActualStatusCode, product.TestResult)
-        fmt.Println(item.Path, item.Method, item.MutationArea, item.MutationCategory, item.ActualStatusCode, item.TestResult )
-    }
-}
-
-
-func GetMutationStatsJson2 (tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
-    tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
-    tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) {
-	
-	//-----
-	//Exclude duplicates.
-    // var noduplicates []*testcase.TcReportResults
     var query []Group
 
-// HttpUrl	HttpMethod	MutationPart	MutationCategory	MutationRule	HttpStatus	TestStatus	Count	MutationMessage
+    From(ExecutionResultSlice).GroupByT(
+        func(item *testcase.TcReportResults) ReportsStuct { 
+            return ReportsStuct{item.Path, item.Method, item.ActualStatusCode}
+        },
+        func(item *testcase.TcReportResults) int { return 1 },
+    ).ToSlice(&query)
 
-    type AA struct {
-    	HttpUrl string
-    	HttpMethod string
-    	MutationPart string
-    	MutationCategory string
-    	// MutationRule string
-    	HttpStatus int
-    	TestStatus string
+    return query
+}
+
+func GetMStats_2 () []Group {
+    type ReportsStuct struct {
+        Path string
+        Method string
+        MutationArea string
+        // MutationCategory string
+        // MutationRule string
+        ActualStatusCode int
+        // TestResult string
     }
 
-
-    // From(ExecutionResultSlice).
-    //     DistinctByT(
-    //         func(item *testcase.TcReportResults) int { return item.ActualStatusCode },
-    //     ).
-    //     ToSlice(&noduplicates)
+    var query []Group
 
     From(ExecutionResultSlice).GroupByT(
-    	func(item *testcase.TcReportResults) AA { return AA{item.Path, item.Method, item.MutationArea, item.MutationCategory, item.ActualStatusCode, item.TestResult }},
-	    func(item *testcase.TcReportResults) int { return 1 },
-	    
-	    
-	).ToSlice(&query)
+        func(item *testcase.TcReportResults) ReportsStuct { 
+            return ReportsStuct{item.Path, item.Method, item.MutationArea, item.ActualStatusCode}
+        },
+        func(item *testcase.TcReportResults) int { return 1 },
+    ).ToSlice(&query)
 
-    // for _, product := range noduplicates {
-    //     fmt.Println(product.Path, product.Method, product.ActualStatusCode, product.TestResult)
-    // }
-    for _, petGroup := range query {
-	    // fmt.Printf("%d\n", petGroup.Key)
-	    fmt.Println(petGroup.Key)
-	    ii := 0
-	    for range petGroup.Group {
-	    	ii += 1
-	        // fmt.Printf("  %s\n", petName)
-
-	    }
-	    fmt.Println("ii: ", ii)
-	}
+    return query
 }
 
 
+func GetMStats_3 () []Group {
+    type ReportsStuct struct {
+        Path string
+        Method string
+        MutationArea string
+        MutationCategory string
+        // MutationRule string
+        ActualStatusCode int
+        // TestResult string
+    }
+
+    var query []Group
+
+    From(ExecutionResultSlice).GroupByT(
+        func(item *testcase.TcReportResults) ReportsStuct { 
+            return ReportsStuct{item.Path, item.Method, item.MutationArea, item.MutationCategory, item.ActualStatusCode}
+        },
+        func(item *testcase.TcReportResults) int { return 1 },
+    ).ToSlice(&query)
+
+    return query
+}
+
+
+func PrintGroup (query []Group) []ReportsMStats {
+    var reportsMStatsSlice []ReportsMStats
+
+    for _, q := range query {
+        ii := 0
+        for range q.Group {
+            ii += 1
+        }
+
+        reportsMStats := ReportsMStats {
+            ReportKey: q.Key,
+            Count: ii,
+        }
+        reportsMStatsSlice = append(reportsMStatsSlice, reportsMStats)
+    }
+    return reportsMStatsSlice
+}
+
+func GetMutationStatsJson() []string {
+    var reJsons []string
+
+    query := GetMStats_1()
+    reportsMStatsSlice := PrintGroup(query)
+
+    reJson, _ := json.Marshal(reportsMStatsSlice)
+    reJsons = append(reJsons, string(reJson))
+    // fmt.Println("=====> reportsMStatsSlice: ", string(reJson))
+
+    query = GetMStats_2()
+    reportsMStatsSlice = PrintGroup(query)
+
+    reJson, _ = json.Marshal(reportsMStatsSlice)
+    reJsons = append(reJsons, string(reJson))
+    // fmt.Println("=====> reportsMStatsSlice: ", string(reJson))
+
+    query = GetMStats_3()
+    reportsMStatsSlice = PrintGroup(query)
+
+    reJson, _ = json.Marshal(reportsMStatsSlice)
+    reJsons = append(reJsons, string(reJson))
+    // fmt.Println("=====> reportsMStatsSlice: ", string(reJson))
+
+    return reJsons
+}
 

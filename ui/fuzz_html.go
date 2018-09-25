@@ -34,6 +34,7 @@ var Fuzz = `
                       <div class="item "><a href="index.html">Overview</a></div>
                       <div class="item "><a id="graphic_link" href="graphic.html">Graphic</a></div>
                       <div class="item "><a id="details_link" href="details.html">Details</a></div>
+                      <div class="item "><a id="mindex_link" href="mindex.html">MutationOverview</a></div>
                       <div class="item "><a id="mutation_link" href="mutation.html">Mutation</a></div>
                       <div class="item selected"><a id="fuzz_link" href="fuzz.html">Fuzz</a></div>
 

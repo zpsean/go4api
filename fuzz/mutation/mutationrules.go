@@ -8,7 +8,7 @@
  *
  */
 
-package fuzz
+package mutation
 
 import (                                                                                                                                             
     // "os"
@@ -138,10 +138,8 @@ var (
     nilNull *int
 )
 
-
-
 //
-func (mtD MutationDetails) DetermineMutationType() string {
+func (mtD MFieldDetails) DetermineMutationType() string {
     var mType string
     switch strings.ToLower(mtD.FieldType) {
         case "char", "string":
@@ -183,7 +181,7 @@ func (mtD MutationDetails) DetermineMutationType() string {
 
 
 // fuzz - mutation
-func (mtD MutationDetails) CallMutationRules(key string) []*MutatedValue {
+func (mtD MFieldDetails) CallMutationRules(key string) []*MutatedValue {
     var mutatedValues []*MutatedValue
     for _, ruleFunc := range MutationRulesMapping(key) {
 

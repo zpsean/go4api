@@ -348,13 +348,11 @@ func GetFuzzTcArray() []testcase.TestCaseDataInfo {
 
 func GetOriginMutationTcArray() []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
-
     jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
-    // to ge the json and related data file, then get tc from them
+
     for _, jsonFile := range jsonFileList {
-        csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_mutation_dt")
-        // to get the json test data directly (if not template) based on template (if template)
-        // tcInfos: [[casename, priority, parentTestCase, ], ...]
+        csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_dt")
+
         var tcInfos []testcase.TestCaseDataInfo
         if len(csvFileList) > 0 {
             tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)

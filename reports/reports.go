@@ -58,10 +58,6 @@ func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string,
     //
     // statsJsonBytes, _ := json.MarshalIndent(ExecutionResultSlice, "", "\t")
     // fmt.Println("ExecutionResultSlice: ", string(statsJsonBytes))
-    GetMutationDetailsJson(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
-    fmt.Println("")
-    GetMutationStatsJson2(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
-
 }
 
 
@@ -71,6 +67,7 @@ func GenerateHtml (resultsDir string) {
     utils.GenerateFileBasedOnVarOverride(ui.Details, resultsDir + "details.html")
     utils.GenerateFileBasedOnVarOverride(ui.Fuzz, resultsDir + "fuzz.html")
     utils.GenerateFileBasedOnVarOverride(ui.Mutation, resultsDir + "mutation.html")
+    utils.GenerateFileBasedOnVarOverride(ui.MIndex, resultsDir + "mindex.html")
 }
 
 
@@ -86,24 +83,28 @@ func GenerateJs (resultsDir string, pStart_time time.Time, pStart string, pEnd_t
     }
     logResultsFile := resultsDir + pStart + ".log"
 
-    statsFile := resultsDir + "/js/stats.js"
-    statsJson := GetStatsJson(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
-    texttmpl.GenerateStatsJs(js.Stats, statsFile, statsJson, logResultsFile)
+    // statsFile := resultsDir + "/js/stats.js"
+    // statsJson := GetStatsJson(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    // texttmpl.GenerateStatsJs(js.Stats, statsFile, statsJson, logResultsFile)
 
 
-    statsFile = resultsDir + "/js/executed.js"
-    executedJson := GetExecutedJson(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
-    texttmpl.GenerateStatsJs(js.Executed, statsFile, executedJson, logResultsFile)
+    statsFile := resultsDir + "/js/executed.js"
+    executedJson := GetExecutedJson(tcExecutedByPriority)
+    texttmpl.GenerateDetailsJs(js.Executed, statsFile, executedJson, logResultsFile)
 
 
     statsFile = resultsDir + "/js/noexecuted.js"
-    notexecutedJson := GetNotExecutedJson(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
-    texttmpl.GenerateStatsJs(js.NotExecuted, statsFile, notexecutedJson, logResultsFile)
+    notexecutedJson := GetNotExecutedJson(tcNotExecutedByPriority)
+    texttmpl.GenerateDetailsJs(js.NotExecuted, statsFile, notexecutedJson, logResultsFile)
 
+
+    statsFile = resultsDir + "/js/stats.js"
+    reJsons := GetStatsJson(statusCountByPriority)
+    texttmpl.GenerateStatsJs(js.Stats, statsFile, reJsons, logResultsFile)
 
     statsFile = resultsDir + "/js/mutationstats.js"
-    mutationStats := GetMutationStatsJson(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
-    texttmpl.GenerateStatsJs(js.MutationStats, statsFile, mutationStats, logResultsFile)
+    reJsons = GetMutationStatsJson()
+    texttmpl.GenerateMutationResultsJs(js.MutationStats, statsFile, reJsons, logResultsFile)
 
 
     // (1). get js/reslts.js
@@ -114,6 +115,9 @@ func GenerateJs (resultsDir string, pStart_time time.Time, pStart string, pEnd_t
     
     // (2). get js/go4api.js
     utils.GenerateFileBasedOnVarOverride(js.Js, resultsDir + "js/go4api.js")
+
+    // (3). other js
+    utils.GenerateFileBasedOnVarOverride(js.Chart, resultsDir + "js/Chart.bundle.min.js")
 
 }
 

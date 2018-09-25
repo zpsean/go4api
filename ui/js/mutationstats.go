@@ -11,5 +11,9 @@
 package js
 
 var MutationStats = `
-var mutationStats = {{.StatsStr}}
+var mutationStats1 = {{.StatsStr_1}}
+
+var mutationStats2 = {{.StatsStr_2}}
+
+var mutationStats3 = {{.StatsStr_3}}
 `
