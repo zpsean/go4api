@@ -14,7 +14,6 @@ var Index = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-    <link href="style/style.css" rel="stylesheet" type="text/css" />
     <link href="style/go4api.css" rel="stylesheet" type="text/css"/>
     <script type="text/javascript" src="js/go4api.js"></script>
     <script type="text/javascript" src="js/reslts.js"></script>
@@ -145,6 +144,12 @@ var Index = `<!DOCTYPE html>
                         </div>
                       </div>
 
+
+                      <div class="schema geant">
+                        <canvas id="myChart5" width="1089" height="350"></canvas>
+                        <div id="container" class="geant"></div>
+                          
+                      </div>
 
                     </div>
                   </div>
@@ -336,6 +341,103 @@ var Index = `<!DOCTYPE html>
                         beginAtZero:true
                     }
                 }]
+            }
+        }
+    });
+  </script>
+
+
+
+  <script>
+    var DATA_COUNT = 12;
+    var MIN_XY = -150;
+    var MAX_XY = 100;
+
+    function generateData(stat) {
+      var data = [
+{"x":1537868438468841870, "y":1537868439569804655, "v":1100962785},
+{"x":1537868440071394552, "y":1537868440494010301, "v":422615749},
+{"x":1537868440997248915, "y":1537868441411196761, "v":413947846},
+{"x":1537868441501379732, "y":1537868442058686728, "v":557306996},
+{"x":1537868441501399696, "y":1537868441882226595, "v":380826899},
+{"x":1537868441501403272, "y":1537868442042055322, "v":540652050},
+{"x":1537868441501452035, "y":1537868442035993969, "v":534541934},
+{"x":1537868442564148953, "y":1537868443053607182, "v":489458229},
+{"x":1537868442564160947, "y":1537868443051335659, "v":487174712},
+{"x":1537868443053782066, "y":1537868443053782066, "v":0},
+{"x":1537868443554011422, "y":1537868444070319763, "v":516308341},
+{"x":1537868443554017272, "y":1537868444070373388, "v":516356116}];
+      // var i;
+
+      // for (i = 0; i < DATA_COUNT; ++i) {
+      //   data.push({
+      //     x: i + 1,
+      //     y: i,
+      //     v: stat[i].Count
+      //   });
+      // }
+      return data;
+    }
+
+
+    var resultLabel = [];
+    for (var i in stats2) {
+      startDate = new Date(stats2[i].ReportKey)
+      str = startDate.getHours() + ":" + startDate.getMinutes() + ":" + startDate.getSeconds()
+      resultLabel.push(str)
+    }
+
+    var resultDataSuccess = [];
+    var resultDataFail = [];
+    for (var i in stats2) {
+      resultDataSuccess.push(stats2_success[i].Count)
+      resultDataFail.push(stats2_fail[i].Count)
+    }
+
+    var data = {
+      datasets: [{
+        data: generateData(stats2_success)
+      }]
+    };
+
+    console.log(data)
+
+    var options = {
+      aspectRatio: 1,
+      legend: false,
+      tooltips: false,
+
+      elements: {
+        point: {
+          borderWidth: function(context) {
+            return Math.min(Math.max(1, context.datasetIndex + 1), 8);
+          },
+
+          hoverBackgroundColor: 'transparent',
+
+          hoverBorderWidth: function(context) {
+            var value = context.dataset.data[context.dataIndex];
+            return Math.round(8 * value.v / 1000);
+          },
+
+          radius: function(context) {
+            var value = context.dataset.data[context.dataIndex];
+            var size = context.chart.width;
+            var base = Math.abs(value.v) / 1000;
+            return (size / 24) * base;
+          }
+        }
+      }
+    };
+
+    var ctx = document.getElementById("myChart5").getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'bubble',
+        data: data,
+        options: {
+            title: {
+              display: true,
+              text: 'Overall Executions - Bubble'
             }
         }
     });

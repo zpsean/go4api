@@ -17,6 +17,7 @@ import (
     "strconv"
     "strings"
     "encoding/json"
+    "path/filepath"
 
     "go4api/cmd"
     "go4api/lib/testcase"
@@ -41,6 +42,7 @@ var (
     ExecutionResultSlice []*testcase.TcReportResults
 )
 
+
 func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time,
         tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
         tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
@@ -58,6 +60,7 @@ func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string,
     //
     // statsJsonBytes, _ := json.MarshalIndent(ExecutionResultSlice, "", "\t")
     // fmt.Println("ExecutionResultSlice: ", string(statsJsonBytes))
+    // Get_Stats_3()
 }
 
 
@@ -93,7 +96,7 @@ func GenerateJs (resultsDir string, pStart_time time.Time, pStart string, pEnd_t
     texttmpl.GenerateDetailsJs(js.Executed, statsFile, executedJson, logResultsFile)
 
 
-    statsFile = resultsDir + "/js/noexecuted.js"
+    statsFile = resultsDir + "/js/notexecuted.js"
     notexecutedJson := GetNotExecutedJson(tcNotExecutedByPriority)
     texttmpl.GenerateDetailsJs(js.NotExecuted, statsFile, notexecutedJson, logResultsFile)
 
@@ -151,6 +154,7 @@ func GetResultsJs (pStart_time time.Time, pEnd_time time.Time, logResultsFile st
     // get the data from the log results file, used for ui
     var tcReportStr string
 
+    fmt.Println("logResultsFile: ", logResultsFile)
     jsonLinesBytes := utils.GetContentFromFile(logResultsFile)
     jsonLines := string(jsonLinesBytes)
     //
@@ -258,4 +262,26 @@ func filterTestMessages (testMessages []*testcase.TestMessage) []*testcase.TestM
     return failedTM
 }
 
+
+// this function is called by cmd -report, to generate report from log file
+func GenerateReportsFromLogFile(logResultsFile string) {
+    // 1. retrieve the resultsDir form logResultsFile
+    resultsDir := filepath.Dir(logResultsFile)
+
+    // 2. get the content from log file, json lines, to ExecutionResultSlice
+    // jsonLinesBytes := utils.GetContentFromFile(logResultsFile)
+    // json.Unmarshal(jsonLinesBytes, &ExecutionResultSlice)
+
+    // 2.1 sor the ExecutionResultSlice, by start time / end time
+
+    // 3. get the: pStart_time, pStart, pEnd_time, tcClassifedCountMap, totalTc, statusCountByPriority, 
+    //      tcExecutedByPriority, tcNotExecutedByPriority
+
+    // 4. call the function GenerateTestReport()
+
+
+    fmt.Println("Report Generated at: " + resultsDir + "/index.html")
+    // fmt.Println("Execution Finished at: " + pEnd_time.String())
+
+}
 

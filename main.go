@@ -14,8 +14,9 @@ import (
 	"fmt"
   "os"
 	"time"
+
   "go4api/cmd"
-  // "go4api/utils"
+  "go4api/reports"
   "go4api/executor"
   "go4api/converter/har"
   "go4api/converter/swagger"
@@ -61,6 +62,10 @@ func main(){
         har.Convert()
       } else if cmd.Opt.Swaggerfile != "" {
         swagger.Convert()
+      }
+    } else if os.Args[1] == "-report" {
+      if cmd.Opt.Logfile != "" {
+        reports.GenerateReportsFromLogFile(cmd.Opt.Logfile)
       }
     } else {
       fmt.Println("Warning: no specific commnd is provided, default is to run")
