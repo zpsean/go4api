@@ -22,6 +22,7 @@ var (
     h bool
     run bool
     convert bool
+    report bool
 )
 
 type Options struct {
@@ -38,6 +39,7 @@ type Options struct {
 
     Harfile string
     Swaggerfile string
+    Logfile string
 }
 
 var Opt Options
@@ -51,6 +53,7 @@ func init() {
     flag.BoolVar(&h, "h", false, "this help")
     flag.BoolVar(&run, "run", false, "")
     flag.BoolVar(&convert, "convert", false, "")
+    flag.BoolVar(&report, "report", false, "Generate report only from log file")
     //
     testconfig := flag.String("c", defaultTestDir + "/testconfig", "the path which test config in")
     testcase := flag.String("tc", defaultTestDir + "/testcase", "the path which test json in")
@@ -65,6 +68,8 @@ func init() {
 
     har := flag.String("harfile", "", "har file name to be converted")
     swagger := flag.String("swaggerfile", "", "har file name to be converted")
+
+    logfile := flag.String("logfile", "", "log file for report generation")
 
     //
     flag.Parse()
@@ -82,6 +87,7 @@ func init() {
 
     Opt.Harfile = *har
     Opt.Swaggerfile = *swagger
+    Opt.Logfile = *logfile
 
     if h {
         usage()
@@ -100,6 +106,7 @@ Usage:
 Available Commands:
   run         Start a test
   convert     Convert a HAR file / Swagger API file to a go4api Json test case
+  report      Generate report only from log file
 
 Command: run
 Usage: go4api -run [-?hFMS] [-c config filename] [-t testcase path] [-d test resource path] [-r test results path] 
@@ -108,6 +115,9 @@ Options:
 
 Command: convert
 Usage: go4api -convert [-harfile har filename] [-swaggerfile swagger api filename]
+
+Command: report
+Usage: go4api -report [-logfile log filename]
 
 Options:
 `)

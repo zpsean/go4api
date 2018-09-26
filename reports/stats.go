@@ -11,7 +11,7 @@
 package reports
 
 import (
- 	// "fmt"
+ 	"fmt"
  	// "strconv"
  	"encoding/json"
 
@@ -114,6 +114,20 @@ func Get_Stats_2_Fail () []Group {
 
     return query
 }
+
+func Get_Stats_3 () {
+    var orderedExecutionResultSlice []*testcase.TcReportResults
+    From(ExecutionResultSlice).
+        OrderByT(
+            func(item *testcase.TcReportResults) int64 { return item.StartTimeUnixNano },
+        ).
+        ToSlice(&orderedExecutionResultSlice)
+
+    for _, item := range orderedExecutionResultSlice {
+        fmt.Println(item.StartTimeUnixNano, item.EndTimeUnixNano, item.DurationUnixNano)
+    }
+}
+
 
 func PrintStatsGroup (query []Group) []ReportsStats {
     var reportsStatsSlice []ReportsStats

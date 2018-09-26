@@ -64,7 +64,7 @@ h1 span {
 	height: 100px;
 	width: 600px;
 	padding: 10px 0 0 160px;
-	background: url('fond-lueur.gif') no-repeat;
+	background: no-repeat;
 	background-position: 70px 0;
 	position: absolute;
 	top: 0;
@@ -175,12 +175,12 @@ h1 span {
 }
 
 .geant {
-	width: 900px;
+	width: 1089px;
 	height: 362px;
 }
 
 .extensible-geant {
-	width: 900px;
+	width: 1089px;
 }
 
 
@@ -208,7 +208,7 @@ h1 span {
 	border-top-left-radius: 8px;
 	border-top-right-radius: 8px;
 	padding: 5px 15px 0px 15px;
-	width: 870px;
+	width: 1059px;
 }
 
 .title_collapsed {
@@ -225,7 +225,7 @@ h1 span {
 #container_statistics_body {
 	border-bottom-left-radius: 8px;
 	border-bottom-right-radius: 8px;
-	background: #B79F39 url('stat-fond.png') repeat-x;
+	background: #B79F39 repeat-x;
 	padding: 0px 5px 5px 5px;
 }
 
@@ -237,7 +237,7 @@ h1 span {
 .statistics .scrollable {
 	max-height: 785px;
 	overflow-y: auto;
-	width: 915px;
+	width: 1089px;
 }
 
 .statistics-in a {
@@ -287,5 +287,4 @@ h1 span {
 .test-table {
 	border-collapse:collapse;
 }
-
 `
