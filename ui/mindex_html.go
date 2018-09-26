@@ -10,8 +10,7 @@
 
 package ui
 
-var MIndex = `
-<!DOCTYPE html>
+var MIndex = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -75,13 +74,8 @@ var MIndex = `
                                       <th id="col-1" class="header sortable"><span>#</span></th>
                                       <th id="col-2" class="header sortable"><span>HttpUrl</span></th>
                                       <th id="col-2" class="header sortable"><span>HttpMethod</span></th>
-                                      <th id="col-3" class="header sortable"><span>MutationPart</span></th>
-                                      <th id="col-4" class="header sortable"><span>MutationCategory</span></th>
-                                      <th id="col-4" class="header sortable"><span>MutationRule</span></th>
                                       <th id="col-4" class="header sortable"><span>HttpStatus</span></th>
-                                      <th id="col-5" class="header sortable"><span>TestStatus</span></th>
-                                      <th id="col-6" class="header sortable"><span>Count</span></th>
-                                      <th id="col-7" class="header sortable"><span>MutationMessage</span></th>
+                                      <th id="col-5" class="header sortable"><span>Count</span></th>
                                   </tr>
                               </thead>
                               <tbody></tbody>
@@ -110,10 +104,48 @@ var MIndex = `
                                     newTd3.innerText = mutationStats1[i].ReportKey.ActualStatusCode;
                                     newTd4.innerText = mutationStats1[i].Count;
                                   }
+                              </script>
+                          </div>
+                      </div>
 
+
+                      <div class="schema p_right">
+                        <div id="priority_2_percentage">
+                          <canvas id="myChart3" width="100" height="100"></canvas>
+                        </div>
+                      </div>
+
+                      <div class="schema p_left">
+                        <div id="priority_2_line" class="p_left">
+                          <canvas id="myChart4" width="100" height="30"></canvas>
+                        </div>
+                      </div>
+
+                      <div class="statistics extensible-geant collapsed">
+                          <table id="container_statistics_head" class="statistics-in extensible-geant">
+                              <thead>
+                                  <tr>
+                                      <th id="col-1" class="header sortable"><span>#</span></th>
+                                      <th id="col-2" class="header sortable"><span>HttpUrl</span></th>
+                                      <th id="col-2" class="header sortable"><span>HttpMethod</span></th>
+                                      <th id="col-3" class="header sortable"><span>MutationPart</span></th>
+                                      <th id="col-4" class="header sortable"><span>HttpStatus</span></th>
+                                      <th id="col-5" class="header sortable"><span>Count</span></th>
+                                  </tr>
+                              </thead>
+                              <tbody></tbody>
+                          </table>
+
+                          <div class="scrollable">
+                              <table id="container_statistics_body2" class="statistics-in extensible-geant">
+                                  <tbody></tbody>
+                              </table>
+
+
+                              <script type="text/javascript">
                                 for (var i = 0;i < mutationStats2.length; i++)
                                   {
-                                    var newTr = container_statistics_body.insertRow();
+                                    var newTr = container_statistics_body2.insertRow();
                                     
                                     var newTd0 = newTr.insertCell();
                                     var newTd1 = newTr.insertCell();
@@ -130,9 +162,41 @@ var MIndex = `
                                     newTd5.innerText = mutationStats2[i].Count;
                                   }
 
+                              </script>
+                          </div>
+                      </div>
+                      <div class="schema geant">
+                        <canvas id="myChart6" width="1089" height="350"></canvas>
+                        <div id="container" class="geant"></div>
+                          
+                      </div>
+
+                      <div class="statistics extensible-geant collapsed">
+                          <table id="container_statistics_head" class="statistics-in extensible-geant">
+                              <thead>
+                                  <tr>
+                                      <th id="col-1" class="header sortable"><span>#</span></th>
+                                      <th id="col-2" class="header sortable"><span>HttpUrl</span></th>
+                                      <th id="col-2" class="header sortable"><span>HttpMethod</span></th>
+                                      <th id="col-3" class="header sortable"><span>MutationPart</span></th>
+                                      <th id="col-4" class="header sortable"><span>MutationCategory</span></th>
+                                      <th id="col-5" class="header sortable"><span>HttpStatus</span></th>
+                                      <th id="col-6" class="header sortable"><span>Count</span></th>
+                                  </tr>
+                              </thead>
+                              <tbody></tbody>
+                          </table>
+
+                          <div class="scrollable">
+                              <table id="container_statistics_body3" class="statistics-in extensible-geant">
+                                  <tbody></tbody>
+                              </table>
+
+
+                              <script type="text/javascript">
                                 for (var i = 0;i < mutationStats3.length; i++)
                                   {
-                                    var newTr = container_statistics_body.insertRow();
+                                    var newTr = container_statistics_body3.insertRow();
                                     
                                     var newTd0 = newTr.insertCell();
                                     var newTd1 = newTr.insertCell();
@@ -153,31 +217,6 @@ var MIndex = `
                               </script>
 
                           </div>
-                      </div>
-
-
-                      <div class="schema p_right">
-                        <div id="priority_2_percentage">
-                          <canvas id="myChart3" width="100" height="100"></canvas>
-                        </div>
-                      </div>
-
-                      <div class="schema p_left">
-                        <div id="priority_2_line" class="p_left">
-                          <canvas id="myChart4" width="100" height="30"></canvas>
-                        </div>
-                      </div>
-
-                      <div class="schema p_right">
-                        <div id="priority_3_percentage">
-                          <canvas id="myChart5" width="100" height="100"></canvas>
-                        </div>
-                      </div>
-
-                      <div class="schema p_left">
-                        <div id="priority_3_line" class="p_left">
-                          <canvas id="myChart6" width="100" height="30"></canvas>
-                        </div>
                       </div>
 
                     </div>
@@ -352,7 +391,7 @@ var MIndex = `
                                         options: {
                                             title: {
                                               display: true,
-                                              text: 'Overall Executions - Method, StatusCode'
+                                              text: 'Overall Executions - Method, StatusCode, MutationPart'
                                             }
                                         }
                                 });
@@ -385,7 +424,7 @@ var MIndex = `
                                         options: {
                                             title: {
                                               display: true,
-                                              text: 'Overall Executions - Method, StatusCode'
+                                              text: 'Overall Executions - Method, StatusCode, MutationPart'
                                             }
                                         }
                                 });
@@ -418,7 +457,7 @@ var MIndex = `
                                         options: {
                                             title: {
                                               display: true,
-                                              text: 'Overall Executions - Method, StatusCode'
+                                              text: 'Overall Executions - Method, StatusCode, MutationPart, MutationCategory'
                                             }
                                         }
                                 });
