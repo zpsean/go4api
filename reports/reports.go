@@ -17,7 +17,6 @@ import (
     "strconv"
     "strings"
     "encoding/json"
-    "path/filepath"
 
     "go4api/cmd"
     "go4api/lib/testcase"
@@ -261,27 +260,3 @@ func filterTestMessages (testMessages []*testcase.TestMessage) []*testcase.TestM
 
     return failedTM
 }
-
-
-// this function is called by cmd -report, to generate report from log file
-func GenerateReportsFromLogFile(logResultsFile string) {
-    // 1. retrieve the resultsDir form logResultsFile
-    resultsDir := filepath.Dir(logResultsFile)
-
-    // 2. get the content from log file, json lines, to ExecutionResultSlice
-    // jsonLinesBytes := utils.GetContentFromFile(logResultsFile)
-    // json.Unmarshal(jsonLinesBytes, &ExecutionResultSlice)
-
-    // 2.1 sor the ExecutionResultSlice, by start time / end time
-
-    // 3. get the: pStart_time, pStart, pEnd_time, tcClassifedCountMap, totalTc, statusCountByPriority, 
-    //      tcExecutedByPriority, tcNotExecutedByPriority
-
-    // 4. call the function GenerateTestReport()
-
-
-    fmt.Println("Report Generated at: " + resultsDir + "/index.html")
-    // fmt.Println("Execution Finished at: " + pEnd_time.String())
-
-}
-
