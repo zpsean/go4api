@@ -229,6 +229,20 @@ h1 span {
 	padding: 0px 5px 5px 5px;
 }
 
+#container_statistics_body2 {
+	border-bottom-left-radius: 8px;
+	border-bottom-right-radius: 8px;
+	background: #B79F39 repeat-x;
+	padding: 0px 5px 5px 5px;
+}
+
+#container_statistics_body3 {
+	border-bottom-left-radius: 8px;
+	border-bottom-right-radius: 8px;
+	background: #B79F39 repeat-x;
+	padding: 0px 5px 5px 5px;
+}
+
 .statistics-in {
 	margin: 0;
 	border-spacing: 4px;
