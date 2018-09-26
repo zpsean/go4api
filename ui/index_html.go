@@ -229,7 +229,7 @@ var Index = `<!DOCTYPE html>
             labels: resultLabel,
             datasets: [{
                 label: '# of TestCase Started - Success',
-                data: resultDataFail,
+                data: resultDataSuccess,
                 backgroundColor: "#36A2EB",
                 borderColor: [
                     'rgba(255,99,132,1)'
@@ -238,7 +238,7 @@ var Index = `<!DOCTYPE html>
             },
             {
                 label: '# of TestCase Started - Fail',
-                data: resultDataSuccess,
+                data: resultDataFail,
                 backgroundColor: "#FF6384",
                 borderColor: [
                     'rgba(255,99,132,1)'
