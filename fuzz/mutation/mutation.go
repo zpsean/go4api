@@ -151,7 +151,7 @@ func MutateSetRequestHeader (originTcData testcase.TestCaseDataInfo, tcJson []by
     i := 0
     for key, value := range originTcData.TestCase.ReqHeaders() {
         //
-        mFieldDetails := MFieldDetails{[]string{}, value, reflect.TypeOf(value).Kind().String(), "", []interface{}{}}
+        mFieldDetails := MFieldDetails{[]string{key}, value, reflect.TypeOf(value).Kind().String(), "", []interface{}{}}
         mType := mFieldDetails.DetermineMutationType()
         mutatedValues := mFieldDetails.CallMutationRules(mType)
         //
@@ -178,7 +178,7 @@ func MutateDelRequestHeader (originTcData testcase.TestCaseDataInfo, tcJson []by
     i := 0
     for key, _ := range originTcData.TestCase.ReqHeaders() {
         i = i + 1
-        mFieldDetails := MFieldDetails{[]string{}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
+        mFieldDetails := MFieldDetails{[]string{key}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
         mutationInfo := "Remove header key: " + "`" + key + "`"
 
         tcMutationInfo := getTcMutationInfo(mFieldDetails, "")
@@ -200,7 +200,7 @@ func MutateAddRequestHeader (originTcData testcase.TestCaseDataInfo, tcJson []by
 
     randKey := rands.RandStringRunes(5)
     randValue := rands.RandStringRunes(5)
-    mFieldDetails := MFieldDetails{[]string{}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
+    mFieldDetails := MFieldDetails{[]string{randKey}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
     mutationInfo := "Add new rand header key: " + " `" + fmt.Sprint(randKey) + "`, `" + fmt.Sprint(randValue) + "`"
 
     tcMutationInfo := getTcMutationInfo(mFieldDetails, randValue)
@@ -239,7 +239,7 @@ func MutateSetRequestQueryString (originTcData testcase.TestCaseDataInfo, tcJson
     var mutatedTcArray []testcase.TestCaseDataInfo
     i := 0
     for key, value := range originTcData.TestCase.ReqQueryString() {
-        mFieldDetails := MFieldDetails{[]string{}, value, reflect.TypeOf(value).Kind().String(), "", []interface{}{}}
+        mFieldDetails := MFieldDetails{[]string{key}, value, reflect.TypeOf(value).Kind().String(), "", []interface{}{}}
         mType := mFieldDetails.DetermineMutationType()
         mutatedValues := mFieldDetails.CallMutationRules(mType)
         // loop and mutate the value, set new value to key
@@ -268,7 +268,7 @@ func MutateDelRequestQueryString (originTcData testcase.TestCaseDataInfo, tcJson
     for key, _ := range originTcData.TestCase.ReqQueryString() {
         // del key
         i = i + 1
-        mFieldDetails := MFieldDetails{[]string{}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
+        mFieldDetails := MFieldDetails{[]string{key}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
         mutationInfo := "Remove querystring key: " + "`" + key + "`"
 
         tcMutationInfo := getTcMutationInfo(mFieldDetails, "")
@@ -437,7 +437,7 @@ func MutateDelRequestPayload (originTcData testcase.TestCaseDataInfo, tcJson []b
 
         // (2). del node
         mutatedTcJson, _ := sjson.Delete(string(tcJson), plFullPath)
-        mFieldDetails := MFieldDetails{[]string{}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
+        mFieldDetails := MFieldDetails{[]string{pathStr}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
         mutationInfo := "Remove payload value on node: " + pathStr
 
         tcMutationInfo := getTcMutationInfo(mFieldDetails, "")
@@ -467,7 +467,7 @@ func MutateAddRequestPayloadNode (originTcData testcase.TestCaseDataInfo, tcJson
 
     mutatedTcJson, _ := sjson.Set(string(tcJson), plFullPath, randValue)
 
-    mFieldDetails := MFieldDetails{[]string{}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
+    mFieldDetails := MFieldDetails{[]string{randKey}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
     mutationInfo := "Add new rand payload key: " + " `" + fmt.Sprint(randKey) + "`, `" + fmt.Sprint(randValue) + "`"
 
     tcMutationInfo := getTcMutationInfo(mFieldDetails, "")

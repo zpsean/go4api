@@ -93,6 +93,8 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
             tcReportResults := tcExecution.TcReportResults()
             repJson, _ := json.Marshal(tcReportResults)
             reports.WriteExecutionResults(string(repJson), logFilePtr)
+
+            reports.ReportConsoleByTc(tcExecution)
         }
         // (4). execute the chilren, and so on
         statusReadyCount = 0

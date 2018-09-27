@@ -53,6 +53,7 @@ var Mutation = `
                   <div class="content-in">
                     <div>
                         <select id="mySelect">
+                          <option value = "Case ID">Case ID</option>
                           <option value = "Path">HttpUrl</option>
                           <option value = "Method">HttpMethod</option>
                           <option value = "MutationArea">MutationPart</option>
@@ -77,15 +78,16 @@ var Mutation = `
                               <thead>
                                   <tr>
                                       <th id="col-1" class="header sortable"><span>#</span></th>
-                                      <th id="col-2" class="header sortable"><span>HttpUrl</span></th>
-                                      <th id="col-2" class="header sortable"><span>HttpMethod</span></th>
-                                      <th id="col-3" class="header sortable"><span>MutationPart</span></th>
-                                      <th id="col-4" class="header sortable"><span>MutationCategory</span></th>
-                                      <th id="col-4" class="header sortable"><span>MutationRule</span></th>
-                                      <th id="col-4" class="header sortable"><span>HttpStatus</span></th>
-                                      <th id="col-5" class="header sortable"><span>TestStatus</span></th>
-                                      <th id="col-6" class="header sortable"><span>Count</span></th>
-                                      <th id="col-7" class="header sortable"><span>MutationMessage</span></th>
+                                      <th id="col-2" class="header sortable"><span>Case ID</span></th>
+                                      <th id="col-3" class="header sortable"><span>HttpUrl</span></th>
+                                      <th id="col-4" class="header sortable"><span>HttpMethod</span></th>
+                                      <th id="col-5" class="header sortable"><span>MutationPart</span></th>
+                                      <th id="col-6" class="header sortable"><span>MutationCategory</span></th>
+                                      <th id="col-7" class="header sortable"><span>MutationRule</span></th>
+                                      <th id="col-8" class="header sortable"><span>HttpStatus</span></th>
+                                      <th id="col-9" class="header sortable"><span>TestStatus</span></th>
+                                      <th id="col-10" class="header sortable"><span>Count</span></th>
+                                      <th id="col-11" class="header sortable"><span>MutationMessage</span></th>
                                   </tr>
                               </thead>
                               <tbody></tbody>
@@ -112,17 +114,19 @@ var Mutation = `
                                     var newTd7 = newTr.insertCell();
                                     var newTd8 = newTr.insertCell();
                                     var newTd9 = newTr.insertCell();
+                                    var newTd10 = newTr.insertCell();
                              
                                     newTd0.innerText = i;
-                                    newTd1.innerText = tcResults[i].Path;
-                                    newTd2.innerText = tcResults[i].Method;
-                                    newTd3.innerText = tcResults[i].MutationArea;
-                                    newTd4.innerText = tcResults[i].MutationCategory;
-                                    newTd5.innerText = tcResults[i].MutationRule;
-                                    newTd6.innerText = tcResults[i].ActualStatusCode;
-                                    newTd7.innerText = tcResults[i].TestResult;
-                                    newTd8.innerText = 1;
-                                    newTd9.innerText = JSON.stringify(tcResults[i].MutationInfo, null, 4);
+                                    newTd1.innerText = tcResults[i].TcName;
+                                    newTd2.innerText = tcResults[i].Path;
+                                    newTd3.innerText = tcResults[i].Method;
+                                    newTd4.innerText = tcResults[i].MutationArea;
+                                    newTd5.innerText = tcResults[i].MutationCategory;
+                                    newTd6.innerText = tcResults[i].MutationRule;
+                                    newTd7.innerText = tcResults[i].ActualStatusCode;
+                                    newTd8.innerText = tcResults[i].TestResult;
+                                    newTd9.innerText = 1;
+                                    newTd10.innerText = JSON.stringify(tcResults[i].MutationInfo, null, 4);
                                   }
                               </script>
 
@@ -146,48 +150,55 @@ var Mutation = `
       switch(x)
       {
       case 0:
-        if (tcResults[i].Path == y) {
+        if (tcResults[i].TcName == y) {
           return true
         } else {
           return false
         }
         break;
       case 1:
-        if (tcResults[i].Method == y) {
+        if (tcResults[i].Path == y) {
           return true
         } else {
           return false
         }
         break;
       case 2:
-        if (tcResults[i].MutationArea == y) {
+        if (tcResults[i].Method == y) {
           return true
         } else {
           return false
         }
         break;
       case 3:
-        if (tcResults[i].MutationCategory == y) {
+        if (tcResults[i].MutationArea == y) {
           return true
         } else {
           return false
         }
         break;
       case 4:
-        if (tcResults[i].MutationRule == y) {
+        if (tcResults[i].MutationCategory == y) {
           return true
         } else {
           return false
         }
         break;
       case 5:
-        if (tcResults[i].ActualStatusCode == y) {
+        if (tcResults[i].MutationRule == y) {
           return true
         } else {
           return false
         }
         break;
       case 6:
+        if (tcResults[i].ActualStatusCode == y) {
+          return true
+        } else {
+          return false
+        }
+        break;
+      case 7:
         if (tcResults[i].TestResult == y) {
           return true
         } else {
@@ -227,7 +238,7 @@ var Mutation = `
       { 
           if (searchCriteria(i, x, y)) {
             var newTr = container_statistics_body.insertRow();
-          
+                                    
             var newTd0 = newTr.insertCell();
             var newTd1 = newTr.insertCell();
             var newTd2 = newTr.insertCell();
@@ -238,17 +249,19 @@ var Mutation = `
             var newTd7 = newTr.insertCell();
             var newTd8 = newTr.insertCell();
             var newTd9 = newTr.insertCell();
+            var newTd10 = newTr.insertCell();
      
             newTd0.innerText = i;
-            newTd1.innerText = tcResults[i].Path;
-            newTd2.innerText = tcResults[i].Method;
-            newTd3.innerText = tcResults[i].MutationArea;
-            newTd4.innerText = tcResults[i].MutationCategory;
-            newTd5.innerText = tcResults[i].MutationRule;
-            newTd6.innerText = tcResults[i].ActualStatusCode;
-            newTd7.innerText = tcResults[i].TestResult;
-            newTd8.innerText = 1;
-            newTd9.innerText = JSON.stringify(tcResults[i].MutationInfo, null, 4);
+            newTd1.innerText = tcResults[i].TcName;
+            newTd2.innerText = tcResults[i].Path;
+            newTd3.innerText = tcResults[i].Method;
+            newTd4.innerText = tcResults[i].MutationArea;
+            newTd5.innerText = tcResults[i].MutationCategory;
+            newTd6.innerText = tcResults[i].MutationRule;
+            newTd7.innerText = tcResults[i].ActualStatusCode;
+            newTd8.innerText = tcResults[i].TestResult;
+            newTd9.innerText = 1;
+            newTd10.innerText = JSON.stringify(tcResults[i].MutationInfo, null, 4);
           }   
       }
     }

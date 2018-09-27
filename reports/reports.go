@@ -171,12 +171,12 @@ func GetResultsJs (pStart_time time.Time, pEnd_time time.Time, logResultsFile st
     return &resultsJs
 }
 
-func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo, actualBody []byte) {
+func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo) {
     tcReportResults := tcExecution.TcConsoleResults()
     // repJson, _ := json.Marshal(tcReportResults)
 
     if tcReportResults.TestResult == "Fail" {
-        length := len(string(actualBody))
+        length := len(string(tcExecution.ActualBody))
         out_len := 0
         if length > 300 {
             out_len = 300
@@ -199,7 +199,7 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo, actualBody [
         failedTMBytes, _ := json.Marshal(failedTM)
         fmt.Println(string(failedTMBytes))
 
-        fmt.Println(string(actualBody)[0:out_len], "...")
+        fmt.Println(string(tcExecution.ActualBody)[0:out_len], "...")
     } else {
         fmt.Printf("\n%s%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d%s\n", CLR_G, tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
             tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,

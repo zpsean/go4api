@@ -37,6 +37,7 @@ type TestCaseExecutionInfo struct {
     StartTimeUnixNano int64
     EndTimeUnixNano int64
     DurationUnixNano int64
+    ActualBody []byte
 }
 
 type TestMessage struct {  

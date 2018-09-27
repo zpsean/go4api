@@ -228,6 +228,21 @@ func M_Common_Set_To_Null (currValue interface{}, fieldType string, fieldSubType
     return mutatedValue
 }
 
+// set the [] to bool - true
+func M_Common_Set_To_Bool_True (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue interface{}
+    mutatedValue = true
+
+    return mutatedValue
+}
+
+// set the [] to bool - false
+func M_Common_Set_To_Bool_False (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue interface{}
+    mutatedValue = false
+
+    return mutatedValue
+}
 
 //----------------------------------------------
 //------- other Rules
@@ -320,6 +335,28 @@ func M_Char_Replace_Mid_One_Blank (currValue interface{}, fieldType string, fiel
     return mutatedValue
 }
 
+func M_Char_Replace_Mid_One_E (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    currValueRune := []rune(currValue.(string))
+    var mutatedValue string
+
+    if len(currValueRune) > 2 {
+        mutatedValue = string(currValueRune[0:1]) + "E" + string(currValueRune[2:len(currValueRune)])
+    }
+
+    return mutatedValue
+}
+
+func M_Char_Replace_Mid_One_Negative_Sign (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    currValueRune := []rune(currValue.(string))
+    var mutatedValue string
+
+    if len(currValueRune) > 2 {
+        mutatedValue = string(currValueRune[0:1]) + "-" + string(currValueRune[2:len(currValueRune)])
+    }
+
+    return mutatedValue
+}
+
 func M_Char_Replace_Mid_None_ASCII (currValue interface{}, fieldType string, fieldSubType string) interface{} {
     currValueRune := []rune(currValue.(string))
     var mutatedValue string
@@ -400,6 +437,7 @@ func M_Char_Replace_Prefix_Star (currValue interface{}, fieldType string, fieldS
     }
     return mutatedValue
 }
+
 
 // change type (simple, i.e. to float64/bool...)
 func M_Char_Set_To_Int (currValue interface{}, fieldType string, fieldSubType string) interface{} {
@@ -510,16 +548,6 @@ func M_Float_Set_To_SmallestNonzeroFloat64 (currValue interface{}, fieldType str
 
 
 // < --------------- Bool ------------->
-func M_Bool_Set_To_Bool_True (currValue interface{}, fieldType string, fieldSubType string) interface{} {
-    mutatedValue := true
-    return mutatedValue
-}
-
-func M_Bool_Set_To_Bool_False (currValue interface{}, fieldType string, fieldSubType string) interface{} {
-    mutatedValue := false
-    return mutatedValue
-}
-
 func M_Bool_Set_To_Zero (currValue interface{}, fieldType string, fieldSubType string) interface{} {
     mutatedValue := 0
     return mutatedValue
@@ -736,30 +764,6 @@ func M_Array_Set_To_Int (currValue interface{}, fieldType string, fieldSubType s
 func M_Array_Set_To_String (currValue interface{}, fieldType string, fieldSubType string) interface{} {
     var mutatedValue interface{}
     mutatedValue = "123"
-
-    return mutatedValue
-}
-
-// set the [] to bool - true
-func M_Array_Set_To_Bool_True (currValue interface{}, fieldType string, fieldSubType string) interface{} {
-    var mutatedValue interface{}
-    mutatedValue = true
-
-    return mutatedValue
-}
-
-// set the [] to bool - false
-func M_Array_Set_To_Bool_False (currValue interface{}, fieldType string, fieldSubType string) interface{} {
-    var mutatedValue interface{}
-    mutatedValue = false
-
-    return mutatedValue
-}
-
-// set the [] to nil (i.e. json null)
-func M_Array_Set_To_Null (currValue interface{}, fieldType string, fieldSubType string) interface{} {
-    var mutatedValue interface{}
-    mutatedValue = nilNull
 
     return mutatedValue
 }
