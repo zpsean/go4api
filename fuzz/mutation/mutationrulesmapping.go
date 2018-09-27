@@ -31,6 +31,8 @@ func MutationRulesMapping(key string) []interface{} {
             M_Char_Add_Mid_One_Blank, 
             M_Char_Add_Mid_None_ASCII,
             M_Char_Replace_Mid_One_Blank, 
+            M_Char_Replace_Mid_One_E,
+            M_Char_Replace_Mid_One_Negative_Sign,
             M_Char_Replace_Mid_None_ASCII,
             M_Char_Set_To_One_Char,
             M_Char_Repeat_50_Times, 
@@ -105,8 +107,9 @@ func MutationRulesMapping(key string) []interface{} {
         "MBool": []interface{} {
             M_Common_Set_To_Empty, 
             M_Common_Set_To_One_Blank,
-            M_Bool_Set_To_Bool_True, 
-            M_Bool_Set_To_Bool_False, 
+            M_Common_Set_To_Null,
+            M_Common_Set_To_Bool_True,
+            M_Common_Set_To_Bool_False,
             M_Bool_Set_To_Zero,
         },
         "MArray": []interface{} {
@@ -128,9 +131,9 @@ func MutationRulesMapping(key string) []interface{} {
             M_Array_Set_To_Only_One_Bool_False,
             M_Array_Set_To_Int,
             M_Array_Set_To_String,
-            M_Array_Set_To_Bool_True,
-            M_Array_Set_To_Bool_False,
-            M_Array_Set_To_Null,
+            M_Common_Set_To_Bool_True,
+            M_Common_Set_To_Bool_False,
+            M_Common_Set_To_Null,
         },
     }
 

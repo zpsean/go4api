@@ -28,7 +28,6 @@ import (
     "go4api/lib/testcase"                                                                                                                               
     "go4api/assertion"
     "go4api/protocal/http"
-    "go4api/reports"
 )
 
 
@@ -69,10 +68,8 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
         StartTimeUnixNano: start_time.UnixNano(),
         EndTimeUnixNano: end_time.UnixNano(),
         DurationUnixNano: end_time.UnixNano() - start_time.UnixNano(),
+        ActualBody: actualBody,
     }
-
-    // (5). print to console
-    reports.ReportConsoleByTc(tcExecution, actualBody)
 
     // (6). write the channel to executor for scheduler and log
     resultsExeChan <- tcExecution

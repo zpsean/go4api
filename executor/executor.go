@@ -87,6 +87,8 @@ func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resu
                 repJson, _ := json.Marshal(tcReportResults)
                 // (4). put the execution log into results
                 reports.WriteExecutionResults(string(repJson), logFilePtr)
+
+                reports.ReportConsoleByTc(tcExecution)
             }
             // if tcTree has no node with "Ready" status, break the miniloop
             statusReadyCount = 0
