@@ -364,40 +364,6 @@ var MIndex = `<!DOCTYPE html>
                                 });
   </script>
 
-
-  <script>
-    var resultLabel = [];
-    for (var i in mutationStats1) {
-      resultLabel.push(mutationStats1[i].ReportKey.Method + ":" + mutationStats1[i].ReportKey.ActualStatusCode)
-    }
-
-    var resultData = [];
-    for (var i in mutationStats1) {
-      resultData.push(mutationStats1[i].Count)
-    }
-
-    var data = {
-            labels: resultLabel,
-            datasets: [
-                {
-                    data: resultData
-                }]
-        };
-    // Get the context of the canvas element we want to select
-    var ctx = document.getElementById("myChart5").getContext("2d");
-    var myBarChart = new Chart(ctx, {
-                                        type: 'pie',
-                                        data: data,
-                                        options: {
-                                            title: {
-                                              display: true,
-                                              text: 'Overall Executions - Method, StatusCode, MutationPart'
-                                            }
-                                        }
-                                });
-  </script>
-
-
   <script>
     var resultLabel = [];
     for (var i in mutationStats2) {
