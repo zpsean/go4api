@@ -48,15 +48,11 @@ var Details = `<!DOCTYPE html>
 
                   <div class="content-in">
                     <div>
-                        <select id="mySelect">
-                          <option value = "Priority">Priority</option>
-                          <option value = "Case ID">Case ID</option>
-                          <option value = "ParentTestCase">ParentTestCase</option>
-                          <option value = "Status">Status</option>
-                        </select>
+                        <select id = "mySelect" onchange="selectKey(this);" style="width:150px;"></select>
+                        <select id = "mySelect2" style="width:300px;"></select>
 
                         <input type="text" id="myInput" size="50" name="search_text" placeholder="Please enter search text here">
-                        <button type="button" onClick="btnClick()">Search!</button>
+                        <button type="button" onClick="btnClick()">Search</button>
                     </div>
 
                     <h1><span>> </span>Overview Information</h1>
@@ -169,7 +165,8 @@ var Details = `<!DOCTYPE html>
 
     function btnClick(){
       var x = document.getElementById("mySelect")
-      var y = document.getElementById("myInput")
+      // var y = document.getElementById("myInput")
+      var y = document.getElementById("mySelect2")
 
       clearRows()
       insertRows(x.selectedIndex, y.value)
@@ -208,6 +205,85 @@ var Details = `<!DOCTYPE html>
             newTd5.innerText = tcResults[i].JsonFilePath + " / " + tcResults[i].CsvFile  + " / " + tcResults[i].CsvRow;
             newTd6.innerText = JSON.stringify(tcResults[i].TestMessages, null, 4);
           }   
+      }
+    }
+  </script>
+
+  <script type="text/javascript">
+    var list1 = new Array(4);
+    var li2 = new Array(4);
+    var list2 = new Array(4);
+
+    list1[0] = "Priority";
+    list1[1] = "TcName";
+    list1[2] = "ParentTestCase";
+    list1[3] = "TestResult";
+
+    li2[0] = new Array;
+    li2[1] = new Array;
+    li2[2] = new Array;
+    li2[3] = new Array;
+
+    list2[0] = new Array;
+    list2[1] = new Array;
+    list2[2] = new Array;
+    list2[3] = new Array;
+
+    for(var i = 0; i < list1.length; i++)
+    {
+      for (var j = 0; j < tcResults.length; j++)
+      { 
+        li2[i].push(tcResults[j][list1[i]])
+      }
+      // console.log(li2[i])
+
+      var distinctItems = Array.from(new Set(li2[i]))
+      list2[i] = distinctItems
+      // console.log(list2[i])
+    }
+    
+
+    var firstSelect = document.getElementById("mySelect");
+    var secondSelect = document.getElementById("mySelect2");
+
+    for(var i = 0; i < list1.length; i++)
+    {
+      var option = document.createElement("option");
+      option.appendChild(document.createTextNode(list1[i]));
+      option.value = list1[i];
+      firstSelect.appendChild(option);
+    }
+
+    var firstKeyValue = list2[0];
+    // console.log(firstKeyValue)
+    for (var j = 0; j < firstKeyValue.length; j++) {
+        var option2 = document.createElement("option");
+        option2.appendChild(document.createTextNode(firstKeyValue[j]));
+        option2.value = firstKeyValue[j];
+        secondSelect.appendChild(option2);
+    }
+
+    function indexof(obj, value)
+    {
+      var k = 0;
+      for(; k < obj.length; k++)
+      {
+          if(obj[k] == value)
+          return k;
+      }
+      return k;
+    }
+
+    function selectKey(obj) {
+      secondSelect.options.length = 0;
+      var index = indexof(list1,obj.value);
+      var list2Element = list2[index];
+      for(var i = 0; i < list2Element.length; i++)
+      {
+          var option = document.createElement("option");
+          option.appendChild(document.createTextNode(list2Element[i]));
+          option.value = list2Element[i];
+          secondSelect.appendChild(option);
       }
     }
   </script>

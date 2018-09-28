@@ -575,6 +575,8 @@ func getFieldsMutationDetails(value interface{}) []MFieldDetails {
         mFieldDetailsSlice = append(mFieldDetailsSlice, mFieldDetails)
     }
 
+    fmt.Println("----> mFieldDetailsSlice: ", mFieldDetailsSlice)
+
     return mFieldDetailsSlice
 }
 
@@ -599,11 +601,19 @@ func sturctFieldsMutation(c chan MFieldDetails, subPath []string, value interfac
                             sturctFieldsMutation(c, subPathNew, value2)
                         case reflect.Array, reflect.Slice:
                             // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
-                            for _, v := range reflect.ValueOf(value2).Interface().([]interface{}) {
+                            for index, v := range reflect.ValueOf(value2).Interface().([]interface{}) {
                                 switch reflect.TypeOf(v).Kind() {
                                     case reflect.Array, reflect.Slice, reflect.Map:
                                         subPathNew := append(subPath, fmt.Sprint(key2))
                                         sturctFieldsMutation(c, subPathNew, value2)
+                                    case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
+                                        subPathNew := append(subPath, fmt.Sprint(key2))
+                                        subPathNew = append(subPathNew, fmt.Sprint(index))
+                                        output := make([]string, len(subPathNew))
+                                        copy(output, subPathNew)
+
+                                        mtD := MFieldDetails{output, value2, reflect.TypeOf(value2).Kind().String(), "", []interface{}{}}
+                                        c <- mtD
                                 }
                                 break
                             }
@@ -635,11 +645,19 @@ func sturctFieldsMutation(c chan MFieldDetails, subPath []string, value interfac
                         sturctFieldsMutation(c, subPathNew, value2)
                     case reflect.Array, reflect.Slice:
                         // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
-                        for _, v := range reflect.ValueOf(value2).Interface().([]interface{}) {
+                        for index, v := range reflect.ValueOf(value2).Interface().([]interface{}) {
                             switch reflect.TypeOf(v).Kind() {
                                 case reflect.Array, reflect.Slice, reflect.Map:
                                     subPathNew := append(subPath, fmt.Sprint(key2))
                                     sturctFieldsMutation(c, subPathNew, value2)
+                                case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
+                                    subPathNew := append(subPath, fmt.Sprint(key2))
+                                    subPathNew = append(subPathNew, fmt.Sprint(index))
+                                    output := make([]string, len(subPathNew))
+                                    copy(output, subPathNew)
+
+                                    mtD := MFieldDetails{output, value2, reflect.TypeOf(value2).Kind().String(), "", []interface{}{}}
+                                    c <- mtD
                             }
                         }
                         break
