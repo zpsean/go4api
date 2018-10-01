@@ -65,20 +65,20 @@ type MCategoryFuncMap struct {
 
 
 func init() {
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"1", "-M-H-S-", "headers", "SetRequestHeader", MutateSetRequestHeader})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"2", "-M-H-D-", "headers", "DelRequestHeader", MutateDelRequestHeader})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"3", "-M-H-A-", "headers", "AddRequestHeader", MutateAddRequestHeader})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"4", "-M-H-D-", "headers", "DelAllRequestHeaders", MutateDelAllRequestHeaders})
+    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"3", "-M-H-S-", "headers", "SetRequestHeader", MutateSetRequestHeader})
+    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"4", "-M-H-D-", "headers", "DelRequestHeader", MutateDelRequestHeader})
+    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"5", "-M-H-A-", "headers", "AddRequestHeader", MutateAddRequestHeader})
+    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"6", "-M-H-D-", "headers", "DelAllRequestHeaders", MutateDelAllRequestHeaders})
 
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"5", "-M-QS-S-", "queryString", "SetRequestQueryString", MutateSetRequestQueryString})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"6", "-M-QS-D-", "queryString", "DelRequestQueryString", MutateDelRequestQueryString})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"7", "-M-QS-A-", "queryString", "AddRequestQueryString", MutateAddRequestQueryString})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"8", "-M-QS-D-", "queryString", "DelAllRequestQueryStrings", MutateDelAllRequestQueryStrings})
+    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"7", "-M-QS-S-", "queryString", "SetRequestQueryString", MutateSetRequestQueryString})
+    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"8", "-M-QS-D-", "queryString", "DelRequestQueryString", MutateDelRequestQueryString})
+    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"9", "-M-QS-A-", "queryString", "AddRequestQueryString", MutateAddRequestQueryString})
+    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"10", "-M-QS-D-", "queryString", "DelAllRequestQueryStrings", MutateDelAllRequestQueryStrings})
 
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"9", "-M-PL-S-", "payload", "SetRequestPayload", MutateSetRequestPayload})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"10", "-M-PL-D-", "payload", "DelRequestPayload", MutateDelRequestPayload})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"11", "-M-PL-A-", "payload", "AddRequestPayloadNode", MutateAddRequestPayloadNode})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"12", "-M-PL-D-", "payload", "DelWholeRequestPayloadNode", MutateDelWholeRequestPayloadNode})
+    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"11", "-M-PL-S-", "payload", "SetRequestPayload", MutateSetRequestPayload})
+    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"12", "-M-PL-D-", "payload", "DelRequestPayload", MutateDelRequestPayload})
+    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"13", "-M-PL-A-", "payload", "AddRequestPayloadNode", MutateAddRequestPayloadNode})
+    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"14", "-M-PL-D-", "payload", "DelWholeRequestPayloadNode", MutateDelWholeRequestPayloadNode})
 }
 
 
@@ -500,68 +500,6 @@ func MutateDelWholeRequestPayloadNode (originTcData testcase.TestCaseDataInfo, t
     mutatedTcArray = append(mutatedTcArray, mTcData)
 
     return mutatedTcArray
-}
-
-
-func sturctFieldsDisplay(value interface{}) {
-    switch reflect.TypeOf(value).Kind() {
-        case reflect.String:
-            fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
-        case reflect.Int32:
-            fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
-        case reflect.Map: {
-            // fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
-            for key2, value2 := range reflect.ValueOf(value).Interface().(map[string]interface{}) {
-                fmt.Println("------> key2, value2: ", key2, value2, reflect.TypeOf(value2))
-                // note, to deal with <nil>
-                if value2 != nil {
-                    switch reflect.TypeOf(value2).Kind() {
-                        case reflect.String:
-                            fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                        case reflect.Int32:
-                            fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                        case reflect.Map:
-                            fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                            sturctFieldsDisplay(value2)
-                        case reflect.Array:
-                            // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
-                            fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                            sturctFieldsDisplay(value2)
-                        case reflect.Slice:
-                            // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
-                            fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                            sturctFieldsDisplay(value2)
-                    }
-                } else {
-                    fmt.Println("------> key2, value2: is nil ", key2, value2, reflect.TypeOf(value2))
-                }
-                
-            }     
-        }
-        case reflect.Array, reflect.Slice: {
-            // fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
-            for key2, value2 := range reflect.ValueOf(value).Interface().([]interface{}) {
-                // fmt.Println("key2, value2: ", key2, reflect.TypeOf(value2))
-                switch reflect.TypeOf(value2).Kind() {
-                    case reflect.String:
-                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                    case reflect.Int32:
-                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                    case reflect.Map:
-                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                        sturctFieldsDisplay(value2)
-                    case reflect.Array:
-                        // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
-                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                        sturctFieldsDisplay(value2)
-                    case reflect.Slice:
-                        // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
-                        fmt.Println("key2, value2: ", key2, value2, reflect.TypeOf(value2), reflect.TypeOf(value2).Kind())
-                        sturctFieldsDisplay(value2)
-                }
-            }  
-        }
-    }
 }
 
 

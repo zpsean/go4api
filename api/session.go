@@ -11,7 +11,7 @@
 package api
 
 import (
-    "os"
+    // "os"
     // "fmt"
     // "strings"
     // "reflect"
@@ -19,70 +19,31 @@ import (
     // "encoding/json"
 
     "go4api/lib/testcase"
+    "go4api/lib/session"
     // "go4api/uti/ls"
 )
 
 
 func WriteSession (testResult string, tcData testcase.TestCaseDataInfo, actualBody []byte) {
-    var expEnvs []map[string]interface{}
+    var tcSessionDef = make(map[string]interface{})
 
     if testResult == "Success" {
-        expEnvs = tcData.TestCase.OutEnvVariables()
-        if len(expEnvs) > 0 {
-            // 
-            for i, _ := range expEnvs {
-                for k, v := range expEnvs[i] {
-                    key := "go4_" + k
-                    value := GetActualValueByJsonPath(v.(string), actualBody)
+        // get its parent session
+        parentTcSession := gsession.LookupParentSession(tcData.ParentTestCase())
 
-                    os.Setenv(key, value.(string))
-                } 
-            }
+        tcName := tcData.TcName()
+        gsession.Gsession[tcName] = parentTcSession
+        // get its session def
+        tcSessionDef = tcData.TestCase.Session()
+
+        if len(tcSessionDef) > 0 {
+            for k, v := range tcSessionDef {
+                gsession.Gsession[tcName][k] = v
+            } 
         }
     } else {
         // fmt.Println("Warning: test execution failed, no OutEnvVariables set!")
     }
 }
 
-func RetriveSession (testResult string, tcData testcase.TestCaseDataInfo, actualBody []byte) {
-    var expEnvs []map[string]interface{}
-
-    if testResult == "Success" {
-        expEnvs = tcData.TestCase.OutEnvVariables()
-        if len(expEnvs) > 0 {
-            // 
-            for i, _ := range expEnvs {
-                for k, v := range expEnvs[i] {
-                    key := "go4_" + k
-                    value := GetActualValueByJsonPath(v.(string), actualBody)
-
-                    os.Setenv(key, value.(string))
-                } 
-            }
-        }
-    } else {
-        // fmt.Println("Warning: test execution failed, no OutEnvVariables set!")
-    }
-}
-
-func MergeSessionWithTcJson (testResult string, tcData testcase.TestCaseDataInfo, actualBody []byte) {
-    var expEnvs []map[string]interface{}
-
-    if testResult == "Success" {
-        expEnvs = tcData.TestCase.OutEnvVariables()
-        if len(expEnvs) > 0 {
-            // 
-            for i, _ := range expEnvs {
-                for k, v := range expEnvs[i] {
-                    key := "go4_" + k
-                    value := GetActualValueByJsonPath(v.(string), actualBody)
-
-                    os.Setenv(key, value.(string))
-                } 
-            }
-        }
-    } else {
-        // fmt.Println("Warning: test execution failed, no OutEnvVariables set!")
-    }
-}
 

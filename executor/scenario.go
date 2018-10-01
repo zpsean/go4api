@@ -155,9 +155,9 @@ func ConstructChildTcInfosBasedOnParentTcName(jsonFileList []string, parentTcNam
     var tcInfos []testcase.TestCaseDataInfo
 
     for _, jsonFile := range jsonFileList {
-        tcNames := GetBasicParentTestCaseInfosPerFile(jsonFile, parentTcName)
+        parentTcNames := GetBasicParentTestCaseInfosPerFile(jsonFile, parentTcName)
         //
-        if len(tcNames) > 0 {
+        if len(parentTcNames) > 0 {
             csvFileList := GetBasicInputsFilesPerFile(jsonFile)
             // if has inputs -> if has *_dt -> use json
             if len(csvFileList) > 0 && utils.CheckFilesExistence(csvFileList) {

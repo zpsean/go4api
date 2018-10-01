@@ -39,7 +39,8 @@
           }
         }
       },
-      "outputs": []
+      "outputs": [],
+      "outEnvVariables": [{"kaaaa": "vaaaa"}]
     }
   }
 ]

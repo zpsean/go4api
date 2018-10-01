@@ -33,3 +33,15 @@ func GetBaseUrlFromConfig() string {
         return ""
     }
 }
+
+
+func GetConfig () Config {
+    if len(Opt.Testconfig) > 0 && len(Opt.TestEnv) > 0 {
+        configJson := utils.GetJsonFromFile(Opt.Testconfig)
+        json.Unmarshal([]byte(configJson), &config)
+
+        return config
+    } else {
+        return map[string]*Environment{}
+    }
+}

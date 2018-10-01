@@ -216,7 +216,14 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile string, csvFileLi
         for i, csvRow := range csvRows {
             // starting with data row
             if i > 0 {
-                outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, csvRows[0], csvRow)
+                // note: here pass the csvRows[0], csvRow, but they can be replaced by map[string]interface{} for later enhancement
+                var cvsRowInterface []interface{}
+                for i, _ := range csvRow {
+                    cvsRowInterface = append(cvsRowInterface, csvRow[i])
+                }
+                mergedTestData := MergeTestData(csvRows[0], cvsRowInterface)
+
+                outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, mergedTestData)
 
                 var tcases testcase.TestCases
                 resJson, _ := ioutil.ReadAll(outTempJson)
@@ -243,7 +250,8 @@ func ConstructTcInfosBasedOnJson(jsonFile string) []testcase.TestCaseDataInfo {
 
     csvFile := ""
     csvRow := ""
-    outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, []string{""}, []string{""})
+    mergedTestData := map[string]interface{}{}
+    outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, mergedTestData)
     
     var tcases testcase.TestCases
     resJson, _ := ioutil.ReadAll(outTempJson)

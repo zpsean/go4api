@@ -80,8 +80,8 @@ func Convert () {
 		        &g4ARequest,
 		        &g4AResponse,
 		        []*testcase.OutputsDetails{},
-                []map[string]interface{}{},
-                map[string]map[string]interface{}{},
+                map[string]interface{}{},
+                map[string]interface{}{},
                 map[string]interface{}{},
 		    }
 		    //

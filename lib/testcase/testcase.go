@@ -54,11 +54,11 @@ func (tc *TestCase) Outputs() []*OutputsDetails {
     return (*tc)[tc.TcName()].Outputs
 }
 
-func (tc *TestCase) OutEnvVariables() []map[string]interface{} {
+func (tc *TestCase) OutEnvVariables() map[string]interface{} {
     return (*tc)[tc.TcName()].OutEnvVariables
 }
 
-func (tc *TestCase) Session() map[string]map[string]interface{} {
+func (tc *TestCase) Session() map[string]interface{} {
     return (*tc)[tc.TcName()].Session
 }
 

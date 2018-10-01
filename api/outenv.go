@@ -13,6 +13,7 @@ package api
 import (
     "os"
     // "fmt"
+    // "syscall"
     // "strings"
     // "reflect"
     // "path/filepath"
@@ -24,20 +25,26 @@ import (
 
 
 func WriteOutEnvVariables (testResult string, tcData testcase.TestCaseDataInfo, actualBody []byte) {
-    var expEnvs []map[string]interface{}
+    var expEnvs map[string]interface{}
 
     if testResult == "Success" {
         expEnvs = tcData.TestCase.OutEnvVariables()
+        
         if len(expEnvs) > 0 {
-            // 
-            for i, _ := range expEnvs {
-                for k, v := range expEnvs[i] {
-                    key := "go4_" + k
-                    value := GetActualValueByJsonPath(v.(string), actualBody)
+            for k, v := range expEnvs {
+                key := "go4_" + k
+                value := GetActualValueByJsonPath(v.(string), actualBody)
+                // fmt.Println("expEnvs: ", key, value.(string))
 
-                    os.Setenv(key, value.(string))
-                } 
-            }
+                err := os.Setenv(key, value.(string))
+                // syscall.Exec(os.Getenv("SHELL"), []string{os.Getenv("SHELL")}, syscall.Environ())
+                if err != nil {
+                    panic(err) 
+                }
+
+                // env := os.Getenv(key)
+                // fmt.Println("----> env: ", env)
+            } 
         }
     } else {
         // fmt.Println("Warning: test execution failed, no OutEnvVariables set!")

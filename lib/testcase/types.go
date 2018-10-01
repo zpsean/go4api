@@ -64,9 +64,9 @@ type TestCaseBasics struct {
     Request *Request         `json:"request"`
     Response *Response       `json:"response"`
     Outputs []*OutputsDetails   `json:"outputs"`
-    OutEnvVariables []map[string]interface{}    `json:"outEnvVariables"`
-    Session map[string]map[string]interface{}            `json:"session"`
-    TearDown map[string]interface{}             `json:"tearDown"`
+    OutEnvVariables map[string]interface{}   `json:"outEnvVariables"`
+    Session map[string]interface{}           `json:"session"`
+    TearDown map[string]interface{}          `json:"tearDown"`
 }
 
 type Request struct {  
