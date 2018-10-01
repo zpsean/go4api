@@ -14,7 +14,7 @@ import (
     // "fmt"
     // "io/ioutil"                                                                                                                                              
     "os"
-    "strings"
+    // "strings"
     "bytes"
     "text/template"
     // "time"
@@ -138,52 +138,25 @@ func GenerateMutationResultsJs(strVar string, targetFile string, resultsJs []str
     }
 }
 
-func GenerateJsonBasedOnTemplateAndCsv(jsonFilePath string, csvHeader []string, csvRow []string) *bytes.Buffer {
+func GenerateJsonBasedOnTemplateAndCsv(jsonFilePath string, testData map[string]interface{}) *bytes.Buffer {
     jsonTemplateBytes := utils.GetContentFromFile(jsonFilePath)
     //
-    tcJson := GetTcJson(string(jsonTemplateBytes), csvHeader, csvRow)
+    tcJson := GetTcJson(string(jsonTemplateBytes), testData)
 
     return tcJson
 }
 
-func GetTcJson (jsonTemplate string, csvHeader []string, csvRow []string) *bytes.Buffer {
-    csvMap := map[string]string{}
-
+func GetTcJson (jsonTemplate string, testData map[string]interface{}) *bytes.Buffer {
     tmpl := template.Must(template.New("tcTemp").Parse(jsonTemplate))
     
-    // consider add the env variables with prefix "go4_*" for username/password/athentication, etc.
-    csvMap = GetOsEnviron()
-    // override the env variables, using the csv data
-    for i, item := range csvRow {
-        csvMap[csvHeader[i]] = item
-    }
-    //
     tcJson := &bytes.Buffer{}
     // Execute the template
-    err := tmpl.Execute(tcJson, csvMap)
+    err := tmpl.Execute(tcJson, testData)
     if err != nil {
       panic(err) 
     }
 
     return tcJson
-}
-
-func GetOsEnviron () map[string]string {
-    csvMap := map[string]string{}
-    // consider add the env variables with prefix "go4_*" for username/password/athentication, etc.
-    var envArray []string
-    envArray = os.Environ()
-    for _, env := range envArray {
-        // find out the first = position, to get the key
-        env_k := strings.Split(env, "=")[0]
-        if strings.HasPrefix(env_k, "go4_") {
-            if strings.TrimLeft(env_k, "go4_") != "" {
-                csvMap[strings.TrimLeft(env_k, "go4_")] = os.Getenv(env_k)
-            }
-        } 
-    }
-
-    return csvMap
 }
 
 
