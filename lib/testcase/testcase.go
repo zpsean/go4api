@@ -38,12 +38,32 @@ func (tc *TestCase) ParentTestCase() string {
     return (*tc)[tc.TcName()].ParentTestCase
 }
 
+func (tc *TestCase) IfSetUpTestCase() bool {
+    return (*tc)[tc.TcName()].IfSetUpTestCase
+}
+
+func (tc *TestCase) IfTearDownTestCase() bool {
+    return (*tc)[tc.TcName()].IfTearDownTestCase
+}
+
 func (tc *TestCase) Inputs() []interface{} {
     return (*tc)[tc.TcName()].Inputs
 }
 
 func (tc *TestCase) Outputs() []*OutputsDetails {
     return (*tc)[tc.TcName()].Outputs
+}
+
+func (tc *TestCase) OutEnvVariables() []map[string]interface{} {
+    return (*tc)[tc.TcName()].OutEnvVariables
+}
+
+func (tc *TestCase) Session() map[string]map[string]interface{} {
+    return (*tc)[tc.TcName()].Session
+}
+
+func (tc *TestCase) TearDown() map[string]interface{} {
+    return (*tc)[tc.TcName()].TearDown
 }
 
 // !! ---------------------------------------

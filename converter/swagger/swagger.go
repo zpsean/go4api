@@ -74,10 +74,15 @@ func Convert () {
 		    tCaseBasics := testcase.TestCaseBasics{
 		        priority, 
 		        parentTestCase,
+                false,
+                false,
 		        []interface{}{},
 		        &g4ARequest,
 		        &g4AResponse,
 		        []*testcase.OutputsDetails{},
+                []map[string]interface{}{},
+                map[string]map[string]interface{}{},
+                map[string]interface{}{},
 		    }
 		    //
 		    tCase[g4ATcName] = &tCaseBasics

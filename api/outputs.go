@@ -17,6 +17,7 @@ import (
     "reflect"
     "path/filepath"
     "encoding/json"
+    "net/http"
 
     "go4api/lib/testcase"
     "go4api/utils"
@@ -25,7 +26,7 @@ import (
 )
 
 
-func WriteOutputsDataToFile(testResult string, tcData testcase.TestCaseDataInfo, actualBody []byte) {
+func WriteOutputsDataToFile (testResult string, tcData testcase.TestCaseDataInfo, actualBody []byte) {
     var expOutputs []*testcase.OutputsDetails
 
     if testResult == "Success" {
@@ -137,9 +138,9 @@ func convertSliceAsString (slice []interface{}) string {
     return varStr
 }
 
-func GetActualValueByJsonPath(key string, actualBody []byte) interface{} {  
+func GetActualValueByJsonPath (key string, actualBody []byte) interface{} {  
     var actualValue interface{}
-    // leading "$." is mandatory if want to using path search
+    // leading "$." is mandatory if want to use path search
     if len(key) > 2 && key[0:2] == "$." {
         value := gjson.Get(string(actualBody), key[2:])
         actualValue = value.Value()
@@ -149,3 +150,29 @@ func GetActualValueByJsonPath(key string, actualBody []byte) interface{} {
 
     return actualValue
 }
+
+func GetStatusActualValue (key string, actualStatusCode int) interface{} {
+    var actualValue interface{}
+    // leading "$(status)" is mandatory if want to retrive status
+    if len(key) == 9 && key == "$(status)" {
+        actualValue = actualStatusCode
+    } else {
+        actualValue = key
+    }
+
+    return actualValue
+}
+
+func GetHeaderActualValue (key string, actualHeader http.Header) interface{} { 
+    var actualValue interface{}
+    // leading "$(header)" is mandatory if want to retrive status
+    if len(key) > 10 && key[0:10] == "$(header)." {
+        actualValue = strings.Join(actualHeader[key[10:]], ",")
+    } else {
+        actualValue = key
+    }
+
+    return actualValue
+}
+
+

@@ -58,10 +58,15 @@ type TestCase map[string]*TestCaseBasics
 type TestCaseBasics struct {
     Priority string         `json:"priority"`
     ParentTestCase string   `json:"parentTestCase"`
+    IfSetUpTestCase bool    `json:"ifSetUpTestCase"`
+    IfTearDownTestCase bool `json:"ifTearDownTestCase"`
     Inputs []interface{}     `json:"inputs"`
     Request *Request         `json:"request"`
     Response *Response       `json:"response"`
     Outputs []*OutputsDetails   `json:"outputs"`
+    OutEnvVariables []map[string]interface{}    `json:"outEnvVariables"`
+    Session map[string]map[string]interface{}            `json:"session"`
+    TearDown map[string]interface{}             `json:"tearDown"`
 }
 
 type Request struct {  
