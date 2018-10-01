@@ -86,8 +86,12 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
     var mutatedTcArray []testcase.TestCaseDataInfo
 
     for _, originTcData := range originMutationTcArray {
+        if originTcData.TestCase.IfSetUpTestCase() == true {
+            mutatedTcArray = append(mutatedTcArray, originTcData)
+            continue
+        }
+
         tcJson, _ := json.Marshal(originTcData)
-        // fmt.Println("tcJsonHTTP:", string(tcJson)) 
         mutatedTcArray = append(mutatedTcArray, originTcData)
 
         // --- here to start the mutation
