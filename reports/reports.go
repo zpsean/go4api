@@ -43,18 +43,16 @@ var (
 
 
 func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time,
-        tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
-        tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
-        tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) {
+        runClass string, totalTc int, statusCountByPriority map[string]map[string]int,) {
     // --------
     // html
     GenerateHtml(resultsDir)
     
     // js
-    GenerateJs(resultsDir, pStart_time, pStart, pEnd_time, tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    GenerateJs(resultsDir, pStart_time, pStart, pEnd_time, runClass, totalTc, statusCountByPriority)
     
     // style
-    GenerateStyle(resultsDir, pStart_time, pStart, pEnd_time, tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    GenerateStyle(resultsDir, pStart_time, pStart, pEnd_time, runClass, totalTc)
 
     //
     // statsJsonBytes, _ := json.MarshalIndent(ExecutionResultSlice, "", "\t")
@@ -74,9 +72,7 @@ func GenerateHtml (resultsDir string) {
 
 
 func GenerateJs (resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time,
-        tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
-        tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
-        tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) {
+        runClass string, totalTc int, statusCountByPriority map[string]map[string]int) {
     // --------
     // (0)
     err := os.MkdirAll(resultsDir + "js", 0777)
@@ -85,22 +81,17 @@ func GenerateJs (resultsDir string, pStart_time time.Time, pStart string, pEnd_t
     }
     logResultsFile := resultsDir + pStart + ".log"
 
-    // statsFile := resultsDir + "/js/stats.js"
-    // statsJson := GetStatsJson(tcClassifedCountMap, totalTc, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
-    // texttmpl.GenerateStatsJs(js.Stats, statsFile, statsJson, logResultsFile)
+    // statsFile := resultsDir + "/js/executed.js"
+    // executedJson := GetExecutedJson(tcExecutedByPriority)
+    // texttmpl.GenerateDetailsJs(js.Executed, statsFile, executedJson, logResultsFile)
 
 
-    statsFile := resultsDir + "/js/executed.js"
-    executedJson := GetExecutedJson(tcExecutedByPriority)
-    texttmpl.GenerateDetailsJs(js.Executed, statsFile, executedJson, logResultsFile)
+    // statsFile = resultsDir + "/js/notexecuted.js"
+    // notexecutedJson := GetNotExecutedJson(tcNotExecutedByPriority)
+    // texttmpl.GenerateDetailsJs(js.NotExecuted, statsFile, notexecutedJson, logResultsFile)
 
 
-    statsFile = resultsDir + "/js/notexecuted.js"
-    notexecutedJson := GetNotExecutedJson(tcNotExecutedByPriority)
-    texttmpl.GenerateDetailsJs(js.NotExecuted, statsFile, notexecutedJson, logResultsFile)
-
-
-    statsFile = resultsDir + "/js/stats.js"
+    statsFile := resultsDir + "/js/stats.js"
     reJsons := GetStatsJson(statusCountByPriority)
     texttmpl.GenerateStatsJs(js.Stats, statsFile, reJsons, logResultsFile)
 
@@ -125,9 +116,7 @@ func GenerateJs (resultsDir string, pStart_time time.Time, pStart string, pEnd_t
 
 
 func GenerateStyle (resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time,
-        tcClassifedCountMap map[string]int, totalTc int, statusCountByPriority map[string]map[string]int, 
-        tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
-        tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) {
+        runClass string, totalTc int) {
     // --------
     err := os.MkdirAll(resultsDir + "style", 0777)
     if err != nil {
@@ -212,9 +201,7 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo) {
 }
 
 
-func ReportConsoleByPriority (totalTc int, priority string, statusCountByPriority map[string]map[string]int, 
-        tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
-        tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) {
+func ReportConsoleByPriority (totalTc int, priority string, statusCountByPriority map[string]map[string]int) {
     // ---
     var totalCount = statusCountByPriority[priority]["Total"]
     var successCount = statusCountByPriority[priority]["Success"]
@@ -231,9 +218,7 @@ func ReportConsoleByPriority (totalTc int, priority string, statusCountByPriorit
     fmt.Println("---------------------------------------------------------------------------------")
 }
 
-func ReportConsoleOverall (totalTc int, key string, statusCountByPriority map[string]map[string]int, 
-        tcExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo,
-        tcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo) {
+func ReportConsoleOverall (totalTc int, key string, statusCountByPriority map[string]map[string]int) {
     // ---
     var totalCount = statusCountByPriority[key]["Total"]
     var successCount = statusCountByPriority[key]["Success"]

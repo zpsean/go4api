@@ -36,23 +36,35 @@ func Dispatch(ch chan int, pStart_time time.Time) {
     if !cmd.Opt.IfScenario {
         if cmd.Opt.IfMutation {
             originMutationTcArray := GetOriginMutationTcArray()
-            // Run(ch, pStart_time, options, pStart, baseUrl, resultsDir, originMutationTcArray)
-
-            // fmt.Println("\noriginMutationTcArray: ", originMutationTcArray)
-            // to mutate 
+            //
             mutatedTcArray := mutation.MutateTcArray(originMutationTcArray)
-            // fmt.Println("\nmutatedTcArray: ", mutatedTcArray)
-            Run(ch, pStart_time, pStart, baseUrl, resultsDir, mutatedTcArray)
+            setUpTcSlice := GetSetupTcSlice(mutatedTcArray)
+            RunSetup(ch, pStart_time, pStart, baseUrl, resultsDir, setUpTcSlice)
+            //
+            mutatedTcArray = mutation.MutateTcArray(originMutationTcArray)
+            normalTcSlice := GetNormalTcSlice(mutatedTcArray)
+            Run(ch, pStart_time, pStart, baseUrl, resultsDir, normalTcSlice)
+            //
+            mutatedTcArray = mutation.MutateTcArray(originMutationTcArray)
+            teardownTcSlice := GetTeardownTcSlice(mutatedTcArray)
+            RunTeardown(ch, pStart_time, pStart, baseUrl, resultsDir, teardownTcSlice)
         } else if cmd.Opt.IfFuzzTest {
             fuzz.PrepFuzzTest(pStart_time)
-
-            // GetFuzzTcArray(options)
+            //
             fuzzTcArray := GetFuzzTcArray()
             Run(ch, pStart_time, pStart, baseUrl, resultsDir, fuzzTcArray)
         } else {
             tcArray := GetTcArray()
-            // fmt.Println("\n tcArray: ", tcArray)
-            Run(ch, pStart_time, pStart, baseUrl, resultsDir, tcArray)
+            setUpTcSlice := GetSetupTcSlice(tcArray)
+            RunSetup(ch, pStart_time, pStart, baseUrl, resultsDir, setUpTcSlice)
+            //
+            tcArray = GetTcArray()
+            normalTcSlice := GetNormalTcSlice(tcArray)
+            Run(ch, pStart_time, pStart, baseUrl, resultsDir, normalTcSlice)
+            //
+            tcArray = GetTcArray()
+            teardownTcSlice := GetTeardownTcSlice(tcArray)
+            RunTeardown(ch, pStart_time, pStart, baseUrl, resultsDir, teardownTcSlice)
         }
     } else {
         RunScenario(ch, pStart_time, pStart, baseUrl, resultsDir)

@@ -38,12 +38,12 @@ func (tc *TestCase) ParentTestCase() string {
     return (*tc)[tc.TcName()].ParentTestCase
 }
 
-func (tc *TestCase) IfSetUpTestCase() bool {
-    return (*tc)[tc.TcName()].IfSetUpTestCase
+func (tc *TestCase) IfGlobalSetUpTestCase() bool {
+    return (*tc)[tc.TcName()].IfGlobalSetUpTestCase
 }
 
-func (tc *TestCase) IfTearDownTestCase() bool {
-    return (*tc)[tc.TcName()].IfTearDownTestCase
+func (tc *TestCase) IfGlobalTearDownTestCase() bool {
+    return (*tc)[tc.TcName()].IfGlobalTearDownTestCase
 }
 
 func (tc *TestCase) Inputs() []interface{} {

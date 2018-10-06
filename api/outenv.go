@@ -29,21 +29,17 @@ func WriteOutEnvVariables (testResult string, tcData testcase.TestCaseDataInfo, 
 
     if testResult == "Success" {
         expEnvs = tcData.TestCase.OutEnvVariables()
-        
+  
         if len(expEnvs) > 0 {
             for k, v := range expEnvs {
                 key := "go4_" + k
                 value := GetActualValueByJsonPath(v.(string), actualBody)
-                // fmt.Println("expEnvs: ", key, value.(string))
 
                 err := os.Setenv(key, value.(string))
                 // syscall.Exec(os.Getenv("SHELL"), []string{os.Getenv("SHELL")}, syscall.Environ())
                 if err != nil {
                     panic(err) 
                 }
-
-                // env := os.Getenv(key)
-                // fmt.Println("----> env: ", env)
             } 
         }
     } else {

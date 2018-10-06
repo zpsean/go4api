@@ -30,107 +30,127 @@ import (
 )
 
 
-func Run(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo) { 
+func Run (ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo) { 
+    prioritySet, root, tcTree := RunBefore(tcArray)
+
+    fmt.Println("\n====> test cases execution starts!") 
+    RunPriorities(ch, pStart, baseUrl, resultsDir, tcArray, prioritySet, root, tcTree)
+
+    RunAfter(ch, pStart_time, pStart, resultsDir, tcArray, root, tcTree)
+}
+
+func RunBefore (tcArray []testcase.TestCaseDataInfo) ([]string, *TcNode, TcTree) { 
     // check the tcArray, if the case not distinct, report it to fix
     if len(tcArray) != len(GetTcNameSet(tcArray)) {
         fmt.Println("\n!! There are duplicated test case names, please make them distinct")
         os.Exit(1)
     }
     //
-    root, _ := BuildTree(tcArray)
-    fmt.Println("------------------")
+    tcTree := CreateTcTree()
+    root := tcTree.BuildTree(tcArray)
     //
     prioritySet := GetPrioritySet(tcArray)
-    _, tcClassifedCountMap := GetTestCasesByPriority(prioritySet, tcArray)
-    // Note, before starting execution, needs to sort the priorities_set first by priority
-    // Note: here is a bug, as the sort results is 1, 10, 11, 2, 3, etc. => fixed
-    prioritySet_Int := utils.ConvertStringArrayToIntArray(prioritySet)
-    sort.Ints(prioritySet_Int)
-    prioritySet = utils.ConvertIntArrayToStringArray(prioritySet_Int)
     // Init
     InitVariables(prioritySet)
-    InitNodesRunResult(root, "Ready")
-    //
-    fmt.Println("\n====> test cases execution starts!")
+    tcTree.InitNodesRunResult(root, "Ready")
 
+    return prioritySet, root, tcTree
+}
+
+func RunPriorities (ch chan int, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo, prioritySet []string, root *TcNode, tcTree TcTree) {
     logFilePtr := reports.OpenExecutionResultsLogFile(resultsDir + pStart + ".log")
-    
+
     for _, priority := range prioritySet {
         fmt.Println("====> Priority " + priority + " starts!")
         
-        miniLoop:
-        for {
-            //
-            resultsExeChan := make(chan testcase.TestCaseExecutionInfo, len(tcArray))
-            var wg sync.WaitGroup
-            //
-            ScheduleNodes(root, &wg, priority, resultsExeChan, pStart, baseUrl, resultsDir)
-            //
-            wg.Wait()
+        //
+        RunEachPriority(ch, pStart, baseUrl, resultsDir, tcArray, priority, root, tcTree, logFilePtr)
 
-            close(resultsExeChan)
-
-            for tcExecution := range resultsExeChan {
-                // (1). tcName, testResult, the search result is saved to *findNode
-                c := make(chan *tcNode)
-                go func(c chan *tcNode) {
-                    defer close(c)
-                    SearchNode(c, root, tcExecution.TcName())
-                }(c)
-                // (2). 
-                RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
-                    tcExecution.TestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
-                // (3). <--> for log write to file
-                tcReportResults := tcExecution.TcReportResults()
-                reports.ExecutionResultSlice = append(reports.ExecutionResultSlice, tcReportResults)
-
-                repJson, _ := json.Marshal(tcReportResults)
-                // (4). put the execution log into results
-                reports.WriteExecutionResults(string(repJson), logFilePtr)
-
-                reports.ReportConsoleByTc(tcExecution)
-            }
-            // if tcTree has no node with "Ready" status, break the miniloop
-            statusReadyCount = 0
-            CollectNodeReadyStatusByPriority(root, priority)
-            //
-            if statusReadyCount == 0 {
-                break miniLoop
-            }
-        }
-        CollectNodeStatusByPriority(root, priority)
-        // (5). also need to put out the cases which has not been executed (i.e. not Success, Fail)
+        // Put out the cases which has not been executed (i.e. not Success or Fail)
         WriteNotNotExecutedToLog(priority, logFilePtr)
 
         // report to console
-        reports.ReportConsoleByPriority(tcClassifedCountMap[priority], priority, statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+        reports.ReportConsoleByPriority(0, priority, statusCountByPriority)
 
         fmt.Println("====> Priority " + priority + " ended!")
         fmt.Println("")
         // sleep for debug
         // time.Sleep(500 * time.Millisecond)
     }
-    logFilePtr.Close()
 
-    CollectOverallNodeStatus(root, "Overall")
-    reports.ReportConsoleOverall(len(tcArray), "Overall", statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    logFilePtr.Close()
+}
+
+
+func RunEachPriority (ch chan int, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo, 
+        priority string, root *TcNode, tcTree TcTree, logFilePtr *os.File) {
+    // ----------
+    miniLoop:
+    for {
+        //
+        resultsExeChan := make(chan testcase.TestCaseExecutionInfo, len(tcArray))
+        var wg sync.WaitGroup
+        //
+        tcTree.ScheduleNodes(root, &wg, priority, resultsExeChan, pStart, baseUrl, resultsDir)
+        //
+        wg.Wait()
+
+        close(resultsExeChan)
+
+        for tcExecution := range resultsExeChan {
+            // (1). tcName, testResult, the search result is saved to *findNode
+            c := make(chan *TcNode)
+            go func(c chan *TcNode) {
+                defer close(c)
+                tcTree.SearchNode(c, root, tcExecution.TcName())
+            }(c)
+            // (2). 
+            tcTree.RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
+                tcExecution.TestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
+            // (3). <--> for log write to file
+            tcReportResults := tcExecution.TcReportResults()
+            reports.ExecutionResultSlice = append(reports.ExecutionResultSlice, tcReportResults)
+
+            repJson, _ := json.Marshal(tcReportResults)
+            // (4). put the execution log into results
+            reports.WriteExecutionResults(string(repJson), logFilePtr)
+
+            reports.ReportConsoleByTc(tcExecution)
+        }
+        // if tcTree has no node with "Ready" status, break the miniloop
+        statusReadyCount = 0
+        tcTree.CollectNodeReadyStatusByPriority(root, priority)
+        //
+        if statusReadyCount == 0 {
+            break miniLoop
+        }
+    }
+}
+
+func RunAfter (ch chan int, pStart_time time.Time, pStart string, resultsDir string, tcArray []testcase.TestCaseDataInfo, root *TcNode, tcTree TcTree) {
+    //
+    tcTree.CollectOverallNodeStatus(root, "Overall")
+    reports.ReportConsoleOverall(len(tcArray), "Overall", statusCountByPriority)
     
     // generate the html report based on template, and results data
     // time.Sleep(1 * time.Second)
     pEnd_time := time.Now()
     //
     reports.GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time, 
-        tcClassifedCountMap, len(tcArray), statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+        "", len(tcArray), statusCountByPriority)
     //
     fmt.Println("Report Generated at: " + resultsDir + "index.html")
     fmt.Println("Execution Finished at: " + pEnd_time.String())
 
     // channel code, can be used for the overall success or fail indicator, especially for CI/CD
-    ch <- statusCountByPriority["Overall"]["Fail"]
+    // ch <- statusCountByPriority["Overall"]["Fail"]
+
+    // repJson, _ := json.Marshal(tcTree)
+    // fmt.Println(string(repJson))
 }
 
 
-func WriteNotNotExecutedToLog(priority string, logFilePtr *os.File) {
+func WriteNotNotExecutedToLog (priority string, logFilePtr *os.File) {
     notRunTime := time.Now()
     for i, _ := range tcNotExecutedByPriority[priority] {
         for _, tcExecution := range tcNotExecutedByPriority[priority][i] {
@@ -152,7 +172,7 @@ func WriteNotNotExecutedToLog(priority string, logFilePtr *os.File) {
     }
 }
 
-func GetTcArray() []testcase.TestCaseDataInfo { 
+func GetTcArray () []testcase.TestCaseDataInfo { 
     var tcArray []testcase.TestCaseDataInfo
 
     jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
@@ -169,7 +189,7 @@ func GetTcArray() []testcase.TestCaseDataInfo {
         }
 
         for _, tcData := range tcInfos {
-            // fmt.Println("\n tcData:", tcData.TcName())
+            // fmt.Println("\n tcData:", tcData.TcName(), tcData.TestCase.IfGlobalSetUpTestCase())
             tcArray = append(tcArray, tcData)
         }
     }
@@ -177,8 +197,19 @@ func GetTcArray() []testcase.TestCaseDataInfo {
     return tcArray
 }
 
+func GetNormalTcSlice (tcArray []testcase.TestCaseDataInfo) []testcase.TestCaseDataInfo {
+    var tcSlice []testcase.TestCaseDataInfo
+    for i, _ := range tcArray {
+        if tcArray[i].TestCase.IfGlobalSetUpTestCase() != true && tcArray[i].TestCase.IfGlobalTearDownTestCase() != true {
+            tcSlice = append(tcSlice, tcArray[i])
+        }
+    }
+    
+    return tcSlice
+}
 
-func GetCsvDataFilesForJsonFile(jsonFile string, suffix string) []string {
+
+func GetCsvDataFilesForJsonFile (jsonFile string, suffix string) []string {
     // here search out the csv files under the same dir, not to use utils.WalkPath as it is recursively
     var csvFileListTemp []string
     infos, err := ioutil.ReadDir(filepath.Dir(jsonFile))
@@ -207,7 +238,7 @@ func GetCsvDataFilesForJsonFile(jsonFile string, suffix string) []string {
 }
 
 
-func ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile string, csvFileList []string) []testcase.TestCaseDataInfo {
+func ConstructTcInfosBasedOnJsonTemplateAndDataTables (jsonFile string, csvFileList []string) []testcase.TestCaseDataInfo {
     var tcInfos []testcase.TestCaseDataInfo
 
     for _, csvFile := range csvFileList {
@@ -245,7 +276,7 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile string, csvFileLi
     return tcInfos
 }
 
-func ConstructTcInfosBasedOnJson(jsonFile string) []testcase.TestCaseDataInfo {
+func ConstructTcInfosBasedOnJson (jsonFile string) []testcase.TestCaseDataInfo {
     var tcInfos []testcase.TestCaseDataInfo
 
     csvFile := ""
@@ -257,6 +288,8 @@ func ConstructTcInfosBasedOnJson(jsonFile string) []testcase.TestCaseDataInfo {
     resJson, _ := ioutil.ReadAll(outTempJson)
     json.Unmarshal([]byte(resJson), &tcases)
     // fmt.Println("resJson: ", string(resJson), tcases)
+    // tJson, _ := json.Marshal(tcases)
+    // fmt.Println("tJson: ", string(tJson))
     // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
      for i, _ := range tcases {
         // populate the testcase.TestCaseDataInfo
@@ -273,7 +306,7 @@ func ConstructTcInfosBasedOnJson(jsonFile string) []testcase.TestCaseDataInfo {
 }
 
 
-func GetTcNameSet(tcArray []testcase.TestCaseDataInfo) []string {
+func GetTcNameSet (tcArray []testcase.TestCaseDataInfo) []string {
     var tcNames []string
 
     for _, tcaseInfo := range tcArray {
@@ -293,7 +326,7 @@ func GetTcNameSet(tcArray []testcase.TestCaseDataInfo) []string {
 }
 
 
-func GetPrioritySet(tcArray []testcase.TestCaseDataInfo) []string {
+func GetPrioritySet (tcArray []testcase.TestCaseDataInfo) []string {
     // get the priorities
     var priorities []string
     for _, tcaseInfo := range tcArray {
@@ -310,12 +343,23 @@ func GetPrioritySet(tcArray []testcase.TestCaseDataInfo) []string {
         }
     }
 
+    prioritySet = SortPrioritySet(prioritySet)
+
+    return prioritySet
+}
+
+func SortPrioritySet (prioritySet []string) []string {
+    // Note: here is a bug, if sort as string, as the sort results is 1, 10, 11, 2, 3, etc. => fixed
+    prioritySet_Int := utils.ConvertStringArrayToIntArray(prioritySet)
+    sort.Ints(prioritySet_Int)
+    prioritySet = utils.ConvertIntArrayToStringArray(prioritySet_Int)
+
     return prioritySet
 }
 
 
 
-func GetTestCasesByPriority(prioritySet []string, tcArray []testcase.TestCaseDataInfo) (map[string][]testcase.TestCaseDataInfo, map[string]int) {
+func GetTestCasesByPriority (prioritySet []string, tcArray []testcase.TestCaseDataInfo) (map[string][]testcase.TestCaseDataInfo, map[string]int) {
     // build the map
     tcClassifedMap := make(map[string][]testcase.TestCaseDataInfo)
     tcClassifedCountMap := make(map[string]int)
@@ -333,7 +377,7 @@ func GetTestCasesByPriority(prioritySet []string, tcArray []testcase.TestCaseDat
 }
 
 
-func GetFuzzTcArray() []testcase.TestCaseDataInfo {
+func GetFuzzTcArray () []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
 
     jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
@@ -356,7 +400,7 @@ func GetFuzzTcArray() []testcase.TestCaseDataInfo {
 }
 
 
-func GetOriginMutationTcArray() []testcase.TestCaseDataInfo {
+func GetOriginMutationTcArray () []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
     jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
 

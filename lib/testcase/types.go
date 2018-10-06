@@ -58,8 +58,8 @@ type TestCase map[string]*TestCaseBasics
 type TestCaseBasics struct {
     Priority string         `json:"priority"`
     ParentTestCase string   `json:"parentTestCase"`
-    IfSetUpTestCase bool    `json:"ifSetUpTestCase"`
-    IfTearDownTestCase bool `json:"ifTearDownTestCase"`
+    IfGlobalSetUpTestCase bool    `json:"ifGlobalSetUpTestCase"`
+    IfGlobalTearDownTestCase bool `json:"ifGlobalTearDownTestCase"`
     Inputs []interface{}     `json:"inputs"`
     Request *Request         `json:"request"`
     Response *Response       `json:"response"`
