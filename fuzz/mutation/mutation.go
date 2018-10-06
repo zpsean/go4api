@@ -86,7 +86,7 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
     var mutatedTcArray []testcase.TestCaseDataInfo
 
     for _, originTcData := range originMutationTcArray {
-        if originTcData.TestCase.IfSetUpTestCase() == true {
+        if originTcData.TestCase.IfGlobalSetUpTestCase() == true {
             mutatedTcArray = append(mutatedTcArray, originTcData)
             continue
         }

@@ -36,12 +36,13 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
     tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt") 
 
     // (2). render them, get the rendered cases
-    root, _ := BuildTree(tcArray)
+    tcTree := CreateTcTree()
+    root := tcTree.BuildTree(tcArray)
 
     // (3). then execute them, genrate the outputs if have
     prioritySet := []string{"1"}
     InitVariables(prioritySet)
-    InitNodesRunResult(root, "Ready")
+    tcTree.InitNodesRunResult(root, "Ready")
     logFilePtr := reports.OpenExecutionResultsLogFile(resultsDir + pStart + ".log")
   
     miniLoop:
@@ -49,7 +50,7 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
         resultsExeChan := make(chan testcase.TestCaseExecutionInfo, len(tcArray))
         var wg sync.WaitGroup
         //
-        ScheduleNodes(root, &wg, "1", resultsExeChan, pStart, baseUrl, resultsDir)
+        tcTree.ScheduleNodes(root, &wg, "1", resultsExeChan, pStart, baseUrl, resultsDir)
         //
         wg.Wait()
 
@@ -72,7 +73,7 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
                         EndTimeUnixNano: 0,
                         DurationUnixNano: 0,
                     }
-                    ifAdded := AddNode(tcaseExecution)
+                    ifAdded := tcTree.AddNode(root, tcaseExecution)
                     if ifAdded && true {
                         fmt.Println("-> Child added: ", tcData.TcName())
                     } else {
@@ -81,13 +82,13 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
                 }
             }
             // (1). tcName, testResult, the search result is saved to *findNode
-            c := make(chan *tcNode)
-            go func(c chan *tcNode) {
+            c := make(chan *TcNode)
+            go func(c chan *TcNode) {
                 defer close(c)
-                SearchNode(c, root, tcExecution.TcName())
+                tcTree.SearchNode(c, root, tcExecution.TcName())
             }(c)
             // (2). 
-            RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
+            tcTree.RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
                     tcExecution.TestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
             // (3). <--> for log write to file
             tcReportResults := tcExecution.TcReportResults()
@@ -98,7 +99,7 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
         }
         // (4). execute the chilren, and so on
         statusReadyCount = 0
-        CollectNodeReadyStatusByPriority(root, "1")
+        tcTree.CollectNodeReadyStatusByPriority(root, "1")
 
         // no more child cases can be added, then break
         if statusReadyCount == 0 {
@@ -107,15 +108,15 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
     }
     logFilePtr.Close()
     
-    CollectOverallNodeStatus(root, "Overall")
-    reports.ReportConsoleOverall(statusCountByPriority["Overall"]["Total"], "Overall", statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+    tcTree.CollectOverallNodeStatus(root, "Overall")
+    reports.ReportConsoleOverall(statusCountByPriority["Overall"]["Total"], "Overall", statusCountByPriority)
 
     // generate the html report based on template, and results data
     // time.Sleep(1 * time.Second)
     pEnd_time := time.Now()
     //
     reports.GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time, 
-        map[string]int{}, statusCountByPriority["Overall"]["Total"], statusCountByPriority, tcExecutedByPriority, tcNotExecutedByPriority)
+        "", statusCountByPriority["Overall"]["Total"], statusCountByPriority)
     //
     fmt.Println("---------------------------------------------------------------------------")
     fmt.Println("Report Generated at: " + resultsDir + "index.html")
