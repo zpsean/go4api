@@ -11,7 +11,7 @@
 package executor
 
 import (
-    // "fmt"
+    "fmt"
     "time"
     // "os"
     // "sort"
@@ -36,10 +36,12 @@ func GetTeardownTcSlice (tcArray []testcase.TestCaseDataInfo) []testcase.TestCas
 
 
 func RunTeardown(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo) { 
-    prioritySet, root, tcTree := RunBefore(tcArray)
+    prioritySet, root, tcTree, tcTreeStats := RunBefore(tcArray)
 
-    RunPriorities(ch, pStart, baseUrl, resultsDir, tcArray, prioritySet, root, tcTree)
+    fmt.Println("\n====> teardown test cases execution starts!") 
 
-    RunAfter(ch, pStart_time, pStart, resultsDir, tcArray, root, tcTree)
+    RunPriorities(ch, pStart, baseUrl, resultsDir, tcArray, prioritySet, root, tcTree, tcTreeStats)
+
+    RunAfter(ch, pStart_time, pStart, resultsDir, tcArray, root, tcTree, tcTreeStats)
 }
 

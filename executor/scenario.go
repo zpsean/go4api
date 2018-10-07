@@ -20,6 +20,7 @@ import (
     
     "go4api/cmd"
     "go4api/lib/testcase"
+    "go4api/lib/tree"
     "go4api/utils"
     "go4api/reports"
     "go4api/lib/csv"
@@ -36,12 +37,13 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
     tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt") 
 
     // (2). render them, get the rendered cases
-    tcTree := CreateTcTree()
+    tcTree := tree.CreateTcTree()
     root := tcTree.BuildTree(tcArray)
 
     // (3). then execute them, genrate the outputs if have
     prioritySet := []string{"1"}
-    InitVariables(prioritySet)
+    tcTreeStats := tree.CreateTcTreeStats(prioritySet)
+    //
     tcTree.InitNodesRunResult(root, "Ready")
     logFilePtr := reports.OpenExecutionResultsLogFile(resultsDir + pStart + ".log")
   
@@ -50,7 +52,13 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
         resultsExeChan := make(chan testcase.TestCaseExecutionInfo, len(tcArray))
         var wg sync.WaitGroup
         //
-        tcTree.ScheduleNodes(root, &wg, "1", resultsExeChan, pStart, baseUrl, resultsDir)
+        cReady := make(chan *tree.TcNode)
+        go func(cReady chan *tree.TcNode) {
+            defer close(cReady)
+            tcTree.CollectNodeReadyStatusByPriority(cReady, root, "1")
+        }(cReady)
+
+        ScheduleCases(cReady, &wg, resultsExeChan, pStart, baseUrl, resultsDir)
         //
         wg.Wait()
 
@@ -82,8 +90,8 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
                 }
             }
             // (1). tcName, testResult, the search result is saved to *findNode
-            c := make(chan *TcNode)
-            go func(c chan *TcNode) {
+            c := make(chan *tree.TcNode)
+            go func(c chan *tree.TcNode) {
                 defer close(c)
                 tcTree.SearchNode(c, root, tcExecution.TcName())
             }(c)
@@ -98,32 +106,31 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
             reports.ReportConsoleByTc(tcExecution)
         }
         // (4). execute the chilren, and so on
-        statusReadyCount = 0
-        tcTree.CollectNodeReadyStatusByPriority(root, "1")
+        tcTreeStats.CollectNodeStatusByPriority(root, "1")
 
         // no more child cases can be added, then break
-        if statusReadyCount == 0 {
+        if tcTreeStats.StatusCountByPriority["1"]["Ready"] == 0 {
             break miniLoop
         }
     }
     logFilePtr.Close()
     
-    tcTree.CollectOverallNodeStatus(root, "Overall")
-    reports.ReportConsoleOverall(statusCountByPriority["Overall"]["Total"], "Overall", statusCountByPriority)
+    tcTreeStats.CollectNodeStatusByPriority(root, "Overall")
+    reports.ReportConsoleOverall(tcTreeStats.StatusCountByPriority["Overall"]["Total"], "Overall", tcTreeStats.StatusCountByPriority)
 
     // generate the html report based on template, and results data
     // time.Sleep(1 * time.Second)
     pEnd_time := time.Now()
     //
     reports.GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time, 
-        "", statusCountByPriority["Overall"]["Total"], statusCountByPriority)
+        "", tcTreeStats.StatusCountByPriority["Overall"]["Total"], tcTreeStats.StatusCountByPriority)
     //
     fmt.Println("---------------------------------------------------------------------------")
     fmt.Println("Report Generated at: " + resultsDir + "index.html")
     fmt.Println("Execution Finished at: " + pEnd_time.String())
     
     // channel code, can be used for the overall success or fail indicator, especially for CI/CD
-    ch <- statusCountByPriority["Overall"]["Fail"]
+    ch <- tcTreeStats.StatusCountByPriority["Overall"]["Fail"]
 }
 
 
