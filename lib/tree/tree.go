@@ -279,7 +279,8 @@ func (tcTree TcTree) RefreshNodeAndDirectChilrenTcResult(node *TcNode, tcRunResu
 }
 
 
-func (tcTree TcTree) CollectNodeReadyStatusByPriority(c chan *TcNode, node *TcNode, priority string) {
+
+func (tcTree TcTree) CollectNodeReadyByPriority(c chan *TcNode, node *TcNode, priority string) {
     for i, _ := range node.Children {
         if node.Children[i].TestCaseExecutionInfo.Priority() == priority {
             switch node.Children[i].TestCaseExecutionInfo.TestResult { 
@@ -287,7 +288,7 @@ func (tcTree TcTree) CollectNodeReadyStatusByPriority(c chan *TcNode, node *TcNo
                     c <- node.Children[i]
             }
         }
-        tcTree.CollectNodeReadyStatusByPriority(c, node.Children[i], priority)
+        tcTree.CollectNodeReadyByPriority(c, node.Children[i], priority)
     }
 }
 

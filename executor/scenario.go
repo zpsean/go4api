@@ -26,9 +26,8 @@ import (
     "go4api/lib/csv"
 )
 
-func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string) {
+func InitRunScenario () (*tree.TcNode, tree.TcTree, tree.TcTreeStats, []testcase.TestCaseDataInfo, []string) {
     jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
-    // fmt.Println("Scenario jsonFileList:", cmd.Opt.IfScenario, jsonFileList, "")
 
     var tcArray []testcase.TestCaseDataInfo
 
@@ -45,6 +44,15 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
     tcTreeStats := tree.CreateTcTreeStats(prioritySet)
     //
     tcTree.InitNodesRunResult(root, "Ready")
+    tcTreeStats.CollectNodeStatusByPriority(root, "1")
+
+    return root, tcTree, tcTreeStats, tcArray, jsonFileList
+}
+
+func RunScenario (ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string) {
+    //
+    root, tcTree, tcTreeStats, tcArray, jsonFileList := InitRunScenario()
+
     logFilePtr := reports.OpenExecutionResultsLogFile(resultsDir + pStart + ".log")
   
     miniLoop:
@@ -55,7 +63,7 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
         cReady := make(chan *tree.TcNode)
         go func(cReady chan *tree.TcNode) {
             defer close(cReady)
-            tcTree.CollectNodeReadyStatusByPriority(cReady, root, "1")
+            tcTree.CollectNodeReadyByPriority(cReady, root, "1")
         }(cReady)
 
         ScheduleCases(cReady, &wg, resultsExeChan, pStart, baseUrl, resultsDir)
@@ -65,60 +73,69 @@ func RunScenario(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
         close(resultsExeChan)
 
         for tcExecution := range resultsExeChan {
-            //(). render the child cases, using the previous outputs as the inputs
-            // the case has inputs and its parent's runstatus == Success (i.e. not failed)
-            if tcExecution.TestResult == "Success" {
-                tcArrayT := ConstructChildTcInfosBasedOnParentTcName(jsonFileList, tcExecution.TcName(), "_outputs")
-                for _, tcData := range tcArrayT {
-                    tcaseExecution := testcase.TestCaseExecutionInfo {
-                        TestCaseDataInfo: &tcData,
-                        TestResult: "",
-                        ActualStatusCode: 0,
-                        StartTime: "",
-                        EndTime: "",
-                        TestMessages: []*testcase.TestMessage{},
-                        StartTimeUnixNano: 0,
-                        EndTimeUnixNano: 0,
-                        DurationUnixNano: 0,
-                    }
-                    ifAdded := tcTree.AddNode(root, tcaseExecution)
-                    if ifAdded && true {
-                        fmt.Println("-> Child added: ", tcData.TcName())
-                    } else {
-                        fmt.Println("-> Child not added: ", tcData.TcName())
-                    }
-                }
-            }
-            // (1). tcName, testResult, the search result is saved to *findNode
+            tcTreeStats.DeductReadyCount("1")
+            //
+            BuildChilrenNodes(tcExecution, jsonFileList, root, tcTree)
+            //
             c := make(chan *tree.TcNode)
             go func(c chan *tree.TcNode) {
                 defer close(c)
                 tcTree.SearchNode(c, root, tcExecution.TcName())
             }(c)
-            // (2). 
+            //
             tcTree.RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
                     tcExecution.TestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
-            // (3). <--> for log write to file
+            //
             tcReportResults := tcExecution.TcReportResults()
             repJson, _ := json.Marshal(tcReportResults)
             reports.WriteExecutionResults(string(repJson), logFilePtr)
 
             reports.ReportConsoleByTc(tcExecution)
         }
-        // (4). execute the chilren, and so on
         tcTreeStats.CollectNodeStatusByPriority(root, "1")
-
-        // no more child cases can be added, then break
+        // if no more child cases can be added, then break
         if tcTreeStats.StatusCountByPriority["1"]["Ready"] == 0 {
             break miniLoop
         }
     }
     logFilePtr.Close()
-    
+
+    RunScenarioReports(ch, pStart_time, pStart, resultsDir, root, tcTreeStats)
+}
+
+func BuildChilrenNodes (tcExecution testcase.TestCaseExecutionInfo, jsonFileList []string, root *tree.TcNode, tcTree tree.TcTree) {
+    // render the child cases, using the previous outputs as the inputs
+    // the case has inputs and its parent's runstatus == Success (i.e. not failed)
+    if tcExecution.TestResult == "Success" {
+        tcArrayT := ConstructChildTcInfosBasedOnParentTcName(jsonFileList, tcExecution.TcName(), "_outputs")
+        for _, tcData := range tcArrayT {
+            tcaseExecution := testcase.TestCaseExecutionInfo {
+                TestCaseDataInfo: &tcData,
+                TestResult: "",
+                ActualStatusCode: 0,
+                StartTime: "",
+                EndTime: "",
+                TestMessages: []*testcase.TestMessage{},
+                StartTimeUnixNano: 0,
+                EndTimeUnixNano: 0,
+                DurationUnixNano: 0,
+            }
+
+            ifAdded := tcTree.AddNode(root, tcaseExecution)
+            if ifAdded && true {
+                fmt.Println("-> Child added: ", tcData.TcName())
+            } else {
+                fmt.Println("-> Child not added: ", tcData.TcName())
+            }
+        }
+    }
+}
+
+func RunScenarioReports (ch chan int, pStart_time time.Time, pStart string, resultsDir string, root *tree.TcNode, tcTreeStats tree.TcTreeStats) {
+    //
     tcTreeStats.CollectNodeStatusByPriority(root, "Overall")
     reports.ReportConsoleOverall(tcTreeStats.StatusCountByPriority["Overall"]["Total"], "Overall", tcTreeStats.StatusCountByPriority)
 
-    // generate the html report based on template, and results data
     // time.Sleep(1 * time.Second)
     pEnd_time := time.Now()
     //

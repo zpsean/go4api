@@ -33,6 +33,7 @@ import (
 
 
 func Run (ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo) { 
+    //-----
     prioritySet, root, tcTree, tcTreeStats := RunBefore(tcArray)
 
     fmt.Println("\n====> test cases execution starts!") 
@@ -67,7 +68,6 @@ func RunPriorities (ch chan int, pStart string, baseUrl string, resultsDir strin
 
     for _, priority := range prioritySet {
         fmt.Println("====> Priority " + priority + " starts!")
-        
         //
         RunEachPriority(ch, pStart, baseUrl, resultsDir, tcArray, priority, root, tcTree, logFilePtr, tcTreeStats)
 
@@ -75,7 +75,6 @@ func RunPriorities (ch chan int, pStart string, baseUrl string, resultsDir strin
         WriteNotNotExecutedToLog(priority, logFilePtr, tcTreeStats)
 
         // report to console
-        // reports.ReportConsoleByPriority(0, priority, statusCountByPriority)
         reports.ReportConsoleByPriority(0, priority, tcTreeStats.StatusCountByPriority)
 
         fmt.Println("====> Priority " + priority + " ended!")
@@ -100,7 +99,7 @@ func RunEachPriority (ch chan int, pStart string, baseUrl string, resultsDir str
         cReady := make(chan *tree.TcNode)
         go func(cReady chan *tree.TcNode) {
             defer close(cReady)
-            tcTree.CollectNodeReadyStatusByPriority(cReady, root, priority)
+            tcTree.CollectNodeReadyByPriority(cReady, root, priority)
         }(cReady)
 
         ScheduleCases(cReady, &wg, resultsExeChan, pStart, baseUrl, resultsDir)
@@ -108,6 +107,8 @@ func RunEachPriority (ch chan int, pStart string, baseUrl string, resultsDir str
         wg.Wait()
 
         close(resultsExeChan)
+
+        tcTreeStats.CollectNodeStatusByPriority(root, priority)
 
         for tcExecution := range resultsExeChan {
             // (1). tcName, testResult, the search result is saved to *findNode
@@ -119,19 +120,18 @@ func RunEachPriority (ch chan int, pStart string, baseUrl string, resultsDir str
             // (2). 
             tcTree.RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
                 tcExecution.TestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
+
+            tcTreeStats.DeductReadyCount(priority)
             // (3). <--> for log write to file
             tcReportResults := tcExecution.TcReportResults()
             reports.ExecutionResultSlice = append(reports.ExecutionResultSlice, tcReportResults)
 
             repJson, _ := json.Marshal(tcReportResults)
-            // (4). put the execution log into results
             reports.WriteExecutionResults(string(repJson), logFilePtr)
 
             reports.ReportConsoleByTc(tcExecution)
         }
         // if tcTree has no node with "Ready" status, break the miniloop
-        tcTreeStats.CollectNodeStatusByPriority(root, priority)
-        //
         if tcTreeStats.StatusCountByPriority[priority]["Ready"] == 0 {
             break miniLoop
         }
@@ -167,11 +167,10 @@ func ScheduleCases (cReady chan *tree.TcNode, wg *sync.WaitGroup, resultsChan ch
     //
     tick := 0
     max := cmd.Opt.ConcurrencyLimit
-    //
-    // note: does data copy happen if use n but not node.Children[i]?
+
     for tcNode := range cReady {
         wg.Add(1)
-        // Note: to prevent to tcp connection, here set a max, then sleep for a while
+        // Note: to prevent reaching tcp connection limitation, here set a max, then sleep for a while
         if tick % max == 0 {
             time.Sleep(100 * time.Millisecond)
             go api.HttpApi(wg, resultsChan, pStart, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo), resultsDir)
