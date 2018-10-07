@@ -8,18 +8,14 @@
  *
  */
 
-package executor
+package tree
 
 import (                                                                                                                                             
     "os"
-    "time"
     "fmt"
-    "sync"
     "encoding/json"
 
-    "go4api/cmd"
     "go4api/lib/testcase"
-    "go4api/api"
 )
 
 type TcNode struct{
@@ -29,39 +25,10 @@ type TcNode struct{
 
 type TcTree map[string]*TcNode
 
-var (
-    statusReadyCount int
-
-    statusCountByPriority = map[string]map[string]int{} 
-    tcNotExecutedByPriority = map[string]map[string][]*testcase.TestCaseExecutionInfo{}
-)
-
 func CreateTcTree () TcTree {
     var tcTree = TcTree{}
 
     return tcTree
-}
-
-func InitVariables(prioritySet []string) {
-    statusReadyCount = 0
-    StatusKeys := []string{"Ready", "Success", "Fail", "ParentFailed"}
-
-    for _, priority := range prioritySet {
-        statusCountByPriority[priority] = map[string]int{}
-        tcNotExecutedByPriority[priority] = map[string][]*testcase.TestCaseExecutionInfo{}
-        
-        for _, status := range StatusKeys {
-            statusCountByPriority[priority][status] = 0
-        }
-        
-    }
-
-    statusCountByPriority["Overall"] = map[string]int{}
-    tcNotExecutedByPriority["Overall"] = map[string][]*testcase.TestCaseExecutionInfo{}
-
-    for _, status := range StatusKeys {
-        statusCountByPriority["Overall"][status] = 0
-    }
 }
 
 
@@ -274,7 +241,7 @@ func (tcTree TcTree) SearchNodeByName (c chan *TcNode, node *TcNode, testCaseNam
         if node.Children[i].TestCaseExecutionInfo.TcName() == testCaseName {
             c <- node.Children[i]
         } else {
-            tcTree.SearchNode(c, node.Children[i], testCaseName)
+            tcTree.SearchNodeByName(c, node.Children[i], testCaseName)
         }
     }
 }
@@ -290,33 +257,6 @@ func (tcTree TcTree) InitNodesRunResult (node *TcNode, runResult string) {
         tcTree.InitNodesRunResult(node.Children[i], "")
     }
 }
-
-
-func (tcTree TcTree) ScheduleNodes (node *TcNode, wg *sync.WaitGroup, priority string, resultsChan chan testcase.TestCaseExecutionInfo, 
-        pStart string, baseUrl string, resultsDir string) {
-    //
-    tick := 0
-    max := cmd.Opt.ConcurrencyLimit
-    //
-    // note: does data copy happen if use n but not node.Children[i]?
-    for i, _ := range node.Children {
-        if priority == node.Children[i].TestCaseExecutionInfo.Priority() && node.Children[i].TestCaseExecutionInfo.TestResult == "Ready" {
-            wg.Add(1)
-            // Note: to prevent to tcp connection, here set a max, then sleep for a while
-            if tick % max == 0 {
-                time.Sleep(100 * time.Millisecond)
-                go api.HttpApi(wg, resultsChan, pStart, baseUrl, *(node.Children[i].TestCaseExecutionInfo.TestCaseDataInfo), resultsDir)
-            } else {
-                go api.HttpApi(wg, resultsChan, pStart, baseUrl, *(node.Children[i].TestCaseExecutionInfo.TestCaseDataInfo), resultsDir)
-            }
-
-            tick = tick + 1
-        }
-        
-        tcTree.ScheduleNodes(node.Children[i], wg, priority, resultsChan, pStart, baseUrl, resultsDir)
-    }
-}
-
 
 func (tcTree TcTree) RefreshNodeAndDirectChilrenTcResult(node *TcNode, tcRunResult string, tcStart string, tcEnd string, tcRunMessage []*testcase.TestMessage, 
         tcStartUnixNano int64, tcEndUnixNano int64) {
@@ -338,50 +278,18 @@ func (tcTree TcTree) RefreshNodeAndDirectChilrenTcResult(node *TcNode, tcRunResu
     }
 }
 
-func (tcTree TcTree) CollectNodeReadyStatusByPriority(node *TcNode, priority string) {
+
+func (tcTree TcTree) CollectNodeReadyStatusByPriority(c chan *TcNode, node *TcNode, priority string) {
     for i, _ := range node.Children {
         if node.Children[i].TestCaseExecutionInfo.Priority() == priority {
             switch node.Children[i].TestCaseExecutionInfo.TestResult { 
                 case "Ready": 
-                    statusReadyCount = statusReadyCount + 1
+                    c <- node.Children[i]
             }
         }
-        tcTree.CollectNodeReadyStatusByPriority(node.Children[i], priority)
+        tcTree.CollectNodeReadyStatusByPriority(c, node.Children[i], priority)
     }
 }
-
-func (tcTree TcTree) CollectNodeStatusByPriority(node *TcNode, priority string) {
-    for i, _ := range node.Children {
-        if node.Children[i].TestCaseExecutionInfo.Priority() == priority {
-            tcTree.collectNodeStatusCommon(node, i, priority)
-        }
-        tcTree.CollectNodeStatusByPriority(node.Children[i], priority)
-    }
-}
-
-func (tcTree TcTree) CollectOverallNodeStatus(node *TcNode, key string) {
-    for i, _ := range node.Children {
-        tcTree.collectNodeStatusCommon(node, i, key)
-        tcTree.CollectOverallNodeStatus(node.Children[i], key)
-    }
-}
-
-func (tcTree TcTree) collectNodeStatusCommon(node *TcNode, i int, key string) {
-    statusCountByPriority[key]["Total"] += 1
-
-    switch node.Children[i].TestCaseExecutionInfo.TestResult { 
-        case "Ready": 
-            statusCountByPriority[key]["Ready"] += 1
-        case "Success": 
-            statusCountByPriority[key]["Success"] += 1
-        case "Fail":
-            statusCountByPriority[key]["Fail"] += 1
-        default: 
-            statusCountByPriority[key]["ParentFailed"] += 1
-            tcNotExecutedByPriority[key]["ParentFailed"] = append(tcNotExecutedByPriority[key]["ParentFailed"], &(node.Children[i].TestCaseExecutionInfo))
-    }
-}
-
 
 func (tcTree TcTree) ShowNodes(node *TcNode) {
     fmt.Println("\nShow node: ", node.TestCaseExecutionInfo.Priority(), node.TestCaseExecutionInfo.TcName(), node.TestCaseExecutionInfo.TestResult)
