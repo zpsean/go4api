@@ -58,6 +58,9 @@ func CreateTcTreeStats (prioritySet []string) TcTreeStats {
     return tcTreeStats
 }
 
+func (tcTreeStats TcTreeStats) DeductReadyCount(priority string) {
+    tcTreeStats.StatusCountByPriority[priority]["Ready"] -= 1
+}
 
 func (tcTreeStats TcTreeStats) CollectNodeStatusByPriority(node *TcNode, priority string) {
     for i, _ := range node.Children {
