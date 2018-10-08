@@ -67,7 +67,18 @@ func Dispatch(ch chan int, pStart_time time.Time) {
             RunTeardown(ch, pStart_time, pStart, baseUrl, resultsDir, teardownTcSlice)
         }
     } else {
-        RunScenario(ch, pStart_time, pStart, baseUrl, resultsDir)
+        jsonFileList := GetJsonFiles()
+        //
+        tcArray := ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
+        setUpTcSlice := GetSetupTcSlice(tcArray)
+        RunSetup(ch, pStart_time, pStart, baseUrl, resultsDir, setUpTcSlice)
+        //
+        tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
+        RunScenario(ch, pStart_time, pStart, baseUrl, resultsDir, jsonFileList, tcArray)
+        //
+        tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
+        teardownTcSlice := GetTeardownTcSlice(tcArray)
+        RunTeardown(ch, pStart_time, pStart, baseUrl, resultsDir, teardownTcSlice)
     }
 }
 
