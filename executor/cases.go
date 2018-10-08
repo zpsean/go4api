@@ -11,7 +11,7 @@
 package executor
 
 import (
-    // "fmt"
+    "fmt"
     // "time"
     // "os"
     "sort"
@@ -114,6 +114,8 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables (jsonFile string, csvFileL
                 }
                 mergedTestData := MergeTestData(csvRows[0], cvsRowInterface)
 
+                fmt.Println("---> mergedTestData: ", mergedTestData)
+
                 outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, mergedTestData)
 
                 var tcases testcase.TestCases
@@ -141,7 +143,9 @@ func ConstructTcInfosBasedOnJson (jsonFile string) []testcase.TestCaseDataInfo {
 
     csvFile := ""
     csvRow := ""
-    mergedTestData := map[string]interface{}{}
+    // mergedTestData := map[string]interface{}{}
+    mergedTestData := MergeTestData([]string{""}, []interface{}{})
+
     outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, mergedTestData)
     
     var tcases testcase.TestCases

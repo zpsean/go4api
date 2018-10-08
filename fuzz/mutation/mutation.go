@@ -87,7 +87,7 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
 
     for _, originTcData := range originMutationTcArray {
         if originTcData.TestCase.IfGlobalSetUpTestCase() == true {
-            mutatedTcArray = append(mutatedTcArray, originTcData)
+            // mutatedTcArray = append(mutatedTcArray, originTcData)
             continue
         }
 
@@ -516,8 +516,6 @@ func getFieldsMutationDetails(value interface{}) []MFieldDetails {
     for mFieldDetails := range c {
         mFieldDetailsSlice = append(mFieldDetailsSlice, mFieldDetails)
     }
-
-    fmt.Println("----> mFieldDetailsSlice: ", mFieldDetailsSlice)
 
     return mFieldDetailsSlice
 }

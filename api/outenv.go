@@ -12,19 +12,16 @@ package api
 
 import (
     "os"
-    // "fmt"
+    "fmt"
     // "syscall"
-    // "strings"
-    // "reflect"
-    // "path/filepath"
-    // "encoding/json"
+    "net/http"
 
     "go4api/lib/testcase"
-    // "go4api/uti/ls"
 )
 
 
-func WriteOutEnvVariables (testResult string, tcData testcase.TestCaseDataInfo, actualBody []byte) {
+func WriteOutEnvVariables (testResult string, tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader http.Header, actualBody []byte) {
+    // ----
     var expEnvs map[string]interface{}
 
     if testResult == "Success" {
@@ -33,9 +30,10 @@ func WriteOutEnvVariables (testResult string, tcData testcase.TestCaseDataInfo, 
         if len(expEnvs) > 0 {
             for k, v := range expEnvs {
                 key := "go4_" + k
-                value := GetActualValueByJsonPath(v.(string), actualBody)
+                value := GetResponseValue(v.(string), actualStatusCode, actualHeader, actualBody)
 
-                err := os.Setenv(key, value.(string))
+                fmt.Println("key, value: ", key, value)
+                err := os.Setenv(key, fmt.Sprint(value))
                 // syscall.Exec(os.Getenv("SHELL"), []string{os.Getenv("SHELL")}, syscall.Environ())
                 if err != nil {
                     panic(err) 
@@ -46,6 +44,8 @@ func WriteOutEnvVariables (testResult string, tcData testcase.TestCaseDataInfo, 
         // fmt.Println("Warning: test execution failed, no OutEnvVariables set!")
     }
 }
+
+
 
 
 

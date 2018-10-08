@@ -11,30 +11,30 @@
 package gsql
 
 import (
+    // "os"
     "strconv"
     "fmt"
-    "time"
-    "log"
+    // "time"
+    // "log"
     "database/sql"
 
     _ "github.com/go-sql-driver/mysql"
 )
 
-
 var db = &sql.DB{}
 
-func init () {
-    db, _ = sql.Open("mysql", "admin:password@/book")
+func InitConnection (ip string, port string, user string, pw string, defaultDB string) {
+    conInfo := user + ":" + pw + "@tcp(" + ip + ":" + port + ")/" + defaultDB
+    db, _ = sql.Open("mysql", conInfo)
+
+    err := db.Ping()
+    if err != nil {
+        panic(err)
+    }
 } 
 
-func method () {
-    insert()
-    query()
-    update()
-    delete()
-}
 
-func update () {
+func Update () {
     tx, _ := db.Begin()
     
     tx.Exec("Update user set age = ? where uid = ?", 1, 1)
@@ -42,30 +42,39 @@ func update () {
     tx.Commit()
 }
 
-func delete () {
+func Delete (stmt string) {
     tx, _ := db.Begin()
 
-    tx.Exec("DELETE FROM USER WHERE uid = ?", 1)
+    tx.Exec(stmt)
 
     tx.Commit()
 }
 
-func query () {
-    stm, _ := db.Prepare("SELECT uid, username FROM USER")
+func QueryWithoutParams () {
+    tx, _ := db.Begin()
+
+    tx.Exec("SELECT * FROM STORE;")
+
+    tx.Commit()
+}
+
+func QueryWithParams () {
+    stm, _ := db.Prepare("SELECT * FROM STORE;")
     defer stm.Close()
-    rows, _ = stm.Query()
+    rows, _ := stm.Query()
     defer rows.Close()
 
     for rows.Next(){
-         var name string
-         var id int
-        if err := rows.Scan(&id, &name); err != nil {
-            log.Fatal(err)
+         var name, name2, name3, name4, name5, name6 string
+         var id string
+        if err := rows.Scan(&id, &name, &name2, &name3, &name4, &name5, &name6); err != nil {
+            panic(err)
         }
+        fmt.Println(id, name)
     }
 }
 
-func insert () {
+func Insert () {
     tx,_ := db.Begin()
     
     tx.Exec("INSERT INTO user(uid, username, age) values(?, ?, ?)", 1, "user" + strconv.Itoa(1), 1)
