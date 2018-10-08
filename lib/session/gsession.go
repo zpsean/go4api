@@ -11,29 +11,22 @@
 package gsession
 
 import (
-    // "os"
-    // "fmt"
-    // "strings"
-    // "reflect"
-    // "encoding/csv"
-    // "encoding/json"
+    "sync"
 )
 
-var Gsession map[string]map[string]interface{}
-
-func init () {
-    Gsession = make(map[string]map[string]interface{})
-}
-
+var Gsession sync.Map
 
 func LookupParentSession (parentTcName string) map[string]interface{} {
-    var tcSession map[string]interface{}
+    tcSession := make(map[string]interface{})
 
-    for k, v := range Gsession {
-        if parentTcName == k {
-            tcSession = v
-        }
-    } 
+    result, ok := Gsession.Load(parentTcName)
+    if ok {
+        tcSession = result.(map[string]interface{})
+    }
 
     return tcSession
+}
+
+func WriteTcSession (tcName string, tcSession map[string]interface{}) {
+    Gsession.Store(tcName, tcSession)
 }

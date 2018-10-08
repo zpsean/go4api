@@ -55,9 +55,9 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     // fmt.Println(tcName + " end: ", end)
 
     // (4). here to generate the outputs file if the Json has "outputs" field
-    WriteOutputsDataToFile(testResult, tcData, actualBody)
-    WriteOutEnvVariables(testResult, tcData, actualBody)
-    WriteSession(testResult, tcData, actualBody)
+    WriteOutputsDataToFile(testResult, tcData, actualStatusCode, actualHeader, actualBody)
+    WriteOutEnvVariables(testResult, tcData, actualStatusCode, actualHeader, actualBody)
+    // WriteSession(testResult, tcData, actualStatusCode, actualHeader, actualBody)
 
     // get the TestCaseExecutionInfo
     tcExecution := testcase.TestCaseExecutionInfo {

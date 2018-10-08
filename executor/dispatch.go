@@ -36,17 +36,16 @@ func Dispatch(ch chan int, pStart_time time.Time) {
     if !cmd.Opt.IfScenario {
         if cmd.Opt.IfMutation {
             originMutationTcArray := GetOriginMutationTcArray()
-            //
-            mutatedTcArray := mutation.MutateTcArray(originMutationTcArray)
-            setUpTcSlice := GetSetupTcSlice(mutatedTcArray)
+            setUpTcSlice := GetSetupTcSlice(originMutationTcArray)
             RunSetup(ch, pStart_time, pStart, baseUrl, resultsDir, setUpTcSlice)
             //
-            mutatedTcArray = mutation.MutateTcArray(originMutationTcArray)
-            normalTcSlice := GetNormalTcSlice(mutatedTcArray)
-            Run(ch, pStart_time, pStart, baseUrl, resultsDir, normalTcSlice)
+            originMutationTcArray = GetOriginMutationTcArray()
+            originNormalTc := GetNormalTcSlice(originMutationTcArray)
+            mutatedTcArray := mutation.MutateTcArray(originNormalTc)
+            Run(ch, pStart_time, pStart, baseUrl, resultsDir, mutatedTcArray)
             //
-            mutatedTcArray = mutation.MutateTcArray(originMutationTcArray)
-            teardownTcSlice := GetTeardownTcSlice(mutatedTcArray)
+            originMutationTcArray = GetOriginMutationTcArray()
+            teardownTcSlice := GetTeardownTcSlice(originMutationTcArray)
             RunTeardown(ch, pStart_time, pStart, baseUrl, resultsDir, teardownTcSlice)
         } else if cmd.Opt.IfFuzzTest {
             fuzz.PrepFuzzTest(pStart_time)

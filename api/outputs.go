@@ -26,7 +26,7 @@ import (
 )
 
 
-func WriteOutputsDataToFile (testResult string, tcData testcase.TestCaseDataInfo, actualBody []byte) {
+func WriteOutputsDataToFile (testResult string, tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader http.Header, actualBody []byte) {
     var expOutputs []*testcase.OutputsDetails
 
     if testResult == "Success" {
@@ -46,7 +46,7 @@ func WriteOutputsDataToFile (testResult string, tcData testcase.TestCaseDataInfo
                 outputsData := expOutputs[i].GetOutputsDetailsData()
                 switch strings.ToLower(outputsFileFormat) {
                     case "csv":
-                        keyStrList, valueStrList = GetOutputsCsvData(outputsData, actualBody)
+                        keyStrList, valueStrList = GetOutputsCsvData(outputsData, actualStatusCode, actualHeader, actualBody)
                 }   
                 // write csv header
                 utils.GenerateCsvFileBasedOnVarOverride(keyStrList, outputsFile)
@@ -59,7 +59,7 @@ func WriteOutputsDataToFile (testResult string, tcData testcase.TestCaseDataInfo
     }
 }
 
-func GetOutputsCsvData (outputsData map[string][]interface{}, actualBody []byte) ([]string, []string) {
+func GetOutputsCsvData (outputsData map[string][]interface{}, actualStatusCode int, actualHeader http.Header, actualBody []byte) ([]string, []string) {
     var keyStrList []string
     var valueStrList []string
 
@@ -71,12 +71,12 @@ func GetOutputsCsvData (outputsData map[string][]interface{}, actualBody []byte)
             // check if the valueSlice is [], or [[]], using the valueSlice[0]
             switch reflect.TypeOf(valueSlice[0]).Kind() {
                 case reflect.Slice:
-                    fieldStrList := GetOutputsDetailsDataForFieldSlice(valueSlice, actualBody)
+                    fieldStrList := GetOutputsDetailsDataForFieldSlice(valueSlice, actualStatusCode, actualHeader, actualBody)
                     fieldStr := convertSliceAsString(fieldStrList)
                     valueStrList = append(valueStrList, fieldStr)
                 default: 
                     // Note, here may return array also
-                    fieldStrList := GetOutputsDetailsDataForFieldString(valueSlice, actualBody)
+                    fieldStrList := GetOutputsDetailsDataForFieldString(valueSlice, actualStatusCode, actualHeader, actualBody)
                     valueStrList = append(valueStrList, strings.Join(fieldStrList, "")) 
             }
         }     
@@ -85,11 +85,12 @@ func GetOutputsCsvData (outputsData map[string][]interface{}, actualBody []byte)
     return keyStrList, valueStrList
 }
 
-func GetOutputsDetailsDataForFieldString (valueSlice []interface{}, actualBody []byte) []string {
+func GetOutputsDetailsDataForFieldString (valueSlice []interface{}, actualStatusCode int, actualHeader http.Header, actualBody []byte) []string {
     var fieldStrList []string
     // check if the valueSlice is [], or [[]], using the valueSlice[0]
     for _, value := range valueSlice {
-        actualValue := GetActualValueByJsonPath(fmt.Sprint(value), actualBody)
+        // actualValue := GetActualValueByJsonPath(fmt.Sprint(value), actualBody)
+        actualValue := GetResponseValue(fmt.Sprint(value), actualStatusCode, actualHeader, actualBody)
         
         if actualValue == nil {
             fieldStrList = append(fieldStrList, "")
@@ -108,13 +109,14 @@ func GetOutputsDetailsDataForFieldString (valueSlice []interface{}, actualBody [
 }
 
 
-func GetOutputsDetailsDataForFieldSlice (valueSlice []interface{}, actualBody []byte) []interface{} {
+func GetOutputsDetailsDataForFieldSlice (valueSlice []interface{}, actualStatusCode int, actualHeader http.Header, actualBody []byte) []interface{} {
     var fieldStrList []interface{}
     // currently, suppose has only one sub slice
     firstSubSlice := valueSlice[0]
 
     for _, value := range reflect.ValueOf(firstSubSlice).Interface().([]interface{}) {
-        actualValue := GetActualValueByJsonPath(fmt.Sprint(value), actualBody)
+        // actualValue := GetActualValueByJsonPath(fmt.Sprint(value), actualBody)
+        actualValue := GetResponseValue(fmt.Sprint(value), actualStatusCode, actualHeader, actualBody)
 
         if actualValue == nil {
             fieldStrList = append(fieldStrList, "")
@@ -138,17 +140,26 @@ func convertSliceAsString (slice []interface{}) string {
     return varStr
 }
 
-func GetActualValueByJsonPath (key string, actualBody []byte) interface{} {  
-    var actualValue interface{}
-    // leading "$." is mandatory if want to use path search
-    if len(key) > 2 && key[0:2] == "$." {
-        value := gjson.Get(string(actualBody), key[2:])
-        actualValue = value.Value()
-    } else {
-        actualValue = key
-    }
 
-    return actualValue
+// -- 
+func GetResponseValue (searchPath string, actualStatusCode int, actualHeader http.Header, actualBody []byte) interface{} {
+    // prefix = "$(status).", "$(headers).", "$(body)."
+    var value interface{}
+    if len(searchPath) > 1 {
+        if strings.HasPrefix(searchPath, "$(status).") {
+            value = GetStatusActualValue(searchPath, actualStatusCode)
+        } else if strings.HasPrefix(searchPath, "$(headers).") {
+            value = GetHeadersActualValue(searchPath, actualHeader)
+        } else if strings.HasPrefix(searchPath, "$(body).") {
+            value = GetActualValueByJsonPath(searchPath, actualBody)
+        } else {
+            value = searchPath
+        }
+    } else {
+        value = searchPath
+    }
+    
+    return value
 }
 
 func GetStatusActualValue (key string, actualStatusCode int) interface{} {
@@ -163,11 +174,16 @@ func GetStatusActualValue (key string, actualStatusCode int) interface{} {
     return actualValue
 }
 
-func GetHeaderActualValue (key string, actualHeader http.Header) interface{} { 
+func GetHeadersActualValue (key string, actualHeader http.Header) interface{} { 
     var actualValue interface{}
-    // leading "$(header)" is mandatory if want to retrive status
-    if len(key) > 10 && key[0:10] == "$(header)." {
-        actualValue = strings.Join(actualHeader[key[10:]], ",")
+    // leading "$(headers)" is mandatory if want to retrive headers value
+    prefix := "$(headers)."
+    lenPrefix := len(prefix)
+
+    fmt.Println("--> actualHeader: ", actualHeader)
+
+    if len(key) > lenPrefix && key[0:lenPrefix] == prefix {
+        actualValue = strings.Join(actualHeader[key[lenPrefix:]], ",")
     } else {
         actualValue = key
     }
@@ -175,4 +191,16 @@ func GetHeaderActualValue (key string, actualHeader http.Header) interface{} {
     return actualValue
 }
 
+func GetActualValueByJsonPath (key string, actualBody []byte) interface{} {  
+    var actualValue interface{}
+    // leading "$." is mandatory if want to use path search
+    if len(key) > 2 && key[0:2] == "$(body)." {
+        value := gjson.Get(string(actualBody), key[2:])
+        actualValue = value.Value()
+    } else {
+        actualValue = key
+    }
+
+    return actualValue
+}
 

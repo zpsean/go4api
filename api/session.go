@@ -10,37 +10,36 @@
 
 package api
 
-import (
-    // "os"
-    // "fmt"
-    // "strings"
-    // "reflect"
-    // "path/filepath"
-    // "encoding/json"
+import (    
+    "net/http"
 
     "go4api/lib/testcase"
     "go4api/lib/session"
-    // "go4api/uti/ls"
 )
 
 
-func WriteSession (testResult string, tcData testcase.TestCaseDataInfo, actualBody []byte) {
+func WriteSession (testResult string, tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader http.Header, actualBody []byte) {
+    var tcSession = make(map[string]interface{})
     var tcSessionDef = make(map[string]interface{})
 
     if testResult == "Success" {
         // get its parent session
         parentTcSession := gsession.LookupParentSession(tcData.ParentTestCase())
+        tcSession = parentTcSession
 
-        tcName := tcData.TcName()
-        gsession.Gsession[tcName] = parentTcSession
         // get its session def
         tcSessionDef = tcData.TestCase.Session()
 
         if len(tcSessionDef) > 0 {
             for k, v := range tcSessionDef {
-                gsession.Gsession[tcName][k] = v
+                value := GetResponseValue(v.(string), actualStatusCode, actualHeader, actualBody)
+
+                tcSession[k] = value
             } 
         }
+        tcName := tcData.TcName()
+        gsession.WriteTcSession(tcName, parentTcSession)
+
     } else {
         // fmt.Println("Warning: test execution failed, no OutEnvVariables set!")
     }
