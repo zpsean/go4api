@@ -26,32 +26,10 @@ import (
     "go4api/lib/csv"
 )
 
-func InitRunScenario () (*tree.TcNode, tree.TcTree, tree.TcTreeStats, []testcase.TestCaseDataInfo, []string) {
-    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
-
-    var tcArray []testcase.TestCaseDataInfo
-
-    // (1). get the root cases in json (but maybe the json has notation, not valid json)
-    // => the json has parentTestCase = root, or the the data table has parentTestCase = root
-    tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt") 
-
-    // (2). render them, get the rendered cases
-    tcTree := tree.CreateTcTree()
-    root := tcTree.BuildTree(tcArray)
-
-    // (3). then execute them, genrate the outputs if have
-    prioritySet := []string{"1"}
-    tcTreeStats := tree.CreateTcTreeStats(prioritySet)
-    //
-    tcTree.InitNodesRunResult(root, "Ready")
-    tcTreeStats.CollectNodeStatusByPriority(root, "1")
-
-    return root, tcTree, tcTreeStats, tcArray, jsonFileList
-}
-
-func RunScenario (ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string) {
-    //
-    root, tcTree, tcTreeStats, tcArray, jsonFileList := InitRunScenario()
+func RunScenario (ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string, 
+        jsonFileList []string, tcArray []testcase.TestCaseDataInfo) {
+    // --
+    root, tcTree, tcTreeStats := InitRunScenario(tcArray)
 
     logFilePtr := reports.OpenExecutionResultsLogFile(resultsDir + pStart + ".log")
   
@@ -103,6 +81,21 @@ func RunScenario (ch chan int, pStart_time time.Time, pStart string, baseUrl str
     RunScenarioReports(ch, pStart_time, pStart, resultsDir, root, tcTreeStats)
 }
 
+func InitRunScenario (tcArray []testcase.TestCaseDataInfo) (*tree.TcNode, tree.TcTree, tree.TcTreeStats) {
+    //
+    tcTree := tree.CreateTcTree()
+    root := tcTree.BuildTree(tcArray)
+
+    // (3). then execute them, genrate the outputs if have
+    prioritySet := []string{"1"}
+    tcTreeStats := tree.CreateTcTreeStats(prioritySet)
+    //
+    tcTree.InitNodesRunResult(root, "Ready")
+    tcTreeStats.CollectNodeStatusByPriority(root, "1")
+
+    return root, tcTree, tcTreeStats
+}
+
 func BuildChilrenNodes (tcExecution testcase.TestCaseExecutionInfo, jsonFileList []string, root *tree.TcNode, tcTree tree.TcTree) {
     // render the child cases, using the previous outputs as the inputs
     // the case has inputs and its parent's runstatus == Success (i.e. not failed)
@@ -151,7 +144,13 @@ func RunScenarioReports (ch chan int, pStart_time time.Time, pStart string, resu
 }
 
 
-func ConstructChildTcInfosBasedOnParentRoot(jsonFileList []string, parentTcName string, dataTableSuffix string) []testcase.TestCaseDataInfo {
+func GetJsonFiles () []string {
+    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
+
+    return jsonFileList
+}
+
+func ConstructChildTcInfosBasedOnParentRoot (jsonFileList []string, parentTcName string, dataTableSuffix string) []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
     var tcInfos []testcase.TestCaseDataInfo
 
@@ -175,7 +174,7 @@ func ConstructChildTcInfosBasedOnParentRoot(jsonFileList []string, parentTcName 
     return tcArray
 }
 
-func ConstructChildTcInfosBasedOnParentTcName(jsonFileList []string, parentTcName string, dataTableSuffix string) []testcase.TestCaseDataInfo {
+func ConstructChildTcInfosBasedOnParentTcName (jsonFileList []string, parentTcName string, dataTableSuffix string) []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
     var tcInfos []testcase.TestCaseDataInfo
 
@@ -202,7 +201,7 @@ func ConstructChildTcInfosBasedOnParentTcName(jsonFileList []string, parentTcNam
     return tcArray
 }
 
-func GetBasicParentTestCaseInfosPerFile(filePath string, parentName string) []string {
+func GetBasicParentTestCaseInfosPerFile (filePath string, parentName string) []string {
     // as the raw Jsonfile itself is template, may not be valid json fomat, before rendered by data
     contentsBytes := utils.GetContentFromFile(filePath)
     contents := string(contentsBytes)
@@ -260,7 +259,6 @@ func GetBasicParentTestCaseInfosPerFile(filePath string, parentName string) []st
     return tcNamesMatchParent
 }
 
-
 func writeGcsvToCsv (gcsvPtr *gcsv.Gcsv, outFile string) {
     // header
     utils.GenerateCsvFileBasedOnVarOverride(gcsvPtr.Header, outFile)
@@ -285,8 +283,4 @@ func writeMapToCsv (inputsMap map[string]interface{}, joinedFile string) {
     // write csv data
     utils.GenerateCsvFileBasedOnVarAppend(valueStrList, joinedFile)
 }
-
-
-
-
 
