@@ -32,7 +32,6 @@ func WriteOutEnvVariables (testResult string, tcData testcase.TestCaseDataInfo, 
                 key := "go4_" + k
                 value := GetResponseValue(v.(string), actualStatusCode, actualHeader, actualBody)
 
-                fmt.Println("key, value: ", key, value)
                 err := os.Setenv(key, fmt.Sprint(value))
                 // syscall.Exec(os.Getenv("SHELL"), []string{os.Getenv("SHELL")}, syscall.Environ())
                 if err != nil {

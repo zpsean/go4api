@@ -11,7 +11,7 @@
 package executor
 
 import (
-    "fmt"
+    // "fmt"
     // "time"
     // "os"
     "sort"
@@ -29,8 +29,6 @@ import (
     "go4api/texttmpl"
     // "go4api/reports"
 )
-
-
 
 func GetTcArray () []testcase.TestCaseDataInfo { 
     var tcArray []testcase.TestCaseDataInfo
@@ -113,8 +111,6 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables (jsonFile string, csvFileL
                     cvsRowInterface = append(cvsRowInterface, csvRow[i])
                 }
                 mergedTestData := MergeTestData(csvRows[0], cvsRowInterface)
-
-                fmt.Println("---> mergedTestData: ", mergedTestData)
 
                 outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, mergedTestData)
 

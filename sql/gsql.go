@@ -64,13 +64,22 @@ func QueryWithParams () {
     rows, _ := stm.Query()
     defer rows.Close()
 
-    for rows.Next(){
-         var name, name2, name3, name4, name5, name6 string
-         var id string
-        if err := rows.Scan(&id, &name, &name2, &name3, &name4, &name5, &name6); err != nil {
-            panic(err)
+    columns, _ := rows.Columns()
+    scanArgs := make([]interface{}, len(columns))
+    values := make([]interface{}, len(columns))
+    for i := range values {
+        scanArgs[i] = &values[i]
+    }
+     
+    for rows.Next() {
+        rows.Scan(scanArgs...)
+        record := make(map[string]string)
+        for i, col := range values {
+            if col != nil {
+                record[columns[i]] = string(col.([]byte))
+            }
         }
-        fmt.Println(id, name)
+        fmt.Println(record)
     }
 }
 

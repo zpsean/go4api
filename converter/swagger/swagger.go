@@ -76,6 +76,7 @@ func Convert () {
 		        parentTestCase,
                 false,
                 false,
+                map[string]interface{}{},
 		        []interface{}{},
 		        &g4ARequest,
 		        &g4AResponse,
