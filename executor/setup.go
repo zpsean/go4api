@@ -13,14 +13,9 @@ package executor
 import (
     "fmt"
     "time"
-    // "os"
-    // "sort"
-    // "sync"
-    // "encoding/json"
 
-    // "go4api/utils"
     "go4api/lib/testcase"
-    // "go4api/reports"
+    "go4api/sql"
 )
 
 func GetSetupTcSlice (tcArray []testcase.TestCaseDataInfo) []testcase.TestCaseDataInfo {
@@ -35,12 +30,53 @@ func GetSetupTcSlice (tcArray []testcase.TestCaseDataInfo) []testcase.TestCaseDa
 }
 
 func RunSetup(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo) { 
-    prioritySet, root, tcTree, tcTreeStats := RunBefore(tcArray)
+    sqlSetUpTcSlice, notSqlSetUpTcSlice := ClassifySetUp(tcArray)
 
+    prioritySet, root, tcTree, tcTreeStats := RunBefore(notSqlSetUpTcSlice)
     fmt.Println("\n====> setup test cases execution starts!") 
+    RunPriorities(ch, pStart, baseUrl, resultsDir, notSqlSetUpTcSlice, prioritySet, root, tcTree, tcTreeStats)
+    RunAfter(ch, pStart_time, pStart, resultsDir, notSqlSetUpTcSlice, root, tcTree, tcTreeStats)
 
-    RunPriorities(ch, pStart, baseUrl, resultsDir, tcArray, prioritySet, root, tcTree, tcTreeStats)
+    // -- for sql execution
+    RunSqlSetUpTc(sqlSetUpTcSlice)
+}
 
-    RunAfter(ch, pStart_time, pStart, resultsDir, tcArray, root, tcTree, tcTreeStats)
+func ClassifySetUp (tcArray []testcase.TestCaseDataInfo) ([]testcase.TestCaseDataInfo, []testcase.TestCaseDataInfo) {
+    var sqlSetUpTcSlice []testcase.TestCaseDataInfo
+    var notSqlSetUpTcSlice []testcase.TestCaseDataInfo
+
+    for i, _ := range tcArray {
+        ifSql := false
+        for k, _ := range tcArray[i].TestCase.SetUp() {
+            if k == "sql" {
+                sqlSetUpTcSlice = append(sqlSetUpTcSlice, tcArray[i])
+                ifSql = true
+            }
+        }
+        if ifSql == false {
+            notSqlSetUpTcSlice = append(notSqlSetUpTcSlice, tcArray[i])
+        }
+    }
+
+    return sqlSetUpTcSlice, notSqlSetUpTcSlice
+}
+
+func RunSqlSetUpTc (sqlTcSlice []testcase.TestCaseDataInfo) {
+    var sqlSlice []string
+
+    for i, _ := range sqlTcSlice {
+        for k, v := range sqlTcSlice[i].TestCase.SetUp() {
+            if k == "sql" {
+                sqlSlice = append(sqlSlice, fmt.Sprint(v))
+            }
+        }
+    }
+
+    ip, port, user, pw, defaultDB := GetDBConnInfo()
+    gsql.InitConnection(ip, port, user, pw, defaultDB)
+
+    for i, _ := range sqlSlice {
+        gsql.Delete(sqlSlice[i])
+    }
 }
 

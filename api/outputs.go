@@ -180,8 +180,6 @@ func GetHeadersActualValue (key string, actualHeader http.Header) interface{} {
     prefix := "$(headers)."
     lenPrefix := len(prefix)
 
-    fmt.Println("--> actualHeader: ", actualHeader)
-
     if len(key) > lenPrefix && key[0:lenPrefix] == prefix {
         actualValue = strings.Join(actualHeader[key[lenPrefix:]], ",")
     } else {

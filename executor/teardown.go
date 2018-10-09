@@ -13,10 +13,10 @@ package executor
 import (
     "fmt"
     "time"
-    "os"
-    "strings"
+    // "os"
+    // "strings"
 
-    "go4api/cmd"
+    // "go4api/cmd"
     "go4api/lib/testcase"
     "go4api/sql"
 )
@@ -37,15 +37,12 @@ func RunTeardown(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
     sqlTearDownTcSlice, notSqlTearDownTcSlice := ClassifyTearDown(tcArray)
 
     prioritySet, root, tcTree, tcTreeStats := RunBefore(notSqlTearDownTcSlice)
-
     fmt.Println("\n====> teardown test cases execution starts!") 
-
     RunPriorities(ch, pStart, baseUrl, resultsDir, notSqlTearDownTcSlice, prioritySet, root, tcTree, tcTreeStats)
-
     RunAfter(ch, pStart_time, pStart, resultsDir, notSqlTearDownTcSlice, root, tcTree, tcTreeStats)
 
     // -- for sql execution
-    RunSqlTearDown(sqlTearDownTcSlice)
+    RunSqlTearDownTc(sqlTearDownTcSlice)
 }
 
 func ClassifyTearDown (tcArray []testcase.TestCaseDataInfo) ([]testcase.TestCaseDataInfo, []testcase.TestCaseDataInfo) {
@@ -68,11 +65,11 @@ func ClassifyTearDown (tcArray []testcase.TestCaseDataInfo) ([]testcase.TestCase
     return sqlTearDownTcSlice, notSqlTearDownTcSlice
 }
 
-func RunSqlTearDown (sqlTearDownTcSlice []testcase.TestCaseDataInfo) {
+func RunSqlTearDownTc (sqlTcSlice []testcase.TestCaseDataInfo) {
     var sqlSlice []string
 
-    for i, _ := range sqlTearDownTcSlice {
-        for k, v := range sqlTearDownTcSlice[i].TestCase.TearDown() {
+    for i, _ := range sqlTcSlice {
+        for k, v := range sqlTcSlice[i].TestCase.TearDown() {
             if k == "sql" {
                 sqlSlice = append(sqlSlice, fmt.Sprint(v))
             }
@@ -82,36 +79,7 @@ func RunSqlTearDown (sqlTearDownTcSlice []testcase.TestCaseDataInfo) {
     ip, port, user, pw, defaultDB := GetDBConnInfo()
     gsql.InitConnection(ip, port, user, pw, defaultDB)
 
-    gsql.Delete(sqlSlice[0])
-}
-
-func GetDBConnInfo () (string, string, string, string, string) {
-    var ip, port, user, pw, defaultDB string
-
-    testEnv := ""
-    if cmd.Opt.TestEnv != "" {
-        testEnv = cmd.Opt.TestEnv
-    } else {
-        testEnv = "qa"
+    for i, _ := range sqlSlice {
+        gsql.Delete(sqlSlice[i])
     }
-
-    switch strings.ToLower(testEnv) {
-        case "qa":
-            ip = os.Getenv("go4_qa_db_ip")
-            port = os.Getenv("go4_qa_db_port")
-            user = os.Getenv("go4_qa_db_username")
-            pw = os.Getenv("go4_qa_db_password")
-            defaultDB = os.Getenv("go4_qa_db_defaultDB")
-        case "dev":
-            ip = os.Getenv("go4_dev_db_ip")
-            port = os.Getenv("go4_dev_db_port")
-            user = os.Getenv("go4_dev_db_username")
-            pw = os.Getenv("go4_dev_db_password")
-            defaultDB = os.Getenv("go4_dev_db_defaultDB")
-    }
-
-    return ip, port, user, pw, defaultDB
 }
-
-
-

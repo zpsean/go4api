@@ -46,6 +46,10 @@ func (tc *TestCase) IfGlobalTearDownTestCase() bool {
     return (*tc)[tc.TcName()].IfGlobalTearDownTestCase
 }
 
+func (tc *TestCase) SetUp() map[string]interface{} {
+    return (*tc)[tc.TcName()].SetUp
+}
+
 func (tc *TestCase) Inputs() []interface{} {
     return (*tc)[tc.TcName()].Inputs
 }

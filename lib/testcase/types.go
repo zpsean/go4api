@@ -60,6 +60,7 @@ type TestCaseBasics struct {
     ParentTestCase string   `json:"parentTestCase"`
     IfGlobalSetUpTestCase bool    `json:"ifGlobalSetUpTestCase"`
     IfGlobalTearDownTestCase bool `json:"ifGlobalTearDownTestCase"`
+    SetUp map[string]interface{}  `json:"setUp"`
     Inputs []interface{}     `json:"inputs"`
     Request *Request         `json:"request"`
     Response *Response       `json:"response"`
