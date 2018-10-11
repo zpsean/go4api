@@ -39,9 +39,11 @@ var Index = `<!DOCTYPE html>
 
                       <script type="text/javascript">
                         // var timestamp = 1523957748602;
-                        // var runStartHumanDate = moment(timestamp).format("YYYY-MM-DD HH:mm:ss Z");
-                        document.writeln("<p class='sim_desc' title='" +"Started at 2018-xx-xx, duration : 10 seconds' data-content=''>");
-                        document.writeln("<b>" + "Started at 2018-xx-xx, duration : 10 seconds </b>");
+                        // var runStartHumanDate = new Date(timestamp).format("YYYY-MM-DD HH:mm:ss Z");
+                        var runStartHumanDate = pStart.substr(0, 19)
+                        var runDuration = (pEndUnixNano - pStartUnixNano) / 1000000000
+                        document.writeln("<p class='sim_desc'>");
+                        document.writeln("<b>" + "Started at " + runStartHumanDate + ", duration: " + runDuration + " seconds </b>");
                         document.writeln("</p>");
                       </script>
                   </div>

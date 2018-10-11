@@ -39,7 +39,7 @@ func RunTeardown(ch chan int, pStart_time time.Time, pStart string, baseUrl stri
     prioritySet, root, tcTree, tcTreeStats := RunBefore(notSqlTearDownTcSlice)
     fmt.Println("\n====> teardown test cases execution starts!") 
     RunPriorities(ch, pStart, baseUrl, resultsDir, notSqlTearDownTcSlice, prioritySet, root, tcTree, tcTreeStats)
-    RunAfter(ch, pStart_time, pStart, resultsDir, notSqlTearDownTcSlice, root, tcTree, tcTreeStats)
+    RunConsoleOverallReport(ch, pStart_time, pStart, resultsDir, notSqlTearDownTcSlice, root, tcTree, tcTreeStats)
 
     // -- for sql execution
     RunSqlTearDownTc(sqlTearDownTcSlice)
@@ -80,6 +80,6 @@ func RunSqlTearDownTc (sqlTcSlice []testcase.TestCaseDataInfo) {
     gsql.InitConnection(ip, port, user, pw, defaultDB)
 
     for i, _ := range sqlSlice {
-        gsql.Delete(sqlSlice[i])
+        gsql.Run(sqlSlice[i])
     }
 }

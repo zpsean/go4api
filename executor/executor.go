@@ -39,8 +39,8 @@ func Run (ch chan int, pStart_time time.Time, pStart string, baseUrl string, res
     fmt.Println("\n====> test cases execution starts!") 
 
     RunPriorities(ch, pStart, baseUrl, resultsDir, tcArray, prioritySet, root, tcTree, tcTreeStats)
-
-    RunAfter(ch, pStart_time, pStart, resultsDir, tcArray, root, tcTree, tcTreeStats)
+    RunConsoleOverallReport(ch, pStart_time, pStart, resultsDir, tcArray, root, tcTree, tcTreeStats)
+    RunFinalReport(ch, pStart_time, pStart, resultsDir, tcArray, root, tcTree, tcTreeStats)
 }
 
 func RunBefore (tcArray []testcase.TestCaseDataInfo) ([]string, *tree.TcNode, tree.TcTree, tree.TcTreeStats) { 
@@ -138,12 +138,16 @@ func RunEachPriority (ch chan int, pStart string, baseUrl string, resultsDir str
     }
 }
 
-func RunAfter (ch chan int, pStart_time time.Time, pStart string, resultsDir string, tcArray []testcase.TestCaseDataInfo, 
+func RunConsoleOverallReport (ch chan int, pStart_time time.Time, pStart string, resultsDir string, tcArray []testcase.TestCaseDataInfo, 
         root *tree.TcNode, tcTree tree.TcTree, tcTreeStats tree.TcTreeStats) {
     // -------
     tcTreeStats.CollectOverallNodeStatus(root, "Overall")
     reports.ReportConsoleOverall(len(tcArray), "Overall", tcTreeStats.StatusCountByPriority)
-    
+}
+
+func RunFinalReport (ch chan int, pStart_time time.Time, pStart string, resultsDir string, tcArray []testcase.TestCaseDataInfo, 
+        root *tree.TcNode, tcTree tree.TcTree, tcTreeStats tree.TcTreeStats) {
+    // -------
     // generate the html report based on template, and results data
     // time.Sleep(1 * time.Second)
     pEnd_time := time.Now()
