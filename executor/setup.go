@@ -35,7 +35,7 @@ func RunSetup(ch chan int, pStart_time time.Time, pStart string, baseUrl string,
     prioritySet, root, tcTree, tcTreeStats := RunBefore(notSqlSetUpTcSlice)
     fmt.Println("\n====> setup test cases execution starts!") 
     RunPriorities(ch, pStart, baseUrl, resultsDir, notSqlSetUpTcSlice, prioritySet, root, tcTree, tcTreeStats)
-    RunAfter(ch, pStart_time, pStart, resultsDir, notSqlSetUpTcSlice, root, tcTree, tcTreeStats)
+    RunConsoleOverallReport(ch, pStart_time, pStart, resultsDir, notSqlSetUpTcSlice, root, tcTree, tcTreeStats)
 
     // -- for sql execution
     RunSqlSetUpTc(sqlSetUpTcSlice)
@@ -76,7 +76,7 @@ func RunSqlSetUpTc (sqlTcSlice []testcase.TestCaseDataInfo) {
     gsql.InitConnection(ip, port, user, pw, defaultDB)
 
     for i, _ := range sqlSlice {
-        gsql.Delete(sqlSlice[i])
+        gsql.Run(sqlSlice[i])
     }
 }
 

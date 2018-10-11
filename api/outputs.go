@@ -152,6 +152,8 @@ func GetResponseValue (searchPath string, actualStatusCode int, actualHeader htt
             value = GetHeadersActualValue(searchPath, actualHeader)
         } else if strings.HasPrefix(searchPath, "$(body).") {
             value = GetActualValueByJsonPath(searchPath, actualBody)
+        } else if strings.HasPrefix(searchPath, "$.") {
+            value = GetActualValueByJsonPath(searchPath, actualBody)
         } else {
             value = searchPath
         }
@@ -191,9 +193,17 @@ func GetHeadersActualValue (key string, actualHeader http.Header) interface{} {
 
 func GetActualValueByJsonPath (key string, actualBody []byte) interface{} {  
     var actualValue interface{}
-    // leading "$." is mandatory if want to use path search
-    if len(key) > 2 && key[0:2] == "$(body)." {
-        value := gjson.Get(string(actualBody), key[2:])
+    // leading "$." or "$(headers)." is mandatory if want to use path search
+    prefix := "$(body)."
+    lenPrefix := len(prefix)
+    prefix2 := "$."
+    lenPrefix2 := len(prefix2)
+
+    if len(key) > lenPrefix && key[0:lenPrefix] == prefix {
+        value := gjson.Get(string(actualBody), key[lenPrefix:])
+        actualValue = value.Value()
+    } else if len(key) > lenPrefix2 && key[0:lenPrefix2] == prefix2 {
+        value := gjson.Get(string(actualBody), key[lenPrefix2:])
         actualValue = value.Value()
     } else {
         actualValue = key

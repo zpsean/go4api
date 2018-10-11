@@ -42,30 +42,23 @@ var Mutation = `
 
                       <script type="text/javascript">
                         // var timestamp = 1523957748602;
-                        // var runStartHumanDate = moment(timestamp).format("YYYY-MM-DD HH:mm:ss Z");
-                        document.writeln("<p class='sim_desc' title='" +"Started at 2018-xx-xx, duration : 10 seconds' data-content=''>");
-                        document.writeln("<b>" + "Started at 2018-xx-xx, duration : 10 seconds </b>");
+                        // var runStartHumanDate = new Date(timestamp).format("YYYY-MM-DD HH:mm:ss Z");
+                        var runStartHumanDate = pStart.substr(0, 19)
+                        var runDuration = (pEndUnixNano - pStartUnixNano) / 1000000000
+                        document.writeln("<p class='sim_desc'>");
+                        document.writeln("<b>" + "Started at " + runStartHumanDate + ", duration: " + runDuration + " seconds </b>");
                         document.writeln("</p>");
                       </script>
                   </div>
 
 
                   <div class="content-in">
-                    <div> 
-                        <select id = "mySelect" onchange="selectKey(this);" style="width:150px;"></select>
-                        <select id = "mySelect2" style="width:300px;"></select>
 
-                        <input type="text" id="myInput" size="50" name="search_text" placeholder="Please enter search text here">
-                        <button type="button" onClick="btnClick()">Search</button>
-                    </div>
-
-                    <h1><span>> </span>Overview Information</h1>
+                    <h1><span>> </span>Details Information</h1>
                     <div class="article">
-
 
                       <div class="statistics extensible-geant collapsed">
                           
-
                           <table id="container_statistics_head" class="statistics-in extensible-geant">
                               <thead>
                                   <tr>
@@ -82,6 +75,68 @@ var Mutation = `
                                       <th id="col-11" class="header sortable"><span>MutationMessage</span></th>
                                   </tr>
                               </thead>
+                              <thead>
+                                  <tr>
+                                      <th id="col-1-1"></th>
+
+                                      <th id="col-2-1">
+                                        <input type="text" id="caseid_input" list="caseid_datalist" size="10" onchange="dataListChange()" />
+                                          <datalist id="caseid_datalist">
+                                        </datalist>
+                                      </th>
+
+                                      <th id="col-3-1">
+                                        <input type="text" id="httpurl_input" list="httpurl_datalist" size="10" onchange="dataListChange()" />
+                                          <datalist id="httpurl_datalist">
+                                        </datalist>
+                                      </th>
+
+                                      <th id="col-4-1">
+                                        <input type="text" id="httmethod_input" list="httmethod_datalist" size="15" onchange="dataListChange()" />
+                                          <datalist id="httmethod_datalist">
+                                        </datalist>
+                                      </th>
+
+                                      <th id="col-5-1">
+                                        <input type="text" id="MutationPart_input" list="MutationPart_datalist" size="20" onchange="dataListChange()" />
+                                          <datalist id="MutationPart_datalist">
+                                        </datalist>
+                                      </th>
+
+                                      <th id="col-6-1">
+                                        <input type="text" id="MutationCategory_input" list="MutationCategory_datalist" size="20" onchange="dataListChange()" />
+                                          <datalist id="MutationCategory_datalist">
+                                        </datalist>
+                                      </th>
+
+                                      <th id="col-7-1">
+                                        <input type="text" id="MutationRule_input" list="MutationRule_datalist" size="18" onchange="dataListChange()" />
+                                          <datalist id="MutationRule_datalist">
+                                        </datalist>
+                                      </th>
+
+                                      <th id="col-8-1">
+                                        <input type="text" id="HttpStatus_input" list="HttpStatus_datalist" size="12" onchange="dataListChange()" />
+                                          <datalist id="HttpStatus_datalist">
+                                        </datalist>
+                                      </th>
+
+                                      <th id="col-9-1">
+                                        <input type="text" id="TestStatus_input" list="TestStatus_datalist" size="12" onchange="dataListChange()" />
+                                          <datalist id="TestStatus_datalist">
+                                        </datalist>
+                                      </th>
+
+                                      <th id="col-10-1"><span></span></th>
+
+                                      <th id="col-11-1">
+                                        <input type="text" id="MutationMessage_input" list="MutationMessage_datalist" size="18" placeholder="Search" onchange="dataListChange()" />
+                                          <datalist id="MutationMessage_datalist">
+                                        </datalist>
+                                      </th>
+                                  </tr>
+                              </thead>
+
                               <tbody></tbody>
                           </table>
 
@@ -136,127 +191,6 @@ var Mutation = `
   </div>
 
 
-  <script language='javascript'>
-    function searchCriteria(i, x, y){
-      // console.log("params: ", i, x, tcResults[i].Priority, y)
-      switch(x)
-      {
-      case 0:
-        if (tcResults[i].TcName == y) {
-          return true
-        } else {
-          return false
-        }
-        break;
-      case 1:
-        if (tcResults[i].Path == y) {
-          return true
-        } else {
-          return false
-        }
-        break;
-      case 2:
-        if (tcResults[i].Method == y) {
-          return true
-        } else {
-          return false
-        }
-        break;
-      case 3:
-        if (tcResults[i].MutationArea == y) {
-          return true
-        } else {
-          return false
-        }
-        break;
-      case 4:
-        if (tcResults[i].MutationCategory == y) {
-          return true
-        } else {
-          return false
-        }
-        break;
-      case 5:
-        if (tcResults[i].MutationRule == y) {
-          return true
-        } else {
-          return false
-        }
-        break;
-      case 6:
-        if (tcResults[i].ActualStatusCode == y) {
-          return true
-        } else {
-          return false
-        }
-        break;
-      case 7:
-        if (tcResults[i].TestResult == y) {
-          return true
-        } else {
-          return false
-        }
-        break;
-      default:
-        console.log("no valid select option selected")
-        return false
-      }
-    }
-
-    function btnClick(){
-      var x = document.getElementById("mySelect")
-      // var y = document.getElementById("myInput")
-      var y = document.getElementById("mySelect2")
-
-      clearRows()
-      insertRows(x.selectedIndex, y.value)
-    }
-
-    function clearRows(){
-      var tb = document.getElementById("container_statistics_body");
-      var rowNum = tb.rows.length;
-      for (i = 0; i < rowNum; i++)
-      {
-          tb.deleteRow(i);
-          rowNum = rowNum - 1;
-          i = i - 1;
-      }
-    }
-
-    function insertRows(x, y){
-      for (var i = 0; i < tcResults.length; i++)
-      { 
-          if (searchCriteria(i, x, y)) {
-            var newTr = container_statistics_body.insertRow();
-                                    
-            var newTd0 = newTr.insertCell();
-            var newTd1 = newTr.insertCell();
-            var newTd2 = newTr.insertCell();
-            var newTd3 = newTr.insertCell();
-            var newTd4 = newTr.insertCell();
-            var newTd5 = newTr.insertCell();
-            var newTd6 = newTr.insertCell();
-            var newTd7 = newTr.insertCell();
-            var newTd8 = newTr.insertCell();
-            var newTd9 = newTr.insertCell();
-            var newTd10 = newTr.insertCell();
-     
-            newTd0.innerText = i;
-            newTd1.innerText = tcResults[i].TcName;
-            newTd2.innerText = tcResults[i].Path;
-            newTd3.innerText = tcResults[i].Method;
-            newTd4.innerText = tcResults[i].MutationArea;
-            newTd5.innerText = tcResults[i].MutationCategory;
-            newTd6.innerText = tcResults[i].MutationRule;
-            newTd7.innerText = tcResults[i].ActualStatusCode;
-            newTd8.innerText = tcResults[i].TestResult;
-            newTd9.innerText = 1;
-            newTd10.innerText = JSON.stringify(tcResults[i].MutationInfo, null, 4);
-          }   
-      }
-    }
-  </script>
-
   <script type="text/javascript">
     var list1 = new Array(9);
     var li2 = new Array(9);
@@ -298,55 +232,120 @@ var Mutation = `
       { 
         li2[i].push(tcResults[j][list1[i]])
       }
-      // console.log(li2[i])
 
       var distinctItems = Array.from(new Set(li2[i]))
       list2[i] = distinctItems
-      // console.log(list2[i])
     }
-    
-
-    var firstSelect = document.getElementById("mySelect");
-    var secondSelect = document.getElementById("mySelect2");
-
-    for(var i = 0; i < list1.length; i++)
-    {
-      var option = document.createElement("option");
-      option.appendChild(document.createTextNode(list1[i]));
-      option.value = list1[i];
-      firstSelect.appendChild(option);
-    }
-
-    var firstKeyValue = list2[0];
-    // console.log(firstKeyValue)
-    for (var j = 0; j < firstKeyValue.length; j++) {
-        var option2 = document.createElement("option");
-        option2.appendChild(document.createTextNode(firstKeyValue[j]));
-        option2.value = firstKeyValue[j];
-        secondSelect.appendChild(option2);
-    }
-
-    function indexof(obj, value)
-    {
-      var k = 0;
-      for(; k < obj.length; k++)
-      {
-          if(obj[k] == value)
-          return k;
-      }
-      return k;
-    }
-
-    function selectKey(obj) {
-      secondSelect.options.length = 0;
-      var index = indexof(list1,obj.value);
+   
+    function populateDatalist(id, index) {
+      var dataList = document.getElementById(id);
       var list2Element = list2[index];
+
       for(var i = 0; i < list2Element.length; i++)
       {
           var option = document.createElement("option");
           option.appendChild(document.createTextNode(list2Element[i]));
           option.value = list2Element[i];
-          secondSelect.appendChild(option);
+          dataList.appendChild(option);
+      }
+    }
+  </script>
+
+
+  <script type="text/javascript">
+    window.onload = function() {
+      populateDatalist("caseid_datalist", 0)
+      populateDatalist("httpurl_datalist", 1)
+      populateDatalist("httmethod_datalist", 2)
+      populateDatalist("MutationPart_datalist", 3)
+      populateDatalist("MutationCategory_datalist", 4)
+      populateDatalist("MutationRule_datalist", 5)
+      populateDatalist("HttpStatus_datalist", 6)
+      populateDatalist("TestStatus_datalist", 7)
+      // populateDatalist("MutationMessage_datalist", 8)
+    }
+
+    function dataListChange(){
+      var v0 = document.getElementById("caseid_input").value
+      var v1 = document.getElementById("httpurl_input").value
+      var v2 = document.getElementById("httmethod_input").value
+      var v3 = document.getElementById("MutationPart_input").value
+      var v4 = document.getElementById("MutationCategory_input").value
+      var v5 = document.getElementById("MutationRule_input").value
+      var v6 = document.getElementById("HttpStatus_input").value
+      var v7 = document.getElementById("TestStatus_input").value
+      var v8 = document.getElementById("MutationMessage_input").value
+
+      clearRows()
+      insertRows(v0, v1, v2, v3, v4, v5, v6, v7, v8)
+    }
+
+
+    function insertRows(v0, v1, v2, v3, v4, v5, v6, v7, v8){
+      for (var i = 0; i < tcResults.length; i++)
+      {   
+          if (searchCriteria(i, v0, v1, v2, v3, v4, v5, v6, v7, v8)) {
+            var newTr = container_statistics_body.insertRow();
+                                    
+            var newTd0 = newTr.insertCell();
+            var newTd1 = newTr.insertCell();
+            var newTd2 = newTr.insertCell();
+            var newTd3 = newTr.insertCell();
+            var newTd4 = newTr.insertCell();
+            var newTd5 = newTr.insertCell();
+            var newTd6 = newTr.insertCell();
+            var newTd7 = newTr.insertCell();
+            var newTd8 = newTr.insertCell();
+            var newTd9 = newTr.insertCell();
+            var newTd10 = newTr.insertCell();
+     
+            newTd0.innerText = i;
+            newTd1.innerText = tcResults[i].TcName;
+            newTd2.innerText = tcResults[i].Path;
+            newTd3.innerText = tcResults[i].Method;
+            newTd4.innerText = tcResults[i].MutationArea;
+            newTd5.innerText = tcResults[i].MutationCategory;
+            newTd6.innerText = tcResults[i].MutationRule;
+            newTd7.innerText = tcResults[i].ActualStatusCode;
+            newTd8.innerText = tcResults[i].TestResult;
+            newTd9.innerText = 1;
+            newTd10.innerText = JSON.stringify(tcResults[i].MutationInfo, null, 4);
+          }   
+      }
+    }
+
+    function searchCriteria(i, v0, v1, v2, v3, v4, v5, v6, v7, v8){
+      if (searchStr(tcResults[i].TcName, v0) && searchStr(tcResults[i].Path, v1)
+        && searchStr(tcResults[i].Method, v2) && searchStr(tcResults[i].MutationArea, v3)
+        && searchStr(tcResults[i].MutationCategory, v4) && searchStr(tcResults[i].MutationRule, v5)
+        && searchStr(tcResults[i].ActualStatusCode, v6) && searchStr(tcResults[i].TestResult, v7)
+        && searchStr(JSON.stringify(tcResults[i].MutationInfo, null, 4), v8)) {
+        return true
+      } else {
+        return false
+      }
+    }
+
+    function searchStr(originStr, subStr) {
+      if (subStr.trim() == "") {
+        return true
+      }
+
+      if (originStr.toString().search(subStr) != -1 ) {
+        return true
+      } else {
+        return false
+      }
+    }
+
+    function clearRows(){
+      var tb = document.getElementById("container_statistics_body");
+      var rowNum = tb.rows.length;
+      for (i = 0; i < rowNum; i++)
+      {
+          tb.deleteRow(i);
+          rowNum = rowNum - 1;
+          i = i - 1;
       }
     }
   </script>

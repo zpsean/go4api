@@ -16,6 +16,7 @@ import (
     "fmt"
     // "time"
     // "log"
+    "strings"
     "database/sql"
 
     _ "github.com/go-sql-driver/mysql"
@@ -33,6 +34,32 @@ func InitConnection (ip string, port string, user string, pw string, defaultDB s
     }
 } 
 
+func Run (stmt string) string {
+    // update, delete, select, insert
+    s := strings.TrimSpace(stmt)
+    s = strings.ToUpper(s)
+    s = string([]rune(stmt)[:6])
+
+    var err error
+
+    switch s {
+        case "UPDATE":
+            Update()
+        case "DELETE":
+            err = Delete(s)
+        case "SELECT":
+            QueryWithoutParams()
+        case "INSERT":
+            Insert() 
+    }
+
+    if err != nil {
+        return "SqlSuccess"
+    } else {
+        return "SqlFailed"
+    }
+
+}
 
 func Update () {
     tx, _ := db.Begin()
@@ -42,12 +69,14 @@ func Update () {
     tx.Commit()
 }
 
-func Delete (stmt string) {
+func Delete (stmt string) error {
     tx, _ := db.Begin()
 
     tx.Exec(stmt)
 
-    tx.Commit()
+    err := tx.Commit()
+
+    return err
 }
 
 func QueryWithoutParams () {
