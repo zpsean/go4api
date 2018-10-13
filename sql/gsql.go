@@ -11,13 +11,15 @@
 package gsql
 
 import (
-    // "os"
+    "os"
     "strconv"
     "fmt"
     // "time"
     // "log"
     "strings"
     "database/sql"
+
+    "go4api/cmd"
 
     _ "github.com/go-sql-driver/mysql"
 )
@@ -120,4 +122,30 @@ func Insert () {
     tx.Commit()
 }
 
+func GetDBConnInfo () (string, string, string, string, string) {
+    var ip, port, user, pw, defaultDB string
 
+    testEnv := ""
+    if cmd.Opt.TestEnv != "" {
+        testEnv = cmd.Opt.TestEnv
+    } else {
+        testEnv = "qa"
+    }
+
+    switch strings.ToLower(testEnv) {
+        case "qa":
+            ip = os.Getenv("go4_qa_db_ip")
+            port = os.Getenv("go4_qa_db_port")
+            user = os.Getenv("go4_qa_db_username")
+            pw = os.Getenv("go4_qa_db_password")
+            defaultDB = os.Getenv("go4_qa_db_defaultDB")
+        case "dev":
+            ip = os.Getenv("go4_dev_db_ip")
+            port = os.Getenv("go4_dev_db_port")
+            user = os.Getenv("go4_dev_db_username")
+            pw = os.Getenv("go4_dev_db_password")
+            defaultDB = os.Getenv("go4_dev_db_defaultDB")
+    }
+
+    return ip, port, user, pw, defaultDB
+}

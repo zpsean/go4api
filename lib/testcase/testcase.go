@@ -373,10 +373,20 @@ func (tcExecution *TestCaseExecutionInfo) TcConsoleResults() *TcConsoleResults {
 
 
 func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
+    ifGlobalSetUpTearDown := ""
+    if tcExecution.TestCaseDataInfo.TestCase.IfGlobalSetUpTestCase() == true {
+        ifGlobalSetUpTearDown = "SetUp"
+    } else if tcExecution.TestCaseDataInfo.TestCase.IfGlobalTearDownTestCase() == true {
+        ifGlobalSetUpTearDown = "TearDown"
+    }
+
     tcReportRes := &TcReportResults { 
         TcName: tcExecution.TcName(),
+        IfGlobalSetUpTearDown: ifGlobalSetUpTearDown,
+        // CaseType: 
         Priority: tcExecution.Priority(),
         ParentTestCase: tcExecution.ParentTestCase(),
+        SetUpResult: tcExecution.SetUpResult,
         Path: tcExecution.ReqPath(),
         Method: tcExecution.ReqMethod(),
         JsonFilePath: tcExecution.TestCaseDataInfo.JsonFilePath,
@@ -394,6 +404,7 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
         StartTimeUnixNano: tcExecution.StartTimeUnixNano,
         EndTimeUnixNano: tcExecution.EndTimeUnixNano,
         DurationUnixNano: tcExecution.DurationUnixNano,
+        TearDownResult: tcExecution.TearDownResult,
     }
 
     return tcReportRes

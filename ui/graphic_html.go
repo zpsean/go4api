@@ -40,8 +40,8 @@ var Graphic = `
                       <script type="text/javascript">
                         // var timestamp = 1523957748602;
                         // var runStartHumanDate = new Date(timestamp).format("YYYY-MM-DD HH:mm:ss Z");
-                        var runStartHumanDate = pStart.substr(0, 19)
-                        var runDuration = (pEndUnixNano - pStartUnixNano) / 1000000000
+                        var runStartHumanDate = gStart.substr(0, 19)
+                        var runDuration = (pEndUnixNano - gStartUnixNano) / 1000000000
                         document.writeln("<p class='sim_desc'>");
                         document.writeln("<b>" + "Started at " + runStartHumanDate + ", duration: " + runDuration + " seconds </b>");
                         document.writeln("</p>");
@@ -71,7 +71,7 @@ var Graphic = `
                               {
                                   var c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                                   c.setAttribute('cx', (i % 15 + 1) * 50);
-                                  c.setAttribute('cy', (tcResults[i].StartTimeUnixNano - pStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000);
+                                  c.setAttribute('cy', (tcResults[i].StartTimeUnixNano - gStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000);
                                   c.r.baseVal.value = tcResults[i].DurationUnixNano / 100000000 + 5;
 
 
@@ -81,7 +81,7 @@ var Graphic = `
                                   text.textContent = strJons
 
                                   text.setAttribute('x', (i % 15 + 1) * 50);
-                                  text.setAttribute('y', (tcResults[i].StartTimeUnixNano - pStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000 - 20)
+                                  text.setAttribute('y', (tcResults[i].StartTimeUnixNano - gStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000 - 20)
                                   text.style.width = '400px'
                                   text.setAttribute('fill', 'transparent')
                                   svgRoot.appendChild(text)
@@ -99,7 +99,7 @@ var Graphic = `
 
 
 
-                                  var pos = [(i % 15 + 1) * 50, (tcResults[i].StartTimeUnixNano - pStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000];
+                                  var pos = [(i % 15 + 1) * 50, (tcResults[i].StartTimeUnixNano - gStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000];
                                   tcPositions[tcResults[i].TcName] = pos;
 
                                   if (tcResults[i].TestResult == "Success")
@@ -122,9 +122,9 @@ var Graphic = `
                                   {
                                       var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                                       line.setAttribute('x1', 0);
-                                      line.setAttribute('y1', (tcResults[i].StartTimeUnixNano - pStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000);
+                                      line.setAttribute('y1', (tcResults[i].StartTimeUnixNano - gStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000);
                                       line.setAttribute('x2', 1080);
-                                      line.setAttribute('y2', (tcResults[i].StartTimeUnixNano - pStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000);
+                                      line.setAttribute('y2', (tcResults[i].StartTimeUnixNano - gStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000);
                                       line.setAttribute('style', "stroke:rgb(99,99,99);stroke-width:1");
                                       
                                       svgRoot.appendChild(line);

@@ -11,55 +11,40 @@
 package reports
 
 import (
-    "fmt"
-	"os"
-    "time"
-    "strconv"
-    "strings"
-    "encoding/json"
+    // "fmt"
+    "os"
+    // "time"
+    // "strings"
 
-    "go4api/cmd"
     "go4api/lib/testcase"
     "go4api/ui"     
     "go4api/ui/js"  
     "go4api/ui/style"                                                                                                                                
     "go4api/utils"
-    "go4api/texttmpl"
+    // "go4api/texttmpl"
 )
 
-const CLR_0 = "\x1b[30;1m"
-const CLR_R = "\x1b[31;1m"
-const CLR_G = "\x1b[32;1m"
-const CLR_Y = "\x1b[33;1m"
-const CLR_B = "\x1b[34;1m"
-const CLR_M = "\x1b[35;1m"
-const CLR_C = "\x1b[36;1m"
-const CLR_W = "\x1b[37;1m"
-const CLR_N = "\x1b[0m"
+// phaseEnd_time := time.Now()
+// phaseEnd_str := phaseEnd_time.Format("2006-01-02 15:04:05.000000000 +0800 CST")
 
 var (
     ExecutionResultSlice []*testcase.TcReportResults
+    resultsJss = map[string]interface{}{} 
 )
 
 
-func GenerateTestReport(resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time,
-        runClass string, totalTc int, statusCountByPriority map[string]map[string]int,) {
-    // --------
+func GenerateTestReport(gStart_str string, gEnd_str string, resultsDir string, resultsLogFile string) {
     // html
     GenerateHtml(resultsDir)
-    
-    // js
-    GenerateJs(resultsDir, pStart_time, pStart, pEnd_time, runClass, totalTc, statusCountByPriority)
-    
     // style
-    GenerateStyle(resultsDir, pStart_time, pStart, pEnd_time, runClass, totalTc)
-
+    GenerateStyle(resultsDir)
+    // js
+    GenerateJs(gStart_str, gEnd_str, resultsDir, resultsLogFile)
     //
     // statsJsonBytes, _ := json.MarshalIndent(ExecutionResultSlice, "", "\t")
     // fmt.Println("ExecutionResultSlice: ", string(statsJsonBytes))
     // Get_Stats_3()
 }
-
 
 func GenerateHtml (resultsDir string) {
     utils.GenerateFileBasedOnVarOverride(ui.Index, resultsDir + "index.html")
@@ -70,54 +55,7 @@ func GenerateHtml (resultsDir string) {
     utils.GenerateFileBasedOnVarOverride(ui.MIndex, resultsDir + "mindex.html")
 }
 
-
-func GenerateJs (resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time,
-        runClass string, totalTc int, statusCountByPriority map[string]map[string]int) {
-    // --------
-    // (0)
-    err := os.MkdirAll(resultsDir + "js", 0777)
-    if err != nil {
-      panic(err) 
-    }
-    logResultsFile := resultsDir + pStart + ".log"
-
-    // statsFile := resultsDir + "/js/executed.js"
-    // executedJson := GetExecutedJson(tcExecutedByPriority)
-    // texttmpl.GenerateDetailsJs(js.Executed, statsFile, executedJson, logResultsFile)
-
-
-    // statsFile = resultsDir + "/js/notexecuted.js"
-    // notexecutedJson := GetNotExecutedJson(tcNotExecutedByPriority)
-    // texttmpl.GenerateDetailsJs(js.NotExecuted, statsFile, notexecutedJson, logResultsFile)
-
-
-    statsFile := resultsDir + "/js/stats.js"
-    reJsons := GetStatsJson(statusCountByPriority)
-    texttmpl.GenerateStatsJs(js.Stats, statsFile, reJsons, logResultsFile)
-
-    statsFile = resultsDir + "/js/mutationstats.js"
-    reJsons = GetMutationStatsJson()
-    texttmpl.GenerateMutationResultsJs(js.MutationStats, statsFile, reJsons, logResultsFile)
-
-
-    // (1). get js/reslts.js
-    resultsFile := resultsDir + "/js/reslts.js"
-    resultsJs := GetResultsJs(pStart_time, pEnd_time, logResultsFile)
-
-    texttmpl.GenerateResultsJs(js.Results, resultsFile, resultsJs, logResultsFile)
-    
-    // (2). get js/go4api.js
-    utils.GenerateFileBasedOnVarOverride(js.Js, resultsDir + "js/go4api.js")
-
-    // (3). other js
-    utils.GenerateFileBasedOnVarOverride(js.Chart, resultsDir + "js/Chart.bundle.min.js")
-
-}
-
-
-func GenerateStyle (resultsDir string, pStart_time time.Time, pStart string, pEnd_time time.Time,
-        runClass string, totalTc int) {
-    // --------
+func GenerateStyle (resultsDir string) {
     err := os.MkdirAll(resultsDir + "style", 0777)
     if err != nil {
       panic(err) 
@@ -137,111 +75,34 @@ func GenerateStyle (resultsDir string, pStart_time time.Time, pStart string, pEn
     utils.GeneratePicture(bytes, resultsDir + "style/arrow_down.png")
 }
 
-
-func GetResultsJs (pStart_time time.Time, pEnd_time time.Time, logResultsFile string) *texttmpl.ResultsJs {
-    // get the data from the log results file, used for ui
-    var tcReportStr string
-
-    fmt.Println("logResultsFile: ", logResultsFile)
-    jsonLinesBytes := utils.GetContentFromFile(logResultsFile)
-    jsonLines := string(jsonLinesBytes)
-    //
-    jsonLines = strings.Replace(jsonLines, "\n", ",", strings.Count(jsonLines, "\n") - 1)
-    tcReportStr = `[` + jsonLines + `]`        
-    //
-    resultsJs := texttmpl.ResultsJs {
-        PStart_time: pStart_time.UnixNano(), 
-        PStart: `"` + pStart_time.String() + `"`, 
-        PEnd_time: pEnd_time.UnixNano(), 
-        PEnd: `"` + pEnd_time.String() + `"`, 
-        TcReportStr: tcReportStr,
-    }
-     
-    return &resultsJs
-}
-
-func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo) {
-    tcReportResults := tcExecution.TcConsoleResults()
-    // repJson, _ := json.Marshal(tcReportResults)
-
-    if tcReportResults.TestResult == "Fail" {
-        length := len(string(tcExecution.ActualBody))
-        out_len := 0
-        if length > 300 {
-            out_len = 300
-        } else {
-            out_len = length
-        }
-
-        fmt.Printf("\n%s%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d%s\n", CLR_R, tcReportResults.TcName , tcReportResults.Priority, tcReportResults.ParentTestCase, 
-            tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
-            tcReportResults.ActualStatusCode, CLR_N)
-
-        if cmd.Opt.IfMutation {
-            fmt.Println(tcReportResults.MutationInfoStr)
-        }
-        
-        // fmt.Println(tcReportResults.MutationInfo)
-
-        // by default, print failed field in testMessages
-        failedTM := filterTestMessages(tcReportResults.TestMessages)
-        failedTMBytes, _ := json.Marshal(failedTM)
-        fmt.Println(string(failedTMBytes))
-
-        fmt.Println(string(tcExecution.ActualBody)[0:out_len], "...")
-    } else {
-        fmt.Printf("\n%s%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d%s\n", CLR_G, tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
-            tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
-            tcReportResults.ActualStatusCode, CLR_N)
-
-        if cmd.Opt.IfMutation {
-            fmt.Println(tcReportResults.MutationInfoStr)
-        }
-    }
-}
-
-
-func ReportConsoleByPriority (totalTc int, priority string, statusCountByPriority map[string]map[string]int) {
-    // ---
-    var totalCount = statusCountByPriority[priority]["Total"]
-    var successCount = statusCountByPriority[priority]["Success"]
-    var failCount = statusCountByPriority[priority]["Fail"]
-    var skipCount = statusCountByPriority[priority]["ParentFailed"]
-    //
-    fmt.Println("---------------------------------------------------------------------------------")
-    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(totalTc) + " Cases in Source")
-    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(totalCount) + " Cases recognized from template")
-    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(successCount + failCount) + " Cases Executed")
-    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(successCount) + " Cases Success")
-    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(failCount) + " Cases Fail")
-    fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(skipCount) + " Cases Skipped (Not Executed, due to Parent Failed)")
-    fmt.Println("---------------------------------------------------------------------------------")
-}
-
-func ReportConsoleOverall (totalTc int, key string, statusCountByPriority map[string]map[string]int) {
-    // ---
-    var totalCount = statusCountByPriority[key]["Total"]
-    var successCount = statusCountByPriority[key]["Success"]
-    var failCount = statusCountByPriority[key]["Fail"]
-    var skipCount = statusCountByPriority[key]["ParentFailed"]
-    //
-    fmt.Println("---------------------------------------------------------------------------------")
-    fmt.Println("----- " + key + ": " + strconv.Itoa(totalTc) + " Cases in Source")
-    fmt.Println("----- " + key + ": " + strconv.Itoa(totalCount) + " Cases recognized from template")
-    fmt.Println("----- " + key + ": " + strconv.Itoa(successCount + failCount) + " Cases Executed")
-    fmt.Println("----- " + key + ": " + strconv.Itoa(successCount) + " Cases Success")
-    fmt.Println("----- " + key + ": " + strconv.Itoa(failCount) + " Cases Fail")
-    fmt.Println("----- " + key + ": " + strconv.Itoa(skipCount) + " Cases Skipped (Not Executed, due to Parent Failed)")
-    fmt.Println("---------------------------------------------------------------------------------")
-}
-
-func filterTestMessages (testMessages []*testcase.TestMessage) []*testcase.TestMessage {
-    var failedTM []*testcase.TestMessage
-    for i, _ := range testMessages {
-        if testMessages[i].AssertionResults == "Failed" {
-            failedTM = append(failedTM, testMessages[i])
-        }
+func GenerateJs (gStart_str string, gEnd_str string, resultsDir string, resultsLogFile string) {
+    // --------
+    // (0)
+    err := os.MkdirAll(resultsDir + "js", 0777)
+    if err != nil {
+      panic(err) 
     }
 
-    return failedTM
+    // statsFile := resultsDir + "/js/stats.js"
+    // reJsons := GetStatsJson(statusCountByPriority)
+    // texttmpl.GenerateStatsJs(js.Stats, statsFile, reJsons, resultsLogFile)
+
+    // statsFile = resultsDir + "/js/mutationstats.js"
+    // reJsons = GetMutationStatsJson()
+    // texttmpl.GenerateMutationResultsJs(js.MutationStats, statsFile, reJsons, resultsLogFile)
+
+
+    // get js/reslts.js
+    GenerateReportsFromLogFile(resultsLogFile)
+    
+    // get js/go4api.js
+    utils.GenerateFileBasedOnVarOverride(js.Js, resultsDir + "js/go4api.js")
+
+    // 3rd js
+    utils.GenerateFileBasedOnVarOverride(js.Chart, resultsDir + "js/Chart.bundle.min.js")
+
 }
+
+
+
+

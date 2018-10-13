@@ -14,36 +14,29 @@ import (
     "fmt"
     "time"
     "os"
-    // "sort"
     "sync"
-    // "path/filepath"
-    // "strings"
-    // "io/ioutil"
-    // "strconv"
     "encoding/json"
 
     "go4api/cmd"
-    // "go4api/utils"
     "go4api/api"
     "go4api/lib/testcase"
     "go4api/lib/tree"
-    // "go4api/texttmpl"
     "go4api/reports"
 )
 
+var overallFail = 0
 
-func Run (ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo) { 
+func Run (ch chan int, baseUrl string, resultsDir string, resultsLogFile string, tcArray []testcase.TestCaseDataInfo) { 
     //-----
-    prioritySet, root, tcTree, tcTreeStats := RunBefore(tcArray)
+    prioritySet, root, tcTree, tcTreeStats := RunInit(tcArray)
 
     fmt.Println("\n====> test cases execution starts!") 
 
-    RunPriorities(ch, pStart, baseUrl, resultsDir, tcArray, prioritySet, root, tcTree, tcTreeStats)
-    RunConsoleOverallReport(ch, pStart_time, pStart, resultsDir, tcArray, root, tcTree, tcTreeStats)
-    RunFinalReport(ch, pStart_time, pStart, resultsDir, tcArray, root, tcTree, tcTreeStats)
+    RunPriorities(baseUrl, resultsDir, resultsLogFile, tcArray, prioritySet, root, tcTree, tcTreeStats)
+    RunConsoleOverallReport(tcArray, root, tcTreeStats)
 }
 
-func RunBefore (tcArray []testcase.TestCaseDataInfo) ([]string, *tree.TcNode, tree.TcTree, tree.TcTreeStats) { 
+func RunInit (tcArray []testcase.TestCaseDataInfo) ([]string, *tree.TcNode, tree.TcTree, tree.TcTreeStats) { 
     // check the tcArray, if the case not distinct, report it to fix
     if len(tcArray) != len(GetTcNameSet(tcArray)) {
         fmt.Println("\n!! There are duplicated test case names, please make them distinct")
@@ -61,15 +54,15 @@ func RunBefore (tcArray []testcase.TestCaseDataInfo) ([]string, *tree.TcNode, tr
     return prioritySet, root, tcTree, tcTreeStats
 }
 
-func RunPriorities (ch chan int, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo, prioritySet []string, 
+func RunPriorities (baseUrl string, resultsDir string, resultsLogFile string, tcArray []testcase.TestCaseDataInfo, prioritySet []string, 
         root *tree.TcNode, tcTree tree.TcTree, tcTreeStats tree.TcTreeStats) {
     // -------
-    logFilePtr := reports.OpenExecutionResultsLogFile(resultsDir + pStart + ".log")
+    logFilePtr := reports.OpenExecutionResultsLogFile(resultsLogFile)
 
     for _, priority := range prioritySet {
         fmt.Println("====> Priority " + priority + " starts!")
         //
-        RunEachPriority(ch, pStart, baseUrl, resultsDir, tcArray, priority, root, tcTree, logFilePtr, tcTreeStats)
+        RunEachPriority(baseUrl, tcArray, priority, root, tcTree, logFilePtr, tcTreeStats)
 
         // Put out the cases which has not been executed (i.e. not Success or Fail)
         WriteNotNotExecutedToLog(priority, logFilePtr, tcTreeStats)
@@ -84,10 +77,12 @@ func RunPriorities (ch chan int, pStart string, baseUrl string, resultsDir strin
     }
 
     logFilePtr.Close()
+
+    overallFail = overallFail + tcTreeStats.StatusCountByPriority["Overall"]["Fail"]
 }
 
 
-func RunEachPriority (ch chan int, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo, 
+func RunEachPriority (baseUrl string, tcArray []testcase.TestCaseDataInfo, 
         priority string, root *tree.TcNode, tcTree tree.TcTree, logFilePtr *os.File, tcTreeStats tree.TcTreeStats) {
     // ----------
     miniLoop:
@@ -102,7 +97,7 @@ func RunEachPriority (ch chan int, pStart string, baseUrl string, resultsDir str
             tcTree.CollectNodeReadyByPriority(cReady, root, priority)
         }(cReady)
 
-        ScheduleCases(cReady, &wg, resultsExeChan, pStart, baseUrl, resultsDir)
+        ScheduleCases(cReady, &wg, resultsExeChan, baseUrl)
         //
         wg.Wait()
 
@@ -138,36 +133,27 @@ func RunEachPriority (ch chan int, pStart string, baseUrl string, resultsDir str
     }
 }
 
-func RunConsoleOverallReport (ch chan int, pStart_time time.Time, pStart string, resultsDir string, tcArray []testcase.TestCaseDataInfo, 
-        root *tree.TcNode, tcTree tree.TcTree, tcTreeStats tree.TcTreeStats) {
+func RunConsoleOverallReport (tcArray []testcase.TestCaseDataInfo, root *tree.TcNode, tcTreeStats tree.TcTreeStats) {
     // -------
     tcTreeStats.CollectOverallNodeStatus(root, "Overall")
     reports.ReportConsoleOverall(len(tcArray), "Overall", tcTreeStats.StatusCountByPriority)
 }
 
-func RunFinalReport (ch chan int, pStart_time time.Time, pStart string, resultsDir string, tcArray []testcase.TestCaseDataInfo, 
-        root *tree.TcNode, tcTree tree.TcTree, tcTreeStats tree.TcTreeStats) {
-    // -------
-    // generate the html report based on template, and results data
-    // time.Sleep(1 * time.Second)
-    pEnd_time := time.Now()
-    //
-    reports.GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time, 
-        "", len(tcArray), tcTreeStats.StatusCountByPriority)
+func RunFinalReport (ch chan int, gStart_str string, resultsDir string, resultsLogFile string) {
+    gEnd_time := time.Now()
+    gEnd_str := gEnd_time.Format("2006-01-02 15:04:05.000000000 +0800 CST")
+
+    reports.GenerateTestReport(gStart_str, gEnd_str, resultsDir, resultsLogFile)
     //
     fmt.Println("Report Generated at: " + resultsDir + "index.html")
-    fmt.Println("Execution Finished at: " + pEnd_time.String())
+    fmt.Println("Execution Finished at: " + gEnd_str)
 
     // channel code, can be used for the overall success or fail indicator, especially for CI/CD
-    // ch <- tcTreeStats.StatusCountByPriority["Overall"]["Fail"]
-
-    // repJson, _ := json.Marshal(tcTree)
-    // fmt.Println(string(repJson))
+    ch <- overallFail
 }
 
 
-func ScheduleCases (cReady chan *tree.TcNode, wg *sync.WaitGroup, resultsChan chan testcase.TestCaseExecutionInfo, 
-        pStart string, baseUrl string, resultsDir string) {
+func ScheduleCases (cReady chan *tree.TcNode, wg *sync.WaitGroup, resultsChan chan testcase.TestCaseExecutionInfo, baseUrl string) {
     //
     tick := 0
     max := cmd.Opt.ConcurrencyLimit
@@ -177,9 +163,9 @@ func ScheduleCases (cReady chan *tree.TcNode, wg *sync.WaitGroup, resultsChan ch
         // Note: to prevent reaching tcp connection limitation, here set a max, then sleep for a while
         if tick % max == 0 {
             time.Sleep(100 * time.Millisecond)
-            go api.HttpApi(wg, resultsChan, pStart, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo), resultsDir)
+            go api.HttpApi(wg, resultsChan, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo))
         } else {
-            go api.HttpApi(wg, resultsChan, pStart, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo), resultsDir)
+            go api.HttpApi(wg, resultsChan, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo))
         }
 
         tick = tick + 1

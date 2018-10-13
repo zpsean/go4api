@@ -23,11 +23,49 @@ import (
 )
 
 type ResultsJs struct {
-    PStart_time int64
-    PStart   string
+    GStart_time int64
+    GStart   string
     PEnd_time int64
     PEnd  string
     TcReportStr string
+}
+
+// var setUp_gStartUnixNano = 1539337198430831188
+// var setUp_gStart = "2018-10-12 17:39:58.430831188 +0800 CST m=+0.002470518"
+// var setUp_pEndUnixNano = 1539337200123399284
+// var setUp_pEnd = "2018-10-12 17:40:00.123399284 +0800 CST m=+1.695102131"
+// var setUp_tcResults = ExecutionResultSlice
+
+// var gStartUnixNano = 1539337198430831188
+// var gStart = "2018-10-12 17:39:58.430831188 +0800 CST m=+0.002470518"
+// var pEndUnixNano = 1539337200123399284
+// var pEnd = "2018-10-12 17:40:00.123399284 +0800 CST m=+1.695102131"
+// var tcResults = ExecutionResultSlice
+
+// var tearDown_gStartUnixNano = 1539337198430831188
+// var tearDown_gStart = "2018-10-12 17:39:58.430831188 +0800 CST m=+0.002470518"
+// var tearDown_pEndUnixNano = 1539337200123399284
+// var tearDown_pEnd = "2018-10-12 17:40:00.123399284 +0800 CST m=+1.695102131"
+// var tearDown_tcResults = ExecutionResultSlice
+
+type ResultsJss struct {
+    setUp_gStartUnixNano int64
+    setUp_gStart   string
+    setUp_pEndUnixNano int64
+    setUp_pEnd  string
+    setUp_tcResults string
+
+    gStartUnixNano int64
+    gStart   string
+    pEndUnixNano int64
+    pEnd  string
+    tcResults string
+
+    tearDown_gStartUnixNano int64
+    tearDown_gStart   string
+    tearDown_pEndUnixNano int64
+    tearDown_pEnd  string
+    tearDown_tcResults string
 }
 
 type DetailsJs struct {

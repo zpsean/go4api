@@ -14,18 +14,20 @@ import (
     "fmt"
     "time"
     "os"
+    "strings"
 
     "go4api/cmd"
     "go4api/fuzz/fuzz"
     "go4api/fuzz/mutation"
 )
 
-func Dispatch(ch chan int, pStart_time time.Time) { 
+func Dispatch(ch chan int, gStart_time time.Time) { 
     //
     baseUrl := GetBaseUrl(cmd.Opt)
-    pStart := pStart_time.String()
-    // get results dir
-    resultsDir := GetResultsDir(pStart, cmd.Opt)
+    gStart_str := gStart_time.Format("2006-01-02 15.04.05.000000000 +0800 CST")
+    // make results dir
+    resultsDir := MkResultsDir(gStart_str, cmd.Opt)
+    resultsLogFile := resultsDir + gStart_str + ".log"
     //
     // <!!--> Note: there are two kinds of test cases dependency:
     // type 1. the parent and child has only execution dependency, no data exchange
@@ -37,47 +39,49 @@ func Dispatch(ch chan int, pStart_time time.Time) {
         if cmd.Opt.IfMutation {
             originMutationTcArray := GetOriginMutationTcArray()
             setUpTcSlice := GetSetupTcSlice(originMutationTcArray)
-            RunSetup(ch, pStart_time, pStart, baseUrl, resultsDir, setUpTcSlice)
+            RunSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
             //
             originMutationTcArray = GetOriginMutationTcArray()
             originNormalTc := GetNormalTcSlice(originMutationTcArray)
             mutatedTcArray := mutation.MutateTcArray(originNormalTc)
-            Run(ch, pStart_time, pStart, baseUrl, resultsDir, mutatedTcArray)
+            Run(ch, baseUrl, resultsDir, resultsLogFile, mutatedTcArray)
             //
             originMutationTcArray = GetOriginMutationTcArray()
             teardownTcSlice := GetTeardownTcSlice(originMutationTcArray)
-            RunTeardown(ch, pStart_time, pStart, baseUrl, resultsDir, teardownTcSlice)
+            RunTeardown(ch, baseUrl, resultsDir, resultsLogFile, teardownTcSlice)
         } else if cmd.Opt.IfFuzzTest {
-            fuzz.PrepFuzzTest(pStart_time)
+            fuzz.PrepFuzzTest(gStart_time)
             //
             fuzzTcArray := GetFuzzTcArray()
-            Run(ch, pStart_time, pStart, baseUrl, resultsDir, fuzzTcArray)
+            Run(ch, baseUrl, resultsDir, resultsLogFile, fuzzTcArray)
         } else {
             tcArray := GetTcArray()
             setUpTcSlice := GetSetupTcSlice(tcArray)
-            RunSetup(ch, pStart_time, pStart, baseUrl, resultsDir, setUpTcSlice)
+            RunSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
             //
             tcArray = GetTcArray()
             normalTcSlice := GetNormalTcSlice(tcArray)
-            Run(ch, pStart_time, pStart, baseUrl, resultsDir, normalTcSlice)
+            Run(ch, baseUrl, resultsDir, resultsLogFile, normalTcSlice)
             //
             tcArray = GetTcArray()
             teardownTcSlice := GetTeardownTcSlice(tcArray)
-            RunTeardown(ch, pStart_time, pStart, baseUrl, resultsDir, teardownTcSlice)
+            RunTeardown(ch, baseUrl, resultsDir, resultsLogFile, teardownTcSlice)
         }
     } else {
         jsonFileList := GetJsonFiles()
         //
         tcArray := ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
         setUpTcSlice := GetSetupTcSlice(tcArray)
-        RunSetup(ch, pStart_time, pStart, baseUrl, resultsDir, setUpTcSlice)
+        RunSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
         //
         tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
-        RunScenario(ch, pStart_time, pStart, baseUrl, resultsDir, jsonFileList, tcArray)
+        RunScenario(ch, baseUrl, resultsDir, resultsLogFile, jsonFileList, tcArray)
         //
         tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
         teardownTcSlice := GetTeardownTcSlice(tcArray)
-        RunTeardown(ch, pStart_time, pStart, baseUrl, resultsDir, teardownTcSlice)
+        RunTeardown(ch, baseUrl, resultsDir, resultsLogFile, teardownTcSlice)
+        //
+        RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
     }
 }
 
@@ -99,14 +103,20 @@ func GetBaseUrl(opt cmd.Options) string {
 }
 
 
-func GetResultsDir(pStart string, opt cmd.Options) string {
+func MkResultsDir(gStart_str string, opt cmd.Options) string {
     var resultsDir string
-    err := os.MkdirAll(cmd.Opt.Testresults + "/" + pStart + "/", 0777)
+
+    if strings.HasSuffix(strings.TrimSpace(cmd.Opt.Testresults), "/") {
+        resultsDir = cmd.Opt.Testresults + gStart_str + "/"
+    } else {
+        resultsDir = cmd.Opt.Testresults + "/" + gStart_str + "/"
+    }
+
+    err := os.MkdirAll(resultsDir, 0777)
     if err != nil {
       panic(err) 
-    } else {
-        resultsDir = cmd.Opt.Testresults + "/" + pStart + "/"
-    }
+    } 
+
     return resultsDir
 }
 

@@ -28,16 +28,19 @@ import (
     "go4api/lib/testcase"                                                                                                                               
     "go4api/assertion"
     "go4api/protocal/http"
+    "go4api/sql"
 )
 
 
-func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionInfo, pStart string, baseUrl string, 
-        tcData testcase.TestCaseDataInfo, resultsDir string) {
+func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionInfo, baseUrl string, tcData testcase.TestCaseDataInfo) {
     //
     defer wg.Done()
     //
     start_time := time.Now()
-    start := start_time.String()
+    start_str := start_time.String()
+    // (1) setUp
+    // tcSetUpResult := RunTcSetUp(tcData)
+    // tcTearDownResult := RunTcTearDown(tcData)
     //
     actualStatusCode, actualHeader, actualBody := CallHttp(baseUrl, tcData)
     //
@@ -51,7 +54,7 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     testResult, TestMessages := Compare(tcName, actualStatusCode, actualHeader, actualBody, expStatus, expHeader, expBody)
     //
     end_time := time.Now()
-    end := end_time.String()
+    end_str := end_time.String()
     // fmt.Println(tcName + " end: ", end)
 
     // (4). here to generate the outputs file if the Json has "outputs" field
@@ -64,8 +67,8 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
         TestCaseDataInfo: &tcData,
         TestResult: testResult,
         ActualStatusCode: actualStatusCode,
-        StartTime: start,
-        EndTime: end,
+        StartTime: start_str,
+        EndTime: end_str,
         TestMessages: TestMessages,
         StartTimeUnixNano: start_time.UnixNano(),
         EndTimeUnixNano: end_time.UnixNano(),
@@ -77,6 +80,60 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     resultsExeChan <- tcExecution
 }
 
+
+func RunTcSetUp (tcData testcase.TestCaseDataInfo) string {
+    var sqlSlice []string
+    var sqlRessult []string  //SqlSuccess, SqlFailed
+    tcSetUpResult := "SqlSuccess"
+
+    for k, v := range tcData.TestCase.SetUp() {
+        if k == "sql" {
+            sqlSlice = append(sqlSlice, fmt.Sprint(v))
+        }
+    }
+
+    if len(sqlSlice) > 0 {
+        ip, port, user, pw, defaultDB := gsql.GetDBConnInfo()
+        gsql.InitConnection(ip, port, user, pw, defaultDB)
+    }
+    
+    for i, _ := range sqlSlice {
+        sqlRessult[i] = gsql.Run(sqlSlice[i])
+        if sqlRessult[i] == "SqlFailed" {
+            tcSetUpResult = "SqlFailed"
+            // break
+        }
+    }
+
+    return tcSetUpResult
+}
+
+func RunTcTearDown (tcData testcase.TestCaseDataInfo) string {
+    var sqlSlice []string
+    var sqlRessult []string  //SqlSuccess, SqlFailed
+    tcTearDownResult := "SqlSuccess"
+
+    for k, v := range tcData.TestCase.TearDown() {
+        if k == "sql" {
+            sqlSlice = append(sqlSlice, fmt.Sprint(v))
+        }
+    }
+
+    if len(sqlSlice) > 0 {
+        ip, port, user, pw, defaultDB := gsql.GetDBConnInfo()
+        gsql.InitConnection(ip, port, user, pw, defaultDB)
+    }
+
+    for i, _ := range sqlSlice {
+        sqlRessult[i] = gsql.Run(sqlSlice[i])
+        if sqlRessult[i] == "SqlFailed" {
+            tcTearDownResult = "SqlFailed"
+            // break
+        }
+    }
+
+    return tcTearDownResult
+}
 
 func CallHttp(baseUrl string, tcData testcase.TestCaseDataInfo) (int, http.Header, []byte) {
     // urlStr := tcData.TestCase.UrlRaw(baseUrl)
