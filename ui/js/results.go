@@ -11,8 +11,8 @@
 package js
 
 var Results = `
-var pStartUnixNano = {{.PStart_time}}
-var pStart = {{.PStart}}
+var gStartUnixNano = {{.gStart_time}}
+var gStart = {{.gStart}}
 var pEndUnixNano = {{.PEnd_time}}
 var pEnd = {{.PEnd}}
 var tcResults = {{.TcReportStr}}

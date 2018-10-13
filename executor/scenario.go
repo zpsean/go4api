@@ -26,12 +26,12 @@ import (
     "go4api/lib/csv"
 )
 
-func RunScenario (ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string, 
+func RunScenario (ch chan int, baseUrl string, resultsDir string, resultsLogFile string, 
         jsonFileList []string, tcArray []testcase.TestCaseDataInfo) {
     // --
     root, tcTree, tcTreeStats := InitRunScenario(tcArray)
 
-    logFilePtr := reports.OpenExecutionResultsLogFile(resultsDir + pStart + ".log")
+    logFilePtr := reports.OpenExecutionResultsLogFile(resultsLogFile)
   
     miniLoop:
     for {
@@ -44,7 +44,7 @@ func RunScenario (ch chan int, pStart_time time.Time, pStart string, baseUrl str
             tcTree.CollectNodeReadyByPriority(cReady, root, "1")
         }(cReady)
 
-        ScheduleCases(cReady, &wg, resultsExeChan, pStart, baseUrl, resultsDir)
+        ScheduleCases(cReady, &wg, resultsExeChan, baseUrl)
         //
         wg.Wait()
 
@@ -78,7 +78,7 @@ func RunScenario (ch chan int, pStart_time time.Time, pStart string, baseUrl str
     }
     logFilePtr.Close()
 
-    RunScenarioReports(ch, pStart_time, pStart, resultsDir, root, tcTreeStats)
+    // RunScenarioReports(ch, gStart_time, gStart, resultsDir, root, tcTreeStats)
 }
 
 func InitRunScenario (tcArray []testcase.TestCaseDataInfo) (*tree.TcNode, tree.TcTree, tree.TcTreeStats) {
@@ -124,7 +124,7 @@ func BuildChilrenNodes (tcExecution testcase.TestCaseExecutionInfo, jsonFileList
     }
 }
 
-func RunScenarioReports (ch chan int, pStart_time time.Time, pStart string, resultsDir string, root *tree.TcNode, tcTreeStats tree.TcTreeStats) {
+func RunScenarioReports (ch chan int, gStart_time time.Time, gStart string, resultsDir string, root *tree.TcNode, tcTreeStats tree.TcTreeStats) {
     //
     tcTreeStats.CollectNodeStatusByPriority(root, "Overall")
     reports.ReportConsoleOverall(tcTreeStats.StatusCountByPriority["Overall"]["Total"], "Overall", tcTreeStats.StatusCountByPriority)
@@ -132,8 +132,8 @@ func RunScenarioReports (ch chan int, pStart_time time.Time, pStart string, resu
     // time.Sleep(1 * time.Second)
     pEnd_time := time.Now()
     //
-    reports.GenerateTestReport(resultsDir, pStart_time, pStart, pEnd_time, 
-        "", tcTreeStats.StatusCountByPriority["Overall"]["Total"], tcTreeStats.StatusCountByPriority)
+    // reports.GenerateTestReport(resultsDir, gStart_time, gStart, pEnd_time, 
+    //     "", tcTreeStats.StatusCountByPriority["Overall"]["Total"], tcTreeStats.StatusCountByPriority)
     //
     fmt.Println("---------------------------------------------------------------------------")
     fmt.Println("Report Generated at: " + resultsDir + "index.html")

@@ -12,7 +12,7 @@ package executor
 
 import (
     "fmt"
-    "time"
+    // "time"
 
     "go4api/lib/testcase"
     "go4api/sql"
@@ -29,16 +29,16 @@ func GetSetupTcSlice (tcArray []testcase.TestCaseDataInfo) []testcase.TestCaseDa
     return setUpTcSlice
 }
 
-func RunSetup(ch chan int, pStart_time time.Time, pStart string, baseUrl string, resultsDir string, tcArray []testcase.TestCaseDataInfo) { 
-    sqlSetUpTcSlice, notSqlSetUpTcSlice := ClassifySetUp(tcArray)
+func RunSetup(ch chan int, baseUrl string, resultsDir string, resultsLogFile string, tcArray []testcase.TestCaseDataInfo) { 
+    // sqlSetUpTcSlice, notSqlSetUpTcSlice := ClassifySetUp(tcArray)
 
-    prioritySet, root, tcTree, tcTreeStats := RunBefore(notSqlSetUpTcSlice)
-    fmt.Println("\n====> setup test cases execution starts!") 
-    RunPriorities(ch, pStart, baseUrl, resultsDir, notSqlSetUpTcSlice, prioritySet, root, tcTree, tcTreeStats)
-    RunConsoleOverallReport(ch, pStart_time, pStart, resultsDir, notSqlSetUpTcSlice, root, tcTree, tcTreeStats)
+    // prioritySet, root, tcTree, tcTreeStats := RunBefore(notSqlSetUpTcSlice)
+    // fmt.Println("\n====> setup test cases execution starts!") 
+    // RunPriorities(ch, gStart, baseUrl, resultsDir, notSqlSetUpTcSlice, prioritySet, root, tcTree, tcTreeStats)
+    // RunConsoleOverallReport(ch, gStart_time, gStart, resultsDir, notSqlSetUpTcSlice, root, tcTree, tcTreeStats)
 
-    // -- for sql execution
-    RunSqlSetUpTc(sqlSetUpTcSlice)
+    // // -- for sql execution
+    // RunSqlSetUpTc(sqlSetUpTcSlice)
 }
 
 func ClassifySetUp (tcArray []testcase.TestCaseDataInfo) ([]testcase.TestCaseDataInfo, []testcase.TestCaseDataInfo) {
@@ -72,8 +72,10 @@ func RunSqlSetUpTc (sqlTcSlice []testcase.TestCaseDataInfo) {
         }
     }
 
-    ip, port, user, pw, defaultDB := GetDBConnInfo()
-    gsql.InitConnection(ip, port, user, pw, defaultDB)
+    if len(sqlSlice) > 0 {
+        ip, port, user, pw, defaultDB := gsql.GetDBConnInfo()
+        gsql.InitConnection(ip, port, user, pw, defaultDB)
+    }
 
     for i, _ := range sqlSlice {
         gsql.Run(sqlSlice[i])

@@ -20,9 +20,9 @@ import (
 	. "github.com/ahmetb/go-linq"
 )
 
-func SortByStartTime () []*testcase.TcReportResults {
+func SortByStartTime (executionResultSlice []*testcase.TcReportResults) []*testcase.TcReportResults {
     var orderedExecutionResultSlice []*testcase.TcReportResults
-    From(ExecutionResultSlice).
+    From(executionResultSlice).
         OrderByT(
             func(item *testcase.TcReportResults) int64 { return item.StartTimeUnixNano },
         ).
@@ -35,9 +35,9 @@ func SortByStartTime () []*testcase.TcReportResults {
     return orderedExecutionResultSlice
 }
 
-func SortByEndTime () []*testcase.TcReportResults {
+func SortByEndTime (executionResultSlice []*testcase.TcReportResults) []*testcase.TcReportResults {
     var orderedExecutionResultSlice []*testcase.TcReportResults
-    From(ExecutionResultSlice).
+    From(executionResultSlice).
         OrderByT(
             func(item *testcase.TcReportResults) int64 { return item.EndTimeUnixNano },
         ).
@@ -50,9 +50,9 @@ func SortByEndTime () []*testcase.TcReportResults {
     return orderedExecutionResultSlice
 }
 
-func SortByDuration () []*testcase.TcReportResults {
+func SortByDuration (executionResultSlice []*testcase.TcReportResults) []*testcase.TcReportResults {
     var orderedExecutionResultSlice []*testcase.TcReportResults
-    From(ExecutionResultSlice).
+    From(executionResultSlice).
         OrderByT(
             func(item *testcase.TcReportResults) int64 { return item.DurationUnixNano },
         ).

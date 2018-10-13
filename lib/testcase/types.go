@@ -29,6 +29,7 @@ type TestCaseDataInfo struct {
 // test case execution type, includes testdata
 type TestCaseExecutionInfo struct {
     TestCaseDataInfo *TestCaseDataInfo
+    SetUpResult string
     TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
     ActualStatusCode int
     StartTime string
@@ -38,6 +39,7 @@ type TestCaseExecutionInfo struct {
     EndTimeUnixNano int64
     DurationUnixNano int64
     ActualBody []byte
+    TearDownResult string
 }
 
 type TestMessage struct {  
@@ -101,8 +103,11 @@ type MutationInfo struct {
 // for report format 
 type TcReportResults struct { 
     TcName string 
+    IfGlobalSetUpTearDown string // SetUp, TearDown
+    // CaseType string // Normal, Scenario, Mutation, Fuzz
     Priority string
     ParentTestCase string
+    SetUpResult string // Success, Fail
     Path string
     Method string
     JsonFilePath string
@@ -112,7 +117,7 @@ type TcReportResults struct {
     MutationCategory string
     MutationRule string
     MutationInfo interface{}
-    TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
+    TestResult string  // Success, Fail, ParentFailed
     ActualStatusCode int
     StartTime string
     EndTime string
@@ -120,6 +125,7 @@ type TcReportResults struct {
     StartTimeUnixNano int64
     EndTimeUnixNano int64
     DurationUnixNano int64
+    TearDownResult string // Success, Fail
 }
 
 
