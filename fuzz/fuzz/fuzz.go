@@ -11,7 +11,7 @@
 package fuzz
 
 import (                                                                                                                                             
-    "time"
+    // "time"
     "fmt"
     "strings"
     "strconv"
@@ -58,7 +58,7 @@ type FieldDefinition struct {
 }
 
 
-func PrepFuzzTest(gStart_time time.Time) {
+func PrepFuzzTest() {
     fuzzFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".fuzz")
     // (1). generate the data tables based on the fuzz test, at least two dt files: positive and negative
     for _, fuzzFile := range fuzzFileList {

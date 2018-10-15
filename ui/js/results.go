@@ -11,9 +11,25 @@
 package js
 
 var Results = `
-var gStartUnixNano = {{.gStart_time}}
-var gStart = {{.gStart}}
-var pEndUnixNano = {{.PEnd_time}}
-var pEnd = {{.PEnd}}
-var tcResults = {{.TcReportStr}}
+var setUpStartUnixNano = {{.SetUpStartUnixNano}};
+var setUpStart = {{.SetUpStart}};
+var setUpEndUnixNano = {{.SetUpEndUnixNano}};
+var setUpEnd = {{.SetUpEnd}};
+
+var normalStartUnixNano = {{.NormalStartUnixNano}};
+var normalStart = {{.NormalStart}};
+var normalEndUnixNano = {{.NormalEndUnixNano}};
+var normalEnd = {{.NormalEnd}};
+
+var tearDownStartUnixNano = {{.TearDownStartUnixNano}};
+var tearDownStart = {{.TearDownStart}};
+var tearDownEndUnixNano = {{.TearDownEndUnixNano}};
+var tearDownEnd = {{.TearDownEnd}};
+
+var gStartUnixNano = {{.GStartUnixNano}};
+var gStart = {{.GStart}};
+var gEndUnixNano = {{.GEndUnixNano}};
+var gEnd = {{.GEnd}};
+
+var tcResults = {{.TcResults}}
 `

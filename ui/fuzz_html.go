@@ -17,7 +17,7 @@ var Fuzz = `
   <meta charset="UTF-8">
     <link href="style/go4api.css" rel="stylesheet" type="text/css"/>
     <script type="text/javascript" src="js/go4api.js"></script>
-    <script type="text/javascript" src="js/reslts.js"></script>
+    <script type="text/javascript" src="js/results.js"></script>
     <script type="text/javascript" src="js/stats.js"></script>
   <title>Go4Api Reports</title>
 </head>
@@ -41,7 +41,7 @@ var Fuzz = `
                         // var timestamp = 1523957748602;
                         // var runStartHumanDate = new Date(timestamp).format("YYYY-MM-DD HH:mm:ss Z");
                         var runStartHumanDate = gStart.substr(0, 19)
-                        var runDuration = (pEndUnixNano - gStartUnixNano) / 1000000000
+                        var runDuration = (gEndUnixNano - gStartUnixNano) / 1000000000
                         document.writeln("<p class='sim_desc'>");
                         document.writeln("<b>" + "Started at " + runStartHumanDate + ", duration: " + runDuration + " seconds </b>");
                         document.writeln("</p>");

@@ -129,7 +129,7 @@ func GetDBConnInfo () (string, string, string, string, string) {
     if cmd.Opt.TestEnv != "" {
         testEnv = cmd.Opt.TestEnv
     } else {
-        testEnv = "qa"
+        testEnv = "QA"
     }
 
     switch strings.ToLower(testEnv) {

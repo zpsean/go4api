@@ -26,7 +26,7 @@ import (
 
 var overallFail = 0
 
-func Run (ch chan int, baseUrl string, resultsDir string, resultsLogFile string, tcArray []testcase.TestCaseDataInfo) { 
+func Run (ch chan int, baseUrl string, resultsDir string, resultsLogFile string, tcArray []testcase.TestCaseDataInfo) tree.TcTreeStats { 
     //-----
     prioritySet, root, tcTree, tcTreeStats := RunInit(tcArray)
 
@@ -34,6 +34,8 @@ func Run (ch chan int, baseUrl string, resultsDir string, resultsLogFile string,
 
     RunPriorities(baseUrl, resultsDir, resultsLogFile, tcArray, prioritySet, root, tcTree, tcTreeStats)
     RunConsoleOverallReport(tcArray, root, tcTreeStats)
+
+    return tcTreeStats
 }
 
 func RunInit (tcArray []testcase.TestCaseDataInfo) ([]string, *tree.TcNode, tree.TcTree, tree.TcTreeStats) { 
@@ -77,10 +79,7 @@ func RunPriorities (baseUrl string, resultsDir string, resultsLogFile string, tc
     }
 
     logFilePtr.Close()
-
-    overallFail = overallFail + tcTreeStats.StatusCountByPriority["Overall"]["Fail"]
 }
-
 
 func RunEachPriority (baseUrl string, tcArray []testcase.TestCaseDataInfo, 
         priority string, root *tree.TcNode, tcTree tree.TcTree, logFilePtr *os.File, tcTreeStats tree.TcTreeStats) {
@@ -119,7 +118,6 @@ func RunEachPriority (baseUrl string, tcArray []testcase.TestCaseDataInfo,
             tcTreeStats.DeductReadyCount(priority)
             // (3). <--> for log write to file
             tcReportResults := tcExecution.TcReportResults()
-            reports.ExecutionResultSlice = append(reports.ExecutionResultSlice, tcReportResults)
 
             repJson, _ := json.Marshal(tcReportResults)
             reports.WriteExecutionResults(string(repJson), logFilePtr)
@@ -134,9 +132,18 @@ func RunEachPriority (baseUrl string, tcArray []testcase.TestCaseDataInfo,
 }
 
 func RunConsoleOverallReport (tcArray []testcase.TestCaseDataInfo, root *tree.TcNode, tcTreeStats tree.TcTreeStats) {
-    // -------
     tcTreeStats.CollectOverallNodeStatus(root, "Overall")
+
+    overallFail = overallFail + tcTreeStats.StatusCountByPriority["Overall"]["Fail"]
+
     reports.ReportConsoleOverall(len(tcArray), "Overall", tcTreeStats.StatusCountByPriority)
+}
+
+func RunFinalConsoleReport (totalTcCount int, setUpTcTreeStats tree.TcTreeStats, normalTcTreeStats tree.TcTreeStats, teardownTcTreeStats tree.TcTreeStats) {
+    fmt.Println("")
+    fmt.Println("Final Test Execution Statistics")
+
+    reports.ReportConsoleOverall(totalTcCount, "Overall", normalTcTreeStats.StatusCountByPriority)
 }
 
 func RunFinalReport (ch chan int, gStart_str string, resultsDir string, resultsLogFile string) {
@@ -145,6 +152,7 @@ func RunFinalReport (ch chan int, gStart_str string, resultsDir string, resultsL
 
     reports.GenerateTestReport(gStart_str, gEnd_str, resultsDir, resultsLogFile)
     //
+    fmt.Println("")
     fmt.Println("Report Generated at: " + resultsDir + "index.html")
     fmt.Println("Execution Finished at: " + gEnd_str)
 
@@ -185,7 +193,6 @@ func WriteNotNotExecutedToLog (priority string, logFilePtr *os.File, tcTreeStats
                 tcExecution.DurationUnixNano = notRunTime.UnixNano() - notRunTime.UnixNano()
 
                 tcReportResults := tcExecution.TcReportResults()
-                reports.ExecutionResultSlice = append(reports.ExecutionResultSlice, tcReportResults)
                 
                 repJson, _ := json.Marshal(tcReportResults)
                 //

@@ -38,9 +38,8 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     //
     start_time := time.Now()
     start_str := start_time.String()
-    // (1) setUp
-    // tcSetUpResult := RunTcSetUp(tcData)
-    // tcTearDownResult := RunTcTearDown(tcData)
+    // setUp
+    tcSetUpResult := RunTcSetUp(tcData)
     //
     actualStatusCode, actualHeader, actualBody := CallHttp(baseUrl, tcData)
     //
@@ -51,21 +50,30 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
 
     // (3). compare
     tcName := tcData.TcName()
-    testResult, TestMessages := Compare(tcName, actualStatusCode, actualHeader, actualBody, expStatus, expHeader, expBody)
+    httpResult, TestMessages := Compare(tcName, actualStatusCode, actualHeader, actualBody, expStatus, expHeader, expBody)
     //
     end_time := time.Now()
     end_str := end_time.String()
     // fmt.Println(tcName + " end: ", end)
 
     // (4). here to generate the outputs file if the Json has "outputs" field
-    WriteOutputsDataToFile(testResult, tcData, actualStatusCode, actualHeader, actualBody)
-    WriteOutEnvVariables(testResult, tcData, actualStatusCode, actualHeader, actualBody)
-    // WriteSession(testResult, tcData, actualStatusCode, actualHeader, actualBody)
+    WriteOutputsDataToFile(httpResult, tcData, actualStatusCode, actualHeader, actualBody)
+    WriteOutEnvVariables(httpResult, tcData, actualStatusCode, actualHeader, actualBody)
+    WriteSession(httpResult, tcData, actualStatusCode, actualHeader, actualBody)
+
+    // tearDown
+    tcTearDownResult := RunTcTearDown(tcData)
+
+    testResult := "Success"
+    if tcSetUpResult == "Fail" || httpResult == "Fail" || tcTearDownResult == "Fail" {
+        testResult = "Fail"
+    }
 
     // get the TestCaseExecutionInfo
     tcExecution := testcase.TestCaseExecutionInfo {
         TestCaseDataInfo: &tcData,
-        TestResult: testResult,
+        SetUpResult: tcSetUpResult,
+        HttpResult: httpResult,
         ActualStatusCode: actualStatusCode,
         StartTime: start_str,
         EndTime: end_str,
@@ -74,6 +82,8 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
         EndTimeUnixNano: end_time.UnixNano(),
         DurationUnixNano: end_time.UnixNano() - start_time.UnixNano(),
         ActualBody: actualBody,
+        TearDownResult: tcTearDownResult,
+        TestResult: testResult,
     }
 
     // (6). write the channel to executor for scheduler and log
