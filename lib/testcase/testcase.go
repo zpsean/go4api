@@ -396,7 +396,7 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
         MutationCategory:tcExecution.TestCaseDataInfo.MutationCategory,
         MutationRule: tcExecution.TestCaseDataInfo.MutationRule,
         MutationInfo: tcExecution.TestCaseDataInfo.MutationInfo,
-        TestResult: tcExecution.TestResult,
+        HttpResult: tcExecution.HttpResult,
         ActualStatusCode: tcExecution.ActualStatusCode,
         StartTime: tcExecution.StartTime,
         EndTime: tcExecution.EndTime,
@@ -405,6 +405,7 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
         EndTimeUnixNano: tcExecution.EndTimeUnixNano,
         DurationUnixNano: tcExecution.DurationUnixNano,
         TearDownResult: tcExecution.TearDownResult,
+        TestResult: tcExecution.TestResult,
     }
 
     return tcReportRes

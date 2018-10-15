@@ -30,7 +30,7 @@ type TestCaseDataInfo struct {
 type TestCaseExecutionInfo struct {
     TestCaseDataInfo *TestCaseDataInfo
     SetUpResult string
-    TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
+    HttpResult string
     ActualStatusCode int
     StartTime string
     EndTime string
@@ -40,6 +40,7 @@ type TestCaseExecutionInfo struct {
     DurationUnixNano int64
     ActualBody []byte
     TearDownResult string
+    TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
 }
 
 type TestMessage struct {  
@@ -117,7 +118,7 @@ type TcReportResults struct {
     MutationCategory string
     MutationRule string
     MutationInfo interface{}
-    TestResult string  // Success, Fail, ParentFailed
+    HttpResult string // Success, Fail
     ActualStatusCode int
     StartTime string
     EndTime string
@@ -126,6 +127,7 @@ type TcReportResults struct {
     EndTimeUnixNano int64
     DurationUnixNano int64
     TearDownResult string // Success, Fail
+    TestResult string  // Success, Fail, ParentFailed
 }
 
 

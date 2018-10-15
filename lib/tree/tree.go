@@ -278,8 +278,6 @@ func (tcTree TcTree) RefreshNodeAndDirectChilrenTcResult(node *TcNode, tcRunResu
     }
 }
 
-
-
 func (tcTree TcTree) CollectNodeReadyByPriority(c chan *TcNode, node *TcNode, priority string) {
     for i, _ := range node.Children {
         if node.Children[i].TestCaseExecutionInfo.Priority() == priority {
@@ -293,9 +291,8 @@ func (tcTree TcTree) CollectNodeReadyByPriority(c chan *TcNode, node *TcNode, pr
 }
 
 func (tcTree TcTree) ShowNodes(node *TcNode) {
-    fmt.Println("\nShow node: ", node.TestCaseExecutionInfo.Priority(), node.TestCaseExecutionInfo.TcName(), node.TestCaseExecutionInfo.TestResult)
+    fmt.Println("\nShow node: ", node)
     for i, _ := range node.Children {
-        // fmt.Println("NN - C node:", &n, n)
         tcTree.ShowNodes(node.Children[i])
     }
 }

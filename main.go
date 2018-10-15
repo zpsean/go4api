@@ -45,12 +45,13 @@ func main(){
     fmt.Println("\n----- Start Main -----")
 
     gStart := time.Now()
+    gStart_str := gStart.Format("2006-01-02 15.04.05.000000000 +0800 CST")
     //
-    fmt.Println("Started at: " + gStart.Format("2006-01-02 15.04.05.000000000 +0800 CST"))
+    fmt.Println("Started at: " + gStart_str)
     // fmt.Println(os.Args)
 
     if os.Args[1] == "-run" {
-      executor.Dispatch(ch, gStart)
+      executor.Dispatch(ch, gStart, gStart_str)
       //
       close(ch)
       x := <-ch
@@ -69,7 +70,7 @@ func main(){
       }
     } else {
       fmt.Println("Warning: no specific commnd is provided, default is to run")
-      executor.Dispatch(ch, gStart)
+      executor.Dispatch(ch, gStart, gStart_str)
       //
       close(ch)
       x := <-ch

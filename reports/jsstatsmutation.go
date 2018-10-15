@@ -25,21 +25,16 @@ type ReportsMStats struct {
     Count int
 }
 
-
-func GetMStats_1 () []Group {
+func (tcReportSlice TcReportSlice) GroupByMutation1 () []Group {
     type ReportsStuct struct {
         Path string
         Method string
-        // MutationArea string
-        // MutationCategory string
-        // MutationRule string
         ActualStatusCode int
-        // TestResult string
     }
 
     var query []Group
 
-    From(ExecutionResultSlice).GroupByT(
+    From(tcReportSlice).GroupByT(
         func(item *testcase.TcReportResults) ReportsStuct { 
             return ReportsStuct{item.Path, item.Method, item.ActualStatusCode}
         },
@@ -49,20 +44,17 @@ func GetMStats_1 () []Group {
     return query
 }
 
-func GetMStats_2 () []Group {
+func (tcReportSlice TcReportSlice) GroupByMutation2 () []Group {
     type ReportsStuct struct {
         Path string
         Method string
         MutationArea string
-        // MutationCategory string
-        // MutationRule string
         ActualStatusCode int
-        // TestResult string
     }
 
     var query []Group
 
-    From(ExecutionResultSlice).GroupByT(
+    From(tcReportSlice).GroupByT(
         func(item *testcase.TcReportResults) ReportsStuct { 
             return ReportsStuct{item.Path, item.Method, item.MutationArea, item.ActualStatusCode}
         },
@@ -73,20 +65,18 @@ func GetMStats_2 () []Group {
 }
 
 
-func GetMStats_3 () []Group {
+func (tcReportSlice TcReportSlice) GroupByMutation3 () []Group {
     type ReportsStuct struct {
         Path string
         Method string
         MutationArea string
         MutationCategory string
-        // MutationRule string
         ActualStatusCode int
-        // TestResult string
     }
 
     var query []Group
 
-    From(ExecutionResultSlice).GroupByT(
+    From(tcReportSlice).GroupByT(
         func(item *testcase.TcReportResults) ReportsStuct { 
             return ReportsStuct{item.Path, item.Method, item.MutationArea, item.MutationCategory, item.ActualStatusCode}
         },
@@ -115,24 +105,24 @@ func PrintGroup (query []Group) []ReportsMStats {
     return reportsMStatsSlice
 }
 
-func GetMutationStatsJson() []string {
+func GetMutationStatsJson(tcReportSlice TcReportSlice) []string {
     var reJsons []string
 
-    query := GetMStats_1()
+    query := tcReportSlice.GroupByMutation1()
     reportsMStatsSlice := PrintGroup(query)
 
     reJson, _ := json.Marshal(reportsMStatsSlice)
     reJsons = append(reJsons, string(reJson))
     // fmt.Println("=====> reportsMStatsSlice: ", string(reJson))
 
-    query = GetMStats_2()
+    query = tcReportSlice.GroupByMutation2()
     reportsMStatsSlice = PrintGroup(query)
 
     reJson, _ = json.Marshal(reportsMStatsSlice)
     reJsons = append(reJsons, string(reJson))
     // fmt.Println("=====> reportsMStatsSlice: ", string(reJson))
 
-    query = GetMStats_3()
+    query = tcReportSlice.GroupByMutation3()
     reportsMStatsSlice = PrintGroup(query)
 
     reJson, _ = json.Marshal(reportsMStatsSlice)

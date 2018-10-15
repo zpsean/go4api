@@ -11,30 +11,29 @@
 package reports
 
 import (
-	// "go4api/lib/testcase"
+ 	// "encoding/json"
+
+	"go4api/lib/testcase"
 )
 
-type TcStats struct {
-	StatusStats map[string]map[string]int
-	StatusStatsPercentage map[string]map[string]float64
+type TcReportSlice []*testcase.TcReportResults
+
+func (tcReportSlice TcReportSlice) ClassifyResults () (TcReportSlice, TcReportSlice, TcReportSlice) {
+    var setUpResultSlice TcReportSlice
+    var normalResultSlice TcReportSlice
+    var tearDownResultSlice TcReportSlice
+
+    for i, _ := range tcReportSlice {
+        switch tcReportSlice[i].IfGlobalSetUpTearDown {
+            case "SetUp":
+                setUpResultSlice = append(setUpResultSlice, tcReportSlice[i])
+            case "TearDown":
+                tearDownResultSlice = append(tearDownResultSlice, tcReportSlice[i])
+            default:
+                normalResultSlice = append(normalResultSlice, tcReportSlice[i])
+        }
+    }
+
+    return setUpResultSlice, normalResultSlice, tearDownResultSlice
 }
 
-type MutationStats struct {
-	HttpUrl string
-	HttpMethod string
-	MutationPart string
-	MutationRule string
-	HttpStatus int
-	TestStatus string 
-	Count int
-}
-
-type MutationDetails struct {
-	HttpUrl string
-	HttpMethod string
-	MutationPart string
-	MutationRule string
-	HttpStatus int
-	TestStatus string 
-	MutationMessage string
-}

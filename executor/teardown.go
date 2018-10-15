@@ -12,12 +12,9 @@ package executor
 
 import (
     "fmt"
-    // "time"
-    // "os"
-    // "strings"
 
     "go4api/lib/testcase"
-    "go4api/sql"
+    "go4api/lib/tree"
 )
 
 func GetTeardownTcSlice (tcArray []testcase.TestCaseDataInfo) []testcase.TestCaseDataInfo {
@@ -32,55 +29,15 @@ func GetTeardownTcSlice (tcArray []testcase.TestCaseDataInfo) []testcase.TestCas
 }
 
 
-func RunTeardown(ch chan int, baseUrl string, resultsLogFile string, resultsDir string, tcArray []testcase.TestCaseDataInfo) { 
-    // sqlTearDownTcSlice, notSqlTearDownTcSlice := ClassifyTearDown(tcArray)
+func RunGlobalTeardown (ch chan int, baseUrl string, resultsDir string, resultsLogFile string, tcArray []testcase.TestCaseDataInfo) tree.TcTreeStats { 
+    //-----
+    prioritySet, root, tcTree, tcTreeStats := RunInit(tcArray)
 
-    // prioritySet, root, tcTree, tcTreeStats := RunBefore(notSqlTearDownTcSlice)
-    // fmt.Println("\n====> teardown test cases execution starts!") 
-    // RunPriorities(ch, gStart, baseUrl, resultsDir, notSqlTearDownTcSlice, prioritySet, root, tcTree, tcTreeStats)
-    // RunConsoleOverallReport(ch, gStart_time, gStart, resultsDir, notSqlTearDownTcSlice, root, tcTree, tcTreeStats)
+    fmt.Println("\n====> Global TearDown test cases execution starts!") 
 
-    // // -- for sql execution
-    // RunSqlTearDownTc(sqlTearDownTcSlice)
+    RunPriorities(baseUrl, resultsDir, resultsLogFile, tcArray, prioritySet, root, tcTree, tcTreeStats)
+    RunConsoleOverallReport(tcArray, root, tcTreeStats)
+
+    return tcTreeStats
 }
 
-func ClassifyTearDown (tcArray []testcase.TestCaseDataInfo) ([]testcase.TestCaseDataInfo, []testcase.TestCaseDataInfo) {
-    var sqlTearDownTcSlice []testcase.TestCaseDataInfo
-    var notSqlTearDownTcSlice []testcase.TestCaseDataInfo
-
-    for i, _ := range tcArray {
-        ifSql := false
-        for k, _ := range tcArray[i].TestCase.TearDown() {
-            if k == "sql" {
-                sqlTearDownTcSlice = append(sqlTearDownTcSlice, tcArray[i])
-                ifSql = true
-            }
-        }
-        if ifSql == false {
-            notSqlTearDownTcSlice = append(notSqlTearDownTcSlice, tcArray[i])
-        }
-    }
-
-    return sqlTearDownTcSlice, notSqlTearDownTcSlice
-}
-
-func RunSqlTearDownTc (sqlTcSlice []testcase.TestCaseDataInfo) {
-    var sqlSlice []string
-
-    for i, _ := range sqlTcSlice {
-        for k, v := range sqlTcSlice[i].TestCase.TearDown() {
-            if k == "sql" {
-                sqlSlice = append(sqlSlice, fmt.Sprint(v))
-            }
-        }
-    }
-
-    if len(sqlSlice) > 0 {
-        ip, port, user, pw, defaultDB := gsql.GetDBConnInfo()
-        gsql.InitConnection(ip, port, user, pw, defaultDB)
-    }
-
-    for i, _ := range sqlSlice {
-        gsql.Run(sqlSlice[i])
-    }
-}

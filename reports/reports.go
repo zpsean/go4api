@@ -16,7 +16,7 @@ import (
     // "time"
     // "strings"
 
-    "go4api/lib/testcase"
+    // "go4api/lib/testcase"
     "go4api/ui"     
     "go4api/ui/js"  
     "go4api/ui/style"                                                                                                                                
@@ -28,7 +28,6 @@ import (
 // phaseEnd_str := phaseEnd_time.Format("2006-01-02 15:04:05.000000000 +0800 CST")
 
 var (
-    ExecutionResultSlice []*testcase.TcReportResults
     resultsJss = map[string]interface{}{} 
 )
 
@@ -39,11 +38,11 @@ func GenerateTestReport(gStart_str string, gEnd_str string, resultsDir string, r
     // style
     GenerateStyle(resultsDir)
     // js
-    GenerateJs(gStart_str, gEnd_str, resultsDir, resultsLogFile)
-    //
-    // statsJsonBytes, _ := json.MarshalIndent(ExecutionResultSlice, "", "\t")
-    // fmt.Println("ExecutionResultSlice: ", string(statsJsonBytes))
-    // Get_Stats_3()
+    GenerateJsDir(resultsDir)
+    GenerateCommonJs(resultsDir, resultsLogFile)
+    // result js
+    tcReportSlice := ParseLogFile(resultsLogFile)
+    GenerateResultsJs(tcReportSlice, resultsDir, resultsLogFile)
 }
 
 func GenerateHtml (resultsDir string) {
@@ -75,34 +74,32 @@ func GenerateStyle (resultsDir string) {
     utils.GeneratePicture(bytes, resultsDir + "style/arrow_down.png")
 }
 
-func GenerateJs (gStart_str string, gEnd_str string, resultsDir string, resultsLogFile string) {
-    // --------
-    // (0)
+
+func GenerateJsDir (resultsDir string) {
     err := os.MkdirAll(resultsDir + "js", 0777)
     if err != nil {
       panic(err) 
     }
-
-    // statsFile := resultsDir + "/js/stats.js"
-    // reJsons := GetStatsJson(statusCountByPriority)
-    // texttmpl.GenerateStatsJs(js.Stats, statsFile, reJsons, resultsLogFile)
-
-    // statsFile = resultsDir + "/js/mutationstats.js"
-    // reJsons = GetMutationStatsJson()
-    // texttmpl.GenerateMutationResultsJs(js.MutationStats, statsFile, reJsons, resultsLogFile)
-
-
-    // get js/reslts.js
-    GenerateReportsFromLogFile(resultsLogFile)
-    
-    // get js/go4api.js
-    utils.GenerateFileBasedOnVarOverride(js.Js, resultsDir + "js/go4api.js")
-
-    // 3rd js
-    utils.GenerateFileBasedOnVarOverride(js.Chart, resultsDir + "js/Chart.bundle.min.js")
-
 }
 
+func GenerateCommonJs (resultsDir string, resultsLogFile string) {
+    // get js/go4api.js
+    utils.GenerateFileBasedOnVarOverride(js.Js, resultsDir + "js/go4api.js")
+    // 3rd js
+    utils.GenerateFileBasedOnVarOverride(js.Chart, resultsDir + "js/Chart.bundle.min.js")
+}
+
+// func GenerateStatsJs (gStart_str string, gEnd_str string, resultsDir string, resultsLogFile string) {
+//     statsFile := resultsDir + "/js/stats.js"
+//     reJsons := GetStatsJson()
+//     texttmpl.GenerateStatsJs(js.Stats, statsFile, reJsons, resultsLogFile)
+// }
+
+// func GenerateMutationResultsJs (gStart_str string, gEnd_str string, resultsDir string, resultsLogFile string) {
+//     statsFile = resultsDir + "/js/mutationstats.js"
+//     reJsons = GetMutationStatsJson()
+//     texttmpl.GenerateMutationResultsJs(js.MutationStats, statsFile, reJsons, resultsLogFile)
+// }
 
 
 
