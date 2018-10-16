@@ -27,7 +27,7 @@ import (
 )
 
 func RunScenario (ch chan int, baseUrl string, resultsDir string, resultsLogFile string, 
-        jsonFileList []string, tcArray []testcase.TestCaseDataInfo) {
+        jsonFileList []string, tcArray []testcase.TestCaseDataInfo) tree.TcTreeStats {
     // --
     root, tcTree, tcTreeStats := InitRunScenario(tcArray)
 
@@ -78,7 +78,7 @@ func RunScenario (ch chan int, baseUrl string, resultsDir string, resultsLogFile
     }
     logFilePtr.Close()
 
-    // RunScenarioReports(ch, gStart_time, gStart, resultsDir, root, tcTreeStats)
+    return tcTreeStats
 }
 
 func InitRunScenario (tcArray []testcase.TestCaseDataInfo) (*tree.TcNode, tree.TcTree, tree.TcTreeStats) {

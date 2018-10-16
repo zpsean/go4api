@@ -561,7 +561,12 @@ func M_Char_Set_To_Float (currValue interface{}, fieldType string, fieldSubType 
 //  change type (complex, i.e. object, arrary)
 func M_Char_Set_To_Array (currValue interface{}, fieldType string, fieldSubType string) interface{} {
     currValueRune := []rune(currValue.(string))
-    mutatedValue := []string{string(currValueRune[0])}
+
+    var mutatedValue []string
+
+    if len(currValueRune) > 0 {
+        mutatedValue = []string{string(currValueRune[0])}
+    }
 
     return mutatedValue
 }

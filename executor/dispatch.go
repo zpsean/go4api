@@ -38,16 +38,20 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
         if cmd.Opt.IfMutation {
             originMutationTcArray := GetOriginMutationTcArray()
             setUpTcSlice := GetSetupTcSlice(originMutationTcArray)
-            RunGlobalSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
+            setUpTcTreeStats := RunGlobalSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
             //
             originMutationTcArray = GetOriginMutationTcArray()
             originNormalTc := GetNormalTcSlice(originMutationTcArray)
             mutatedTcArray := mutation.MutateTcArray(originNormalTc)
-            Run(ch, baseUrl, resultsDir, resultsLogFile, mutatedTcArray)
+            normalTcTreeStats := Run(ch, baseUrl, resultsDir, resultsLogFile, mutatedTcArray)
             //
             originMutationTcArray = GetOriginMutationTcArray()
             teardownTcSlice := GetTeardownTcSlice(originMutationTcArray)
-            RunGlobalTeardown(ch, baseUrl, resultsDir, resultsLogFile, teardownTcSlice)
+            teardownTcTreeStats := RunGlobalTeardown(ch, baseUrl, resultsDir, resultsLogFile, teardownTcSlice)
+            //
+            totalTcCount := len(setUpTcSlice) + len(mutatedTcArray) + len(teardownTcSlice)
+            RunFinalConsoleReport(totalTcCount, setUpTcTreeStats, normalTcTreeStats, teardownTcTreeStats)
+            RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
         } else if cmd.Opt.IfFuzzTest {
             fuzz.PrepFuzzTest()
             //
@@ -75,15 +79,17 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
         //
         tcArray := ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
         setUpTcSlice := GetSetupTcSlice(tcArray)
-        RunGlobalSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
+        setUpTcTreeStats := RunGlobalSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
         //
         tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
-        RunScenario(ch, baseUrl, resultsDir, resultsLogFile, jsonFileList, tcArray)
+        normalTcTreeStats := RunScenario(ch, baseUrl, resultsDir, resultsLogFile, jsonFileList, tcArray)
         //
         tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
         teardownTcSlice := GetTeardownTcSlice(tcArray)
-        RunGlobalTeardown(ch, baseUrl, resultsDir, resultsLogFile, teardownTcSlice)
+        teardownTcTreeStats := RunGlobalTeardown(ch, baseUrl, resultsDir, resultsLogFile, teardownTcSlice)
         //
+        totalTcCount := len(setUpTcSlice) + len(tcArray) + len(teardownTcSlice)
+        RunFinalConsoleReport(totalTcCount, setUpTcTreeStats, normalTcTreeStats, teardownTcTreeStats)
         RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
     }
 }

@@ -15,7 +15,7 @@ import (
  	// "strconv"
  	// "encoding/json"
 
-	// "go4api/lib/testcase"
+	"go4api/lib/testcase"
 	// "go4api/texttmpl"
 
 	. "github.com/ahmetb/go-linq"
@@ -64,7 +64,6 @@ func (tcReportSlice TcReportSlice) GroupByFailStartTime () []Group {
     return query
 }
 
-
 func GroupByStartTime (execStartSlice []int64) []Group {
     var query []Group
 
@@ -80,3 +79,20 @@ func GroupByStartTime (execStartSlice []int64) []Group {
     return query
 }
 
+
+func (tcReportSlice TcReportSlice) GroupByOverallStatus () []Group {
+    type ReportsStuct struct {
+        TestResult string
+    }
+
+    var query []Group
+
+    From(tcReportSlice).GroupByT(
+        func(item *testcase.TcReportResults) ReportsStuct { 
+            return ReportsStuct{item.TestResult}
+        },
+        func(item *testcase.TcReportResults) int64 { return 1 },
+    ).ToSlice(&query)
+
+    return query
+}

@@ -42,7 +42,14 @@ func GenerateTestReport(gStart_str string, gEnd_str string, resultsDir string, r
     GenerateCommonJs(resultsDir, resultsLogFile)
     // result js
     tcReportSlice := ParseLogFile(resultsLogFile)
-    GenerateResultsJs(tcReportSlice, resultsDir, resultsLogFile)
+    GenerateResultsJs(tcReportSlice, resultsDir)
+    // stats js
+    GenerateStatsJs(tcReportSlice, resultsDir)
+    // 
+    GenerateMutationResultsJs(tcReportSlice, resultsDir)
+
+    // gauge
+    tcReportSlice.GeStatsGaugeJson()
 }
 
 func GenerateHtml (resultsDir string) {
@@ -83,23 +90,11 @@ func GenerateJsDir (resultsDir string) {
 }
 
 func GenerateCommonJs (resultsDir string, resultsLogFile string) {
-    // get js/go4api.js
+    // js/go4api.js
     utils.GenerateFileBasedOnVarOverride(js.Js, resultsDir + "js/go4api.js")
     // 3rd js
     utils.GenerateFileBasedOnVarOverride(js.Chart, resultsDir + "js/Chart.bundle.min.js")
 }
-
-// func GenerateStatsJs (gStart_str string, gEnd_str string, resultsDir string, resultsLogFile string) {
-//     statsFile := resultsDir + "/js/stats.js"
-//     reJsons := GetStatsJson()
-//     texttmpl.GenerateStatsJs(js.Stats, statsFile, reJsons, resultsLogFile)
-// }
-
-// func GenerateMutationResultsJs (gStart_str string, gEnd_str string, resultsDir string, resultsLogFile string) {
-//     statsFile = resultsDir + "/js/mutationstats.js"
-//     reJsons = GetMutationStatsJson()
-//     texttmpl.GenerateMutationResultsJs(js.MutationStats, statsFile, reJsons, resultsLogFile)
-// }
 
 
 

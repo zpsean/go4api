@@ -161,7 +161,7 @@ var Mutation = `
                                     var newTd9 = newTr.insertCell();
                                     var newTd10 = newTr.insertCell();
                              
-                                    newTd0.innerText = i;
+                                    newTd0.innerText = i + 1;
                                     newTd1.innerText = tcResults[i].TcName;
                                     newTd2.innerText = tcResults[i].Path;
                                     newTd3.innerText = tcResults[i].Method;

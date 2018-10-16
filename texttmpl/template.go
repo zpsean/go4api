@@ -55,6 +55,7 @@ type StatsJs struct {
     StatsStr_2 string
     StatsStr_Success string
     StatsStr_Fail string
+    StatsStr_Status string
 }
 
 type MStatsJs struct {
@@ -79,7 +80,7 @@ func GetTemplateFromString() {
 }
 
 
-func GenerateDetailsJs(strVar string, targetFile string, detailsJs *DetailsJs, logResultsFile string) {
+func GenerateDetailsJs(strVar string, targetFile string, detailsJs *DetailsJs) {
     outFile, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
     if err != nil {
        panic(err) 
@@ -94,7 +95,7 @@ func GenerateDetailsJs(strVar string, targetFile string, detailsJs *DetailsJs, l
     }
 }
 
-func GenerateResultsJs(strVar string, targetFile string, resultsJs *ResultsJs, logResultsFile string) {
+func GenerateResultsJs(strVar string, targetFile string, resultsJs *ResultsJs) {
     outFile, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
     if err != nil {
        panic(err) 
@@ -110,7 +111,7 @@ func GenerateResultsJs(strVar string, targetFile string, resultsJs *ResultsJs, l
 }
 
 
-func GenerateStatsJs(strVar string, targetFile string, resultsJs []string, logResultsFile string) {
+func GenerateStatsJs(strVar string, targetFile string, resultsJs []string) {
     outFile, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
     if err != nil {
        panic(err) 
@@ -124,6 +125,7 @@ func GenerateStatsJs(strVar string, targetFile string, resultsJs []string, logRe
         StatsStr_2: resultsJs[1],
         StatsStr_Success: resultsJs[2],
         StatsStr_Fail: resultsJs[3],
+        StatsStr_Status: resultsJs[4],
     }
 
     err = tmpl.Execute(outFile, statsJs)
@@ -133,7 +135,7 @@ func GenerateStatsJs(strVar string, targetFile string, resultsJs []string, logRe
 }
 
 
-func GenerateMutationResultsJs(strVar string, targetFile string, resultsJs []string, logResultsFile string) {
+func GenerateMutationResultsJs(strVar string, targetFile string, resultsJs []string) {
     outFile, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
     if err != nil {
        panic(err) 

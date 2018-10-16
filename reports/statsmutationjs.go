@@ -14,7 +14,8 @@ import (
  	// "fmt"
  	"encoding/json"
 
-	// "go4api/texttmpl"
+    "go4api/ui/js" 
+	"go4api/texttmpl"
 	"go4api/lib/testcase"
 
     . "github.com/ahmetb/go-linq"
@@ -23,6 +24,40 @@ import (
 type ReportsMStats struct {
     ReportKey interface{}
     Count int
+}
+
+func GenerateMutationResultsJs (tcReportSlice TcReportSlice, resultsDir string) {
+    statsFile := resultsDir + "/js/mutationstats.js"
+    reJsons := tcReportSlice.GetMutationStatsJson()
+
+    texttmpl.GenerateMutationResultsJs(js.MutationStats, statsFile, reJsons)
+}
+
+func (tcReportSlice TcReportSlice) GetMutationStatsJson () []string {
+    var reJsons []string
+
+    query := tcReportSlice.GroupByMutation1()
+    reportsMStatsSlice := PrintGroup(query)
+
+    reJson, _ := json.Marshal(reportsMStatsSlice)
+    reJsons = append(reJsons, string(reJson))
+    // fmt.Println("=====> reportsMStatsSlice: ", string(reJson))
+
+    query = tcReportSlice.GroupByMutation2()
+    reportsMStatsSlice = PrintGroup(query)
+
+    reJson, _ = json.Marshal(reportsMStatsSlice)
+    reJsons = append(reJsons, string(reJson))
+    // fmt.Println("=====> reportsMStatsSlice: ", string(reJson))
+
+    query = tcReportSlice.GroupByMutation3()
+    reportsMStatsSlice = PrintGroup(query)
+
+    reJson, _ = json.Marshal(reportsMStatsSlice)
+    reJsons = append(reJsons, string(reJson))
+    // fmt.Println("=====> reportsMStatsSlice: ", string(reJson))
+
+    return reJsons
 }
 
 func (tcReportSlice TcReportSlice) GroupByMutation1 () []Group {
@@ -103,32 +138,5 @@ func PrintGroup (query []Group) []ReportsMStats {
         reportsMStatsSlice = append(reportsMStatsSlice, reportsMStats)
     }
     return reportsMStatsSlice
-}
-
-func GetMutationStatsJson(tcReportSlice TcReportSlice) []string {
-    var reJsons []string
-
-    query := tcReportSlice.GroupByMutation1()
-    reportsMStatsSlice := PrintGroup(query)
-
-    reJson, _ := json.Marshal(reportsMStatsSlice)
-    reJsons = append(reJsons, string(reJson))
-    // fmt.Println("=====> reportsMStatsSlice: ", string(reJson))
-
-    query = tcReportSlice.GroupByMutation2()
-    reportsMStatsSlice = PrintGroup(query)
-
-    reJson, _ = json.Marshal(reportsMStatsSlice)
-    reJsons = append(reJsons, string(reJson))
-    // fmt.Println("=====> reportsMStatsSlice: ", string(reJson))
-
-    query = tcReportSlice.GroupByMutation3()
-    reportsMStatsSlice = PrintGroup(query)
-
-    reJson, _ = json.Marshal(reportsMStatsSlice)
-    reJsons = append(reJsons, string(reJson))
-    // fmt.Println("=====> reportsMStatsSlice: ", string(reJson))
-
-    return reJsons
 }
 

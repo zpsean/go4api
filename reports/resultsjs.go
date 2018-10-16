@@ -18,11 +18,11 @@ import (
  	"go4api/texttmpl"
 )
 
-func GenerateResultsJs (tcReportSlice TcReportSlice, resultsDir string, resultsLogFile string) {
+func GenerateResultsJs (tcReportSlice TcReportSlice, resultsDir string) {
 	normalResultsJs := tcReportSlice.GetResultsJs()
 
     resultsFile := resultsDir + "/js/results.js"
-    texttmpl.GenerateResultsJs(js.Results, resultsFile, normalResultsJs, resultsLogFile)
+    texttmpl.GenerateResultsJs(js.Results, resultsFile, normalResultsJs)
 }
 
 func (tcReportSlice TcReportSlice) GetResultsJs () *texttmpl.ResultsJs {
