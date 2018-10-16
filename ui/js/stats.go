@@ -18,4 +18,6 @@ var stats2 = {{.StatsStr_2}};
 var stats2_success = {{.StatsStr_Success}};
 
 var stats2_fail = {{.StatsStr_Fail}};
+
+var stats3_status = {{.StatsStr_Status}};
 `

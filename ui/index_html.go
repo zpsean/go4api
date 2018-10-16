@@ -72,13 +72,14 @@ var Index = `<!DOCTYPE html>
                           <table id="container_statistics_head" class="statistics-in extensible-geant">
                               <thead>
                                   <tr>
-                                      <th rowspan="2" id="col-1" class="header sortable sorted-up"><span>Priority</span></th>
-                                      <th colspan="2" class="header"><span class="executions">Executions</span></th>
-                                      <th colspan="8" class="header"><span class="response-time">Response Time (ns)</span></th>
+                                      <th rowspan="2" id="col-1" class="header sortable sorted-up"><span>Phase</span></th>
+                                      <th colspan="3" class="header"><span class="executions">Executions</span></th>
+                                      <th colspan="7" class="header"><span class="response-time">Response Time (ns)</span></th>
                                   </tr>
                                   <tr>
-                                      <th id="col-2" class="header sortable"><span>Status</span></th>
-                                      <th id="col-2" class="header sortable"><span>Count</span></th>
+                                      <th id="col-2" class="header sortable"><span>Priority</span></th>
+                                      <th id="col-3" class="header sortable"><span>Status</span></th>
+                                      <th id="col-4" class="header sortable"><span>Count</span></th>
 
                                       <th id="col-7" class="header sortable"><span>Min</span></th>
                                       <th id="col-8" class="header sortable"><span>50th pct</span></th>
@@ -87,7 +88,6 @@ var Index = `<!DOCTYPE html>
                                       <th id="col-11" class="header sortable"><span>99th pct</span></th>
                                       <th id="col-12" class="header sortable"><span>Max</span></th>
                                       <th id="col-13" class="header sortable"><span>Mean</span></th>
-                                      <th id="col-14" class="header sortable"><span>Std Dev</span></th>
                                   </tr>
                               </thead>
                               <tbody></tbody>
@@ -99,36 +99,34 @@ var Index = `<!DOCTYPE html>
                               </table>
 
                               <script type="text/javascript">
-                                    for (var k in stats1)
-                                    {
-                                      for (var kk in stats1[k])
-                                        {
-                                          if (kk == "Success" || kk == "Fail" || kk == "ParentFailed")
-                                          {
-                                            var newTr = container_statistics_body.insertRow();
-                                            
-                                            var newTd0 = newTr.insertCell();
-                                            var newTd1 = newTr.insertCell();
-                                            var newTd2 = newTr.insertCell();
-                                            var newTd3 = newTr.insertCell();
-                                            var newTd4 = newTr.insertCell();
-                                            var newTd5 = newTr.insertCell();
-                                            var newTd6 = newTr.insertCell();
-                                            var newTd7 = newTr.insertCell();
-                                            var newTd8 = newTr.insertCell();
-                                     
-                                            newTd0.innerText = k;
-                                            newTd1.innerText = kk
-                                            newTd2.innerText = stats1[k][kk];
-                                            newTd3.innerText = stats1[k][kk];
-                                            newTd4.innerText = stats1[k][kk];
-                                            newTd5.innerText = stats1[k][kk];
-                                            newTd6.innerText = stats1[k][kk];
-                                            newTd7.innerText = stats1[k][kk];
-                                            newTd8.innerText = stats1[k][kk];
-                                          }
-                                        } 
-                                    }
+                                for (var i = 0; i < stats1.length; i++)
+                                {
+                                  var newTr = container_statistics_body.insertRow();
+                                  
+                                  var newTd0 = newTr.insertCell();
+                                  var newTd1 = newTr.insertCell();
+                                  var newTd2 = newTr.insertCell();
+                                  var newTd3 = newTr.insertCell();
+                                  var newTd4 = newTr.insertCell();
+                                  var newTd5 = newTr.insertCell();
+                                  var newTd6 = newTr.insertCell();
+                                  var newTd7 = newTr.insertCell();
+                                  var newTd8 = newTr.insertCell();
+                                  var newTd9 = newTr.insertCell();
+                                  var newTd10 = newTr.insertCell();
+                           
+                                  newTd0.innerText = stats1[i].ReportKey.IfGlobalSetUpTearDown;
+                                  newTd1.innerText = stats1[i].ReportKey.Priority;
+                                  newTd2.innerText = stats1[i].ReportKey.TestResult;
+                                  newTd3.innerText = stats1[i].Count;
+                                  newTd4.innerText = stats1[i].PerformanceGauge.Min;
+                                  newTd5.innerText = stats1[i].PerformanceGauge.P50;
+                                  newTd6.innerText = stats1[i].PerformanceGauge.P75;
+                                  newTd7.innerText = stats1[i].PerformanceGauge.P95;
+                                  newTd8.innerText = stats1[i].PerformanceGauge.P99;
+                                  newTd9.innerText = stats1[i].PerformanceGauge.Max;
+                                  newTd9.innerText = stats1[i].PerformanceGauge.Mean;
+                                }
                               </script>
                           </div>
                       </div>
@@ -166,10 +164,19 @@ var Index = `<!DOCTYPE html>
 
   <script>
     var tcCountArray = new Array(3)
-    tcCountArray[0] = stats1.Overall.Fail
-    tcCountArray[1] = stats1.Overall.Success
-    tcCountArray[2] = stats1.Overall.ParentFailed
 
+    for (var i = 0; i < stats3_status.length; i++)
+    {
+      if (stats3_status[i].ReportKey.TestResult == "Fail")
+      {
+        tcCountArray[0] = stats3_status[i].Count
+      } else if (stats3_status[i].ReportKey.TestResult == "Success") {
+        tcCountArray[1] = stats3_status[i].Count
+      } else if (stats3_status[i].ReportKey.TestResult == "ParentFailed") {
+        tcCountArray[2] = stats3_status[i].Count
+      }
+    }
+    
     var data = {
             labels: [
                 "Fail",
@@ -268,9 +275,18 @@ var Index = `<!DOCTYPE html>
 
   <script>
     var tcCountArray = new Array(3)
-    tcCountArray[0] = stats1.Overall.Fail
-    tcCountArray[1] = stats1.Overall.Success
-    tcCountArray[2] = stats1.Overall.ParentFailed
+    
+    for (var i = 0; i < stats3_status.length; i++)
+    {
+      if (stats3_status[i].ReportKey.TestResult == "Fail")
+      {
+        tcCountArray[0] = stats3_status[i].Count
+      } else if (stats3_status[i].ReportKey.TestResult == "Success") {
+        tcCountArray[1] = stats3_status[i].Count
+      } else if (stats3_status[i].ReportKey.TestResult == "ParentFailed") {
+        tcCountArray[2] = stats3_status[i].Count
+      }
+    }
 
     var data = {
             labels: [
