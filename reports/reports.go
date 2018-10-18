@@ -49,7 +49,9 @@ func GenerateTestReport(gStart_str string, gEnd_str string, resultsDir string, r
     GenerateMutationResultsJs(tcReportSlice, resultsDir)
 
     // gauge
-    tcReportSlice.GeStatsGaugeJson()
+    // tcReportSlice.GetStatsGaugeJson()
+    // graphic
+    tcReportSlice.GenerateGraphicJs(resultsDir)
 }
 
 func GenerateHtml (resultsDir string) {

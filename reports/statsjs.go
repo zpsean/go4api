@@ -42,7 +42,7 @@ func (tcReportSlice TcReportSlice) GetStatsJson () []string {
     var reJsons []string
 
     // for index.html details stats
-    statsGaugeJson := tcReportSlice.GeStatsGaugeJson()
+    statsGaugeJson := tcReportSlice.GetStatsGaugeJson()
     reJsons = append(reJsons, statsGaugeJson)
 
     reportsStatsTotalSlice, reJsonTotal := tcReportSlice.GetTotalStatsJson()

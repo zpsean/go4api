@@ -10,8 +10,7 @@
 
 package ui
 
-var Graphic = `
-<!DOCTYPE html>
+var Graphic = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -19,6 +18,7 @@ var Graphic = `
     <script type="text/javascript" src="js/go4api.js"></script>
     <script type="text/javascript" src="js/results.js"></script>
     <script type="text/javascript" src="js/stats.js"></script>
+    <script type="text/javascript" src="js/graphic.js"></script>
   <title>Go4Api Reports</title>
 </head>
 <body>
@@ -67,21 +67,23 @@ var Graphic = `
                               var tcPositions = {}
 
 
-                              for (var i = 0; i < tcResults.length; i++)
+                              for (var key in circles)
                               {
                                   var c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                                  c.setAttribute('cx', (i % 15 + 1) * 50);
-                                  c.setAttribute('cy', (tcResults[i].StartTimeUnixNano - gStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000);
-                                  c.r.baseVal.value = tcResults[i].DurationUnixNano / 100000000 + 5;
+                                  c.setAttribute('cx', circles[key][0]);
+                                  c.setAttribute('cy', circles[key][1]);
+                                  c.r.baseVal.value = circles[key][2];
+                                  c.setAttribute('fill', circles[key][3]);
+
+                                  svgRoot.appendChild(c);
 
 
                                   var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-
-                                  strJons = JSON.stringify(tcResults[i], null, 4)
+                                  strJons = JSON.stringify(circles[key], null, 4)
                                   text.textContent = strJons
 
-                                  text.setAttribute('x', (i % 15 + 1) * 50);
-                                  text.setAttribute('y', (tcResults[i].StartTimeUnixNano - gStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000 - 20)
+                                  text.setAttribute('x', circles[key][0]);
+                                  text.setAttribute('y', circles[key][1])
                                   text.style.width = '400px'
                                   text.setAttribute('fill', 'transparent')
                                   svgRoot.appendChild(text)
@@ -95,66 +97,35 @@ var Graphic = `
                                           text.setAttribute('fill', 'transparent')
                                       })
                                   })(text)
-
-
-
-
-                                  var pos = [(i % 15 + 1) * 50, (tcResults[i].StartTimeUnixNano - gStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000];
-                                  tcPositions[tcResults[i].TcName] = pos;
-
-                                  if (tcResults[i].TestResult == "Success")
-                                      {
-                                      c.setAttribute('fill', 'green');
-                                      }
-                                  else if (tcResults[i].TestResult == "Fail")
-                                      {
-                                      c.setAttribute('fill', 'red');
-                                      }
-                                  else
-                                      {
-                                      c.setAttribute('fill', 'gray');
-                                      }
-
-                                  svgRoot.appendChild(c);
-
-
-                                  if (tcResults[i].Priority != priority)
-                                  {
-                                      var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                                      line.setAttribute('x1', 0);
-                                      line.setAttribute('y1', (tcResults[i].StartTimeUnixNano - gStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000);
-                                      line.setAttribute('x2', 1080);
-                                      line.setAttribute('y2', (tcResults[i].StartTimeUnixNano - gStartUnixNano + tcResults[i].DurationUnixNano / 2) / 10000000);
-                                      line.setAttribute('style', "stroke:rgb(99,99,99);stroke-width:1");
-                                      
-                                      svgRoot.appendChild(line);
-
-                                      priority = tcResults[i].Priority;
-                                  }
                               }
 
-                              for (var parent = 0; parent < tcResults.length; parent++)
+                              for (var key in priorityLines)
                               {
-                                  for (var child = 0; child < tcResults.length; child++)
-                                  {
-                                      if (tcResults[parent].TcName == tcResults[child].ParentTestCase)
-                                      {
-                                          var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                                  var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                                           
-                                          line.setAttribute('x1', tcPositions[tcResults[parent].TcName][0]);
-                                          line.setAttribute('y1', tcPositions[tcResults[parent].TcName][1]);
-                                          line.setAttribute('x2', tcPositions[tcResults[child].TcName][0]);
-                                          line.setAttribute('y2', tcPositions[tcResults[child].TcName][1]);
-                                          line.setAttribute('style', "stroke:rgb(250,99,99);stroke-width:1");
-                                          
-                                          svgRoot.appendChild(line);
-                                      }
-                                  }
+                                  line.setAttribute('x1', priorityLines[key][0]);
+                                  line.setAttribute('y1', priorityLines[key][1]);
+                                  line.setAttribute('x2', priorityLines[key][2]);
+                                  line.setAttribute('y2', priorityLines[key][3]);
+                                  line.setAttribute('style', "stroke:rgb(99,99,99);stroke-width:1");
+
+                                  svgRoot.appendChild(line);
                               }
 
+                              for (var key in parentChildrenlines)
+                              {
+                                  var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                                          
+                                  line.setAttribute('x1', parentChildrenlines[key][0]);
+                                  line.setAttribute('y1', parentChildrenlines[key][1]);
+                                  line.setAttribute('x2', parentChildrenlines[key][2]);
+                                  line.setAttribute('y2', parentChildrenlines[key][3]);
+                                  line.setAttribute('style', "stroke:rgb(250,99,99);stroke-width:1");
+
+                                  svgRoot.appendChild(line);
+                              }
 
                       </script>
-
 
                     </div>
                   </div>
