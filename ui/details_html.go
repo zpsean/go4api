@@ -58,12 +58,14 @@ var Details = `<!DOCTYPE html>
                               <thead>
                                   <tr>
                                       <th id="col-1" class="header sortable"><span>#</span></th>
-                                      <th id="col-2" class="header sortable"><span>Priority</span></th>
-                                      <th id="col-3" class="header sortable"><span>Case ID</span></th>
-                                      <th id="col-4" class="header sortable"><span>ParentTestCase</span></th>
-                                      <th id="col-5" class="header sortable"><span>Status</span></th>
-                                      <th id="col-6" class="header sortable"><span>Case Data</span></th>
-                                      <th id="col-7" class="header sortable"><span>Message</span></th>
+                                      <th id="col-2" class="header sortable"><span>Phase</span></th>
+                                      <th id="col-3" class="header sortable"><span>Priority</span></th>
+                                      <th id="col-4" class="header sortable"><span>Case ID</span></th>
+                                      <th id="col-5" class="header sortable"><span>ParentTestCase</span></th>
+                                      <th id="col-6" class="header sortable"><span>HttpStatus</span></th>
+                                      <th id="col-7" class="header sortable"><span>CaseStatus</span></th>
+                                      <th id="col-8" class="header sortable"><span>Case Data</span></th>
+                                      <th id="col-9" class="header sortable"><span>Message</span></th>
                                   </tr>
                               </thead>
                               <thead>
@@ -71,36 +73,48 @@ var Details = `<!DOCTYPE html>
                                       <th id="col-1-1"></th>
 
                                       <th id="col-2-1">
-                                        <input type="text" id="Priority_input" list="Priority_datalist" size="10" onchange="dataListChange()" />
-                                          <datalist id="Priority_datalist">
+                                        <input type="text" id="Phase_input" list="Phase_datalist" size="10" onchange="dataListChange()" />
+                                          <datalist id="Phase_datalist">
                                         </datalist>
                                       </th>
 
                                       <th id="col-3-1">
-                                        <input type="text" id="caseid_input" list="caseid_datalist" size="30" onchange="dataListChange()" />
-                                          <datalist id="caseid_datalist">
+                                        <input type="text" id="Priority_input" list="Priority_datalist" size="8" onchange="dataListChange()" />
+                                          <datalist id="Priority_datalist">
                                         </datalist>
                                       </th>
 
                                       <th id="col-4-1">
-                                        <input type="text" id="ParentTestCase_input" list="ParentTestCase_datalist" size="30" onchange="dataListChange()" />
-                                          <datalist id="ParentTestCase_datalist">
+                                        <input type="text" id="caseid_input" list="caseid_datalist" size="25" onchange="dataListChange()" />
+                                          <datalist id="caseid_datalist">
                                         </datalist>
                                       </th>
 
                                       <th id="col-5-1">
-                                        <input type="text" id="TestResult_input" list="TestResult_datalist" size="20" onchange="dataListChange()" />
-                                          <datalist id="TestResult_datalist">
+                                        <input type="text" id="ParentTestCase_input" list="ParentTestCase_datalist" size="25" onchange="dataListChange()" />
+                                          <datalist id="ParentTestCase_datalist">
                                         </datalist>
                                       </th>
 
                                       <th id="col-6-1">
-                                        <input type="text" id="CaseData_input" list="CaseData_datalist" size="30" placeholder="Search" onchange="dataListChange()" />
-                                          <datalist id="CaseData_datalist">
+                                        <input type="text" id="HttpResult_input" list="HttpResult_datalist" size="12" onchange="dataListChange()" />
+                                          <datalist id="HttpResult_datalist">
                                         </datalist>
                                       </th>
 
                                       <th id="col-7-1">
+                                        <input type="text" id="TestResult_input" list="TestResult_datalist" size="12" onchange="dataListChange()" />
+                                          <datalist id="TestResult_datalist">
+                                        </datalist>
+                                      </th>
+
+                                      <th id="col-8-1">
+                                        <input type="text" id="CaseData_input" list="CaseData_datalist" size="28" placeholder="Search" onchange="dataListChange()" />
+                                          <datalist id="CaseData_datalist">
+                                        </datalist>
+                                      </th>
+
+                                      <th id="col-8-1">
                                         <input type="text" id="Message_input" list="Message_datalist" size="30" placeholder="Search" onchange="dataListChange()" />
                                           <datalist id="Message_datalist">
                                         </datalist>
@@ -129,14 +143,18 @@ var Details = `<!DOCTYPE html>
                                     var newTd4 = newTr.insertCell();
                                     var newTd5 = newTr.insertCell();
                                     var newTd6 = newTr.insertCell();
+                                    var newTd7 = newTr.insertCell();
+                                    var newTd8 = newTr.insertCell();
                              
                                     newTd0.innerText= i + 1;
-                                    newTd1.innerText = tcResults[i].Priority;
-                                    newTd2.innerText = tcResults[i].TcName;
-                                    newTd3.innerText = tcResults[i].ParentTestCase;
-                                    newTd4.innerText = tcResults[i].TestResult;
-                                    newTd5.innerText = tcResults[i].JsonFilePath + " / " + tcResults[i].CsvFile  + " / " + tcResults[i].CsvRow;
-                                    newTd6.innerText = JSON.stringify(tcResults[i].TestMessages, null, 4);
+                                    newTd1.innerText = tcResults[i].IfGlobalSetUpTearDown;
+                                    newTd2.innerText = tcResults[i].Priority;
+                                    newTd3.innerText = tcResults[i].TcName;
+                                    newTd4.innerText = tcResults[i].ParentTestCase;
+                                    newTd5.innerText = tcResults[i].ActualStatusCode;
+                                    newTd6.innerText = tcResults[i].TestResult;
+                                    newTd7.innerText = tcResults[i].JsonFilePath + " / " + tcResults[i].CsvFile  + " / " + tcResults[i].CsvRow;
+                                    newTd8.innerText = JSON.stringify(tcResults[i].TestMessages, null, 4);
                                 }
                               </script>
 
@@ -161,12 +179,14 @@ var Details = `<!DOCTYPE html>
     var li2 = new Array(4);
     var list2 = new Array(4);
 
-    list1[0] = "Priority";
-    list1[1] = "TcName";
-    list1[2] = "ParentTestCase";
-    list1[3] = "TestResult";
-    list1[4] = "CaseData";
-    list1[5] = "Message";
+    list1[0] = "IfGlobalSetUpTearDown";
+    list1[1] = "Priority";
+    list1[2] = "TcName";
+    list1[3] = "ParentTestCase";
+    list1[4] = "ActualStatusCode";
+    list1[5] = "TestResult";
+    list1[6] = "CaseData";
+    list1[7] = "Message";
 
     li2[0] = new Array;
     li2[1] = new Array;
@@ -174,6 +194,8 @@ var Details = `<!DOCTYPE html>
     li2[3] = new Array;
     li2[4] = new Array;
     li2[5] = new Array;
+    li2[6] = new Array;
+    li2[7] = new Array;
 
     list2[0] = new Array;
     list2[1] = new Array;
@@ -181,6 +203,8 @@ var Details = `<!DOCTYPE html>
     list2[3] = new Array;
     list2[4] = new Array;
     list2[5] = new Array;
+    list2[6] = new Array;
+    list2[7] = new Array;
 
     for(var i = 0; i < list1.length; i++)
     {
@@ -212,33 +236,36 @@ var Details = `<!DOCTYPE html>
     var tcResults;
 
     window.onload = function() {
-      populateDatalist("Priority_datalist", 0)
-      populateDatalist("caseid_datalist", 1)
-      populateDatalist("ParentTestCase_datalist", 2)
-      populateDatalist("TestResult_datalist", 3)
+      populateDatalist("Phase_datalist", 0)
+      populateDatalist("Priority_datalist", 1)
+      populateDatalist("caseid_datalist", 2)
+      populateDatalist("ParentTestCase_datalist", 3)
+      populateDatalist("HttpResult_datalist", 4)
+      populateDatalist("TestResult_datalist", 5)
       // populateDatalist("CaseData_datalist", 4)
       // populateDatalist("Message_datalist", 5)
     }
 
     function dataListChange(){
-      var v0 = document.getElementById("Priority_input").value
-      var v1 = document.getElementById("caseid_input").value
-      var v2 = document.getElementById("ParentTestCase_input").value
-      var v3 = document.getElementById("TestResult_input").value
-      var v4 = document.getElementById("CaseData_input").value
-      var v5 = document.getElementById("Message_input").value
+      var v1 = document.getElementById("Phase_input").value
+      var v2 = document.getElementById("Priority_input").value
+      var v3 = document.getElementById("caseid_input").value
+      var v4 = document.getElementById("ParentTestCase_input").value
+      var v5 = document.getElementById("HttpResult_input").value
+      var v6 = document.getElementById("TestResult_input").value
+      var v7 = document.getElementById("CaseData_input").value
+      var v8 = document.getElementById("Message_input").value
 
       clearRows()
-      insertRows(v0, v1, v2, v3, v4, v5)
+      insertRows(v1, v2, v3, v4, v5, v6, v7, v8)
     }
 
-
-    function insertRows(v0, v1, v2, v3, v4, v5){
+    function insertRows(v1, v2, v3, v4, v5, v6, v7, v8){
       for (var i = 0; i < tcResults.length; i++)
       {   
-          if (searchCriteria(i, v0, v1, v2, v3, v4, v5)) {
+          if (searchCriteria(i, v1, v2, v3, v4, v5, v6, v7, v8)) {
             var newTr = container_statistics_body.insertRow();
-                                    
+                
             var newTd0 = newTr.insertCell();
             var newTd1 = newTr.insertCell();
             var newTd2 = newTr.insertCell();
@@ -246,23 +273,29 @@ var Details = `<!DOCTYPE html>
             var newTd4 = newTr.insertCell();
             var newTd5 = newTr.insertCell();
             var newTd6 = newTr.insertCell();
-
-            newTd0.innerText = i + 1;
-            newTd1.innerText = tcResults[i].Priority;
-            newTd2.innerText = tcResults[i].TcName;
-            newTd3.innerText = tcResults[i].ParentTestCase;
-            newTd4.innerText = tcResults[i].TestResult;
-            newTd5.innerText = tcResults[i].JsonFilePath + " / " + tcResults[i].CsvFile  + " / " + tcResults[i].CsvRow;
-            newTd6.innerText = JSON.stringify(tcResults[i].TestMessages, null, 4);
+            var newTd7 = newTr.insertCell();
+            var newTd8 = newTr.insertCell();
+     
+            newTd0.innerText= i + 1;
+            newTd1.innerText = tcResults[i].IfGlobalSetUpTearDown;
+            newTd2.innerText = tcResults[i].Priority;
+            newTd3.innerText = tcResults[i].TcName;
+            newTd4.innerText = tcResults[i].ParentTestCase;
+            newTd5.innerText = tcResults[i].ActualStatusCode;
+            newTd6.innerText = tcResults[i].TestResult;
+            newTd7.innerText = tcResults[i].JsonFilePath + " / " + tcResults[i].CsvFile  + " / " + tcResults[i].CsvRow;
+            newTd8.innerText = JSON.stringify(tcResults[i].TestMessages, null, 4);
           }   
       }
     }
 
-    function searchCriteria(i, v0, v1, v2, v3, v4, v5){
-      if (searchStr(tcResults[i].Priority, v0) && searchStr(tcResults[i].TcName, v1)
-        && searchStr(tcResults[i].ParentTestCase, v2) && searchStr(tcResults[i].TestResult, v3)
-        && searchStr(tcResults[i].JsonFilePath + " / " + tcResults[i].CsvFile  + " / " + tcResults[i].CsvRow, v4)
-        && searchStr(JSON.stringify(tcResults[i].TestMessages), v5)) {
+    function searchCriteria(i, v1, v2, v3, v4, v5, v6, v7, v8){
+      if (searchStr(tcResults[i].IfGlobalSetUpTearDown, v1) && searchStr(tcResults[i].Priority, v2) 
+        && searchStr(tcResults[i].TcName, v3)
+        && searchStr(tcResults[i].ParentTestCase, v4) && searchStr(tcResults[i].ActualStatusCode, v5)
+        && searchStr(tcResults[i].TestResult, v6)
+        && searchStr(tcResults[i].JsonFilePath + " / " + tcResults[i].CsvFile  + " / " + tcResults[i].CsvRow, v7)
+        && searchStr(JSON.stringify(tcResults[i].TestMessages), v8)) {
         return true
       } else {
         return false

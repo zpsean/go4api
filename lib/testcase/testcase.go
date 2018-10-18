@@ -375,11 +375,11 @@ func (tcExecution *TestCaseExecutionInfo) TcConsoleResults() *TcConsoleResults {
 func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
     ifGlobalSetUpTearDown := ""
     if tcExecution.TestCaseDataInfo.TestCase.IfGlobalSetUpTestCase() == true {
-        ifGlobalSetUpTearDown = "SetUp"
+        ifGlobalSetUpTearDown = "GlobalSetUp"
     } else if tcExecution.TestCaseDataInfo.TestCase.IfGlobalTearDownTestCase() == true {
-        ifGlobalSetUpTearDown = "TearDown"
+        ifGlobalSetUpTearDown = "GlobalTearDown"
     }
-
+    
     tcReportRes := &TcReportResults { 
         TcName: tcExecution.TcName(),
         IfGlobalSetUpTearDown: ifGlobalSetUpTearDown,

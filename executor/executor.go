@@ -143,7 +143,8 @@ func RunFinalConsoleReport (totalTcCount int, setUpTcTreeStats tree.TcTreeStats,
     fmt.Println("")
     fmt.Println("Final Test Execution Statistics")
 
-    reports.ReportConsoleOverall(totalTcCount, "Overall", normalTcTreeStats.StatusCountByPriority)
+    reports.ReportConsoleOverall(totalTcCount, "Overall", setUpTcTreeStats.StatusCountByPriority, 
+        normalTcTreeStats.StatusCountByPriority, teardownTcTreeStats.StatusCountByPriority)
 }
 
 func RunFinalReport (ch chan int, gStart_str string, resultsDir string, resultsLogFile string) {

@@ -64,6 +64,12 @@ type MStatsJs struct {
     StatsStr_3 string
 }
 
+type GraphicJs struct {
+    Circles string
+    PriorityLines string
+    ParentChildrenLines string
+}
+
 
 func GetTemplateFromString() {
     type Inventory struct {
@@ -155,6 +161,28 @@ func GenerateMutationResultsJs(strVar string, targetFile string, resultsJs []str
       panic(err) 
     }
 }
+
+func GenerateGraphicJs(strVar string, targetFile string, resultsJs []string) {
+    outFile, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+    if err != nil {
+       panic(err) 
+    }
+    defer outFile.Close()
+    //
+    tmpl := template.Must(template.New("HtmlJsCss").Parse(strVar))
+
+    graphicJs := GraphicJs {
+        Circles: resultsJs[0],
+        PriorityLines: resultsJs[1],
+        ParentChildrenLines: resultsJs[2],
+    }
+
+    err = tmpl.Execute(outFile, graphicJs)
+    if err != nil {
+      panic(err) 
+    }
+}
+
 
 func GenerateJsonBasedOnTemplateAndCsv(jsonFilePath string, testData map[string]interface{}) *bytes.Buffer {
     jsonTemplateBytes := utils.GetContentFromFile(jsonFilePath)

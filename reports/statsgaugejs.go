@@ -46,7 +46,7 @@ type PerformanceGauge struct {
 //     texttmpl.GenerateStatsGaugeJs(js.StatsGauge, statsFile, reJsons)
 // }
 
-func (tcReportSlice TcReportSlice) GeStatsGaugeJson () string {
+func (tcReportSlice TcReportSlice) GetStatsGaugeJson () string {
     var finalStatsGaugeSlice []StatsGauge
 
     reportsStatsGaugeSliceL1 := tcReportSlice.GetStatsGaugeJsonL1()

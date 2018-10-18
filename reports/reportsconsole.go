@@ -87,12 +87,20 @@ func ReportConsoleByPriority (totalTc int, priority string, statusCountByPriorit
     fmt.Println("---------------------------------------------------------------------------------")
 }
 
-func ReportConsoleOverall (totalTc int, key string, statusCountByPriority map[string]map[string]int) {
+func ReportConsoleOverall (totalTc int, key string, params ... map[string]map[string]int) {
     // ---
-    var totalCount = statusCountByPriority[key]["Total"]
-    var successCount = statusCountByPriority[key]["Success"]
-    var failCount = statusCountByPriority[key]["Fail"]
-    var skipCount = statusCountByPriority[key]["ParentFailed"]
+    var totalCount = 0
+    var successCount = 0
+    var failCount = 0
+    var skipCount = 0
+
+    for _, param := range params {
+        totalCount = totalCount + param[key]["Total"]
+        successCount = successCount + param[key]["Success"]
+        failCount = failCount + param[key]["Fail"]
+        skipCount = skipCount + param[key]["ParentFailed"]
+    }
+    
     //
     fmt.Println("---------------------------------------------------------------------------------")
     fmt.Println("----- " + key + ": " + strconv.Itoa(totalTc) + " Cases in Source")
