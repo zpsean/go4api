@@ -11,7 +11,9 @@
 package gsession
 
 import (
+ 	"fmt"
     "sync"
+    "encoding/json"
 )
 
 var Gsession sync.Map
@@ -29,4 +31,7 @@ func LookupParentSession (parentTcName string) map[string]interface{} {
 
 func WriteTcSession (tcName string, tcSession map[string]interface{}) {
     Gsession.Store(tcName, tcSession)
+
+    reJson, _ := json.MarshalIndent(tcSession, "", "\t")
+    fmt.Println(string(reJson))
 }

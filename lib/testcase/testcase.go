@@ -106,7 +106,7 @@ func (tc *TestCase) SetRequestHeader (key string, newValue string) {
 }
 
 func (tc *TestCase) AddRequestHeader (key string, newValue string) {
-    reqH := tc.ReqQueryString()
+    reqH := tc.ReqHeaders()
     // if has key, value already
     if len(reqH) > 0 {
         (*tc)[tc.TcName()].Request.Headers[key] = newValue
