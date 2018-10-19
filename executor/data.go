@@ -22,7 +22,7 @@ import (
 // data lookup sequence, latter override former one(s)
 // config (json) -> env variables (key, value) -> session (key, value) -> data file (*_dt) / data file (inputs)
 
-func MergeTestData (csvHeader []string, csvRow []interface{}) map[string]interface{} {
+func MergeTestData (csvHeader []string, csvRow []interface{}, parentTcName string) map[string]interface{} {
     var finalMap = make(map[string]interface{})
     // check if config
 
@@ -33,7 +33,7 @@ func MergeTestData (csvHeader []string, csvRow []interface{}) map[string]interfa
     }
 
     // 3
-    sessionMap := gsession.LookupParentSession("")
+    sessionMap := gsession.LookupParentSession(parentTcName)
     for k, v := range sessionMap {
         finalMap[k] = v
     }

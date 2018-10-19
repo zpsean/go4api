@@ -41,9 +41,9 @@ func GetTcArray () []testcase.TestCaseDataInfo {
         var tcInfos []testcase.TestCaseDataInfo
 
         if len(csvFileList) > 0 {
-            tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
+            tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList, "")
         } else {
-            tcInfos = ConstructTcInfosBasedOnJson(jsonFile)
+            tcInfos = ConstructTcInfosBasedOnJson(jsonFile, "")
         }
 
         for _, tcData := range tcInfos {
@@ -96,7 +96,7 @@ func GetCsvDataFilesForJsonFile (jsonFile string, suffix string) []string {
 }
 
 
-func ConstructTcInfosBasedOnJsonTemplateAndDataTables (jsonFile string, csvFileList []string) []testcase.TestCaseDataInfo {
+func ConstructTcInfosBasedOnJsonTemplateAndDataTables (jsonFile string, csvFileList []string, parentTcName string) []testcase.TestCaseDataInfo {
     var tcInfos []testcase.TestCaseDataInfo
 
     for _, csvFile := range csvFileList {
@@ -107,10 +107,10 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables (jsonFile string, csvFileL
             if i > 0 {
                 // note: here pass the csvRows[0], csvRow, but they can be replaced by map[string]interface{} for later enhancement
                 var cvsRowInterface []interface{}
-                for i, _ := range csvRow {
-                    cvsRowInterface = append(cvsRowInterface, csvRow[i])
+                for rowI, _ := range csvRow {
+                    cvsRowInterface = append(cvsRowInterface, csvRow[rowI])
                 }
-                mergedTestData := MergeTestData(csvRows[0], cvsRowInterface)
+                mergedTestData := MergeTestData(csvRows[0], cvsRowInterface, parentTcName)
 
                 outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, mergedTestData)
 
@@ -118,10 +118,10 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables (jsonFile string, csvFileL
                 resJson, _ := ioutil.ReadAll(outTempJson)
                 json.Unmarshal([]byte(resJson), &tcases)
                 // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
-                for i, _ := range tcases {
+                for tcI, _ := range tcases {
                     // populate the testcase.TestCaseDataInfo
                     tcaseData := testcase.TestCaseDataInfo {
-                        TestCase: &tcases[i],
+                        TestCase: &tcases[tcI],
                         JsonFilePath: jsonFile,
                         CsvFile: csvFile,
                         CsvRow: strconv.Itoa(i + 1),
@@ -134,13 +134,13 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables (jsonFile string, csvFileL
     return tcInfos
 }
 
-func ConstructTcInfosBasedOnJson (jsonFile string) []testcase.TestCaseDataInfo {
+func ConstructTcInfosBasedOnJson (jsonFile string, parentTcName string) []testcase.TestCaseDataInfo {
     var tcInfos []testcase.TestCaseDataInfo
 
     csvFile := ""
     csvRow := ""
     // mergedTestData := map[string]interface{}{}
-    mergedTestData := MergeTestData([]string{""}, []interface{}{})
+    mergedTestData := MergeTestData([]string{""}, []interface{}{}, parentTcName)
 
     outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, mergedTestData)
     
@@ -248,7 +248,7 @@ func GetFuzzTcArray () []testcase.TestCaseDataInfo {
         // tcInfos: [[casename, priority, parentTestCase, ], ...]
         var tcInfos []testcase.TestCaseDataInfo
         if len(csvFileList) > 0 {
-            tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
+            tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList, "")
         }
 
         for _, tcData := range tcInfos {
@@ -269,9 +269,9 @@ func GetOriginMutationTcArray () []testcase.TestCaseDataInfo {
 
         var tcInfos []testcase.TestCaseDataInfo
         if len(csvFileList) > 0 {
-            tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
+            tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList, "")
         } else {
-            tcInfos = ConstructTcInfosBasedOnJson(jsonFile)
+            tcInfos = ConstructTcInfosBasedOnJson(jsonFile, "")
         }
 
         for _, tcData := range tcInfos {
