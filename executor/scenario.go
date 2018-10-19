@@ -78,6 +78,9 @@ func RunScenario (ch chan int, baseUrl string, resultsDir string, resultsLogFile
     }
     logFilePtr.Close()
 
+    reJson, _ := json.MarshalIndent(tcTree, "", "\t")
+    fmt.Println(string(reJson))
+
     return tcTreeStats
 }
 
