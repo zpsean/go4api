@@ -78,9 +78,6 @@ func RunScenario (ch chan int, baseUrl string, resultsDir string, resultsLogFile
     }
     logFilePtr.Close()
 
-    reJson, _ := json.MarshalIndent(tcTree, "", "\t")
-    fmt.Println(string(reJson))
-
     return tcTreeStats
 }
 
@@ -163,9 +160,9 @@ func ConstructChildTcInfosBasedOnParentRoot (jsonFileList []string, parentTcName
             csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_dt")
 
             if len(csvFileList) > 0 {
-                tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
+                tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList, parentTcName)
             } else {
-                tcInfos = ConstructTcInfosBasedOnJson(jsonFile)
+                tcInfos = ConstructTcInfosBasedOnJson(jsonFile, parentTcName)
             }
             
             for _, tcData := range tcInfos {
@@ -185,14 +182,15 @@ func ConstructChildTcInfosBasedOnParentTcName (jsonFileList []string, parentTcNa
         parentTcNames := GetBasicParentTestCaseInfosPerFile(jsonFile, parentTcName)
         //
         if len(parentTcNames) > 0 {
-            csvFileList := GetBasicInputsFilesPerFile(jsonFile)
+            csvInputsFileList := GetBasicInputsFilesPerFile(jsonFile)
             // if has inputs -> if has *_dt -> use json
-            if len(csvFileList) > 0 && utils.CheckFilesExistence(csvFileList) {
-                tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList)
+            if len(csvInputsFileList) > 0 && utils.CheckFilesExistence(csvInputsFileList) {
+                tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvInputsFileList, parentTcName)
             } else if len(GetCsvDataFilesForJsonFile(jsonFile, "_dt")) > 0 {
-                tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, GetCsvDataFilesForJsonFile(jsonFile, "_dt"))
+                dtFileList := GetCsvDataFilesForJsonFile(jsonFile, "_dt")
+                tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, dtFileList, parentTcName)
             } else {
-                tcInfos = ConstructTcInfosBasedOnJson(jsonFile)
+                tcInfos = ConstructTcInfosBasedOnJson(jsonFile, parentTcName)
             }
 
             for _, tcData := range tcInfos {
