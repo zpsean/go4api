@@ -10,8 +10,7 @@
 
 package ui
 
-var Mutation = `
-<!DOCTYPE html>
+var Mutation = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -139,7 +138,7 @@ var Mutation = `
                           </table>
 
                           <div class="scrollable">
-                              <table id="container_statistics_body" class="statistics-in extensible-geant">
+                              <table id="container_statistics_body" style="word-wrap:break-word;word-break:break-all"; class="statistics-in extensible-geant">
                                   <tbody></tbody>
                               </table>
 
@@ -160,6 +159,18 @@ var Mutation = `
                                     var newTd8 = newTr.insertCell();
                                     var newTd9 = newTr.insertCell();
                                     var newTd10 = newTr.insertCell();
+
+                                    newTd0.width="30px";
+                                    newTd1.width="120px";
+                                    newTd2.width="165px";
+                                    newTd3.width="50px";
+                                    newTd4.width="70px";
+                                    newTd5.width="95px";
+                                    newTd6.width="185px";
+                                    newTd7.width="50px";
+                                    newTd8.width="60px";
+                                    newTd9.width="40px";
+                                    newTd10.width="254px";
                              
                                     newTd0.innerText = i + 1;
                                     newTd1.innerText = tcResults[i].TcName;

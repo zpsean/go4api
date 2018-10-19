@@ -378,6 +378,8 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
         ifGlobalSetUpTearDown = "GlobalSetUp"
     } else if tcExecution.TestCaseDataInfo.TestCase.IfGlobalTearDownTestCase() == true {
         ifGlobalSetUpTearDown = "GlobalTearDown"
+    } else {
+        ifGlobalSetUpTearDown = "RegularCases"
     }
     
     tcReportRes := &TcReportResults { 
