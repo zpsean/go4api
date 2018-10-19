@@ -56,66 +56,73 @@ var Details = `<!DOCTYPE html>
                           
                           <table id="container_statistics_head" class="statistics-in extensible-geant">
                               <thead>
-                                  <tr>
-                                      <th id="col-1" class="header sortable"><span>#</span></th>
-                                      <th id="col-2" class="header sortable"><span>Phase</span></th>
-                                      <th id="col-3" class="header sortable"><span>Priority</span></th>
-                                      <th id="col-4" class="header sortable"><span>Case ID</span></th>
-                                      <th id="col-5" class="header sortable"><span>ParentTestCase</span></th>
-                                      <th id="col-6" class="header sortable"><span>HttpStatus</span></th>
-                                      <th id="col-7" class="header sortable"><span>CaseStatus</span></th>
-                                      <th id="col-8" class="header sortable"><span>Case Data</span></th>
-                                      <th id="col-9" class="header sortable"><span>Message</span></th>
+                                  <tr style="word-wrap:break-word;word-break:normal";>
+                                      <th id="col-1" width="30px"; class="header sortable"><span>#</span></th>
+                                      <th id="col-2" width="95px"; class="header sortable"><span>Phase</span></th>
+                                      <th id="col-3" width="40px"; class="header sortable"><span>Pri-ority</span></th>
+                                      <th id="col-4" width="120px"; class="header sortable"><span>Case ID</span></th>
+                                      <th id="col-5" width="120px"; class="header sortable"><span>Parent-TestCase</span></th>
+                                      <th id="col-6" width="95px"; class="header sortable"><span>Http-Status</span></th>
+                                      <th id="col-7" width="95px"; class="header sortable"><span>Case-Status</span></th>
+                                      <th id="col-8" width="50px"; class="header sortable"><span>Duration-(ms)</span></th>
+                                      <th id="col-9" width="160px"; class="header sortable"><span>Case Data</span></th>
+                                      <th id="col-10" width="314px";  class="header sortable"><span>Message</span></th>
                                   </tr>
                               </thead>
                               <thead>
                                   <tr>
-                                      <th id="col-1-1"></th>
+                                      <th id="col-1-1" ></th>
 
                                       <th id="col-2-1">
-                                        <input type="text" id="Phase_input" list="Phase_datalist" size="10" onchange="dataListChange()" />
+                                        <input type="text" id="Phase_input" list="Phase_datalist" style="width:80px" onchange="dataListChange()" />
                                           <datalist id="Phase_datalist">
                                         </datalist>
                                       </th>
 
                                       <th id="col-3-1">
-                                        <input type="text" id="Priority_input" list="Priority_datalist" size="8" onchange="dataListChange()" />
+                                        <input type="text" id="Priority_input" list="Priority_datalist" style="width:38px" onchange="dataListChange()" />
                                           <datalist id="Priority_datalist">
                                         </datalist>
                                       </th>
 
                                       <th id="col-4-1">
-                                        <input type="text" id="caseid_input" list="caseid_datalist" size="25" onchange="dataListChange()" />
+                                        <input type="text" id="caseid_input" list="caseid_datalist" style="width:110px" onchange="dataListChange()" />
                                           <datalist id="caseid_datalist">
                                         </datalist>
                                       </th>
 
                                       <th id="col-5-1">
-                                        <input type="text" id="ParentTestCase_input" list="ParentTestCase_datalist" size="25" onchange="dataListChange()" />
+                                        <input type="text" id="ParentTestCase_input" list="ParentTestCase_datalist" style="width:110px" onchange="dataListChange()" />
                                           <datalist id="ParentTestCase_datalist">
                                         </datalist>
                                       </th>
 
                                       <th id="col-6-1">
-                                        <input type="text" id="HttpResult_input" list="HttpResult_datalist" size="12" onchange="dataListChange()" />
+                                        <input type="text" id="HttpResult_input" list="HttpResult_datalist" style="width:85px" onchange="dataListChange()" />
                                           <datalist id="HttpResult_datalist">
                                         </datalist>
                                       </th>
 
                                       <th id="col-7-1">
-                                        <input type="text" id="TestResult_input" list="TestResult_datalist" size="12" onchange="dataListChange()" />
+                                        <input type="text" id="TestResult_input" list="TestResult_datalist" style="width:85px" onchange="dataListChange()" />
                                           <datalist id="TestResult_datalist">
                                         </datalist>
                                       </th>
 
                                       <th id="col-8-1">
-                                        <input type="text" id="CaseData_input" list="CaseData_datalist" size="28" placeholder="Search" onchange="dataListChange()" />
+                                        <input type="text" id="Duration_input" list="Duration_datalist" style="width:50px" onchange="dataListChange()" />
+                                          <datalist id="Duration_datalist">
+                                        </datalist>
+                                      </th>
+
+                                      <th id="col-9-1">
+                                        <input type="text" id="CaseData_input" list="CaseData_datalist" style="width:150px" placeholder="Search" onchange="dataListChange()" />
                                           <datalist id="CaseData_datalist">
                                         </datalist>
                                       </th>
 
-                                      <th id="col-8-1">
-                                        <input type="text" id="Message_input" list="Message_datalist" size="30" placeholder="Search" onchange="dataListChange()" />
+                                      <th id="col-10-1">
+                                        <input type="text" id="Message_input" list="Message_datalist" style="width:210px" placeholder="Search" onchange="dataListChange()" />
                                           <datalist id="Message_datalist">
                                         </datalist>
                                       </th>
@@ -127,7 +134,7 @@ var Details = `<!DOCTYPE html>
                           </table>
 
                           <div class="scrollable">
-                              <table id="container_statistics_body" class="statistics-in extensible-geant">
+                              <table id="container_statistics_body" style="word-wrap:break-word;word-break:break-all"; class="statistics-in extensible-geant">
                                   <tbody></tbody>
                               </table>
 
@@ -145,6 +152,18 @@ var Details = `<!DOCTYPE html>
                                     var newTd6 = newTr.insertCell();
                                     var newTd7 = newTr.insertCell();
                                     var newTd8 = newTr.insertCell();
+                                    var newTd9 = newTr.insertCell();
+
+                                    newTd0.width="30px";
+                                    newTd1.width="95px";
+                                    newTd2.width="40px";
+                                    newTd3.width="120px";
+                                    newTd4.width="120px";
+                                    newTd5.width="95px";
+                                    newTd6.width="95px";
+                                    newTd7.width="50px";
+                                    newTd8.width="160px";
+                                    newTd9.width="314px";
                              
                                     newTd0.innerText= i + 1;
                                     newTd1.innerText = tcResults[i].IfGlobalSetUpTearDown;
@@ -153,8 +172,9 @@ var Details = `<!DOCTYPE html>
                                     newTd4.innerText = tcResults[i].ParentTestCase;
                                     newTd5.innerText = tcResults[i].ActualStatusCode;
                                     newTd6.innerText = tcResults[i].TestResult;
-                                    newTd7.innerText = tcResults[i].JsonFilePath + " / " + tcResults[i].CsvFile  + " / " + tcResults[i].CsvRow;
-                                    newTd8.innerText = JSON.stringify(tcResults[i].TestMessages, null, 4);
+                                    newTd7.innerText = tcResults[i].DurationUnixNano / 1000000;
+                                    newTd8.innerText = tcResults[i].JsonFilePath + "\n\n" + tcResults[i].CsvFile  + "\n\n" + tcResults[i].CsvRow;
+                                    newTd9.innerText = JSON.stringify(tcResults[i].TestMessages, null, 4);
                                 }
                               </script>
 
@@ -275,6 +295,18 @@ var Details = `<!DOCTYPE html>
             var newTd6 = newTr.insertCell();
             var newTd7 = newTr.insertCell();
             var newTd8 = newTr.insertCell();
+            var newTd9 = newTr.insertCell();
+
+            newTd0.width="30px";
+            newTd1.width="95px";
+            newTd2.width="40px";
+            newTd3.width="120px";
+            newTd4.width="120px";
+            newTd5.width="95px";
+            newTd6.width="95px";
+            newTd7.width="50px";
+            newTd8.width="160px";
+            newTd9.width="314px";
      
             newTd0.innerText= i + 1;
             newTd1.innerText = tcResults[i].IfGlobalSetUpTearDown;
@@ -283,8 +315,9 @@ var Details = `<!DOCTYPE html>
             newTd4.innerText = tcResults[i].ParentTestCase;
             newTd5.innerText = tcResults[i].ActualStatusCode;
             newTd6.innerText = tcResults[i].TestResult;
-            newTd7.innerText = tcResults[i].JsonFilePath + " / " + tcResults[i].CsvFile  + " / " + tcResults[i].CsvRow;
-            newTd8.innerText = JSON.stringify(tcResults[i].TestMessages, null, 4);
+            newTd7.innerText = tcResults[i].DurationUnixNano / 1000000;
+            newTd8.innerText = tcResults[i].JsonFilePath + "\n\n" + tcResults[i].CsvFile  + "\n\n" + tcResults[i].CsvRow;
+            newTd9.innerText = JSON.stringify(tcResults[i].TestMessages, null, 4);
           }   
       }
     }

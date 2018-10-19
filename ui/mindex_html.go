@@ -71,11 +71,11 @@ var MIndex = `<!DOCTYPE html>
                           <table id="container_statistics_head" class="statistics-in extensible-geant">
                               <thead>
                                   <tr>
-                                      <th id="col-1" class="header sortable"><span>#</span></th>
-                                      <th id="col-2" class="header sortable"><span>HttpUrl</span></th>
-                                      <th id="col-2" class="header sortable"><span>HttpMethod</span></th>
-                                      <th id="col-4" class="header sortable"><span>HttpStatus</span></th>
-                                      <th id="col-5" class="header sortable"><span>Count</span></th>
+                                      <th id="col-1" width="50px" class="header sortable"><span>#</span></th>
+                                      <th id="col-2" width="300px" class="header sortable"><span>HttpUrl</span></th>
+                                      <th id="col-2" width="300px" class="header sortable"><span>HttpMethod</span></th>
+                                      <th id="col-4" width="300px" class="header sortable"><span>HttpStatus</span></th>
+                                      <th id="col-5" width="140px" class="header sortable"><span>Count</span></th>
                                   </tr>
                               </thead>
                               <tbody></tbody>
@@ -97,6 +97,12 @@ var MIndex = `<!DOCTYPE html>
                                     var newTd2 = newTr.insertCell();
                                     var newTd3 = newTr.insertCell();
                                     var newTd4 = newTr.insertCell();
+
+                                    newTd0.width="50px";
+                                    newTd1.width="300px";
+                                    newTd2.width="300px";
+                                    newTd3.width="300px";
+                                    newTd4.width="140px";
 
                                     newTd0.innerText = i;
                                     newTd1.innerText = mutationStats1[i].ReportKey.Path;
@@ -125,12 +131,12 @@ var MIndex = `<!DOCTYPE html>
                           <table id="container_statistics_head" class="statistics-in extensible-geant">
                               <thead>
                                   <tr>
-                                      <th id="col-1" class="header sortable"><span>#</span></th>
-                                      <th id="col-2" class="header sortable"><span>HttpUrl</span></th>
-                                      <th id="col-2" class="header sortable"><span>HttpMethod</span></th>
-                                      <th id="col-3" class="header sortable"><span>MutationPart</span></th>
-                                      <th id="col-4" class="header sortable"><span>HttpStatus</span></th>
-                                      <th id="col-5" class="header sortable"><span>Count</span></th>
+                                      <th id="col-1" width="50px"  class="header sortable"><span>#</span></th>
+                                      <th id="col-2" width="300px" class="header sortable"><span>HttpUrl</span></th>
+                                      <th id="col-2" width="300px" class="header sortable"><span>HttpMethod</span></th>
+                                      <th id="col-3" width="300px" class="header sortable"><span>MutationPart</span></th>
+                                      <th id="col-4" width="70px" class="header sortable"><span>HttpStatus</span></th>
+                                      <th id="col-5" width="70px" class="header sortable"><span>Count</span></th>
                                   </tr>
                               </thead>
                               <tbody></tbody>
@@ -154,6 +160,13 @@ var MIndex = `<!DOCTYPE html>
                                     var newTd4 = newTr.insertCell();
                                     var newTd5 = newTr.insertCell();
 
+                                    newTd0.width="50px";
+                                    newTd1.width="300px";
+                                    newTd2.width="300px";
+                                    newTd3.width="300px";
+                                    newTd4.width="70px";
+                                    newTd5.width="70px";
+
                                     newTd0.innerText = i;
                                     newTd1.innerText = mutationStats2[i].ReportKey.Path;
                                     newTd2.innerText = mutationStats2[i].ReportKey.Method;
@@ -175,13 +188,13 @@ var MIndex = `<!DOCTYPE html>
                           <table id="container_statistics_head" class="statistics-in extensible-geant">
                               <thead>
                                   <tr>
-                                      <th id="col-1" class="header sortable"><span>#</span></th>
-                                      <th id="col-2" class="header sortable"><span>HttpUrl</span></th>
-                                      <th id="col-2" class="header sortable"><span>HttpMethod</span></th>
-                                      <th id="col-3" class="header sortable"><span>MutationPart</span></th>
-                                      <th id="col-4" class="header sortable"><span>MutationCategory</span></th>
-                                      <th id="col-5" class="header sortable"><span>HttpStatus</span></th>
-                                      <th id="col-6" class="header sortable"><span>Count</span></th>
+                                      <th id="col-1" width="50px"  class="header sortable"><span>#</span></th>
+                                      <th id="col-2" width="300px" class="header sortable"><span>HttpUrl</span></th>
+                                      <th id="col-2" width="260px" class="header sortable"><span>HttpMethod</span></th>
+                                      <th id="col-3" width="260px" class="header sortable"><span>MutationPart</span></th>
+                                      <th id="col-4" width="70px"  class="header sortable"><span>MutationCategory</span></th>
+                                      <th id="col-5" width="70px"  class="header sortable"><span>HttpStatus</span></th>
+                                      <th id="col-6" width="70px" class="header sortable"><span>Count</span></th>
                                   </tr>
                               </thead>
                               <tbody></tbody>
@@ -205,6 +218,14 @@ var MIndex = `<!DOCTYPE html>
                                     var newTd4 = newTr.insertCell();
                                     var newTd5 = newTr.insertCell();
                                     var newTd6 = newTr.insertCell();
+
+                                    newTd0.width="50px";
+                                    newTd1.width="300px";
+                                    newTd2.width="300px";
+                                    newTd3.width="300px";
+                                    newTd4.width="70px";
+                                    newTd5.width="70px";
+                                    newTd6.width="70px";
 
                                     newTd0.innerText = i;
                                     newTd1.innerText = mutationStats3[i].ReportKey.Path;

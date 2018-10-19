@@ -72,22 +72,23 @@ var Index = `<!DOCTYPE html>
                           <table id="container_statistics_head" class="statistics-in extensible-geant">
                               <thead>
                                   <tr>
-                                      <th rowspan="2" id="col-1" class="header sortable sorted-up"><span>Phase</span></th>
-                                      <th colspan="3" class="header"><span class="executions">Executions</span></th>
-                                      <th colspan="7" class="header"><span class="response-time">Response Time (ns)</span></th>
+                                      <th rowspan="2" id="col-1" width="139px" class="header sortable sorted-up"><span>Phase</span></th>
+                                      <th colspan="3" width="95px" class="header"><span class="executions">Executions</span></th>
+                                      <th colspan="8" width="95px" class="header"><span class="response-time">Response Time (ns)</span></th>
                                   </tr>
                                   <tr>
-                                      <th id="col-2" class="header sortable"><span>Priority</span></th>
-                                      <th id="col-3" class="header sortable"><span>Status</span></th>
-                                      <th id="col-4" class="header sortable"><span>Count</span></th>
+                                      <th id="col-2" width="95px" class="header sortable"><span>Priority</span></th>
+                                      <th id="col-3" width="95px" class="header sortable"><span>Status</span></th>
+                                      <th id="col-4" width="95px" class="header sortable"><span>Count</span></th>
 
-                                      <th id="col-7" class="header sortable"><span>Min</span></th>
-                                      <th id="col-8" class="header sortable"><span>50th pct</span></th>
-                                      <th id="col-9" class="header sortable"><span>75th pct</span></th>
-                                      <th id="col-10" class="header sortable"><span>95th pct</span></th>
-                                      <th id="col-11" class="header sortable"><span>99th pct</span></th>
-                                      <th id="col-12" class="header sortable"><span>Max</span></th>
-                                      <th id="col-13" class="header sortable"><span>Mean</span></th>
+                                      <th id="col-7" width="95px" class="header sortable"><span>Min</span></th>
+                                      <th id="col-8" width="95px" class="header sortable"><span>50th pct</span></th>
+                                      <th id="col-9" width="95px" class="header sortable"><span>75th pct</span></th>
+                                      <th id="col-10" width="95px" class="header sortable"><span>95th pct</span></th>
+                                      <th id="col-11" width="95px" class="header sortable"><span>99th pct</span></th>
+                                      <th id="col-12" width="95px" class="header sortable"><span>Max</span></th>
+                                      <th id="col-13" width="95px" class="header sortable"><span>Mean</span></th>
+                                      <th id="col-14" width="95px" class="header sortable"><span>Std Dev</span></th>
                                   </tr>
                               </thead>
                               <tbody></tbody>
@@ -114,6 +115,21 @@ var Index = `<!DOCTYPE html>
                                   var newTd8 = newTr.insertCell();
                                   var newTd9 = newTr.insertCell();
                                   var newTd10 = newTr.insertCell();
+                                  var newTd11 = newTr.insertCell();
+
+                                  newTd0.width="139px";
+                                  newTd1.width="95px";
+                                  newTd2.width="95px";
+                                  newTd3.width="95px";
+                                  newTd4.width="95px";
+                                  newTd5.width="95px";
+                                  newTd6.width="95px";
+                                  newTd7.width="95px";
+                                  newTd8.width="95px";
+                                  newTd9.width="95px";
+                                  newTd10.width="95px";
+                                  newTd11.width="95px";
+
                            
                                   newTd0.innerText = stats1[i].ReportKey.IfGlobalSetUpTearDown;
                                   newTd1.innerText = stats1[i].ReportKey.Priority;
@@ -125,7 +141,8 @@ var Index = `<!DOCTYPE html>
                                   newTd7.innerText = stats1[i].PerformanceGauge.P95;
                                   newTd8.innerText = stats1[i].PerformanceGauge.P99;
                                   newTd9.innerText = stats1[i].PerformanceGauge.Max;
-                                  newTd9.innerText = stats1[i].PerformanceGauge.Mean;
+                                  newTd10.innerText = stats1[i].PerformanceGauge.Mean;
+                                  newTd11.innerText = stats1[i].PerformanceGauge.StdDev;
                                 }
                               </script>
                           </div>

@@ -37,6 +37,7 @@ type PerformanceGauge struct {
     P99 int64
     Max int64
     Mean int64
+    StdDev int64
 }
 
 // func GenerateStatsGaugeJs (tcReportSlice TcReportSlice, resultsDir string) {
@@ -90,6 +91,7 @@ func (tcReportSlice TcReportSlice) GetStatsGaugeJsonL3 () []StatsGauge {
 
 func (tcReportSlice TcReportSlice) GetStatsGaugeJsonL4 () []StatsGauge {
     var tcReportGaugeSlice []StatsGauge
+    var durationSlice []int64
 
     performanceGauge := PerformanceGauge {
         Min: 0,
@@ -99,11 +101,26 @@ func (tcReportSlice TcReportSlice) GetStatsGaugeJsonL4 () []StatsGauge {
         P99: 0,
         Max: 0,
         Mean: 0,
+        StdDev: 0,
     }
     totalTc := len(tcReportSlice)
     if len(tcReportSlice) > 0 {
         orderedByDuration := tcReportSlice.SortByDuration()
         totalTcF := float64(totalTc)
+
+        for i, _ := range orderedByDuration {
+            durationSlice = append(durationSlice, orderedByDuration[i].DurationUnixNano / 1000000)
+        }
+        mean := From(durationSlice).SumInts() / int64(totalTc)
+
+        var v int64
+        v = 0
+        for i, _ := range durationSlice {
+            v = v + (durationSlice[i] - mean) * (durationSlice[i] - mean)
+        }
+        // try later to use v / (int64(totalTc) - 1)
+        variance := v / int64(totalTc)
+        stddev := int64(math.Sqrt(float64(variance)))
 
         performanceGauge = PerformanceGauge {
             Min: orderedByDuration[0].DurationUnixNano / 1000000,
@@ -112,15 +129,16 @@ func (tcReportSlice TcReportSlice) GetStatsGaugeJsonL4 () []StatsGauge {
             P95: orderedByDuration[int(math.Floor(totalTcF * 0.95))].DurationUnixNano / 1000000,
             P99: orderedByDuration[int(math.Floor(totalTcF * 0.99))].DurationUnixNano / 1000000,
             Max: orderedByDuration[totalTc - 1].DurationUnixNano / 1000000,
-            Mean: 0,
+            Mean: mean,
+            StdDev: stddev,
         }
     }
 
     statsGauge := StatsGauge {
         ReportKey: map[string]string{
-            "IfGlobalSetUpTearDown": "All",
-            "Priority": "All",
-            "TestResult": "All",
+            "IfGlobalSetUpTearDown": "ALL",
+            "Priority": "ALL",
+            "TestResult": "ALL",
         },
         Count: totalTc,
         PerformanceGauge: &performanceGauge,
@@ -155,13 +173,14 @@ func (tcReportSlice TcReportSlice) GroupByStatsGaugeDetailsL2 () []Group {
     type ReportsStuct struct {
         IfGlobalSetUpTearDown string
         Priority string
+        TestResult string
     }
 
     var query []Group
 
     From(tcReportSlice).GroupByT(
         func(item *testcase.TcReportResults) ReportsStuct { 
-            return ReportsStuct{item.IfGlobalSetUpTearDown, item.Priority}
+            return ReportsStuct{item.IfGlobalSetUpTearDown, item.Priority, "ALL"}
         },
         func(item *testcase.TcReportResults) int64 { return item.DurationUnixNano / 1000000 },
     ).ToSlice(&query)
@@ -172,13 +191,15 @@ func (tcReportSlice TcReportSlice) GroupByStatsGaugeDetailsL2 () []Group {
 func (tcReportSlice TcReportSlice) GroupByStatsGaugeDetailsL3 () []Group {
     type ReportsStuct struct {
         IfGlobalSetUpTearDown string
+        Priority string
+        TestResult string
     }
 
     var query []Group
 
     From(tcReportSlice).GroupByT(
         func(item *testcase.TcReportResults) ReportsStuct { 
-            return ReportsStuct{item.IfGlobalSetUpTearDown}
+            return ReportsStuct{item.IfGlobalSetUpTearDown, "ALL", "ALL"}
         },
         func(item *testcase.TcReportResults) int64 { return item.DurationUnixNano / 1000000 },
     ).ToSlice(&query)
@@ -213,10 +234,21 @@ func GetPerformanceGauge (group []interface{}) *PerformanceGauge {
         P99: 0,
         Max: 0,
         Mean: 0,
+        StdDev: 0,
     }
     if len(group) > 0 {
         totalTc := len(group)
         totalTcF := float64(totalTc)
+
+        mean := From(group).SumInts() / int64(totalTc)
+
+        var v int64
+        v = 0
+        for i, _ := range group {
+            v = v + (group[i].(int64) - mean) * (group[i].(int64) - mean)
+        }
+        variance := v / int64(totalTc)
+        stddev := int64(math.Sqrt(float64(variance)))
 
         performanceGauge = PerformanceGauge {
             Min: group[0].(int64),
@@ -225,7 +257,8 @@ func GetPerformanceGauge (group []interface{}) *PerformanceGauge {
             P95: group[int(math.Floor(totalTcF * 0.95))].(int64),
             P99: group[int(math.Floor(totalTcF * 0.99))].(int64),
             Max: group[totalTc - 1].(int64),
-            Mean: 0,
+            Mean: mean,
+            StdDev: stddev,
         }
     }
     
