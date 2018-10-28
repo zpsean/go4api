@@ -18,6 +18,8 @@ import (
 
     "go4api/lib/testcase"
     "go4api/lib/rands"
+    "go4api/lib/g4json"
+
     // gjson "github.com/tidwall/gjson"
     sjson "github.com/tidwall/sjson"
 )
@@ -504,106 +506,23 @@ func MutateDelWholeRequestPayloadNode (originTcData testcase.TestCaseDataInfo, t
 
 
 func getFieldsMutationDetails(value interface{}) []MFieldDetails {
-    c := make(chan MFieldDetails)
-
-    go func(c chan MFieldDetails) {
-        defer close(c)
-        sturctFieldsMutation(c, []string{}, value)
-    }(c)
-
     var mFieldDetailsSlice []MFieldDetails
-    //
-    for mFieldDetails := range c {
+
+    fieldDetailsSlice := g4json.GetFieldsDetails(value)
+
+    for i, _ := range fieldDetailsSlice {
+        mFieldDetails := MFieldDetails {
+            FieldPath: fieldDetailsSlice[i].FieldPath,
+            CurrValue: fieldDetailsSlice[i].CurrValue,
+            FieldType: fieldDetailsSlice[i].FieldType,
+            FieldSubType: fieldDetailsSlice[i].FieldSubType,
+            MutatedValues: []interface{}{},
+        }
+
         mFieldDetailsSlice = append(mFieldDetailsSlice, mFieldDetails)
     }
 
     return mFieldDetailsSlice
 }
 
-
-func sturctFieldsMutation(c chan MFieldDetails, subPath []string, value interface{}) {
-    switch reflect.TypeOf(value).Kind() {
-        case reflect.Map: {
-            // fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
-            for key2, value2 := range reflect.ValueOf(value).Interface().(map[string]interface{}) {
-                // fmt.Println("key2, value2: ", key2, reflect.TypeOf(value2))
-                if value2 != nil {
-                    switch reflect.TypeOf(value2).Kind() {
-                        case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
-                            subPathNew := append(subPath, key2)
-                            output := make([]string, len(subPathNew))
-                            copy(output, subPathNew)
-
-                            mtD := MFieldDetails{output, value2, reflect.TypeOf(value2).Kind().String(), "", []interface{}{}}
-                            c <- mtD
-                        case reflect.Map:
-                            subPathNew := append(subPath, key2)
-                            sturctFieldsMutation(c, subPathNew, value2)
-                        case reflect.Array, reflect.Slice:
-                            // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
-                            for index, v := range reflect.ValueOf(value2).Interface().([]interface{}) {
-                                switch reflect.TypeOf(v).Kind() {
-                                    case reflect.Array, reflect.Slice, reflect.Map:
-                                        subPathNew := append(subPath, fmt.Sprint(key2))
-                                        sturctFieldsMutation(c, subPathNew, value2)
-                                    case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
-                                        subPathNew := append(subPath, fmt.Sprint(key2))
-                                        subPathNew = append(subPathNew, fmt.Sprint(index))
-                                        output := make([]string, len(subPathNew))
-                                        copy(output, subPathNew)
-
-                                        mtD := MFieldDetails{output, value2, reflect.TypeOf(value2).Kind().String(), "", []interface{}{}}
-                                        c <- mtD
-                                }
-                                break
-                            }
-                    }
-                } else {
-                    subPathNew := append(subPath, key2)
-                    output := make([]string, len(subPathNew))
-                    copy(output, subPathNew)
-
-                    mtD := MFieldDetails{output, nil, "", "", []interface{}{}}
-                    c <- mtD
-                }
-            }     
-        }
-        case reflect.Array, reflect.Slice: {
-            // fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
-            for key2, value2 := range reflect.ValueOf(value).Interface().([]interface{}) {
-                // fmt.Println("key2, value2: ", key2, reflect.TypeOf(value2))
-                switch reflect.TypeOf(value2).Kind() {
-                    case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
-                        subPathNew := append(subPath, fmt.Sprint(key2))
-                        output := make([]string, len(subPathNew))
-                        copy(output, subPathNew)
-
-                        mtD := MFieldDetails{output, value2, reflect.TypeOf(value2).Kind().String(), "", []interface{}{}}
-                        c <- mtD
-                    case reflect.Map:
-                        subPathNew := append(subPath, fmt.Sprint(key2))
-                        sturctFieldsMutation(c, subPathNew, value2)
-                    case reflect.Array, reflect.Slice:
-                        // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
-                        for index, v := range reflect.ValueOf(value2).Interface().([]interface{}) {
-                            switch reflect.TypeOf(v).Kind() {
-                                case reflect.Array, reflect.Slice, reflect.Map:
-                                    subPathNew := append(subPath, fmt.Sprint(key2))
-                                    sturctFieldsMutation(c, subPathNew, value2)
-                                case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
-                                    subPathNew := append(subPath, fmt.Sprint(key2))
-                                    subPathNew = append(subPathNew, fmt.Sprint(index))
-                                    output := make([]string, len(subPathNew))
-                                    copy(output, subPathNew)
-
-                                    mtD := MFieldDetails{output, value2, reflect.TypeOf(value2).Kind().String(), "", []interface{}{}}
-                                    c <- mtD
-                            }
-                        }
-                        break
-                }
-            } 
-        }
-    }
-}
 
