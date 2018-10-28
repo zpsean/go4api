@@ -12,13 +12,18 @@
 
 Menu
 ----
-
+- [Why another API Testing Tool?](#why-another-api-testing-tool)
 - [Features](#features)
 - [Install](#install)
 - [Quick Start](#quick-start)
 - [CheatSheet](#cheatsheet)
 - [v1.0 Target](#v10-target)
 - [Need help or want to contribute?](#need-help-or-want-to-contribute)
+  
+
+Why another API Testing Tool?
+--------
+Go4Api aims to the testing difficulty faced to QA, which is different from Developers. That is, plan and execute a single api test is easy, a bunch of tools can help on it. But how about if we have hundreds of API(s) and thousands of test data to manage and execute, and more, regression them during the API(s) lifetime?
 
 Features
 --------
@@ -31,6 +36,8 @@ Features
 - **Convert HAR file / Swagger API file**
 
 More information, refer to [wiki](https://github.com/zpsean/go4api/wiki).
+
+
 
 Install and Run
 ------
