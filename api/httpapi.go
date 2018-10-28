@@ -25,36 +25,36 @@ import (
     "encoding/json"
 
     "go4api/cmd"
-    "go4api/lib/testcase"                                                                                                                               
+    "go4api/lib/testcase"                                                                                                                             
     "go4api/assertion"
     "go4api/protocal/http"
     "go4api/sql"
 )
 
 
-func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionInfo, baseUrl string, tcData testcase.TestCaseDataInfo) {
+func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionInfo, baseUrl string, oTcData testcase.TestCaseDataInfo) {
     //
     defer wg.Done()
     //
     start_time := time.Now()
-    start_str := start_time.String()
+    // start_str := start_time.String()
+    start_str := start_time.Format("2006-01-02 15:04:05.999999999")
+    //--- TBD: here to identify and call the builtin functions in Body, then modify the tcData
+    tcData := EvaluateBuiltinFunctions(oTcData)
     // setUp
     tcSetUpResult := RunTcSetUp(tcData)
     //
-    actualStatusCode, actualHeader, actualBody := CallHttp(baseUrl, tcData)
-    //
-    // (2). Expected response
     expStatus := tcData.TestCase.RespStatus()
     expHeader := tcData.TestCase.RespHeaders()
     expBody := tcData.TestCase.RespBody()
-
+    //
+    actualStatusCode, actualHeader, actualBody := CallHttp(baseUrl, tcData)
     // (3). compare
     tcName := tcData.TcName()
     httpResult, TestMessages := Compare(tcName, actualStatusCode, actualHeader, actualBody, expStatus, expHeader, expBody)
     //
     end_time := time.Now()
-    end_str := end_time.String()
-    // fmt.Println(tcName + " end: ", end)
+    end_str := end_time.Format("2006-01-02 15:04:05.999999999")
 
     // (4). here to generate the outputs file if the Json has "outputs" field
     WriteOutputsDataToFile(httpResult, tcData, actualStatusCode, actualHeader, actualBody)
@@ -348,7 +348,7 @@ func compareCommon (reponsePart string, key string, assertionKey string, actualV
 }
 
 
-func PrepMultipart(path string, name string) (*bytes.Buffer, string, error) {
+func PrepMultipart (path string, name string) (*bytes.Buffer, string, error) {
     fp, err := os.Open(path) 
     if err != nil {
         panic(err)
@@ -399,7 +399,7 @@ func PrepMultipart(path string, name string) (*bytes.Buffer, string, error) {
 }
 
 
-func PrepPostPayload(reqPayload map[string]interface{}) *strings.Reader {
+func PrepPostPayload (reqPayload map[string]interface{}) *strings.Reader {
     var body *strings.Reader
 
     for key, value := range reqPayload {
@@ -413,7 +413,7 @@ func PrepPostPayload(reqPayload map[string]interface{}) *strings.Reader {
     return body
 }
 
-func PrepPostFormPayload(reqPayload map[string]interface{}) *strings.Reader {
+func PrepPostFormPayload (reqPayload map[string]interface{}) *strings.Reader {
     var body *strings.Reader
 
     // Note, has 3 conditions: text (json), form, or multipart file upload
