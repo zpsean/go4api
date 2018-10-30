@@ -164,21 +164,28 @@ func RunFinalReport (ch chan int, gStart_str string, resultsDir string, resultsL
 
 func ScheduleCases (cReady chan *tree.TcNode, wg *sync.WaitGroup, resultsChan chan testcase.TestCaseExecutionInfo, baseUrl string) {
     //
-    tick := 0
-    max := cmd.Opt.ConcurrencyLimit
+    if cmd.Opt.IfConcurrency == true {
+        tick := 0
+        max := cmd.Opt.ConcurrencyLimit
 
-    for tcNode := range cReady {
-        wg.Add(1)
-        // Note: to prevent reaching tcp connection limitation, here set a max, then sleep for a while
-        if tick % max == 0 {
-            time.Sleep(100 * time.Millisecond)
-            go api.HttpApi(wg, resultsChan, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo))
-        } else {
-            go api.HttpApi(wg, resultsChan, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo))
+        for tcNode := range cReady {
+            wg.Add(1)
+            // Note: to prevent reaching tcp connection limitation, here set a max, then sleep for a while
+            if tick % max == 0 {
+                time.Sleep(100 * time.Millisecond)
+                go api.HttpApi(wg, resultsChan, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo))
+            } else {
+                go api.HttpApi(wg, resultsChan, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo))
+            }
+
+            tick = tick + 1
         }
-
-        tick = tick + 1
-    }
+    } else {
+        for tcNode := range cReady {
+            wg.Add(1)
+            api.HttpApi(wg, resultsChan, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo))
+        }
+    }   
 }
 
 

@@ -35,6 +35,7 @@ type Options struct {
     IfScenario  bool
     IfFuzzTest  bool
     IfMutation  bool
+    IfConcurrency bool
     ConcurrencyLimit int
 
     Harfile string
@@ -64,6 +65,7 @@ func init() {
     ifScenario := flag.Bool("S", false, "if the target cases are for scenarios, which have data dependency")
     ifFuzzTest := flag.Bool("F", false, "if to run the Fuzz test")
     ifMutation := flag.Bool("M", false, "if to run the Mutation test")
+    ifConcurrency := flag.Bool("ifCon", true, "if to run the with concurrency mode")
     concurrency := flag.Int("cl", 100, "concurrency limitation")
 
     har := flag.String("harfile", "", "har file name to be converted")
@@ -83,6 +85,7 @@ func init() {
     Opt.IfScenario = *ifScenario
     Opt.IfFuzzTest = *ifFuzzTest
     Opt.IfMutation = *ifMutation
+    Opt.IfConcurrency = *ifConcurrency
     Opt.ConcurrencyLimit = *concurrency
 
     Opt.Harfile = *har
