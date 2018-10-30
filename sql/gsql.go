@@ -27,8 +27,11 @@ import (
 var db = &sql.DB{}
 
 func InitConnection (ip string, port string, user string, pw string, defaultDB string) {
+
     conInfo := user + ":" + pw + "@tcp(" + ip + ":" + port + ")/" + defaultDB
     db, _ = sql.Open("mysql", conInfo)
+    db.SetMaxOpenConns(2000)
+    db.SetMaxIdleConns(1000)
 
     err := db.Ping()
     if err != nil {
@@ -48,14 +51,14 @@ func Run (stmt string) string {
         case "UPDATE":
             Update()
         case "DELETE":
-            err = Delete(s)
+            err = Delete(stmt)
         case "SELECT":
             QueryWithoutParams()
         case "INSERT":
             Insert() 
     }
 
-    if err != nil {
+    if err == nil {
         return "SqlSuccess"
     } else {
         return "SqlFailed"

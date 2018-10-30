@@ -19,16 +19,28 @@ var alphaNumeric = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0
 var charSet = []rune("中文测试的些字符集可以使用一二三四五六七八九十abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
 
-func NextInt (min int, max int) int {
+func NextInt (omin float64, omax float64) int {
+	min := int(omin)
+	max := int(omax)
+
     l := max - min
+    if l <= 0 {
+    	return min
+    }
     rand.Seed(time.Now().UnixNano())
     
     return rand.Intn(l) + min
 }
 
-func NextAlphaNumeric (n int) string {
+func NextAlphaNumeric (length float64) string {
+	n := int(length)
+
     b := make([]rune, n)
     l := len(alphaNumeric)
+    if n <= 0 {
+    	return ""
+    } 
+    
     for i := range b {
         // [0,n)
         rand.Seed(time.Now().UnixNano())

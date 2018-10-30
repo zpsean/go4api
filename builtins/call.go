@@ -11,21 +11,78 @@
 package builtins
 
 import (
+    // "fmt"
 	// "math/rand"                                                                                                                                        
 	// "time"
  	// "strings"
  	"reflect"
 )
 
-func CallBuiltinFunc (funcName string, funcParams ... interface{}) interface{} {
-    f := reflect.ValueOf(funcName)
-
-    in := make([]reflect.Value, len(funcParams))
-    for k, param := range funcParams {
-        in[k] = reflect.ValueOf(param)
+func BuiltinFunctionsMapping (key string) []interface{} {
+    //
+    FuncsMapping := map[string][]interface{} {
+    	"NextInt": []interface{} {
+            NextInt, 
+            "",
+        },
+        "NextAlphaNumeric": []interface{} {
+            NextAlphaNumeric, 
+            "",
+        },
+        "CurrentTimeStampString": []interface{} {
+            CurrentTimeStampString, 
+            "ignoreParams",
+        },
+        "CurrentTimeStampMilliString": []interface{} {
+            CurrentTimeStampMilliString, 
+            "ignoreParams",
+        },
+        "CurrentTimeStampMicroString": []interface{} {
+            CurrentTimeStampMicroString, 
+            "ignoreParams",
+        },
+        "CurrentTimeStampNanoString": []interface{} {
+            CurrentTimeStampNanoString, 
+            "ignoreParams",
+        },
+        "CurrentTimeStampUnix": []interface{} {
+            CurrentTimeStampUnix, 
+            "ignoreParams",
+        },
+        "CurrentTimeStampUnixMilli": []interface{} {
+            CurrentTimeStampUnixMilli, 
+            "ignoreParams",
+        },
+        "CurrentTimeStampUnixMicro": []interface{} {
+            CurrentTimeStampUnixMicro, 
+            "ignoreParams",
+        },
+        "CurrentTimeStampUnixNano": []interface{} {
+            CurrentTimeStampUnixNano, 
+            "ignoreParams",
+        },
     }
 
-    result := f.Call(in)
+    return FuncsMapping[key]
+}
 
-    return result[0]
+func CallBuiltinFunc (funcName string, funcParams interface{}) interface{} {
+    f := reflect.ValueOf(BuiltinFunctionsMapping(funcName)[0])
+
+    var in []reflect.Value
+
+    for _, param := range reflect.ValueOf(funcParams).Interface().([]interface{}) {
+        in = append(in, reflect.ValueOf(param))
+    }
+
+    if BuiltinFunctionsMapping(funcName)[1] == "ignoreParams" {
+    	ins := make([]reflect.Value, 0)
+    	result := f.Call(ins)
+
+    	return result[0].Interface()
+    } else {
+    	result := f.Call(in)
+
+    	return result[0].Interface()
+    }
 }

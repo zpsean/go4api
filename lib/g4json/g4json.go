@@ -63,23 +63,7 @@ func sturctFields(c chan FieldDetails, subPath []string, value interface{}) {
                             subPathNew := append(subPath, key2)
                             sturctFields(c, subPathNew, value2)
                         case reflect.Array, reflect.Slice:
-                            // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
-                            for index, v := range reflect.ValueOf(value2).Interface().([]interface{}) {
-                                switch reflect.TypeOf(v).Kind() {
-                                    case reflect.Array, reflect.Slice, reflect.Map:
-                                        subPathNew := append(subPath, fmt.Sprint(key2))
-                                        sturctFields(c, subPathNew, value2)
-                                    case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
-                                        subPathNew := append(subPath, fmt.Sprint(key2))
-                                        subPathNew = append(subPathNew, fmt.Sprint(index))
-                                        output := make([]string, len(subPathNew))
-                                        copy(output, subPathNew)
-
-                                        mtD := FieldDetails{output, value2, reflect.TypeOf(value2).Kind().String(), ""}
-                                        c <- mtD
-                                }
-                                break
-                            }
+                            sturctFieldsSlice(c, subPath, value2, key2)
                     }
                 } else {
                     subPathNew := append(subPath, key2)
@@ -107,26 +91,38 @@ func sturctFields(c chan FieldDetails, subPath []string, value interface{}) {
                         subPathNew := append(subPath, fmt.Sprint(key2))
                         sturctFields(c, subPathNew, value2)
                     case reflect.Array, reflect.Slice:
-                        // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
-                        for index, v := range reflect.ValueOf(value2).Interface().([]interface{}) {
-                            switch reflect.TypeOf(v).Kind() {
-                                case reflect.Array, reflect.Slice, reflect.Map:
-                                    subPathNew := append(subPath, fmt.Sprint(key2))
-                                    sturctFields(c, subPathNew, value2)
-                                case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
-                                    subPathNew := append(subPath, fmt.Sprint(key2))
-                                    subPathNew = append(subPathNew, fmt.Sprint(index))
-                                    output := make([]string, len(subPathNew))
-                                    copy(output, subPathNew)
-
-                                    mtD := FieldDetails{output, value2, reflect.TypeOf(value2).Kind().String(), ""}
-                                    c <- mtD
-                            }
-                        }
-                        break
+                        sturctFieldsSlice(c, subPath, value2, key2)
                 }
             } 
         }
+    }
+}
+
+func sturctFieldsSlice (c chan FieldDetails, subPath []string, value2 interface{}, key2 interface{}) {
+    // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
+    if len(reflect.ValueOf(value2).Interface().([]interface{})) == 0 {
+        subPathNew := append(subPath, fmt.Sprint(key2))
+        output := make([]string, len(subPathNew))
+        copy(output, subPathNew)
+
+        mtD := FieldDetails{output, value2, reflect.TypeOf(value2).Kind().String(), ""}
+        c <- mtD
+    }
+    for _, v := range reflect.ValueOf(value2).Interface().([]interface{}) {
+        switch reflect.TypeOf(v).Kind() {
+            case reflect.Array, reflect.Slice, reflect.Map:
+                subPathNew := append(subPath, fmt.Sprint(key2))
+                sturctFields(c, subPathNew, value2)
+            case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
+                subPathNew := append(subPath, fmt.Sprint(key2))
+                // subPathNew = append(subPathNew, fmt.Sprint(index))
+                output := make([]string, len(subPathNew))
+                copy(output, subPathNew)
+
+                mtD := FieldDetails{output, value2, reflect.TypeOf(value2).Kind().String(), ""}
+                c <- mtD
+        }
+        break
     }
 }
 

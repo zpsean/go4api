@@ -11,7 +11,7 @@
 package executor
 
 import (
-    // "fmt"
+    "fmt"
     // "time"
     // "os"
     "sort"
@@ -116,7 +116,10 @@ func ConstructTcInfosBasedOnJsonTemplateAndDataTables (jsonFile string, csvFileL
 
                 var tcases testcase.TestCases
                 resJson, _ := ioutil.ReadAll(outTempJson)
-                json.Unmarshal([]byte(resJson), &tcases)
+                err := json.Unmarshal([]byte(resJson), &tcases)
+                if err != nil {
+                    fmt.Println("!! error, Json format validation : ", jsonFile, ": ", csvFile, ": ", strconv.Itoa(i + 1), ": ", err)
+                }
                 // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
                 for tcI, _ := range tcases {
                     // populate the testcase.TestCaseDataInfo
@@ -146,7 +149,10 @@ func ConstructTcInfosBasedOnJson (jsonFile string, parentTcName string) []testca
     
     var tcases testcase.TestCases
     resJson, _ := ioutil.ReadAll(outTempJson)
-    json.Unmarshal([]byte(resJson), &tcases)
+    err := json.Unmarshal([]byte(resJson), &tcases)
+    if err != nil {
+        fmt.Println("!! error, Json format validation : ", jsonFile, ": ", err)
+    }
     // fmt.Println("resJson: ", string(resJson), tcases)
     // tJson, _ := json.Marshal(tcases)
     // fmt.Println("tJson: ", string(tJson))
@@ -278,6 +284,9 @@ func GetOriginMutationTcArray () []testcase.TestCaseDataInfo {
             tcArray = append(tcArray, tcData)
         }
     }
+
+    // tJson, _ := json.MarshalIndent(tcArray, "", "\t")
+    // fmt.Println("tcArray: ", string(tJson))
 
     return tcArray
 }
