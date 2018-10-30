@@ -11,8 +11,9 @@
 package api
 
 import (
-    "fmt"
+    // "fmt"
     "strings"
+    // "reflect"
     "encoding/json"
 
     "go4api/lib/testcase"
@@ -24,35 +25,45 @@ import (
 )
 
 func EvaluateBuiltinFunctions (tcData testcase.TestCaseDataInfo) testcase.TestCaseDataInfo {
-    tcJson, _ := json.Marshal(tcData)
+    tcJsonBytes, _ := json.Marshal(tcData)
+    tcJson := string(tcJsonBytes)
 
-    for key, value := range tcData.TestCase.ReqPayload() {
-        if key == "text" {
-            // to loop over the struct
-            fieldDetailsSlice := g4json.GetFieldsDetails(value)
+    var value interface{}
 
-            for i, _ := range fieldDetailsSlice {
-                plPath := key + "." + strings.Join(fieldDetailsSlice[i].FieldPath, ".")
-                plFullPath := "TestCase." + tcData.TcName() + ".request.payload" + "." + plPath
-                
-                // check if field value has Fn::
-                // e.g. "field": {"Fn::NextInt": ["min", "max"]}
-                if strings.Contains(fieldDetailsSlice[i].CurrValue.(string), "Fn::") {
-                    funcName := strings.TrimLeft(fieldDetailsSlice[i].CurrValue.(string), "Fn::")
-                    // funcParams := gjson.Get(string(actualBody), key[lenPrefix:])
+    tcBasicsJsonBytes, _ := json.Marshal(tcData.TestCase.TestCaseBasics())
+    tcBasicsJson := string(tcBasicsJsonBytes)
+    json.Unmarshal([]byte(tcBasicsJson), &value)
 
-                    resValue := builtins.CallBuiltinFunc(funcName, "")
+    fieldDetailsSlice := g4json.GetFieldsDetails(value)
+    // tJson, _ := json.MarshalIndent(fieldDetailsSlice, "", "\t")
+    // fmt.Println("=======>11: ", string(tJson))
 
-                    fmt.Println("resValue: ", resValue)
+    for i, _ := range fieldDetailsSlice {
+        // e.g. "field": {"Fn::NextInt": ["min", "max"]}
+        for j, _ := range fieldDetailsSlice[i].FieldPath {
+            if strings.Contains(fieldDetailsSlice[i].FieldPath[j], "Fn::") {
+                plPath := strings.Join(fieldDetailsSlice[i].FieldPath[0:j], ".")
+                plFullPath := "TestCase." + tcData.TcName() + "." + plPath
 
-                    sjson.Set(string(tcJson), plFullPath, resValue)
-                }
+                funcName := strings.TrimLeft(fieldDetailsSlice[i].FieldPath[j], "Fn::")
+                funcParams := fieldDetailsSlice[i].CurrValue
+
+                resValue := builtins.CallBuiltinFunc(funcName, funcParams)
+
+                // switch reflect.TypeOf(resValue).Kind() {
+                //     case reflect.Int, reflect.Int64:
+                //         resValue = resValue
+                //     case reflect.String:
+                //         resValue = fmt.Sprint(resValue)
+                // }
+
+                tcJson, _  = sjson.Set(tcJson, plFullPath, resValue)
             }
-        }
+        }    
     }
 
     var fTcData testcase.TestCaseDataInfo
-    json.Unmarshal(tcJson, &fTcData)
+    json.Unmarshal([]byte(tcJson), &fTcData)
 
     return fTcData
 }

@@ -19,6 +19,7 @@ import (
     "go4api/cmd"
     "go4api/fuzz/fuzz"
     "go4api/fuzz/mutation"
+    "go4api/sql"
 )
 
 func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) { 
@@ -36,6 +37,8 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
     //
     if !cmd.Opt.IfScenario {
         if cmd.Opt.IfMutation {
+            WarmUpDBConnection()
+            //
             originMutationTcArray := GetOriginMutationTcArray()
             setUpTcSlice := GetSetupTcSlice(originMutationTcArray)
             setUpTcTreeStats := RunGlobalSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
@@ -58,6 +61,8 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
             fuzzTcArray := GetFuzzTcArray()
             Run(ch, baseUrl, resultsDir, resultsLogFile, fuzzTcArray)
         } else {
+            WarmUpDBConnection()
+            //
             tcArray := GetTcArray()
             setUpTcSlice := GetSetupTcSlice(tcArray)
             setUpTcTreeStats := RunGlobalSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
@@ -75,6 +80,7 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
             RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
         }
     } else {
+        WarmUpDBConnection()
         jsonFileList := GetJsonFiles()
         //
         tcArray := ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
@@ -129,3 +135,7 @@ func MkResultsDir(gStart_str string, opt cmd.Options) string {
     return resultsDir
 }
 
+func WarmUpDBConnection () {
+    ip, port, user, pw, defaultDB := gsql.GetDBConnInfo()
+    gsql.InitConnection(ip, port, user, pw, defaultDB)
+}

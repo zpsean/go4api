@@ -37,32 +37,40 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     defer wg.Done()
     //
     start_time := time.Now()
-    // start_str := start_time.String()
     start_str := start_time.Format("2006-01-02 15:04:05.999999999")
     //--- TBD: here to identify and call the builtin functions in Body, then modify the tcData
     tcData := EvaluateBuiltinFunctions(oTcData)
     // setUp
     tcSetUpResult := RunTcSetUp(tcData)
     //
-    expStatus := tcData.TestCase.RespStatus()
-    expHeader := tcData.TestCase.RespHeaders()
-    expBody := tcData.TestCase.RespBody()
-    //
-    actualStatusCode, actualHeader, actualBody := CallHttp(baseUrl, tcData)
-    // (3). compare
-    tcName := tcData.TcName()
-    httpResult, TestMessages := Compare(tcName, actualStatusCode, actualHeader, actualBody, expStatus, expHeader, expBody)
-    //
-    end_time := time.Now()
-    end_str := end_time.Format("2006-01-02 15:04:05.999999999")
+    var actualStatusCode int
+    var actualHeader http.Header
+    var actualBody []byte
+    var httpResult string
+    var TestMessages []*testcase.TestMessage
+    if IfValidHttp(tcData) == true {
+        expStatus := tcData.TestCase.RespStatus()
+        expHeader := tcData.TestCase.RespHeaders()
+        expBody := tcData.TestCase.RespBody()
+        //
+        actualStatusCode, actualHeader, actualBody = CallHttp(baseUrl, tcData)
+        // (3). compare
+        tcName := tcData.TcName()
+        httpResult, TestMessages = Compare(tcName, actualStatusCode, actualHeader, actualBody, expStatus, expHeader, expBody)
 
-    // (4). here to generate the outputs file if the Json has "outputs" field
-    WriteOutputsDataToFile(httpResult, tcData, actualStatusCode, actualHeader, actualBody)
-    WriteOutEnvVariables(httpResult, tcData, actualStatusCode, actualHeader, actualBody)
-    WriteSession(httpResult, tcData, actualStatusCode, actualHeader, actualBody)
-
+        // (4). here to generate the outputs file if the Json has "outputs" field
+        WriteOutputsDataToFile(httpResult, tcData, actualStatusCode, actualHeader, actualBody)
+        WriteOutEnvVariables(httpResult, tcData, actualStatusCode, actualHeader, actualBody)
+        WriteSession(httpResult, tcData, actualStatusCode, actualHeader, actualBody)
+    } else {
+        httpResult = "NoHttp"
+        actualStatusCode = 999
+    }
     // tearDown
     tcTearDownResult := RunTcTearDown(tcData)
+
+    end_time := time.Now()
+    end_str := end_time.Format("2006-01-02 15:04:05.999999999")
 
     testResult := "Success"
     if tcSetUpResult == "Fail" || httpResult == "Fail" || tcTearDownResult == "Fail" {
@@ -90,10 +98,18 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     resultsExeChan <- tcExecution
 }
 
+func IfValidHttp (tcData testcase.TestCaseDataInfo) bool {
+    ifValidHttp := true
+
+    if tcData.TestCase.Request() == nil {
+        ifValidHttp = false
+    }
+
+    return ifValidHttp
+}
 
 func RunTcSetUp (tcData testcase.TestCaseDataInfo) string {
     var sqlSlice []string
-    var sqlRessult []string  //SqlSuccess, SqlFailed
     tcSetUpResult := "SqlSuccess"
 
     for k, v := range tcData.TestCase.SetUp() {
@@ -102,10 +118,7 @@ func RunTcSetUp (tcData testcase.TestCaseDataInfo) string {
         }
     }
 
-    if len(sqlSlice) > 0 {
-        ip, port, user, pw, defaultDB := gsql.GetDBConnInfo()
-        gsql.InitConnection(ip, port, user, pw, defaultDB)
-    }
+    var sqlRessult = make([]string, len(sqlSlice))  //value: SqlSuccess, SqlFailed
     
     for i, _ := range sqlSlice {
         sqlRessult[i] = gsql.Run(sqlSlice[i])
@@ -120,7 +133,6 @@ func RunTcSetUp (tcData testcase.TestCaseDataInfo) string {
 
 func RunTcTearDown (tcData testcase.TestCaseDataInfo) string {
     var sqlSlice []string
-    var sqlRessult []string  //SqlSuccess, SqlFailed
     tcTearDownResult := "SqlSuccess"
 
     for k, v := range tcData.TestCase.TearDown() {
@@ -129,10 +141,7 @@ func RunTcTearDown (tcData testcase.TestCaseDataInfo) string {
         }
     }
 
-    if len(sqlSlice) > 0 {
-        ip, port, user, pw, defaultDB := gsql.GetDBConnInfo()
-        gsql.InitConnection(ip, port, user, pw, defaultDB)
-    }
+    var sqlRessult = make([]string, len(sqlSlice))  //value: SqlSuccess, SqlFailed
 
     for i, _ := range sqlSlice {
         sqlRessult[i] = gsql.Run(sqlSlice[i])

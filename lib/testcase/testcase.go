@@ -30,6 +30,10 @@ func (tc *TestCase) TcName() string {
     return tcName
 }
 
+func (tc *TestCase) TestCaseBasics() *TestCaseBasics {
+    return (*tc)[tc.TcName()]
+}
+
 func (tc *TestCase) Priority() string {
     return (*tc)[tc.TcName()].Priority
 }
@@ -156,14 +160,25 @@ func (tc *TestCase) UpdateTcName (newKey string) {
     (*tc)[newKey] = mTc[newKey]
 }
 
-
 // type Request struct
+func (tc *TestCase) Request() *Request {
+    return (*tc)[tc.TcName()].Request
+}
+
 func (tc *TestCase) ReqMethod() string {
-    return (*tc)[tc.TcName()].Request.Method
+    if (*tc)[tc.TcName()].Request == nil {
+        return ""
+    } else {
+        return (*tc)[tc.TcName()].Request.Method
+    }
 }
 
 func (tc *TestCase) ReqPath() string {
-    return (*tc)[tc.TcName()].Request.Path
+    if (*tc)[tc.TcName()].Request == nil {
+        return ""
+    } else {
+        return (*tc)[tc.TcName()].Request.Path
+    }
 }
 
 func (tc *TestCase) ReqHeaders() map[string]interface{} {
