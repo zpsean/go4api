@@ -148,8 +148,7 @@ var Graphic = `<!DOCTYPE html>
       <a href="https://github.com/zpsean/go4api" title="Go4Api Home Page"><img alt="Go4Api" src="style/logosmall.png"/></a>
   </div>
 
-  <pre id="modal" style="display:none; border:1px solid #dcdcdc; position: absolute; left:0; top:0; background-color: #F5F5F5; opacity: 0.9"></pre>
-
+  <pre id="modal" style="display:none; border:1px solid #dcdcdc; position: absolute; left:0; top:0; background-color:#F5F5F5; width: 800px; white-space: pre-wrap; word-wrap:break-word;word-break:normal; opacity: 0.9"></pre>
 
   <script type="text/javascript">
     window.onclick = function() {

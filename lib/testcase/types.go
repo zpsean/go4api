@@ -128,6 +128,7 @@ type TcReportResults struct {
     DurationUnixNano int64
     TearDownResult string // Success, Fail
     TestResult string  // Success, Fail, ParentFailed
+    CaseOrigin interface{}
 }
 
 
