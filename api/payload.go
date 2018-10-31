@@ -159,10 +159,19 @@ func PrepPostFormPayload (reqPayload map[string]interface{}) *strings.Reader {
     var body *strings.Reader
 
     data := url.Values{}
-    for key, value := range reqPayload {
-        // value (type interface {}) as type string in argument to data.Set: need type assertion
-        data.Set(key, fmt.Sprint(value))
+
+    reqPayloadJsonBytes, _ := json.Marshal(reqPayload)
+    reqPayloadJson := string(reqPayloadJsonBytes)
+
+    var i int64
+    total := gjson.Get(reqPayloadJson, "form.#")
+    for i = 0; i < total.Int(); i++ {
+        name := gjson.Get(reqPayloadJson, "form." + fmt.Sprint(i) + ".name")
+        value := gjson.Get(reqPayloadJson, "form." + fmt.Sprint(i) + ".value")
+        
+        data.Set(name.String(), value.String())
     }
+
     body = strings.NewReader(data.Encode())
 
     return body
