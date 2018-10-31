@@ -38,7 +38,6 @@ func GetPayloadInfo (tcData testcase.TestCaseDataInfo) (string, string, *strings
     apiMethodSelector := apiMethod
     // Note, has 3 conditions: text (json), form, or multipart file upload
     for key, _ := range reqPayload {
-        fmt.Println("key: ", key)
         switch key {
             case "form-data": {
                 //multipart/form-data
@@ -134,7 +133,7 @@ func PrepMultipart (reqPayload map[string]interface {}, path string) (*bytes.Buf
     }
     // do not forget this
     boundary := writer.FormDataContentType()
-    fmt.Println("boundary", boundary)
+    // fmt.Println("boundary", boundary)
     // ==> i.e. multipart/form-data; boundary=37b1e9deba0159aaf429d7183a9de344c532e50299532f7b4f7bdbbca435
 
     return body, boundary, nil
