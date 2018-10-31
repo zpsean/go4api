@@ -120,6 +120,7 @@ func RunEachPriority (baseUrl string, tcArray []testcase.TestCaseDataInfo,
             tcReportResults := tcExecution.TcReportResults()
 
             repJson, _ := json.Marshal(tcReportResults)
+
             reports.WriteExecutionResults(string(repJson), logFilePtr)
 
             reports.ReportConsoleByTc(tcExecution)

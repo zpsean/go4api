@@ -37,6 +37,7 @@ type Options struct {
     IfMutation  bool
     IfConcurrency bool
     ConcurrencyLimit int
+    IfShowOriginRequest bool
 
     Harfile string
     Swaggerfile string
@@ -67,6 +68,7 @@ func init() {
     ifMutation := flag.Bool("M", false, "if to run the Mutation test")
     ifConcurrency := flag.Bool("ifCon", true, "if to run the with concurrency mode")
     concurrency := flag.Int("cl", 100, "concurrency limitation")
+    ifShowOriginRequest := flag.Bool("ifOriginReq", false, "if to show origin request, be careful, it may expose confidential info")
 
     har := flag.String("harfile", "", "har file name to be converted")
     swagger := flag.String("swaggerfile", "", "har file name to be converted")
@@ -87,6 +89,7 @@ func init() {
     Opt.IfMutation = *ifMutation
     Opt.IfConcurrency = *ifConcurrency
     Opt.ConcurrencyLimit = *concurrency
+    Opt.IfShowOriginRequest = *ifShowOriginRequest
 
     Opt.Harfile = *har
     Opt.Swaggerfile = *swagger

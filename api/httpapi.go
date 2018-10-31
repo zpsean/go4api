@@ -39,7 +39,10 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     start_time := time.Now()
     start_str := start_time.Format("2006-01-02 15:04:05.999999999")
     //--- TBD: here to identify and call the builtin functions in Body, then modify the tcData
-    tcData := EvaluateBuiltinFunctions(oTcData)
+    tcData := oTcData
+    if !cmd.Opt.IfMutation {
+        tcData = EvaluateBuiltinFunctions(oTcData)
+    }
     // setUp
     tcSetUpResult := RunTcSetUp(tcData)
     //

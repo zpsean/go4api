@@ -25,10 +25,7 @@ func OpenExecutionResultsLogFile(logFile string) *os.File {
  	return file
 }
 
-func WriteExecutionResults(resultString string, file *os.File) {
-    // Note: potential bug, as maybe to much write happens at a time
-    // defer file.Close()
- 
+func WriteExecutionResults(resultString string, file *os.File) { 
     file.WriteString(resultString + "\n")
 }
 

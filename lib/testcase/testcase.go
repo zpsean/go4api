@@ -18,6 +18,9 @@ import (
     "strings"
     "net/url" 
     "path/filepath"
+    // "encoding/json"
+
+    "go4api/cmd"
 )
 
 // test case type - get
@@ -396,7 +399,12 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
     } else {
         ifGlobalSetUpTearDown = "RegularCases"
     }
-    
+
+    var caseOrigin interface{}
+    if cmd.Opt.IfShowOriginRequest == true {
+        caseOrigin = tcExecution.TestCaseDataInfo.TestCase
+    }
+
     tcReportRes := &TcReportResults { 
         TcName: tcExecution.TcName(),
         IfGlobalSetUpTearDown: ifGlobalSetUpTearDown,
@@ -423,6 +431,7 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
         DurationUnixNano: tcExecution.DurationUnixNano,
         TearDownResult: tcExecution.TearDownResult,
         TestResult: tcExecution.TestResult,
+        CaseOrigin: caseOrigin,
     }
 
     return tcReportRes
