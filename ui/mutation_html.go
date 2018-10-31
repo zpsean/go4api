@@ -31,8 +31,8 @@ var Mutation = `<!DOCTYPE html>
               <div class="content">
                   <div class="sous-menu">
                       <div class="item "><a href="index.html">Overview</a></div>
-                      <div class="item "><a id="graphic_link" href="graphic.html">Graphic</a></div>
                       <div class="item "><a id="details_link" href="details.html">Details</a></div>
+                      <div class="item "><a id="graphic_link" href="graphic.html">Graphic</a></div>
                       <div class="item "><a id="mindex_link" href="mindex.html">MutationOverview</a></div>
                       <div class="item selected"><a id="mutation_link" href="mutation.html">Mutation</a></div>
                       <div class="item "><a id="fuzz_link" href="fuzz.html">Fuzz</a></div>
@@ -307,6 +307,18 @@ var Mutation = `<!DOCTYPE html>
             var newTd8 = newTr.insertCell();
             var newTd9 = newTr.insertCell();
             var newTd10 = newTr.insertCell();
+
+            newTd0.width="30px";
+            newTd1.width="120px";
+            newTd2.width="165px";
+            newTd3.width="50px";
+            newTd4.width="70px";
+            newTd5.width="95px";
+            newTd6.width="185px";
+            newTd7.width="50px";
+            newTd8.width="60px";
+            newTd9.width="40px";
+            newTd10.width="254px";
      
             newTd0.innerText = i;
             newTd1.innerText = tcResults[i].TcName;

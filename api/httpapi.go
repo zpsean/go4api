@@ -14,15 +14,10 @@ import (
     "fmt"
     "time"
     "sync"
-    "os"
-    "bytes"
-    "mime/multipart"
-    "io"
     // "reflect"
-    "net/http"     
-    "net/url"  
+    "net/http"  
     "strings"
-    "encoding/json"
+    // "encoding/json"
 
     "go4api/cmd"
     "go4api/lib/testcase"                                                                                                                             
@@ -187,41 +182,6 @@ func CallHttp(baseUrl string, tcData testcase.TestCaseDataInfo) (int, http.Heade
 }
 
 
-func GetPayloadInfo (tcData testcase.TestCaseDataInfo) (string, string, *strings.Reader, *bytes.Buffer, string) {
-    apiMethod := tcData.TestCase.ReqMethod()
-    // request payload(body)
-    reqPayload := tcData.TestCase.ReqPayload()
-    //
-    var bodyText *strings.Reader // init body
-    bodyMultipart := &bytes.Buffer{}
-    boundary := ""
-    //
-    apiMethodSelector := apiMethod
-    // Note, has 3 conditions: text (json), form, or multipart file upload
-    for key, value := range reqPayload {
-        // case 1: multipart upload
-        if key == "filename" {
-            if string(cmd.Opt.Testresource[len(cmd.Opt.Testresource) - 1]) == "/" {
-                bodyMultipart, boundary, _ = PrepMultipart(cmd.Opt.Testresource + value.(string), "excel")
-            } else {
-                bodyMultipart, boundary, _ = PrepMultipart(cmd.Opt.Testresource + "/" + value.(string), "excel")
-            }
-            apiMethodSelector = "POSTMultipart"
-            break
-        }
-        // case 2: normal json
-        if key == "text" {
-            bodyText = PrepPostPayload(reqPayload)
-            break
-        }
-        // case 3: if Post, and the key does not have filename, text, then it would be PostForm
-        bodyText = PrepPostFormPayload(reqPayload)
-    }
-
-    return apiMethodSelector, apiMethod, bodyText, bodyMultipart, boundary
-}
-
-
 func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actualBody []byte, 
         expStatus map[string]interface{}, expHeader map[string]interface{}, expBody map[string]interface{}) (string, []*testcase.TestMessage) {
     //
@@ -359,85 +319,6 @@ func compareCommon (reponsePart string, key string, assertionKey string, actualV
     return testRes, &msg
 }
 
-
-func PrepMultipart (path string, name string) (*bytes.Buffer, string, error) {
-    fp, err := os.Open(path) 
-    if err != nil {
-        panic(err)
-    }
-    defer fp.Close()
-
-    body := &bytes.Buffer{} // init body
-    writer := multipart.NewWriter(body) // multipart
-    
-    // prepare the reader instances to encode
-    params := map[string]io.Reader{
-        name:  fp, // it is file
-        // "other": strings.NewReader("hello world!"),
-    }
-    //
-    for key, r := range params {
-        var fw io.Writer
-        if x, ok := r.(io.Closer); ok {
-            defer x.Close()
-        }
-        // Add an file
-        if x, ok := r.(*os.File); ok {
-            if fw, err = writer.CreateFormFile(key, x.Name()); err != nil {
-                return nil, "", err
-            }
-        } else {
-            // Add other fields
-            if fw, err = writer.CreateFormField(key); err != nil {
-                return nil, "", err
-            }
-        }
-        if _, err = io.Copy(fw, r); err != nil {
-            return nil, "", err
-        }
-    }
-    //
-    err = writer.Close()
-    if err != nil {
-        return nil, "", err
-    }
-    // do not forget this
-    boundary := writer.FormDataContentType()
-    // fmt.Println("boundary", boundary)
-    // ==> i.e. multipart/form-data; boundary=37b1e9deba0159aaf429d7183a9de344c532e50299532f7b4f7bdbbca435
-
-    return body, boundary, nil
-
-}
-
-
-func PrepPostPayload (reqPayload map[string]interface{}) *strings.Reader {
-    var body *strings.Reader
-
-    for key, value := range reqPayload {
-        if key == "text" {
-            repJson, _ := json.Marshal(value)
-            body = strings.NewReader(string(repJson))
-            break
-        }
-    }
-
-    return body
-}
-
-func PrepPostFormPayload (reqPayload map[string]interface{}) *strings.Reader {
-    var body *strings.Reader
-
-    // Note, has 3 conditions: text (json), form, or multipart file upload
-    data := url.Values{}
-    for key, value := range reqPayload {
-        // value (type interface {}) as type string in argument to data.Set: need type assertion
-        data.Set(key, fmt.Sprint(value))
-    }
-    body = strings.NewReader(data.Encode())
-
-    return body
-}
 
 
 
