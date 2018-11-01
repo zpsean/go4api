@@ -29,6 +29,10 @@ func BuiltinFunctionsMapping (key string) []interface{} {
             NextAlphaNumeric, 
             "",
         },
+        "NextStringNumeric": []interface{} {
+            NextStringNumeric, 
+            "",
+        },
         "CurrentTimeStampString": []interface{} {
             CurrentTimeStampString, 
             "ignoreParams",

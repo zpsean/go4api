@@ -16,6 +16,7 @@ import (
 )
 
 var alphaNumeric = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+var numeric = []rune("0123456789")
 var charSet = []rune("中文测试的些字符集可以使用一二三四五六七八九十abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
 
@@ -45,6 +46,24 @@ func NextAlphaNumeric (length float64) string {
         // [0,n)
         rand.Seed(time.Now().UnixNano())
         b[i] = alphaNumeric[rand.Intn(l)]
+    }
+
+    return string(b)
+}
+
+func NextStringNumeric (length float64) string {
+	n := int(length)
+
+    b := make([]rune, n)
+    l := len(numeric)
+    if n <= 0 {
+    	return ""
+    } 
+    
+    for i := range b {
+        // [0,n)
+        rand.Seed(time.Now().UnixNano())
+        b[i] = numeric[rand.Intn(l)]
     }
 
     return string(b)
