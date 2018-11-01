@@ -88,13 +88,14 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
         setUpTcTreeStats := RunGlobalSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
         //
         tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
-        normalTcTreeStats := RunScenario(ch, baseUrl, resultsDir, resultsLogFile, jsonFileList, tcArray)
+        normalTcSlice := GetNormalTcSlice(tcArray)
+        normalTcTreeStats := RunScenario(ch, baseUrl, resultsDir, resultsLogFile, jsonFileList, normalTcSlice)
         //
         tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
         teardownTcSlice := GetTeardownTcSlice(tcArray)
         teardownTcTreeStats := RunGlobalTeardown(ch, baseUrl, resultsDir, resultsLogFile, teardownTcSlice)
         //
-        totalTcCount := len(setUpTcSlice) + len(tcArray) + len(teardownTcSlice)
+        totalTcCount := len(setUpTcSlice) + len(normalTcSlice) + len(teardownTcSlice)
         RunFinalConsoleReport(totalTcCount, setUpTcTreeStats, normalTcTreeStats, teardownTcTreeStats)
         RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
     }

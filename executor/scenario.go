@@ -11,7 +11,7 @@
 package executor
 
 import (
-    "time"
+    // "time"
     "fmt"
     "sync"
     "strings"
@@ -77,6 +77,8 @@ func RunScenario (ch chan int, baseUrl string, resultsDir string, resultsLogFile
         }
     }
     logFilePtr.Close()
+    //
+    RunConsoleOverallReport(tcArray, root, tcTreeStats)
 
     return tcTreeStats
 }
@@ -122,25 +124,6 @@ func BuildChilrenNodes (tcExecution testcase.TestCaseExecutionInfo, jsonFileList
             }
         }
     }
-}
-
-func RunScenarioReports (ch chan int, gStart_time time.Time, gStart string, resultsDir string, root *tree.TcNode, tcTreeStats tree.TcTreeStats) {
-    //
-    tcTreeStats.CollectNodeStatusByPriority(root, "Overall")
-    reports.ReportConsoleOverall(tcTreeStats.StatusCountByPriority["Overall"]["Total"], "Overall", tcTreeStats.StatusCountByPriority)
-
-    // time.Sleep(1 * time.Second)
-    pEnd_time := time.Now()
-    //
-    // reports.GenerateTestReport(resultsDir, gStart_time, gStart, pEnd_time, 
-    //     "", tcTreeStats.StatusCountByPriority["Overall"]["Total"], tcTreeStats.StatusCountByPriority)
-    //
-    fmt.Println("---------------------------------------------------------------------------")
-    fmt.Println("Report Generated at: " + resultsDir + "index.html")
-    fmt.Println("Execution Finished at: " + pEnd_time.String())
-    
-    // channel code, can be used for the overall success or fail indicator, especially for CI/CD
-    ch <- tcTreeStats.StatusCountByPriority["Overall"]["Fail"]
 }
 
 
