@@ -17,7 +17,6 @@ Menu
 - [Install](#install)
 - [Quick Start](#quick-start)
 - [CheatSheet](#cheatsheet)
-- [v1.0 Target](#v10-target)
 - [Need help or want to contribute?](#need-help-or-want-to-contribute)
   
 
@@ -227,18 +226,6 @@ CheatSheet
 <p align="center">
   <img width="900" src="https://cdn.rawgit.com/zpsean/go4api/master/CheatSheet2.png">
 </p>
-
----
-
-v1.0 Target
---------------------------------
-
-v1.0 is planning to have:
-
-- Fully support the HTTP method on Get, Post, Put, Delete
-- More options to control the test cases execution
-- Fully coverage on Assertion on Equals, Contains, etc.
-- Fully coverage on rules for Fuzz Test (Mutation, Random).
 
 ---
 
