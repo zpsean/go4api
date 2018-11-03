@@ -13,6 +13,7 @@ package g4json
 import (
     // "os"
     "fmt"
+    "sync"
     "strings"
     "reflect"
     // "encoding/csv"
@@ -27,147 +28,209 @@ type FieldDetails struct {
 }
 
 func GetFieldsDetails(value interface{}) []FieldDetails {
+    var fieldDetailsSlice []FieldDetails
     c := make(chan FieldDetails)
 
     go func(c chan FieldDetails) {
         defer close(c)
-        sturctFields(c, []string{}, value)
+        wg := &sync.WaitGroup{}
+
+        wg.Add(1)
+        TraverseFields(c, []string{}, value, wg)
+
+        wg.Wait()
     }(c)
 
-    var mFieldDetailsSlice []FieldDetails
-    //
-    for mFieldDetails := range c {
-        mFieldDetailsSlice = append(mFieldDetailsSlice, mFieldDetails)
+    for fieldDetails := range c {
+        fieldDetailsSlice = append(fieldDetailsSlice, fieldDetails)
     }
-
-    return mFieldDetailsSlice
+    
+    return fieldDetailsSlice
 }
 
+// encoding/json: func Unmarshal(data []byte, v interface{}) error
+// Bool                   => JSON bool
+// float64                => JSON numbers
+// string                 => JSON strings
+// []interface{}          => JSON array
+// map[string]interface{} => JSON object
+// nil                    => JSON null
 
-func sturctFields(c chan FieldDetails, subPath []string, value interface{}) {
-    switch reflect.TypeOf(value).Kind() {
-        case reflect.Map: {
-            // fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
-            for key2, value2 := range reflect.ValueOf(value).Interface().(map[string]interface{}) {
-                // fmt.Println("key2, value2: ", key2, reflect.TypeOf(value2))
-                if value2 != nil {
-                    switch reflect.TypeOf(value2).Kind() {
-                        case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
-                            subPathNew := append(subPath, key2)
-                            output := make([]string, len(subPathNew))
-                            copy(output, subPathNew)
+// Note: some issues exposed:
+// 1. all Json numbers's type is marked as float64, can not distinguish int with float64
+// 2. if Json number is 1234.00, then the value in Go is 1234 once json.Unmarshal, lost the .00
+// 3. as Json mumbers are treated as float64, it may result in some issue, like use sci a.xxxe+1yy to represent timestamp
+func TraverseFields(c chan FieldDetails, subPath []string, value interface{}, wg *sync.WaitGroup) {
+    defer wg.Done()
 
-                            mtD := FieldDetails{output, value2, reflect.TypeOf(value2).Kind().String(), ""}
-                            c <- mtD
-                        case reflect.Map:
-                            subPathNew := append(subPath, key2)
-                            sturctFields(c, subPathNew, value2)
-                        case reflect.Array, reflect.Slice:
-                            sturctFieldsSlice(c, subPath, value2, key2)
-                    }
-                } else {
-                    subPathNew := append(subPath, key2)
-                    output := make([]string, len(subPathNew))
-                    copy(output, subPathNew)
-
-                    mtD := FieldDetails{output, nil, "", ""}
-                    c <- mtD
-                }
-            }     
-        }
-        case reflect.Array, reflect.Slice: {
-            // fmt.Println("value: ", value, reflect.TypeOf(value), reflect.TypeOf(value).Kind())
-            for key2, value2 := range reflect.ValueOf(value).Interface().([]interface{}) {
-                // fmt.Println("key2, value2: ", key2, reflect.TypeOf(value2))
-                switch reflect.TypeOf(value2).Kind() {
-                    case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
-                        subPathNew := append(subPath, fmt.Sprint(key2))
-                        output := make([]string, len(subPathNew))
-                        copy(output, subPathNew)
-
-                        mtD := FieldDetails{output, value2, reflect.TypeOf(value2).Kind().String(), ""}
-                        c <- mtD
-                    case reflect.Map:
-                        subPathNew := append(subPath, fmt.Sprint(key2))
-                        sturctFields(c, subPathNew, value2)
-                    case reflect.Array, reflect.Slice:
-                        sturctFieldsSlice(c, subPath, value2, key2)
-                }
-            } 
-        }
+    switch value.(type) {
+        case nil:
+            wg.Add(1)
+            go fieldNull(c, subPath, value, "", wg)
+        case string, float64, bool:
+            wg.Add(1)
+            fieldPrimitive(c, subPath, value, "", wg)
+        case map[string]interface{}:
+            wg.Add(1)
+            go fieldMap(c, subPath, value, "", wg)
+        case []interface{}:
+            wg.Add(1)
+            go fieldSlice(c, subPath, value, "", wg)
     }
 }
 
-func sturctFieldsSlice (c chan FieldDetails, subPath []string, value2 interface{}, key2 interface{}) {
-    // note: maybe the Array/Slice is the last node, if it contains concrete type, like [1, 2, 3, ...]
-    if len(reflect.ValueOf(value2).Interface().([]interface{})) == 0 {
-        subPathNew := append(subPath, fmt.Sprint(key2))
-        output := make([]string, len(subPathNew))
-        copy(output, subPathNew)
+func fieldNull (c chan FieldDetails, subPath []string, value interface{}, key interface{}, wg *sync.WaitGroup) {
+    defer wg.Done()
 
-        mtD := FieldDetails{output, value2, reflect.TypeOf(value2).Kind().String(), ""}
+    subPathNew := make([]string, len(subPath))
+    if key == "" {
+        copy(subPathNew, subPath)
+    } else {
+        copy(subPathNew, subPath)
+        subPathNew = append(subPathNew, fmt.Sprint(key))
+    }
+ 
+    mtD := FieldDetails{subPathNew, value, "", ""}
+    c <- mtD
+}
+
+func fieldPrimitive (c chan FieldDetails, subPath []string, value interface{}, key interface{}, wg *sync.WaitGroup) {
+    defer wg.Done()
+
+    subPathNew := make([]string, len(subPath))
+    if key == "" {
+        copy(subPathNew, subPath)
+    } else {
+        copy(subPathNew, subPath)
+        subPathNew = append(subPathNew, fmt.Sprint(key))
+    }
+
+    mtD := FieldDetails{subPathNew, value, reflect.TypeOf(value).Kind().String(), ""}
+    c <- mtD
+}
+
+func fieldMap (c chan FieldDetails, subPath []string, value interface{}, key interface{}, wg *sync.WaitGroup) {
+    defer wg.Done()
+
+    subPathNew := make([]string, len(subPath))
+    if key == "" {
+        copy(subPathNew, subPath)
+    } else {
+        copy(subPathNew, subPath)
+        subPathNew = append(subPathNew, fmt.Sprint(key))
+    }
+    // once the value == {}
+    if len(reflect.ValueOf(value).Interface().(map[string]interface{})) == 0 {
+        mtD := FieldDetails{subPathNew, value, reflect.TypeOf(value).Kind().String(), ""}
         c <- mtD
-    }
-
-    for _, v := range reflect.ValueOf(value2).Interface().([]interface{}) {
-        if v != nil { 
-            switch reflect.TypeOf(v).Kind() {
-                case reflect.Array, reflect.Slice, reflect.Map:
-                    subPathNew := append(subPath, fmt.Sprint(key2))
-                    sturctFields(c, subPathNew, value2)
-                case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
-                    subPathNew := append(subPath, fmt.Sprint(key2))
-                    // subPathNew = append(subPathNew, fmt.Sprint(index))
-                    output := make([]string, len(subPathNew))
-                    copy(output, subPathNew)
-
-                    mtD := FieldDetails{output, value2, reflect.TypeOf(value2).Kind().String(), ""}
-                    c <- mtD
+    } else {
+        mtD := FieldDetails{subPathNew, value, reflect.TypeOf(value).Kind().String(), ""}
+        c <- mtD
+        //
+        for key2, value2 := range reflect.ValueOf(value).Interface().(map[string]interface{}) {
+            switch value2.(type) {
+                case nil:
+                    wg.Add(1)
+                    go fieldNull(c, subPathNew, value2, key2, wg)
+                case string, float64, bool:
+                    wg.Add(1)
+                    go fieldPrimitive(c, subPathNew, value2, key2, wg)
+                case map[string]interface{}:
+                    wg.Add(1)
+                    go fieldMap(c, subPathNew, value2, key2, wg)
+                case []interface{}:
+                    wg.Add(1)
+                    go fieldSlice(c, subPathNew, value2, key2, wg)
+                
             }
-            break
-        } else {
-            subPathNew := append(subPath, fmt.Sprint(key2))
-            output := make([]string, len(subPathNew))
-            copy(output, subPathNew)
-
-            mtD := FieldDetails{output, nil, "", ""}
-            c <- mtD
         }
     }
 }
 
+func fieldSlice (c chan FieldDetails, subPath []string, value interface{}, key interface{}, wg *sync.WaitGroup) {
+    defer wg.Done()
 
-func getJsonNodePaths (FieldDetailsSlice []FieldDetails) ([]string, int) {
+    subPathNew := make([]string, len(subPath))
+    if key == "" {
+        copy(subPathNew, subPath)
+    } else {
+        copy(subPathNew, subPath)
+        subPathNew = append(subPathNew, fmt.Sprint(key))
+    }
+    // once the value == []
+    if len(reflect.ValueOf(value).Interface().([]interface{})) == 0 {
+        mtD := FieldDetails{subPathNew, value, reflect.TypeOf(value).Kind().String(), ""}
+        c <- mtD
+    } else {
+        mtD := FieldDetails{subPathNew, value, reflect.TypeOf(value).Kind().String(), ""}
+        c <- mtD
+        // loop all elments of the Slice, as it may contains different types
+        for key2, value2 := range reflect.ValueOf(value).Interface().([]interface{}) {
+            switch value2.(type) {
+                case nil:
+                    wg.Add(1)
+                    go fieldNull(c, subPathNew, value2, fmt.Sprint(key2), wg)
+                case string, float64, bool:
+                    wg.Add(1)
+                    go fieldPrimitive(c, subPathNew, value2, fmt.Sprint(key2), wg)
+                case map[string]interface{}:
+                    wg.Add(1)
+                    go fieldMap(c, subPathNew, value2, fmt.Sprint(key2), wg)
+                case []interface{}:
+                    wg.Add(1)
+                    go fieldSlice(c, subPathNew, value2, fmt.Sprint(key2), wg)
+                
+            }
+        }
+    }
+}
+
+func GetJsonNodesLevel (fieldDetailsSlice []FieldDetails) int {
     // get the max level of the paths
     max := 0
-    for _, fieldDetails := range FieldDetailsSlice {
+    for _, fieldDetails := range fieldDetailsSlice {
         if len(fieldDetails.FieldPath) > max {
             max = len(fieldDetails.FieldPath)
         }
     }
-    // 
-    var nodePaths []string
-    for i := max; i > 0; i-- {
-        for _, fieldDetails := range FieldDetailsSlice {
-            if len(fieldDetails.FieldPath) >= i {
-                nodePathStr := strings.Join(fieldDetails.FieldPath[0:i], ".")
 
-                ifExists := ""
-                for _, str := range nodePaths {
-                    if nodePathStr == str {
-                        ifExists = "Y"
-                        break
-                    }
+    return max
+}
+
+func GetJsonNodesPath (fieldDetailsSlice []FieldDetails) []string {
+    var nodePaths []string
+    for i, _ := range fieldDetailsSlice {
+        nodePathStr := strings.Join(fieldDetailsSlice[i].FieldPath, ".")
+        nodePaths = append(nodePaths, nodePathStr)
+        // fmt.Println(fieldDetailsSlice[i].FieldType, "==", nodePathStr)
+    }
+
+    return nodePaths
+}
+
+// to get all the leaves, including the blank slice [], blank map {}
+func GetJsonLeavesPath (fieldDetailsSlice []FieldDetails) []string {
+    var leavesPath []string
+    for i, _ := range fieldDetailsSlice {
+        switch fieldDetailsSlice[i].FieldType {
+            case "", "string", "float64", "bool":
+                nodePathStr := strings.Join(fieldDetailsSlice[i].FieldPath, ".")
+                leavesPath = append(leavesPath, nodePathStr)
+                // fmt.Println(fieldDetailsSlice[i].FieldType, "==", nodePathStr)
+            case "map":
+                if len(reflect.ValueOf(fieldDetailsSlice[i].CurrValue).Interface().(map[string]interface{})) == 0 {
+                    nodePathStr := strings.Join(fieldDetailsSlice[i].FieldPath, ".")
+                    leavesPath = append(leavesPath, nodePathStr)
                 }
-                if ifExists == "" {
-                    nodePaths = append(nodePaths, nodePathStr)
+            case "slice":
+                if len(reflect.ValueOf(fieldDetailsSlice[i].CurrValue).Interface().([]interface{})) == 0 {
+                    nodePathStr := strings.Join(fieldDetailsSlice[i].FieldPath, ".")
+                    leavesPath = append(leavesPath, nodePathStr)
                 }
-            }
         }
     }
 
-    return nodePaths, max
+    return leavesPath
 }
-
 
 
