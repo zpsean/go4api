@@ -53,7 +53,7 @@ To build from source you need **[Go](https://golang.org/doc/install)** (1.10 or 
 
 - Run `go get github.com/zpsean/go4api` which will:
   - git clone the repo and put the source in `$GOPATH/src/github.com/zpsean/go4api`
-  - build a `go4api` binary and put it in `$GOPATH/bin`
+  - build a `go4api` binary and put it in `$GOPATH/bin`, if for linux, use `env GOOS=linux GOARCH=amd64 go build`
 - Make sure you have `$GOPATH/bin` in your PATH
 - You can now run go4api using `$./go4api ...`
 
