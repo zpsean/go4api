@@ -202,7 +202,6 @@ func GetJsonNodesPath (fieldDetailsSlice []FieldDetails) []string {
     for i, _ := range fieldDetailsSlice {
         nodePathStr := strings.Join(fieldDetailsSlice[i].FieldPath, ".")
         nodePaths = append(nodePaths, nodePathStr)
-        // fmt.Println(fieldDetailsSlice[i].FieldType, "==", nodePathStr)
     }
 
     return nodePaths
@@ -216,7 +215,6 @@ func GetJsonLeavesPath (fieldDetailsSlice []FieldDetails) []string {
             case "", "string", "float64", "bool":
                 nodePathStr := strings.Join(fieldDetailsSlice[i].FieldPath, ".")
                 leavesPath = append(leavesPath, nodePathStr)
-                // fmt.Println(fieldDetailsSlice[i].FieldType, "==", nodePathStr)
             case "map":
                 if len(reflect.ValueOf(fieldDetailsSlice[i].CurrValue).Interface().(map[string]interface{})) == 0 {
                     nodePathStr := strings.Join(fieldDetailsSlice[i].FieldPath, ".")
@@ -231,6 +229,27 @@ func GetJsonLeavesPath (fieldDetailsSlice []FieldDetails) []string {
     }
 
     return leavesPath
+}
+
+// to get all the leaves, including the blank slice [], blank map {}
+func GetJsonLeaves (fieldDetailsSlice []FieldDetails) []FieldDetails {
+    var leaves []FieldDetails
+    for i, _ := range fieldDetailsSlice {
+        switch fieldDetailsSlice[i].FieldType {
+            case "", "string", "float64", "bool":
+                leaves = append(leaves, fieldDetailsSlice[i])
+            case "map":
+                if len(reflect.ValueOf(fieldDetailsSlice[i].CurrValue).Interface().(map[string]interface{})) == 0 {
+                    leaves = append(leaves, fieldDetailsSlice[i])
+                }
+            case "slice":
+                if len(reflect.ValueOf(fieldDetailsSlice[i].CurrValue).Interface().([]interface{})) == 0 {
+                    leaves = append(leaves, fieldDetailsSlice[i])
+                }
+        }
+    }
+
+    return leaves
 }
 
 
