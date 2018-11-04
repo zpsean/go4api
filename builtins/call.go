@@ -18,75 +18,32 @@ import (
  	"reflect"
 )
 
-func BuiltinFunctionsMapping (key string) []interface{} {
+func BuiltinFunctionsMapping (key string) interface{} {
     //
-    FuncsMapping := map[string][]interface{} {
-    	"NextInt": []interface{} {
-            NextInt, 
-            "",
-        },
-        "NextAlphaNumeric": []interface{} {
-            NextAlphaNumeric, 
-            "",
-        },
-        "NextStringNumeric": []interface{} {
-            NextStringNumeric, 
-            "",
-        },
-        "CurrentTimeStampString": []interface{} {
-            CurrentTimeStampString, 
-            "ignoreParams",
-        },
-        "CurrentTimeStampMilliString": []interface{} {
-            CurrentTimeStampMilliString, 
-            "ignoreParams",
-        },
-        "CurrentTimeStampMicroString": []interface{} {
-            CurrentTimeStampMicroString, 
-            "ignoreParams",
-        },
-        "CurrentTimeStampNanoString": []interface{} {
-            CurrentTimeStampNanoString, 
-            "ignoreParams",
-        },
-        "CurrentTimeStampUnix": []interface{} {
-            CurrentTimeStampUnix, 
-            "ignoreParams",
-        },
-        "CurrentTimeStampUnixMilli": []interface{} {
-            CurrentTimeStampUnixMilli, 
-            "ignoreParams",
-        },
-        "CurrentTimeStampUnixMicro": []interface{} {
-            CurrentTimeStampUnixMicro, 
-            "ignoreParams",
-        },
-        "CurrentTimeStampUnixNano": []interface{} {
-            CurrentTimeStampUnixNano, 
-            "ignoreParams",
-        },
+    FuncsMapping := map[string]interface{} {
+    	"NextInt": NextInt,
+        "NextAlphaNumeric": NextAlphaNumeric,
+        "NextStringNumeric": NextStringNumeric,
+        "Join": Join,
+        "Split": Split,
+        "ToString": ToString,
+        "CurrentTimeStampString": CurrentTimeStampString,
+        "CurrentTimeStampUnix": CurrentTimeStampUnix,
+        "CurrentTimeStampUnixMilli": CurrentTimeStampUnixMilli,
+        "CurrentTimeStampUnixMicro": CurrentTimeStampUnixMicro,
+        "CurrentTimeStampUnixNano": CurrentTimeStampUnixNano,
     }
 
     return FuncsMapping[key]
 }
 
 func CallBuiltinFunc (funcName string, funcParams interface{}) interface{} {
-    f := reflect.ValueOf(BuiltinFunctionsMapping(funcName)[0])
+    f := reflect.ValueOf(BuiltinFunctionsMapping(funcName))
 
     var in []reflect.Value
+    in = append(in, reflect.ValueOf(funcParams))
 
-    for _, param := range reflect.ValueOf(funcParams).Interface().([]interface{}) {
-        in = append(in, reflect.ValueOf(param))
-    }
+    result := f.Call(in)
 
-    if BuiltinFunctionsMapping(funcName)[1] == "ignoreParams" {
-    	ins := make([]reflect.Value, 0)
-    	result := f.Call(ins)
-
-    	return result[0].Interface()
-    } else {
-    	result := f.Call(in)
-
-    	return result[0].Interface()
-    }
+    return result[0].Interface()
 }

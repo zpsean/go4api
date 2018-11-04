@@ -194,6 +194,11 @@ func Test_GetJsonLeavesPath_2 (t *testing.T) {
     
     resj,_ := json.MarshalIndent(a, "", "\t")
     fmt.Println(string(resj), len(a))
+	// ...
+	// "request.payload.text.field1.Fn::F1",
+	// "request.payload.text.field2.Fn::F2.0",
+	// "request.payload.text.field2.Fn::F2.1.Fn::F3.1",
+	// "request.payload.text.field2.Fn::F2.1.Fn::F3.0"
 
     if len(a) != 13 {
         t.Fatalf("json parse failed")
