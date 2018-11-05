@@ -15,6 +15,7 @@ import (
 	"math/rand"                                                                                                                                        
 	"time"
     "strings"
+    "strconv"
     "reflect"
 )
 
@@ -104,8 +105,35 @@ func Substitute (target string, dddd string) {
 }
 
 // { "Fn::Select" : [ "1", [ "apples", "grapes", "oranges", "mangoes" ] ] }
-func Select (index string, targetSlice interface{}) {
+func Select (param interface{}) string {
+    switch param.(type) {
+        case []interface{}:
+            res := ""
+            var err error
+            paramSlice := reflect.ValueOf(param).Interface().([]interface{})
+            
+            if len(paramSlice) <= 1 {
+                panic(err)
+            } else if len(paramSlice) > 1 {
+                index, err := strconv.Atoi(paramSlice[0].(string))
 
+                if err != nil {
+                    panic(err)
+                }
+
+                var listValues []string
+                valueSlice := reflect.ValueOf(paramSlice[1]).Interface().([]interface{})
+                for i, _ := range valueSlice {
+                    listValues = append(listValues, valueSlice[i].(string))
+                }
+
+                res = listValues[index]
+            }
+
+            return res
+        default:
+            return ""
+    }
 }
 
 // { "Fn::Join" : [ ":", [ "a", "b", "c" ] ] }
@@ -150,7 +178,7 @@ func Split (param interface{}) []string {
             } else if len(paramSlice) > 1 {
                 res = strings.Split(paramSlice[1].(string), paramSlice[0].(string))
             }
-            
+
             return res
         default:
             return []string{}
@@ -169,8 +197,14 @@ func ToString (param interface{}) string {
     }
 }
 
-func ToInt (value interface{}) {
-    
+func ToInt (param interface{}) int {
+    switch param.(type) {
+        case float64:
+            // Note: tbd, to cosider format for int, float64 more
+            return int(param.(float64))
+        default:
+            return 0
+    }
 }
 
 func CurrentTimeStampString (param interface{}) string {

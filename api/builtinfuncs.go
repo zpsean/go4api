@@ -11,7 +11,7 @@
 package api
 
 import (
-    "fmt"
+    // "fmt"
     "strings"
     // "reflect"
     "encoding/json"
@@ -35,33 +35,38 @@ type BuiltinFieldDetails struct {
 func EvaluateBuiltinFunctions (tcData testcase.TestCaseDataInfo) testcase.TestCaseDataInfo {
     tcJsonBytes, _ := json.Marshal(tcData)
     tcJson := string(tcJsonBytes)
-
     // fmt.Println(tcJson)
 
+    var value interface{}
+    
     // check if has builtin function
     if !strings.Contains(tcJson, "Fn::") {
         return tcData
     } else {
-        builtinLeavesSlice := GetBuiltinLeavesSlice(tcData.TestCase.TestCaseBasics())
+        tcBasicsJsonBytes, _ := json.Marshal(tcData.TestCase.TestCaseBasics())
+        tcBasicsJson := string(tcBasicsJsonBytes)
+        json.Unmarshal(tcBasicsJsonBytes, &value)
+
+        builtinLeavesSlice := GetBuiltinLeavesSlice(value)
         maxLevel := g4json.GetJsonNodesLevel(builtinLeavesSlice)
-        fmt.Println("maxLevel: ", maxLevel)
+  
+        tcBasicsJson = IterateBuiltsins(tcBasicsJson, builtinLeavesSlice, maxLevel)
 
-        tcJson = IterateBuiltsins(tcJson, builtinLeavesSlice, maxLevel)
+        tcBasicsPath := "TestCase." + tcData.TestCase.TcName()
+        var tcBasicsValue interface{}
+        json.Unmarshal([]byte(tcBasicsJson), &tcBasicsValue)
 
-        var fTcData testcase.TestCaseDataInfo
-        json.Unmarshal([]byte(tcJson), &fTcData)
+        tcJson, _  = sjson.Set(tcJson, tcBasicsPath, tcBasicsValue)
 
-        return fTcData
+        var bTcData testcase.TestCaseDataInfo
+        json.Unmarshal([]byte(tcJson), &bTcData)
+
+        return bTcData
     }
 }
 
-func GetBuiltinLeavesSlice (tcBasics *testcase.TestCaseBasics) []g4json.FieldDetails {
-    var value interface{}
+func GetBuiltinLeavesSlice (value interface{}) []g4json.FieldDetails {
     var builtinLeavesSlice []g4json.FieldDetails
-
-    tcBasicsJsonBytes, _ := json.Marshal(tcBasics)
-    tcBasicsJson := string(tcBasicsJsonBytes)
-    json.Unmarshal([]byte(tcBasicsJson), &value)
 
     fieldDetailsSlice := g4json.GetFieldsDetails(value)
     leavesSlice := g4json.GetJsonLeaves(fieldDetailsSlice)
@@ -82,13 +87,7 @@ func GetBuiltinLeavesSlice (tcBasics *testcase.TestCaseBasics) []g4json.FieldDet
 // leafpath:    "request.payload.text.field2.Fn::F2.0",
 //              "request.payload.text.field2.Fn::F2.1.Fn::F3.1",
 //              "request.payload.text.field2.Fn::F2.1.Fn::F3.0"
-
-// scan from end to front
-// create new shadow slice to record Fn value
-// merge the values
-// then sjson to update the field
-func IterateBuiltsins (tcJson string, builtinLeavesSlice []g4json.FieldDetails, maxLevel int) string {
-    // ---
+func IterateBuiltsins (tcBasicsJson string, builtinLeavesSlice []g4json.FieldDetails, maxLevel int) string {
     var evaluatedSlice []g4json.FieldDetails
     var evaluatedFuncPaths []string
 
@@ -98,27 +97,11 @@ func IterateBuiltsins (tcJson string, builtinLeavesSlice []g4json.FieldDetails, 
             if pathLength >= i && i > 1 {
                 // the last node (leaf), take its own CurrValue as the funcParams 
                 if strings.Contains(builtinLeavesSlice[j].FieldPath[i - 1], "Fn::") {
-                    //
-                    var evalData testcase.TestCaseDataInfo
                     var value interface{}
-                    json.Unmarshal([]byte(tcJson), &evalData)
-
-                    tcBasicsJsonBytes, _ := json.Marshal(evalData.TestCase.TestCaseBasics())
-                    tcBasicsJson := string(tcBasicsJsonBytes)
                     json.Unmarshal([]byte(tcBasicsJson), &value)
 
                     evaluatedSlice = g4json.GetFieldsDetails(value)
-                    // zz, _ := json.MarshalIndent(evaluatedSlice, "", "\t")
-                    // fmt.Println("evaluatedSlice: ", string(zz))
-
-                    
-                    // evaluatedSlice = GetBuiltinLeavesSlice(evalData.TestCase.TestCaseBasics())
-                    // zz, _ := json.MarshalIndent(evaluatedSlice, "", "\t")
-                    // fmt.Println("evaluatedSlice: ", string(zz))
-
-                    //
                     nodePathStr := strings.Join(builtinLeavesSlice[j].FieldPath[0:i - 1], ".")
-                    plFullPath := "TestCase." + evalData.TestCase.TcName() + "." + nodePathStr
 
                     funcName := strings.TrimLeft(builtinLeavesSlice[j].FieldPath[i - 1], "Fn::")
 
@@ -138,19 +121,10 @@ func IterateBuiltsins (tcJson string, builtinLeavesSlice []g4json.FieldDetails, 
                         if funcParamsPath == p {
                             funcParams = evaluatedSlice[k].CurrValue
                         }
-
-
                     }
-                    
-                    fmt.Println("---> vv i, j: ", fmt.Sprint(i), fmt.Sprint(j), ": ", funcName, funcParams)
-                    fmt.Println("---> vv plFullPath: ", plFullPath)
 
                     resValue := builtins.CallBuiltinFunc(funcName, funcParams)
-                    
-                    fmt.Println("---> vv i, j: ", fmt.Sprint(i), fmt.Sprint(j), ": ", resValue)
-                    
-
-                    tcJson, _  = sjson.Set(tcJson, plFullPath, resValue)
+                    tcBasicsJson, _  = sjson.Set(tcBasicsJson, nodePathStr, resValue)
 
                     evaluatedFuncPaths = append(evaluatedFuncPaths, funcParamsPath)
                 }
@@ -158,6 +132,6 @@ func IterateBuiltsins (tcJson string, builtinLeavesSlice []g4json.FieldDetails, 
         }
     }
 
-    return tcJson
+    return tcBasicsJson
 }
 
