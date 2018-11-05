@@ -276,4 +276,24 @@ func CurrentTimeStampUnixNano (param interface{}) int64 {
 	return t.UnixNano()
 }
 
+// conditions
+func And (param interface{}) bool {
+    return true
+}
+
+func Or (param interface{}) bool {
+
+    return true
+}
+
+func If (param interface{}) bool {
+
+    return true
+}
+
+func Not (param interface{}) bool {
+
+    return true
+}
+
 

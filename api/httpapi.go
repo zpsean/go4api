@@ -11,7 +11,7 @@
 package api
 
 import (
-    "fmt"
+    // "fmt"
     "time"
     "sync"
     // "reflect"
@@ -23,7 +23,7 @@ import (
     "go4api/lib/testcase"                                                                                                                             
     "go4api/assertion"
     "go4api/protocal/http"
-    "go4api/sql"
+    // "go4api/sql"
 )
 
 
@@ -106,51 +106,6 @@ func IfValidHttp (tcData testcase.TestCaseDataInfo) bool {
     return ifValidHttp
 }
 
-func RunTcSetUp (tcData testcase.TestCaseDataInfo) string {
-    var sqlSlice []string
-    tcSetUpResult := "SqlSuccess"
-
-    for k, v := range tcData.TestCase.SetUp() {
-        if k == "sql" {
-            sqlSlice = append(sqlSlice, fmt.Sprint(v))
-        }
-    }
-
-    var sqlRessult = make([]string, len(sqlSlice))  //value: SqlSuccess, SqlFailed
-    
-    for i, _ := range sqlSlice {
-        sqlRessult[i] = gsql.Run(sqlSlice[i])
-        if sqlRessult[i] == "SqlFailed" {
-            tcSetUpResult = "SqlFailed"
-            // break
-        }
-    }
-
-    return tcSetUpResult
-}
-
-func RunTcTearDown (tcData testcase.TestCaseDataInfo) string {
-    var sqlSlice []string
-    tcTearDownResult := "SqlSuccess"
-
-    for k, v := range tcData.TestCase.TearDown() {
-        if k == "sql" {
-            sqlSlice = append(sqlSlice, fmt.Sprint(v))
-        }
-    }
-
-    var sqlRessult = make([]string, len(sqlSlice))  //value: SqlSuccess, SqlFailed
-
-    for i, _ := range sqlSlice {
-        sqlRessult[i] = gsql.Run(sqlSlice[i])
-        if sqlRessult[i] == "SqlFailed" {
-            tcTearDownResult = "SqlFailed"
-            // break
-        }
-    }
-
-    return tcTearDownResult
-}
 
 func CallHttp(baseUrl string, tcData testcase.TestCaseDataInfo) (int, http.Header, []byte) {
     // urlStr := tcData.TestCase.UrlRaw(baseUrl)

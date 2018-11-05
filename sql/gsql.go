@@ -39,29 +39,30 @@ func InitConnection (ip string, port string, user string, pw string, defaultDB s
     }
 } 
 
-func Run (stmt string) string {
+func Run (stmt string) (int, string) {
     // update, delete, select, insert
     s := strings.TrimSpace(stmt)
     s = strings.ToUpper(s)
     s = string([]rune(stmt)[:6])
 
     var err error
+    var count int
 
-    switch s {
+    switch strings.ToUpper(s) {
         case "UPDATE":
             Update()
         case "DELETE":
-            err = Delete(stmt)
+            _, err = Delete(stmt)
         case "SELECT":
-            QueryWithoutParams()
+            count, err = QueryWithoutParams(stmt)
         case "INSERT":
             Insert() 
     }
 
     if err == nil {
-        return "SqlSuccess"
+        return count, "SqlSuccess"
     } else {
-        return "SqlFailed"
+        return count, "SqlFailed"
     }
 
 }
@@ -74,22 +75,33 @@ func Update () {
     tx.Commit()
 }
 
-func Delete (stmt string) error {
+func Delete (stmt string) (sql.Result, error) {
     tx, _ := db.Begin()
-
-    tx.Exec(stmt)
-
+    res, e := tx.Exec(stmt)
     err := tx.Commit()
 
-    return err
+    fmt.Println(res, e, err)
+
+    return res, err
 }
 
-func QueryWithoutParams () {
-    tx, _ := db.Begin()
+func QueryWithoutParams (stmt string) (int, error) {
+    fmt.Println(">>>>>>>>>>>>>>>>>", stmt)
 
-    tx.Exec("SELECT * FROM STORE;")
+    rows, err := db.Query(stmt)
+    defer rows.Close()
 
-    tx.Commit()
+    var count int
+    for rows.Next() {   
+        if err := rows.Scan(&count); err != nil {
+            panic(err)
+        }
+    }
+
+    fmt.Println("Number of rows are: ", count)
+    fmt.Println(rows, err)
+
+    return count, err
 }
 
 func QueryWithParams () {
