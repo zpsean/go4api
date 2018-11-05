@@ -24,6 +24,7 @@ func BuiltinFunctionsMapping (key string) interface{} {
     	"NextInt": NextInt,
         "NextAlphaNumeric": NextAlphaNumeric,
         "NextStringNumeric": NextStringNumeric,
+        "Select": Select,
         "Join": Join,
         "Split": Split,
         "ToString": ToString,
