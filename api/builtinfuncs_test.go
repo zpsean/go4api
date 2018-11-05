@@ -43,7 +43,9 @@ func init () {
               "payload": {
                 "thisField": {"Fn::NextAlphaNumeric": 25},
                 "text": { 
-                          "builtin6": {"Fn::NextStringNumeric": 31}
+                          "builtin6": {"Fn::NextStringNumeric": 31},
+                          "builtin11": {"Fn::Split": ["|", "a|b|c"]},
+                          "builtin12": {"Fn::Substitute": ["www.${var1}--${var2}", {"var1": "value1", "var2": 12345}]}
                         }
               }
             }

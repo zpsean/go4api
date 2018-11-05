@@ -47,11 +47,13 @@ func WriteOutputsDataToFile (testResult string, tcData testcase.TestCaseDataInfo
                 switch strings.ToLower(outputsFileFormat) {
                     case "csv":
                         keyStrList, valueStrList = GetOutputsCsvData(outputsData, actualStatusCode, actualHeader, actualBody)
+                        // write csv header
+                        utils.GenerateCsvFileBasedOnVarOverride(keyStrList, outputsFile)
+                        // write csv data
+                        utils.GenerateCsvFileBasedOnVarAppend(valueStrList, outputsFile)
+                    case "xlsx":
+                        SaveHttpRespFile(actualBody, outputsFile)
                 }   
-                // write csv header
-                utils.GenerateCsvFileBasedOnVarOverride(keyStrList, outputsFile)
-                // write csv data
-                utils.GenerateCsvFileBasedOnVarAppend(valueStrList, outputsFile)
             } 
         }
     } else {

@@ -22,6 +22,7 @@ import (
 var alphaNumeric = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 var numeric = []rune("0123456789")
 var charSet = []rune("中文测试的些字符集可以使用一二三四五六七八九十abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+var specialChar = []rune(" !@#$%^&*(){}|<>?~<>")
 
 
 func NextInt (param interface{}) int {
@@ -100,8 +101,35 @@ func NextStringNumeric (param interface{}) string {
     }
 }
 
-func Substitute (target string, dddd string) {
+// { "Fn::Substitute" : [ String, { Var1Name: Var1Value, Var2Name: Var2Value } ] }
+// { "Fn::Substitute" : [ "www.${var1}", { "var1": "value1"} ]}
+func Substitute (param interface{}) string {
+    switch param.(type) {
+        case []interface{}:
+            sourceStr := ""
+            var err error
+            paramSlice := reflect.ValueOf(param).Interface().([]interface{})
+            
+            if len(paramSlice) <= 1 {
+                panic(err)
+            } else if len(paramSlice) > 1 {
+                sourceStr = paramSlice[0].(string)
 
+                if err != nil {
+                    panic(err)
+                }
+
+                var keyValueMap = make(map[string]interface{})
+                keyValueMap = reflect.ValueOf(paramSlice[1]).Interface().(map[string]interface{})
+                for key, value := range keyValueMap {
+                    sourceStr = strings.Replace(sourceStr, "${" + key + "}", fmt.Sprint(value), -1)
+                }
+            }
+
+            return sourceStr
+        default:
+            return ""
+    }
 }
 
 // { "Fn::Select" : [ "1", [ "apples", "grapes", "oranges", "mangoes" ] ] }
@@ -121,6 +149,7 @@ func Select (param interface{}) string {
                     panic(err)
                 }
 
+                // cosider the string first, tbd, for enhance to interface{}
                 var listValues []string
                 valueSlice := reflect.ValueOf(paramSlice[1]).Interface().([]interface{})
                 for i, _ := range valueSlice {
