@@ -12,12 +12,13 @@ package gsql
 
 import (
     "os"
-    "strconv"
-    "fmt"
+    // "strconv"
+    // "fmt"
     // "time"
     // "log"
     "strings"
     "database/sql"
+    // "encoding/json"
 
     "go4api/cmd"
 
@@ -26,8 +27,14 @@ import (
 
 var db = &sql.DB{}
 
-func InitConnection (ip string, port string, user string, pw string, defaultDB string) {
+type SqlExec struct {
+    Stmt string
+    RowsCount int
+    RowsHeaders []string
+    RowsData []map[string]interface{}
+}
 
+func InitConnection (ip string, port string, user string, pw string, defaultDB string) {
     conInfo := user + ":" + pw + "@tcp(" + ip + ":" + port + ")/" + defaultDB
     db, _ = sql.Open("mysql", conInfo)
     db.SetMaxOpenConns(2000)
@@ -39,102 +46,130 @@ func InitConnection (ip string, port string, user string, pw string, defaultDB s
     }
 } 
 
-func Run (stmt string) (int, string) {
+func Run (stmt string) (int, []string, []map[string]interface{}, string) {
     // update, delete, select, insert
     s := strings.TrimSpace(stmt)
     s = strings.ToUpper(s)
     s = string([]rune(stmt)[:6])
 
     var err error
-    var count int
+    sqlExecStatus := ""
+
+    sqlExec := &SqlExec{stmt, 0, []string{}, []map[string]interface{}{}}
 
     switch strings.ToUpper(s) {
         case "UPDATE":
-            Update()
+            err = sqlExec.Update()
         case "DELETE":
-            _, err = Delete(stmt)
+            err = sqlExec.Delete()
         case "SELECT":
-            count, err = QueryWithoutParams(stmt)
+            err = sqlExec.QueryWithoutParams()
         case "INSERT":
-            Insert() 
+            err = sqlExec.Insert() 
     }
 
     if err == nil {
-        return count, "SqlSuccess"
+        sqlExecStatus = "SqlSuccess"
     } else {
-        return count, "SqlFailed"
+        sqlExecStatus = "SqlFailed"
     }
 
+    return sqlExec.RowsCount, sqlExec.RowsHeaders, sqlExec.RowsData, sqlExecStatus
 }
 
-func Update () {
-    tx, _ := db.Begin()
-    
-    tx.Exec("Update user set age = ? where uid = ?", 1, 1)
+func (sqlExec *SqlExec) Update () error {
+    sqlStmt, err := db.Prepare(sqlExec.Stmt)
+    res, err := sqlStmt.Exec()
 
-    tx.Commit()
-}
-
-func Delete (stmt string) (sql.Result, error) {
-    tx, _ := db.Begin()
-    res, e := tx.Exec(stmt)
-    err := tx.Commit()
-
-    fmt.Println(res, e, err)
-
-    return res, err
-}
-
-func QueryWithoutParams (stmt string) (int, error) {
-    fmt.Println(">>>>>>>>>>>>>>>>>", stmt)
-
-    rows, err := db.Query(stmt)
-    defer rows.Close()
-
-    var count int
-    for rows.Next() {   
-        if err := rows.Scan(&count); err != nil {
-            panic(err)
-        }
+    if err == nil {
+        rowsAffected, _ := res.RowsAffected()
+        sqlExec.RowsCount = int(rowsAffected)
     }
 
-    fmt.Println("Number of rows are: ", count)
-    fmt.Println(rows, err)
-
-    return count, err
+    return err
 }
 
-func QueryWithParams () {
-    stm, _ := db.Prepare("SELECT * FROM STORE;")
-    defer stm.Close()
-    rows, _ := stm.Query()
-    defer rows.Close()
+func (sqlExec *SqlExec) Delete () error {
+    sqlStmt, err := db.Prepare(sqlExec.Stmt)
+    res, err := sqlStmt.Exec()
 
-    columns, _ := rows.Columns()
-    scanArgs := make([]interface{}, len(columns))
-    values := make([]interface{}, len(columns))
+    if err == nil {
+        rowsAffected, _ := res.RowsAffected()
+        sqlExec.RowsCount = int(rowsAffected)
+    }
+
+    sqlStmt.Close()
+
+    return err
+}
+
+func (sqlExec *SqlExec) QueryWithoutParams () error {
+    sqlStmt, err := db.Prepare(sqlExec.Stmt)
+    rows, err := sqlStmt.Query()
+
+    if err == nil {
+        rowsCount, rowsHeaders, rowsData := ScanRows(rows)
+
+        sqlExec.RowsCount = rowsCount
+        sqlExec.RowsHeaders = rowsHeaders
+        sqlExec.RowsData = rowsData
+    }
+
+    defer rows.Close()
+    sqlStmt.Close()
+
+    return err
+}
+
+func (sqlExec *SqlExec) QueryWithParams () {
+
+}
+
+func ScanRows (rows *sql.Rows) (int, []string, []map[string]interface{}) {
+    rowsHeaders, _ := rows.Columns()
+    var rowsData []map[string]interface{}
+
+    scanArgs := make([]interface{}, len(rowsHeaders))
+    values := make([]interface{}, len(rowsHeaders))
     for i := range values {
         scanArgs[i] = &values[i]
     }
-     
+
+    rowsCount := 0
     for rows.Next() {
         rows.Scan(scanArgs...)
-        record := make(map[string]string)
+        record := make(map[string]interface{})
+
         for i, col := range values {
             if col != nil {
-                record[columns[i]] = string(col.([]byte))
+                // note, try best to get the type information to interface{}
+                switch col.(type) {
+                    case int64:
+                        record[rowsHeaders[i]] = col.(int64)
+                    case float64:
+                        record[rowsHeaders[i]] = col.(float64)
+                    default:
+                        record[rowsHeaders[i]] = string(col.([]byte))
+                }
             }
         }
-        fmt.Println(record)
+        rowsCount = rowsCount + 1
+        rowsData = append(rowsData, record)
     }
+
+    return rowsCount, rowsHeaders, rowsData
 }
 
-func Insert () {
-    tx,_ := db.Begin()
-    
-    tx.Exec("INSERT INTO user(uid, username, age) values(?, ?, ?)", 1, "user" + strconv.Itoa(1), 1)
+func (sqlExec *SqlExec) Insert () error {
+    sqlStmt, err := db.Prepare(sqlExec.Stmt)
+    res, err := sqlStmt.Exec()
 
-    tx.Commit()
+    if err == nil {
+        rowsAffected, _ := res.RowsAffected()
+        sqlExec.RowsCount = int(rowsAffected)
+    }
+
+    return err
 }
 
 func GetDBConnInfo () (string, string, string, string, string) {

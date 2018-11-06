@@ -17,14 +17,13 @@ import (
     "reflect"
     "path/filepath"
     "encoding/json"
-    "net/http"
 
     "go4api/lib/testcase"
     "go4api/utils"
 )
 
 
-func WriteOutputsDataToFile (testResult string, tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader http.Header, actualBody []byte) {
+func WriteOutputsDataToFile (testResult string, tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) {
     var expOutputs []*testcase.OutputsDetails
 
     if testResult == "Success" {
@@ -59,7 +58,7 @@ func WriteOutputsDataToFile (testResult string, tcData testcase.TestCaseDataInfo
     }
 }
 
-func GetOutputsCsvData (outputsData map[string][]interface{}, actualStatusCode int, actualHeader http.Header, actualBody []byte) ([]string, []string) {
+func GetOutputsCsvData (outputsData map[string][]interface{}, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) ([]string, []string) {
     var keyStrList []string
     var valueStrList []string
 
@@ -85,7 +84,7 @@ func GetOutputsCsvData (outputsData map[string][]interface{}, actualStatusCode i
     return keyStrList, valueStrList
 }
 
-func GetOutputsDetailsDataForFieldString (valueSlice []interface{}, actualStatusCode int, actualHeader http.Header, actualBody []byte) []string {
+func GetOutputsDetailsDataForFieldString (valueSlice []interface{}, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) []string {
     var fieldStrList []string
     // check if the valueSlice is [], or [[]], using the valueSlice[0]
     for _, value := range valueSlice {
@@ -109,7 +108,7 @@ func GetOutputsDetailsDataForFieldString (valueSlice []interface{}, actualStatus
 }
 
 
-func GetOutputsDetailsDataForFieldSlice (valueSlice []interface{}, actualStatusCode int, actualHeader http.Header, actualBody []byte) []interface{} {
+func GetOutputsDetailsDataForFieldSlice (valueSlice []interface{}, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) []interface{} {
     var fieldStrList []interface{}
     // currently, suppose has only one sub slice
     firstSubSlice := valueSlice[0]

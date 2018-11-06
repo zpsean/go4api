@@ -8,7 +8,7 @@
  *
  */
 
-package protocal
+package g4http
 
 import (
     "fmt"
@@ -60,6 +60,11 @@ func (httpRestful HttpRestful) Request(urlStr string, apiMethod string, reqHeade
     body, _ := ioutil.ReadAll(response.Body)
     // fmt.Print("-------> body: ", reqBody, string(body))
 
-    return response.StatusCode, response.Header, body
+    var actualHeader = make(map[string][]string)
+    for k, v := range response.Header {
+        actualHeader[k] = v
+    }
+
+    return response.StatusCode, actualHeader, body
 }
 

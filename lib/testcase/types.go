@@ -63,14 +63,14 @@ type TestCaseBasics struct {
     ParentTestCase string   `json:"parentTestCase"`
     IfGlobalSetUpTestCase bool    `json:"ifGlobalSetUpTestCase"`
     IfGlobalTearDownTestCase bool `json:"ifGlobalTearDownTestCase"`
-    SetUp map[string]interface{}  `json:"setUp"`
-    Inputs []interface{}     `json:"inputs"`
-    Request *Request         `json:"request"`
-    Response *Response       `json:"response"`
+    SetUp []*CommandDetails     `json:"setUp"`
+    Inputs []interface{}        `json:"inputs"`
+    Request *Request            `json:"request"`
+    Response *Response          `json:"response"`
     Outputs []*OutputsDetails   `json:"outputs"`
     OutEnvVariables map[string]interface{}   `json:"outEnvVariables"`
     Session map[string]interface{}           `json:"session"`
-    TearDown map[string]interface{}          `json:"tearDown"`
+    TearDown []*CommandDetails               `json:"tearDown"`
 }
 
 type Request struct {  
@@ -91,6 +91,13 @@ type OutputsDetails struct {
     FileName string
     Format string
     Data map[string][]interface{}
+}
+
+type CommandDetails struct {
+    CmdType string                              `json:"cmdType"`
+    Cmd string                                  `json:"cmd"`
+    CmdResponse map[string]interface{}          `json:"cmdResponse"`
+    CmdOutEnvVariables map[string]interface{}   `json:"cmdOutEnvVariables"`
 }
 
 type MutationInfo struct {

@@ -14,13 +14,12 @@ import (
     "os"
     "fmt"
     // "syscall"
-    "net/http"
 
     "go4api/lib/testcase"
 )
 
 
-func WriteOutEnvVariables (testResult string, tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader http.Header, actualBody []byte) {
+func WriteOutEnvVariables (testResult string, tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) {
     // ----
     var expEnvs map[string]interface{}
 
