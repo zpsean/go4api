@@ -51,14 +51,14 @@ func Convert () {
             parentTestCase,
             false,
             false,
-            map[string]interface{}{},
+            []*testcase.CommandDetails{},
             []interface{}{},
             &g4ARequest,
             &g4AResponse,
             []*testcase.OutputsDetails{},
             map[string]interface{}{},
             map[string]interface{}{},
-            map[string]interface{}{},
+            []*testcase.CommandDetails{},
         }
 
         tCase[g4ATcName] = &tCaseBasics

@@ -53,7 +53,7 @@ func (tc *TestCase) IfGlobalTearDownTestCase() bool {
     return (*tc)[tc.TcName()].IfGlobalTearDownTestCase
 }
 
-func (tc *TestCase) SetUp() map[string]interface{} {
+func (tc *TestCase) SetUp() []*CommandDetails {
     return (*tc)[tc.TcName()].SetUp
 }
 
@@ -73,7 +73,7 @@ func (tc *TestCase) Session() map[string]interface{} {
     return (*tc)[tc.TcName()].Session
 }
 
-func (tc *TestCase) TearDown() map[string]interface{} {
+func (tc *TestCase) TearDown() []*CommandDetails {
     return (*tc)[tc.TcName()].TearDown
 }
 
@@ -436,8 +436,4 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
 
     return tcReportRes
 }
-
-
-
-
 

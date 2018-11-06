@@ -15,14 +15,14 @@ import (
     "time"
     "sync"
     // "reflect"
-    "net/http"  
+    // "net/http"  
     "strings"
     // "encoding/json"
 
     "go4api/cmd"
     "go4api/lib/testcase"                                                                                                                             
     "go4api/assertion"
-    "go4api/protocal/http"
+    g4http "go4api/protocal/http"
     // "go4api/sql"
 )
 
@@ -38,12 +38,13 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
     if !cmd.Opt.IfMutation {
         tcData = EvaluateBuiltinFunctions(oTcData)
     }
-    // setUp
-    tcSetUpResult := RunTcSetUp(tcData)
     //
     var actualStatusCode int
-    var actualHeader http.Header
+    var actualHeader = make(map[string][]string)
     var actualBody []byte
+    // setUp
+    tcSetUpResult := RunTcSetUp(tcData, actualStatusCode, actualHeader, actualBody)
+    //
     var httpResult string
     var TestMessages []*testcase.TestMessage
     if IfValidHttp(tcData) == true {
@@ -65,7 +66,7 @@ func HttpApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionI
         actualStatusCode = 999
     }
     // tearDown
-    tcTearDownResult := RunTcTearDown(tcData)
+    tcTearDownResult := RunTcTearDown(tcData, actualStatusCode, actualHeader, actualBody)
 
     end_time := time.Now()
     end_str := end_time.Format("2006-01-02 15:04:05.999999999")
@@ -107,7 +108,7 @@ func IfValidHttp (tcData testcase.TestCaseDataInfo) bool {
 }
 
 
-func CallHttp(baseUrl string, tcData testcase.TestCaseDataInfo) (int, http.Header, []byte) {
+func CallHttp(baseUrl string, tcData testcase.TestCaseDataInfo) (int, map[string][]string, []byte) {
     // urlStr := tcData.TestCase.UrlRaw(baseUrl)
     urlStr := tcData.TestCase.UrlEncode(baseUrl)
     //
@@ -123,10 +124,10 @@ func CallHttp(baseUrl string, tcData testcase.TestCaseDataInfo) (int, http.Heade
     // < !! ----------- !! >
     // (1). Actual response
     var actualStatusCode int
-    var actualHeader http.Header
+    var actualHeader map[string][]string
     var actualBody []byte
     // 
-    httpRequest := protocal.HttpRestful{}
+    httpRequest := g4http.HttpRestful{}
     if apiMethodSelector == "POSTMultipart" {
         actualStatusCode, actualHeader, actualBody = httpRequest.Request(urlStr, apiMethod, reqHeaders, bodyMultipart)    
     } else {
@@ -137,7 +138,7 @@ func CallHttp(baseUrl string, tcData testcase.TestCaseDataInfo) (int, http.Heade
 }
 
 
-func Compare(tcName string, actualStatusCode int, actualHeader http.Header, actualBody []byte, 
+func Compare(tcName string, actualStatusCode int, actualHeader map[string][]string, actualBody []byte, 
         expStatus map[string]interface{}, expHeader map[string]interface{}, expBody map[string]interface{}) (string, []*testcase.TestMessage) {
     //
     var testResults []bool
@@ -188,7 +189,7 @@ func CompareStatus(actualStatusCode int, expStatus map[string]interface{}) ([]bo
     return testResults, testMessages
 } 
 
-func CompareHeaders(actualHeader http.Header, expHeader map[string]interface{}) ([]bool, []*testcase.TestMessage) {
+func CompareHeaders(actualHeader map[string][]string, expHeader map[string]interface{}) ([]bool, []*testcase.TestMessage) {
     var testResults []bool
     var testMessages []*testcase.TestMessage
     // headers
@@ -196,7 +197,6 @@ func CompareHeaders(actualHeader http.Header, expHeader map[string]interface{}) 
         expHeader_sub := value.(map[string]interface{})
         //
         for assertionKey, expValue := range expHeader_sub {
-            // as the http.Header has structure, so that here need to assert if the expValue in []string
             actualValue := strings.Join(actualHeader[key], ",")
 
             testRes, msg := compareCommon("Headers", key, assertionKey, actualValue, expValue)

@@ -11,14 +11,15 @@
 package api
 
 import (
+    // "fmt"
     "strings"
-    "net/http"
+    "encoding/json"
     
     gjson "github.com/tidwall/gjson"
 )
 
 
-func GetResponseValue (searchPath string, actualStatusCode int, actualHeader http.Header, actualBody []byte) interface{} {
+func GetResponseValue (searchPath string, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) interface{} {
     // prefix = "$(status).", "$(headers).", "$(body)."
     var value interface{}
     if len(searchPath) > 1 {
@@ -52,7 +53,7 @@ func GetStatusActualValue (key string, actualStatusCode int) interface{} {
     return actualValue
 }
 
-func GetHeadersActualValue (key string, actualHeader http.Header) interface{} { 
+func GetHeadersActualValue (key string, actualHeader map[string][]string) interface{} { 
     var actualValue interface{}
     // leading "$(headers)" is mandatory if want to retrive headers value
     prefix := "$(headers)."
@@ -86,5 +87,26 @@ func GetActualValueByJsonPath (key string, actualBody []byte) interface{} {
     }
 
     return actualValue
+}
+
+
+func GetSqlActualRespValue (searchPath string, rowsCount int, rowsData []map[string]interface{}) interface{} {
+    // prefix = "$(sql)."
+    var resValue interface{}
+ 
+    prefix := "$(sql)."
+    lenPrefix := len(prefix)
+
+    if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
+        rowsDataB, _ := json.Marshal(rowsData)
+        rowsDataJson := string(rowsDataB)
+
+        value := gjson.Get(string(rowsDataJson), searchPath[lenPrefix:])
+        resValue = value.Value()
+    } else {
+        resValue = searchPath
+    }
+
+    return resValue
 }
 

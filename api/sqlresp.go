@@ -19,7 +19,7 @@ import (
     gjson "github.com/tidwall/gjson"
 )
 
-func GetSqlResponseValue (searchPath string, count int, rows string) interface{} {
+func GetSqlResponseValueff (searchPath string, count int, rows string) interface{} {
     // prefix = "$(sql)."
     var resValue interface{}
 
@@ -40,7 +40,7 @@ func GetSqlResponseValue (searchPath string, count int, rows string) interface{}
     return resValue
 }
 
-func SqLCompareCommon (assertionKey string, actualValue interface{}, expValue interface{}) {
+func SqLCompareCommoffn (assertionKey string, actualValue interface{}, expValue interface{}) {
     assertionResults := ""
     var testRes bool
 
