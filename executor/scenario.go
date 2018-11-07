@@ -62,7 +62,7 @@ func RunScenario (ch chan int, baseUrl string, resultsDir string, resultsLogFile
             }(c)
             //
             tcTree.RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
-                    tcExecution.TestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
+                    tcExecution.HttpTestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
             //
             tcReportResults := tcExecution.TcReportResults()
             repJson, _ := json.Marshal(tcReportResults)
@@ -110,7 +110,7 @@ func BuildChilrenNodes (tcExecution testcase.TestCaseExecutionInfo, jsonFileList
                 ActualStatusCode: 0,
                 StartTime: "",
                 EndTime: "",
-                TestMessages: []*testcase.TestMessage{},
+                HttpTestMessages: []*testcase.TestMessage{},
                 StartTimeUnixNano: 0,
                 EndTimeUnixNano: 0,
                 DurationUnixNano: 0,

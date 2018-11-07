@@ -381,9 +381,10 @@ func (tcExecution *TestCaseExecutionInfo) TcConsoleResults() *TcConsoleResults {
         CsvFile: filepath.Base(tcExecution.TestCaseDataInfo.CsvFile),
         CsvRow: tcExecution.TestCaseDataInfo.CsvRow,
         MutationInfoStr: tcExecution.TestCaseDataInfo.MutationInfoStr,
+        HttpResult: tcExecution.HttpResult,
         TestResult: tcExecution.TestResult,
         ActualStatusCode: tcExecution.ActualStatusCode,
-        TestMessages: tcExecution.TestMessages,
+        HttpTestMessages: tcExecution.HttpTestMessages,
     }
 
     return tcConsoleRes
@@ -412,6 +413,7 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
         Priority: tcExecution.Priority(),
         ParentTestCase: tcExecution.ParentTestCase(),
         SetUpResult: tcExecution.SetUpResult,
+        SetUpTestMessages: tcExecution.SetUpTestMessages,
         Path: tcExecution.ReqPath(),
         Method: tcExecution.ReqMethod(),
         JsonFilePath: tcExecution.TestCaseDataInfo.JsonFilePath,
@@ -425,11 +427,12 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
         ActualStatusCode: tcExecution.ActualStatusCode,
         StartTime: tcExecution.StartTime,
         EndTime: tcExecution.EndTime,
-        TestMessages: tcExecution.TestMessages,
+        HttpTestMessages: tcExecution.HttpTestMessages,
         StartTimeUnixNano: tcExecution.StartTimeUnixNano,
         EndTimeUnixNano: tcExecution.EndTimeUnixNano,
         DurationUnixNano: tcExecution.DurationUnixNano,
         TearDownResult: tcExecution.TearDownResult,
+        TearDownTestMessages: tcExecution.TearDownTestMessages,
         TestResult: tcExecution.TestResult,
         CaseOrigin: caseOrigin,
     }

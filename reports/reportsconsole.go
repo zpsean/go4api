@@ -33,7 +33,7 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo) {
     tcReportResults := tcExecution.TcConsoleResults()
     // repJson, _ := json.Marshal(tcReportResults)
 
-    if tcReportResults.TestResult == "Fail" {
+    if tcReportResults.HttpResult == "Fail" {
         length := len(string(tcExecution.ActualBody))
         out_len := 0
         if length > 300 {
@@ -53,7 +53,7 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo) {
         // fmt.Println(tcReportResults.MutationInfo)
 
         // by default, print failed field in testMessages
-        failedTM := filterTestMessages(tcReportResults.TestMessages)
+        failedTM := filterTestMessages(tcReportResults.HttpTestMessages)
         failedTMBytes, _ := json.Marshal(failedTM)
         fmt.Println(string(failedTMBytes))
 

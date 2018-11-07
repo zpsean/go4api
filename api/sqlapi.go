@@ -22,24 +22,25 @@ import (
 )
 // Note: for each SetUp, TesrDown, it may have more than one Command (including sql)
 // for each Command, it may have more than one assertion
-func RunTcSetUp (tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) string {
+func RunTcSetUp (tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) (string, [][]*testcase.TestMessage) {
     cmdGroup := tcData.TestCase.SetUp()
 
-    finalResults := Command(cmdGroup, actualStatusCode, actualHeader, actualBody)
+    finalResults, finalTestMessages := Command(cmdGroup, actualStatusCode, actualHeader, actualBody)
 
-    return finalResults
+    return finalResults, finalTestMessages
 }
 
-func RunTcTearDown (tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) string {
+func RunTcTearDown (tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) (string, [][]*testcase.TestMessage) {
     cmdGroup := tcData.TestCase.TearDown()
 
-    finalResults := Command(cmdGroup, actualStatusCode, actualHeader, actualBody)
+    finalResults, finalTestMessages := Command(cmdGroup, actualStatusCode, actualHeader, actualBody)
 
-    return finalResults
+    return finalResults, finalTestMessages
 }
 
-func Command (cmdGroup []*testcase.CommandDetails, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) string {
+func Command (cmdGroup []*testcase.CommandDetails, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) (string, [][]*testcase.TestMessage) {
     finalResults := "Success"
+    var finalTestMessages = [][]*testcase.TestMessage{}
     var cmdsResults []bool
     //
     cmdGroupJsonB, _ := json.Marshal(cmdGroup)
@@ -56,10 +57,10 @@ func Command (cmdGroup []*testcase.CommandDetails, actualStatusCode int, actualH
                 if sqlExecStatus == "SqlSuccess" {
                     cmdExpResp := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmdResponse").Map()
 
-                    singleCmdResults, _ := compareRespGroup(cmdExpResp, rowsCount, rowsData, actualStatusCode, actualHeader, actualBody)
+                    singleCmdResults, testMessages := compareRespGroup(cmdExpResp, rowsCount, rowsData, actualStatusCode, actualHeader, actualBody)
+
                     cmdsResults = append(cmdsResults, singleCmdResults)
-                    //
-                    
+                    finalTestMessages = append(finalTestMessages, testMessages)
                 } else {
                     cmdsResults = append(cmdsResults, false)
                 }
@@ -73,7 +74,7 @@ func Command (cmdGroup []*testcase.CommandDetails, actualStatusCode int, actualH
         }
     }
 
-    return finalResults
+    return finalResults, finalTestMessages
 }
 
 func compareRespGroup (cmdExpResp map[string]gjson.Result, rowsCount int, rowsData []map[string]interface{},
@@ -97,11 +98,8 @@ func compareRespGroup (cmdExpResp map[string]gjson.Result, rowsCount int, rowsDa
                     expValue = GetResponseValue(expValueOrigin.(string), actualStatusCode, actualHeader, actualBody)
             }
             
-            fmt.Println("sql", key, assertionKey, actualValue, expValue)
             testRes, msg := compareCommon("sql", key, assertionKey, actualValue, expValue)
-
-            fmt.Println("testRes, msg: ", testRes, msg)
-
+            
             testMessages = append(testMessages, msg)
             testResults = append(testResults, testRes)
         }

@@ -30,16 +30,18 @@ type TestCaseDataInfo struct {
 type TestCaseExecutionInfo struct {
     TestCaseDataInfo *TestCaseDataInfo
     SetUpResult string
+    SetUpTestMessages [][]*TestMessage
     HttpResult string
     ActualStatusCode int
     StartTime string
     EndTime string
-    TestMessages []*TestMessage
+    HttpTestMessages []*TestMessage
     StartTimeUnixNano int64
     EndTimeUnixNano int64
     DurationUnixNano int64
     ActualBody []byte
     TearDownResult string
+    TearDownTestMessages [][]*TestMessage
     TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
 }
 
@@ -116,6 +118,7 @@ type TcReportResults struct {
     Priority string
     ParentTestCase string
     SetUpResult string // Success, Fail
+    SetUpTestMessages [][]*TestMessage
     Path string
     Method string
     JsonFilePath string
@@ -129,11 +132,12 @@ type TcReportResults struct {
     ActualStatusCode int
     StartTime string
     EndTime string
-    TestMessages []*TestMessage
+    HttpTestMessages []*TestMessage
     StartTimeUnixNano int64
     EndTimeUnixNano int64
     DurationUnixNano int64
     TearDownResult string // Success, Fail
+    TearDownTestMessages [][]*TestMessage
     TestResult string  // Success, Fail, ParentFailed
     CaseOrigin interface{}
 }
@@ -147,8 +151,9 @@ type TcConsoleResults struct {
     CsvFile string
     CsvRow string
     MutationInfoStr interface{}
-    TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
+    HttpResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
+    TestResult string
     ActualStatusCode int
-    TestMessages []*TestMessage
+    HttpTestMessages []*TestMessage
 }
 
