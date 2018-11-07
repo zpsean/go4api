@@ -113,7 +113,7 @@ func RunEachPriority (baseUrl string, tcArray []testcase.TestCaseDataInfo,
             }(c)
             // (2). 
             tcTree.RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
-                tcExecution.TestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
+                tcExecution.HttpTestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
 
             tcTreeStats.DeductReadyCount(priority)
             // (3). <--> for log write to file
@@ -174,9 +174,9 @@ func ScheduleCases (cReady chan *tree.TcNode, wg *sync.WaitGroup, resultsChan ch
             // Note: to prevent reaching tcp connection limitation, here set a max, then sleep for a while
             if tick % max == 0 {
                 time.Sleep(100 * time.Millisecond)
-                go api.HttpApi(wg, resultsChan, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo))
+                go api.DispatchApi(wg, resultsChan, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo))
             } else {
-                go api.HttpApi(wg, resultsChan, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo))
+                go api.DispatchApi(wg, resultsChan, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo))
             }
 
             tick = tick + 1
@@ -184,7 +184,7 @@ func ScheduleCases (cReady chan *tree.TcNode, wg *sync.WaitGroup, resultsChan ch
     } else {
         for tcNode := range cReady {
             wg.Add(1)
-            api.HttpApi(wg, resultsChan, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo))
+            api.DispatchApi(wg, resultsChan, baseUrl, *(tcNode.TestCaseExecutionInfo.TestCaseDataInfo))
         }
     }   
 }

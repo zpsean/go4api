@@ -80,7 +80,7 @@ func (tcTree TcTree) BuildRootNode () (*TcNode, bool) {
         ActualStatusCode: 0,
         StartTime: "",
         EndTime: "",
-        TestMessages: []*testcase.TestMessage{},
+        HttpTestMessages: []*testcase.TestMessage{},
         StartTimeUnixNano: 0,
         EndTimeUnixNano: 0,
         DurationUnixNano: 0,
@@ -102,7 +102,7 @@ func (tcTree TcTree) BuildRootDirectChildrenNodes (root *TcNode, tcArray []testc
             ActualStatusCode: 0,
             StartTime: "",
             EndTime: "",
-            TestMessages: []*testcase.TestMessage{},
+            HttpTestMessages: []*testcase.TestMessage{},
             StartTimeUnixNano: 0,
             EndTimeUnixNano: 0,
             DurationUnixNano: 0,
@@ -134,7 +134,7 @@ func (tcTree TcTree) LoopAndBuildOtherNodes (root *TcNode, tcArrayTree []testcas
                 ActualStatusCode: 0,
                 StartTime: "",
                 EndTime: "",
-                TestMessages: []*testcase.TestMessage{},
+                HttpTestMessages: []*testcase.TestMessage{},
                 StartTimeUnixNano: 0,
                 EndTimeUnixNano: 0,
                 DurationUnixNano: 0,
@@ -264,7 +264,7 @@ func (tcTree TcTree) RefreshNodeAndDirectChilrenTcResult(node *TcNode, tcRunResu
     node.TestCaseExecutionInfo.TestResult = tcRunResult
     node.TestCaseExecutionInfo.StartTime = tcStart
     node.TestCaseExecutionInfo.EndTime = tcEnd
-    node.TestCaseExecutionInfo.TestMessages = tcRunMessage
+    node.TestCaseExecutionInfo.HttpTestMessages = tcRunMessage
     node.TestCaseExecutionInfo.StartTimeUnixNano = tcStartUnixNano
     node.TestCaseExecutionInfo.EndTimeUnixNano = tcEndUnixNano
     node.TestCaseExecutionInfo.DurationUnixNano = tcEndUnixNano - tcStartUnixNano
