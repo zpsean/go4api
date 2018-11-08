@@ -11,16 +11,19 @@
 package api
 
 import (    
-    "net/http"
-
-    "go4api/lib/testcase"
     "go4api/lib/session"
 )
 
 
-func WriteSession (testResult string, tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader http.Header, actualBody []byte) {
+func (tcDataStore *TcDataStore) WriteSession (testResult string) {
     var tcSession = make(map[string]interface{})
     var tcSessionDef = make(map[string]interface{})
+
+    tcData := tcDataStore.TcData
+
+    actualStatusCode := tcDataStore.HttpActualStatusCode
+    actualHeader := tcDataStore.HttpActualHeader
+    actualBody := tcDataStore.HttpActualBody
 
     if testResult == "Success" {
         // get its parent session

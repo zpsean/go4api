@@ -23,8 +23,14 @@ import (
 )
 
 
-func WriteOutputsDataToFile (testResult string, tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) {
+func (tcDataStore *TcDataStore) WriteOutputsDataToFile (testResult string) {
     var expOutputs []*testcase.OutputsDetails
+
+    tcData := tcDataStore.TcData
+
+    actualStatusCode := tcDataStore.HttpActualStatusCode
+    actualHeader := tcDataStore.HttpActualHeader
+    actualBody := tcDataStore.HttpActualBody
 
     if testResult == "Success" {
         expOutputs = tcData.TestCase.Outputs()
