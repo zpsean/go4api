@@ -11,11 +11,7 @@
 package api
 
 import (
-    // "fmt"
-    // "time"
-    // "sync"
-    // "reflect"
-    // "net/http"  
+    // "fmt" 
     "strings"
     // "encoding/json"
 
@@ -23,11 +19,11 @@ import (
     "go4api/lib/testcase"                                                                                                                             
     "go4api/assertion"
     g4http "go4api/protocal/http"
-    // "go4api/sql"
 )
 
+func (tcDataStore *TcDataStore) CallHttp(baseUrl string) {
+    tcData := tcDataStore.TcData
 
-func CallHttp(baseUrl string, tcData testcase.TestCaseDataInfo) (int, map[string][]string, []byte) {
     // urlStr := tcData.TestCase.UrlRaw(baseUrl)
     urlStr := tcData.TestCase.UrlEncode(baseUrl)
     //
@@ -41,7 +37,6 @@ func CallHttp(baseUrl string, tcData testcase.TestCaseDataInfo) (int, map[string
     }
 
     // < !! ----------- !! >
-    // (1). Actual response
     var actualStatusCode int
     var actualHeader map[string][]string
     var actualBody []byte
@@ -53,13 +48,24 @@ func CallHttp(baseUrl string, tcData testcase.TestCaseDataInfo) (int, map[string
         actualStatusCode, actualHeader, actualBody = httpRequest.Request(urlStr, apiMethod, reqHeaders, bodyText)
         }
 
-    return actualStatusCode, actualHeader, actualBody
+    tcDataStore.HttpActualStatusCode = actualStatusCode
+    tcDataStore.HttpActualHeader = actualHeader
+    tcDataStore.HttpActualBody = actualBody
 }
 
 
-func Compare(tcName string, actualStatusCode int, actualHeader map[string][]string, actualBody []byte, 
-        expStatus map[string]interface{}, expHeader map[string]interface{}, expBody map[string]interface{}) (string, []*testcase.TestMessage) {
-    //
+func (tcDataStore *TcDataStore) Compare () (string, []*testcase.TestMessage) {
+    // ----
+    tcData := tcDataStore.TcData
+
+    expStatus := tcData.TestCase.RespStatus()
+    expHeader := tcData.TestCase.RespHeaders()
+    expBody := tcData.TestCase.RespBody()
+
+    actualStatusCode := tcDataStore.HttpActualStatusCode
+    actualHeader := tcDataStore.HttpActualHeader
+    actualBody := tcDataStore.HttpActualBody
+
     var testResults []bool
     var testMessages []*testcase.TestMessage
     // status
@@ -192,8 +198,4 @@ func compareCommon (reponsePart string, key string, assertionKey string, actualV
 
     return testRes, &msg
 }
-
-
-
-
 

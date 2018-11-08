@@ -14,14 +14,18 @@ import (
     "os"
     "fmt"
     // "syscall"
-
-    "go4api/lib/testcase"
 )
 
 
-func WriteOutEnvVariables (testResult string, tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) {
+func (tcDataStore *TcDataStore) WriteOutEnvVariables (testResult string) {
     // ----
     var expEnvs map[string]interface{}
+
+    tcData := tcDataStore.TcData
+
+    actualStatusCode := tcDataStore.HttpActualStatusCode
+    actualHeader := tcDataStore.HttpActualHeader
+    actualBody := tcDataStore.HttpActualBody
 
     if testResult == "Success" {
         expEnvs = tcData.TestCase.OutEnvVariables()

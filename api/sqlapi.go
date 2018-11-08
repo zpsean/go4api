@@ -22,7 +22,12 @@ import (
 )
 // Note: for each SetUp, TesrDown, it may have more than one Command (including sql)
 // for each Command, it may have more than one assertion
-func RunTcSetUp (tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) (string, [][]*testcase.TestMessage) {
+func (tcDataStore *TcDataStore) RunTcSetUp () (string, [][]*testcase.TestMessage) {
+    tcData := tcDataStore.TcData
+    actualStatusCode := tcDataStore.HttpActualStatusCode
+    actualHeader := tcDataStore.HttpActualHeader
+    actualBody := tcDataStore.HttpActualBody
+
     cmdGroup := tcData.TestCase.SetUp()
 
     finalResults, finalTestMessages := Command(cmdGroup, actualStatusCode, actualHeader, actualBody)
@@ -30,7 +35,12 @@ func RunTcSetUp (tcData testcase.TestCaseDataInfo, actualStatusCode int, actualH
     return finalResults, finalTestMessages
 }
 
-func RunTcTearDown (tcData testcase.TestCaseDataInfo, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) (string, [][]*testcase.TestMessage) {
+func (tcDataStore *TcDataStore) RunTcTearDown () (string, [][]*testcase.TestMessage) {
+    tcData := tcDataStore.TcData
+    actualStatusCode := tcDataStore.HttpActualStatusCode
+    actualHeader := tcDataStore.HttpActualHeader
+    actualBody := tcDataStore.HttpActualBody
+
     cmdGroup := tcData.TestCase.TearDown()
 
     finalResults, finalTestMessages := Command(cmdGroup, actualStatusCode, actualHeader, actualBody)
