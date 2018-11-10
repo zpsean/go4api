@@ -21,8 +21,6 @@ import (
 )
 
 type TcTreeStats struct{
-    // Depth int
-
     StatusCountByPriority map[string]map[string]int
     TcNotExecutedByPriority map[string]map[string][]*testcase.TestCaseExecutionInfo
 }
@@ -40,7 +38,6 @@ func CreateTcTreeStats (prioritySet []string) TcTreeStats {
         for _, status := range StatusKeys {
             statusCountByPriority[priority][status] = 0
         }
-        
     }
 
     statusCountByPriority["Overall"] = map[string]int{}
@@ -90,7 +87,7 @@ func (tcTreeStats TcTreeStats) collectNodeStatusCommon(node *TcNode, i int, key 
             tcTreeStats.StatusCountByPriority[key]["Fail"] += 1
         default: 
             tcTreeStats.StatusCountByPriority[key]["ParentFailed"] += 1
-            tcTreeStats.TcNotExecutedByPriority[key]["ParentFailed"] = append(tcTreeStats.TcNotExecutedByPriority[key]["ParentFailed"], &(node.Children[i].TestCaseExecutionInfo))
+            tcTreeStats.TcNotExecutedByPriority[key]["ParentFailed"] = append(tcTreeStats.TcNotExecutedByPriority[key]["ParentFailed"], node.Children[i].TestCaseExecutionInfo)
     }
 }
 

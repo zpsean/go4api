@@ -13,7 +13,7 @@ package executor
 import (
     "fmt"
     // "time"
-    // "os"
+    "os"
     "sort"
     // "sync"
     "path/filepath"
@@ -25,41 +25,36 @@ import (
     "go4api/cmd"
     "go4api/utils"
     "go4api/lib/testcase"
-    // "go4api/lib/tree"
-    "go4api/texttmpl"
-    // "go4api/reports"
 )
 
-func GetTcArray () []testcase.TestCaseDataInfo { 
-    var tcArray []testcase.TestCaseDataInfo
+func InitFullTcSlice () []*testcase.TestCaseDataInfo { 
+    var fullTcSlice []*testcase.TestCaseDataInfo
 
     jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
-    // to ge the json and related data file, then get tc from them
     for _, jsonFile := range jsonFileList {
         csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_dt")
         //
-        var tcInfos []testcase.TestCaseDataInfo
+        var tcInfos []*testcase.TestCaseDataInfo
 
         if len(csvFileList) > 0 {
-            tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList, "")
+            tcInfos = ConstructTcInfosWithDt(jsonFile, csvFileList)
         } else {
-            tcInfos = ConstructTcInfosBasedOnJson(jsonFile, "")
+            tcInfos = ConstructTcInfosWithoutDt(jsonFile)
         }
 
-        for _, tcData := range tcInfos {
-            // fmt.Println("\n tcData:", tcData.TcName(), tcData.TestCase.IfGlobalSetUpTestCase())
-            tcArray = append(tcArray, tcData)
+        for i, _ := range tcInfos {
+            fullTcSlice = append(fullTcSlice, tcInfos[i])
         }
     }
 
-    return tcArray
+    return fullTcSlice
 }
 
-func GetNormalTcSlice (tcArray []testcase.TestCaseDataInfo) []testcase.TestCaseDataInfo {
-    var tcSlice []testcase.TestCaseDataInfo
-    for i, _ := range tcArray {
-        if tcArray[i].TestCase.IfGlobalSetUpTestCase() != true && tcArray[i].TestCase.IfGlobalTearDownTestCase() != true {
-            tcSlice = append(tcSlice, tcArray[i])
+func InitNormalTcSlice (fullTcSlice []*testcase.TestCaseDataInfo) []*testcase.TestCaseDataInfo {
+    var tcSlice []*testcase.TestCaseDataInfo
+    for i, _ := range fullTcSlice {
+        if fullTcSlice[i].TestCase.IfGlobalSetUpTestCase() != true && fullTcSlice[i].TestCase.IfGlobalTearDownTestCase() != true {
+            tcSlice = append(tcSlice, fullTcSlice[i])
         }
     }
     
@@ -87,7 +82,7 @@ func GetCsvDataFilesForJsonFile (jsonFile string, suffix string) []string {
         csvFileName := strings.TrimRight(filepath.Base(csvFile), ".csv")
         jsonFileName := strings.TrimRight(filepath.Base(jsonFile), ".json")
         // Note: the json file realted data table files is pattern: jsonFileName + "_dt[*]"
-        if strings.Contains(csvFileName, jsonFileName + suffix) {
+        if strings.HasPrefix(csvFileName, jsonFileName + suffix) {
             csvFileList = append(csvFileList, csvFile)
         }
     }
@@ -95,71 +90,22 @@ func GetCsvDataFilesForJsonFile (jsonFile string, suffix string) []string {
     return csvFileList
 }
 
+func ConstructTcInfosWithoutDt (jsonFile string) []*testcase.TestCaseDataInfo {
+    var tcInfos []*testcase.TestCaseDataInfo
+    var tcases testcase.TestCases
 
-func ConstructTcInfosBasedOnJsonTemplateAndDataTables (jsonFile string, csvFileList []string, parentTcName string) []testcase.TestCaseDataInfo {
-    var tcInfos []testcase.TestCaseDataInfo
-
-    for _, csvFile := range csvFileList {
-        // to check the csv file's existence
-        csvRows := utils.GetCsvFromFile(csvFile)
-        for i, csvRow := range csvRows {
-            // starting with data row
-            if i > 0 {
-                // note: here pass the csvRows[0], csvRow, but they can be replaced by map[string]interface{} for later enhancement
-                var cvsRowInterface []interface{}
-                for rowI, _ := range csvRow {
-                    cvsRowInterface = append(cvsRowInterface, csvRow[rowI])
-                }
-                mergedTestData := MergeTestData(csvRows[0], cvsRowInterface, parentTcName)
-
-                outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, mergedTestData)
-
-                var tcases testcase.TestCases
-                resJson, _ := ioutil.ReadAll(outTempJson)
-                err := json.Unmarshal([]byte(resJson), &tcases)
-                if err != nil {
-                    fmt.Println("!! error, Json format validation : ", jsonFile, ": ", csvFile, ": ", strconv.Itoa(i + 1), ": ", err)
-                }
-                // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
-                for tcI, _ := range tcases {
-                    // populate the testcase.TestCaseDataInfo
-                    tcaseData := testcase.TestCaseDataInfo {
-                        TestCase: &tcases[tcI],
-                        JsonFilePath: jsonFile,
-                        CsvFile: csvFile,
-                        CsvRow: strconv.Itoa(i + 1),
-                    }
-                    tcInfos = append(tcInfos, tcaseData)
-                }
-            }
-        }
-    }
-    return tcInfos
-}
-
-func ConstructTcInfosBasedOnJson (jsonFile string, parentTcName string) []testcase.TestCaseDataInfo {
-    var tcInfos []testcase.TestCaseDataInfo
+    jsonStr := utils.GetJsonFromFile(jsonFile)
 
     csvFile := ""
     csvRow := ""
-    // mergedTestData := map[string]interface{}{}
-    mergedTestData := MergeTestData([]string{""}, []interface{}{}, parentTcName)
 
-    outTempJson := texttmpl.GenerateJsonBasedOnTemplateAndCsv(jsonFile, mergedTestData)
-    
-    var tcases testcase.TestCases
-    resJson, _ := ioutil.ReadAll(outTempJson)
-    err := json.Unmarshal([]byte(resJson), &tcases)
+    err := json.Unmarshal([]byte(jsonStr), &tcases)
     if err != nil {
-        fmt.Println("!! error, Json format validation : ", jsonFile, ": ", err)
+        fmt.Println("!! Error, parse Json into cases failed: ", jsonFile, ": ", err)
     }
-    // fmt.Println("resJson: ", string(resJson), tcases)
-    // tJson, _ := json.Marshal(tcases)
-    // fmt.Println("tJson: ", string(tJson))
-    // as the json is generated based on templated dynamically, so that, to cache all the resulted json in array
-     for i, _ := range tcases {
-        // populate the testcase.TestCaseDataInfo
-        tcaseData := testcase.TestCaseDataInfo {
+  
+    for i, _ := range tcases {
+        tcaseData := &testcase.TestCaseDataInfo {
             TestCase: &tcases[i],
             JsonFilePath: jsonFile,
             CsvFile: csvFile,
@@ -171,8 +117,77 @@ func ConstructTcInfosBasedOnJson (jsonFile string, parentTcName string) []testca
     return tcInfos
 }
 
+// not using "text/template"
+func ConstructTcInfosWithDt (jsonFile string, csvFileList []string) []*testcase.TestCaseDataInfo {
+    var tcInfos []*testcase.TestCaseDataInfo
 
-func GetTcNameSet (tcArray []testcase.TestCaseDataInfo) []string {
+    for _, csvFile := range csvFileList {
+        jsonStr := utils.GetJsonFromFile(jsonFile)
+
+        csvRows := utils.GetCsvFromFile(csvFile)
+        for i, csvRow := range csvRows {
+            jsonR := jsonStr
+            // csvRows[0] is the header row
+            if i > 0 {
+                for col, _ := range csvRow {
+                    key := csvRows[0][col]
+                    value := csvRows[i][col]
+
+                    jsonR = strings.Replace(jsonR, "${" + key + "}", fmt.Sprint(value), -1)
+                }
+
+                var tcases testcase.TestCases
+                err := json.Unmarshal([]byte(jsonR), &tcases)
+                if err != nil {
+                    fmt.Println("!! Error, parse Json into cases failed: ", jsonFile, ": ", csvFile, ": ", strconv.Itoa(i + 1), ": ", err)
+                }
+    
+                for tcI, _ := range tcases {
+                    tcaseData := &testcase.TestCaseDataInfo {
+                        TestCase: &tcases[tcI],
+                        JsonFilePath: jsonFile,
+                        CsvFile: csvFile,
+                        CsvRow: strconv.Itoa(i + 1),
+                    }
+                    tcInfos = append(tcInfos, tcaseData)
+                }
+            }
+        }
+        if IfCaseNameDuplicated(tcInfos) {
+            fmt.Println("!! Error, has duplicated case name, please fix before run")
+            os.Exit(1)
+        }
+    }
+    if IfCaseNameDuplicated(tcInfos) {
+        fmt.Println("!! Error, has duplicated case name, please fix before run")
+        os.Exit(1)
+    }
+
+    return tcInfos
+}
+
+
+func IfCaseNameDuplicated (tcInfos []*testcase.TestCaseDataInfo) bool {
+    keys := make(map[string]bool)
+    var caseNameSet []string
+
+    for _, tcDataInfo := range tcInfos {
+        entry := tcDataInfo.TestCase.TcName()
+        if _, ok := keys[entry]; !ok {
+            keys[entry] = true
+            caseNameSet = append(caseNameSet, entry)
+        }
+    }
+
+    if len(tcInfos) > len(caseNameSet) {
+        return true
+    } else {
+        return false
+    }
+}
+
+
+func GetTcNameSet (tcArray []*testcase.TestCaseDataInfo) []string {
     var tcNames []string
 
     for _, tcaseInfo := range tcArray {
@@ -192,7 +207,7 @@ func GetTcNameSet (tcArray []testcase.TestCaseDataInfo) []string {
 }
 
 
-func GetPrioritySet (tcArray []testcase.TestCaseDataInfo) []string {
+func GetPrioritySet (tcArray []*testcase.TestCaseDataInfo) []string {
     // get the priorities
     var priorities []string
     for _, tcaseInfo := range tcArray {
@@ -223,71 +238,17 @@ func SortPrioritySet (prioritySet []string) []string {
     return prioritySet
 }
 
-
-
-func GetTestCasesByPriority (prioritySet []string, tcArray []testcase.TestCaseDataInfo) (map[string][]testcase.TestCaseDataInfo, map[string]int) {
-    // build the map
-    tcClassifedMap := make(map[string][]testcase.TestCaseDataInfo)
-    tcClassifedCountMap := make(map[string]int)
-
-    for _, entry := range prioritySet {
-        for _, tcaseData := range tcArray {
-            if entry == tcaseData.Priority() {
-                tcClassifedMap[entry] = append(tcClassifedMap[entry], tcaseData)
-                tcClassifedCountMap[entry] += 1
-            }
-        }
-    }
-
-    return tcClassifedMap, tcClassifedCountMap
-}
-
-
 func GetFuzzTcArray () []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
 
-    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
-    // to ge the json and related data file, then get tc from them
-    for _, jsonFile := range jsonFileList {
-        csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_fuzz_dt")
-        // to get the json test data directly (if not template) based on template (if template)
-        // tcInfos: [[casename, priority, parentTestCase, ], ...]
-        var tcInfos []testcase.TestCaseDataInfo
-        if len(csvFileList) > 0 {
-            tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList, "")
-        }
-
-        for _, tcData := range tcInfos {
-            tcArray = append(tcArray, tcData)
-        }
-    }
+    // csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_fuzz_dt")
 
     return tcArray
 }
 
-
 func GetOriginMutationTcArray () []testcase.TestCaseDataInfo {
     var tcArray []testcase.TestCaseDataInfo
-    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
-
-    for _, jsonFile := range jsonFileList {
-        csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_dt")
-
-        var tcInfos []testcase.TestCaseDataInfo
-        if len(csvFileList) > 0 {
-            tcInfos = ConstructTcInfosBasedOnJsonTemplateAndDataTables(jsonFile, csvFileList, "")
-        } else {
-            tcInfos = ConstructTcInfosBasedOnJson(jsonFile, "")
-        }
-
-        for _, tcData := range tcInfos {
-            tcArray = append(tcArray, tcData)
-        }
-    }
-
-    // tJson, _ := json.MarshalIndent(tcArray, "", "\t")
-    // fmt.Println("tcArray: ", string(tJson))
-
+    
     return tcArray
 }
 

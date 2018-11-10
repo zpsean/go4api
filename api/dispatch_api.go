@@ -11,9 +11,10 @@
 package api
 
 import (
-    // "fmt"
+    "fmt"
     "time"
     "sync"
+    "strings"
     "encoding/json"
 
     "go4api/cmd"
@@ -24,6 +25,8 @@ import (
 
 type TcDataStore struct {
     TcData testcase.TestCaseDataInfo
+
+    TcLocalStore map[string]interface{}
     SetUpStore []map[string]interface{}
 
     HttpExpStatus map[string]interface{}
@@ -40,6 +43,7 @@ type TcDataStore struct {
 func InitTcDataStore (tcData testcase.TestCaseDataInfo) *TcDataStore {
     tcDataStore := &TcDataStore {
         tcData,
+        map[string]interface{}{},
         []map[string]interface{}{},
 
         map[string]interface{}{},
@@ -63,17 +67,25 @@ func DispatchApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecut
     defer wg.Done()
 
     tcDataStore := InitTcDataStore(tcData)
-    //--- TBD: here to identify and call the builtin functions in Body, then modify the tcData
-    // RenderVariables(otcData, Setup)
-    // EvaluateBuiltinFunctions(otcData, Setup)
-
     // setUp
     if !cmd.Opt.IfMutation {
-        tcDataStore.EvaluateSetUpSectionBuiltinFunctions()
+        // Stage 1: deal with Setup().Cmd before run
+        // tcDataStore.RenderSetUpCmdVariables()
+        // tcDataStore.EvaluateSetUpCmdBuiltinFunctions()
         // bb, _ := json.Marshal(tcDataStore.TcData)
         // fmt.Println("bb>>>>>>>>: ", string(bb))
     }
+    // Stage 2: deal with the Setup().Assertion
     tcSetUpResult, setUpTestMessages := tcDataStore.RunTcSetUp()
+    if !cmd.Opt.IfMutation {
+        // Stage 3: deal with the Setup().Out* after run
+
+        // tcDataStore.RenderSetUpResultsVariables()
+        // tcDataStore.EvaluateSetUpResultsBuiltinFunctions()
+
+        // tcDataStore.WriteOutEnvVariables(tcSetUpResult)
+        // tcDataStore.WriteSession(tcSetUpResult)
+    }
     //
     var httpResult string
     var httpTestMessages []*testcase.TestMessage
@@ -87,9 +99,9 @@ func DispatchApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecut
         httpResult, httpTestMessages = tcDataStore.Compare()
 
         // (4). here to generate the outputs file if the Json has "outputs" field
-        tcDataStore.WriteOutputsDataToFile(httpResult)
-        tcDataStore.WriteOutEnvVariables(httpResult)
-        tcDataStore.WriteSession(httpResult)
+        // tcDataStore.WriteOutputsDataToFile(httpResult)
+        // tcDataStore.WriteOutEnvVariables(httpResult)
+        // tcDataStore.WriteSession(httpResult)
     } else {
         httpResult = "NoHttp"
         tcDataStore.HttpActualStatusCode = 999
@@ -144,11 +156,35 @@ func IfValidHttp (tcData testcase.TestCaseDataInfo) bool {
 }
 
 
-func (tcDataStore *TcDataStore) RenderSetUpSectionVariables () {
+func (tcDataStore *TcDataStore) RenderSetUpCmdVariables () {
+    dataFeeder := make(map[string]interface{})
 
+    tcSetup := tcDataStore.TcData.TestCase.SetUp()
+    for i, _ := range tcSetup {
+        cmdStr := tcSetup[i].Cmd
+
+        for key, value := range dataFeeder{
+            cmdStr = strings.Replace(cmdStr, "${" + key + "}", fmt.Sprint(value), -1)
+        }
+        tcSetup[i].Cmd = cmdStr
+    }
 } 
 
-func (tcDataStore *TcDataStore) EvaluateSetUpSectionBuiltinFunctions () {
+func (tcDataStore *TcDataStore) RenderSetUpResultsVariables () {
+    dataFeeder := make(map[string]interface{})
+
+    tcSetup := tcDataStore.TcData.TestCase.SetUp()
+    for i, _ := range tcSetup {
+        cmdStr := tcSetup[i].Cmd
+
+        for key, value := range dataFeeder {
+            cmdStr = strings.Replace(cmdStr, "${" + key + "}", fmt.Sprint(value), -1)
+        }
+        tcSetup[i].Cmd = cmdStr
+    }
+} 
+
+func (tcDataStore *TcDataStore) EvaluateSetUpCmdBuiltinFunctions () {
     var resTcData testcase.TestCaseDataInfo
     var tcTempSetup []*testcase.CommandDetails
 

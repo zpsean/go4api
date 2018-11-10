@@ -69,6 +69,13 @@ func Command (cmdGroup []*testcase.CommandDetails, actualStatusCode int, actualH
 
                     singleCmdResults, testMessages := compareRespGroup(cmdExpResp, rowsCount, rowsData, actualStatusCode, actualHeader, actualBody)
 
+                    // <---> 
+                    if singleCmdResults == true {
+                        // write out session if has
+                        // write out global variables if has
+                        // write out tc loca variables if hs
+                    }
+
                     cmdsResults = append(cmdsResults, singleCmdResults)
                     finalTestMessages = append(finalTestMessages, testMessages)
                 } else {

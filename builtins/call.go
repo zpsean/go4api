@@ -29,6 +29,7 @@ func BuiltinFunctionsMapping (key string) interface{} {
         "Join": Join,
         "Split": Split,
         "ToString": ToString,
+        "ToInt": ToInt,
         "CurrentTimeStampString": CurrentTimeStampString,
         "CurrentTimeStampUnix": CurrentTimeStampUnix,
         "CurrentTimeStampUnixMilli": CurrentTimeStampUnixMilli,

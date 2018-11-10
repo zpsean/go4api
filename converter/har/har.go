@@ -56,8 +56,9 @@ func Convert () {
             &g4ARequest,
             &g4AResponse,
             []*testcase.OutputsDetails{},
-            map[string]interface{}{},
-            map[string]interface{}{},
+            map[string]interface{}{},  // OutGlobalVariables
+            map[string]interface{}{},  // OutLocalVariables
+            map[string]interface{}{},  // Session
             []*testcase.CommandDetails{},
         }
 

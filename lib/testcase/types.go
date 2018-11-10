@@ -70,7 +70,8 @@ type TestCaseBasics struct {
     Request *Request            `json:"request"`
     Response *Response          `json:"response"`
     Outputs []*OutputsDetails   `json:"outputs"`
-    OutEnvVariables map[string]interface{}   `json:"outEnvVariables"`
+    OutGlobalVariables map[string]interface{}   `json:"outGlobalVariables"`
+    OutLocalVariables map[string]interface{}   `json:"outLocalVariables"`
     Session map[string]interface{}           `json:"session"`
     TearDown []*CommandDetails               `json:"tearDown"`
 }
@@ -97,9 +98,12 @@ type OutputsDetails struct {
 
 type CommandDetails struct {
     CmdType string                              `json:"cmdType"`
+    CmdSource string                            `json:"cmdSource"`
     Cmd string                                  `json:"cmd"`
     CmdResponse map[string]interface{}          `json:"cmdResponse"`
-    CmdOutEnvVariables map[string]interface{}   `json:"cmdOutEnvVariables"`
+    OutGlobalVariables map[string]interface{}   `json:"outGlobalVariables"`
+    OutLocalVariables map[string]interface{}    `json:"outLocalVariables"`
+    Session map[string]interface{}              `json:"session"`
 }
 
 type MutationInfo struct {
