@@ -32,6 +32,7 @@ type G4Store struct {
 
 type TcsRunStore struct {
     TcSlice     []*testcase.TestCaseDataInfo
+
     PrioritySet []string
     Root        *tree.TcNode
     TcTree      tree.TcTree

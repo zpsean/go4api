@@ -15,14 +15,14 @@ import (
     // "fmt"
     "strings"
 
-    "go4api/lib/session"
+    gsession "go4api/lib/session"
     // "go4api/cmd"
 )
 
 // data lookup sequence, latter override former one(s)
 // config (json) -> env variables (key, value) -> session (key, value) -> data file (*_dt) / data file (inputs)
 
-func MergeTestData (csvHeader []string, csvRow []interface{}, parentTcName string) map[string]interface{} {
+func (tcDataStore *TcDataStore) MergeTestData () map[string]interface{} {
     var finalMap = make(map[string]interface{})
     // check if config
 
@@ -32,17 +32,28 @@ func MergeTestData (csvHeader []string, csvRow []interface{}, parentTcName strin
         finalMap[k] = v
     }
 
+    globalVariables := gsession.LoopGlobalVariables()
+    for k, v := range globalVariables {
+        finalMap[k] = v
+    }
+
     // 3
-    sessionMap := gsession.LookupParentSession(parentTcName)
+    tcName := tcDataStore.TcData.TestCase.TcName()
+    sessionMap := gsession.LookupTcSession(tcName)
     for k, v := range sessionMap {
         finalMap[k] = v
     }
 
-    // 4
-    dtMap := ConvertCsvRowToMap(csvHeader, csvRow)
-    for k, v := range dtMap {
+    tcLocalVariables := tcDataStore.TcLocalVariables
+    for k, v := range tcLocalVariables {
         finalMap[k] = v
     }
+
+    // inputs file(s)
+    // dtMap := ConvertCsvRowToMap(csvHeader, csvRow)
+    // for k, v := range dtMap {
+    //     finalMap[k] = v
+    // }
 
     return finalMap
 }

@@ -11,81 +11,22 @@
 package api
 
 import (
-    "fmt"
     "time"
     "sync"
-    "strings"
-    "encoding/json"
 
-    "go4api/cmd"
+    // "go4api/cmd"
     "go4api/lib/testcase" 
-
-    sjson "github.com/tidwall/sjson"
 )
 
-type TcDataStore struct {
-    TcData testcase.TestCaseDataInfo
-
-    TcLocalStore map[string]interface{}
-    SetUpStore []map[string]interface{}
-
-    HttpExpStatus map[string]interface{}
-    HttpExpHeader map[string]interface{}
-    HttpExpBody map[string]interface{}
-    HttpActualStatusCode int
-    HttpActualHeader map[string][]string
-    HttpActualBody []byte
-
-    HttpStore map[string]interface{}
-    TearDownStore []map[string]interface{}
-}
-
-func InitTcDataStore (tcData testcase.TestCaseDataInfo) *TcDataStore {
-    tcDataStore := &TcDataStore {
-        tcData,
-        map[string]interface{}{},
-        []map[string]interface{}{},
-
-        map[string]interface{}{},
-        map[string]interface{}{},
-        map[string]interface{}{},
-        -1,
-        map[string][]string{},
-        []byte{},
-
-        map[string]interface{}{},
-        []map[string]interface{}{},
-    }
-    // aa, _ := json.Marshal(tcData)
-    // fmt.Println(string(aa))
-    
-    return tcDataStore
-}
-
 func DispatchApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionInfo, baseUrl string, tcData testcase.TestCaseDataInfo) {
-    //
+    // -----------
     defer wg.Done()
 
     tcDataStore := InitTcDataStore(tcData)
     // setUp
-    if !cmd.Opt.IfMutation {
-        // Stage 1: deal with Setup().Cmd before run
-        // tcDataStore.RenderSetUpCmdVariables()
-        // tcDataStore.EvaluateSetUpCmdBuiltinFunctions()
-        // bb, _ := json.Marshal(tcDataStore.TcData)
-        // fmt.Println("bb>>>>>>>>: ", string(bb))
-    }
-    // Stage 2: deal with the Setup().Assertion
+    // if !cmd.Opt.IfMutation {
+    // }
     tcSetUpResult, setUpTestMessages := tcDataStore.RunTcSetUp()
-    if !cmd.Opt.IfMutation {
-        // Stage 3: deal with the Setup().Out* after run
-
-        // tcDataStore.RenderSetUpResultsVariables()
-        // tcDataStore.EvaluateSetUpResultsBuiltinFunctions()
-
-        // tcDataStore.WriteOutEnvVariables(tcSetUpResult)
-        // tcDataStore.WriteSession(tcSetUpResult)
-    }
     //
     var httpResult string
     var httpTestMessages []*testcase.TestMessage
@@ -95,13 +36,11 @@ func DispatchApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecut
 
     if IfValidHttp(tcData) == true {
         tcDataStore.CallHttp(baseUrl)
-
         httpResult, httpTestMessages = tcDataStore.Compare()
 
-        // (4). here to generate the outputs file if the Json has "outputs" field
-        // tcDataStore.WriteOutputsDataToFile(httpResult)
-        // tcDataStore.WriteOutEnvVariables(httpResult)
-        // tcDataStore.WriteSession(httpResult)
+        if httpResult == "Success" {
+            tcDataStore.HandleHttpResultsForOut()
+        }
     } else {
         httpResult = "NoHttp"
         tcDataStore.HttpActualStatusCode = 999
@@ -110,11 +49,6 @@ func DispatchApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecut
     end_str := end_time.Format("2006-01-02 15:04:05.999999999")
 
     // tearDown
-    if !cmd.Opt.IfMutation {
-        tcDataStore.EvaluateTearDownSectionBuiltinFunctions()
-        tcData = tcDataStore.TcData
-        // fmt.Println(tcData)
-    }
     tcTearDownResult, tearDownTestMessages := tcDataStore.RunTcTearDown()
 
     testResult := "Success"
@@ -156,89 +90,3 @@ func IfValidHttp (tcData testcase.TestCaseDataInfo) bool {
 }
 
 
-func (tcDataStore *TcDataStore) RenderSetUpCmdVariables () {
-    dataFeeder := make(map[string]interface{})
-
-    tcSetup := tcDataStore.TcData.TestCase.SetUp()
-    for i, _ := range tcSetup {
-        cmdStr := tcSetup[i].Cmd
-
-        for key, value := range dataFeeder{
-            cmdStr = strings.Replace(cmdStr, "${" + key + "}", fmt.Sprint(value), -1)
-        }
-        tcSetup[i].Cmd = cmdStr
-    }
-} 
-
-func (tcDataStore *TcDataStore) RenderSetUpResultsVariables () {
-    dataFeeder := make(map[string]interface{})
-
-    tcSetup := tcDataStore.TcData.TestCase.SetUp()
-    for i, _ := range tcSetup {
-        cmdStr := tcSetup[i].Cmd
-
-        for key, value := range dataFeeder {
-            cmdStr = strings.Replace(cmdStr, "${" + key + "}", fmt.Sprint(value), -1)
-        }
-        tcSetup[i].Cmd = cmdStr
-    }
-} 
-
-func (tcDataStore *TcDataStore) EvaluateSetUpCmdBuiltinFunctions () {
-    var resTcData testcase.TestCaseDataInfo
-    var tcTempSetup []*testcase.CommandDetails
-
-    tcSetup := tcDataStore.TcData.TestCase.SetUp()
-    if tcSetup != nil {
-        if len(tcSetup) > 0 {
-            jsonStr := EvaluateBuiltinFunctions(tcSetup)
-            json.Unmarshal([]byte(jsonStr), &tcTempSetup)
-   
-            tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
-            tcDataJson := string(tcDataJsonBytes)
-            path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + ".setUp"
-
-            tcDataJson, _  = sjson.Set(tcDataJson, path, tcTempSetup)
-
-            json.Unmarshal([]byte(tcDataJson), &resTcData)
-
-            tcDataStore.TcData = resTcData
-        }
-    }
-}
-
-func (tcDataStore *TcDataStore) RenderHttpSectionVariables () {
-
-} 
-
-func (tcDataStore *TcDataStore) EvaluateHttpSectionBuiltinFunctions () {
-
-} 
-
-
-func (tcDataStore *TcDataStore) RenderTearDownSectionVariables () {
-
-} 
-
-func (tcDataStore *TcDataStore) EvaluateTearDownSectionBuiltinFunctions () {
-    var resTcData testcase.TestCaseDataInfo
-    var tcTempTearDown []*testcase.CommandDetails
-
-    tcTearDown := tcDataStore.TcData.TestCase.SetUp()
-    if tcTearDown != nil {
-        if len(tcTearDown) > 0 {
-            jsonStr := EvaluateBuiltinFunctions(tcTearDown)
-            json.Unmarshal([]byte(jsonStr), &tcTempTearDown)
-   
-            tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
-            tcDataJson := string(tcDataJsonBytes)
-            path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + ".tearDown"
-
-            tcDataJson, _  = sjson.Set(tcDataJson, path, tcTempTearDown)
-
-            json.Unmarshal([]byte(tcDataJson), &resTcData)
-
-            tcDataStore.TcData = resTcData
-        }
-    }
-} 
