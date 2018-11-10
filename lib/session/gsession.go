@@ -14,18 +14,13 @@ import (
     "sync"
 )
 
-var Gsession sync.Map
+var GlobalVariables sync.Map
+var Session         sync.Map
 
-func InitNewSession () sync.Map {
-    var session = sync.Map{}
-
-    return session
-}
-
-func LookupParentSession (parentTcName string) map[string]interface{} {
+func LookupTcSession (parentTcName string) map[string]interface{} {
     tcSession := make(map[string]interface{})
 
-    result, ok := Gsession.Load(parentTcName)
+    result, ok := Session.Load(parentTcName)
     if ok {
         tcSession = result.(map[string]interface{})
     }
@@ -34,5 +29,32 @@ func LookupParentSession (parentTcName string) map[string]interface{} {
 }
 
 func WriteTcSession (tcName string, tcSession map[string]interface{}) {
-    Gsession.Store(tcName, tcSession)
+    Session.Store(tcName, tcSession)
 }
+
+func LoopGlobalVariables () map[string]interface{} {
+    var resMap = make(map[string]interface{})
+
+    GlobalVariables.Range(func(key, value interface{}) bool {
+        resMap[key.(string)] = value
+        return true
+    })
+
+    return resMap
+}
+
+func LookupGlobalVariables (key string) interface{} {
+    var value interface{}
+
+    result, ok := GlobalVariables.Load(key)
+    if ok {
+        value = result
+    }
+
+    return value
+}
+
+func WriteGlobalVariables (key string, value interface{}) {
+    GlobalVariables.Store(key, value)
+}
+

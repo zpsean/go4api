@@ -14,37 +14,43 @@ import (
     // "fmt"
     "strings"
     "encoding/json"
+
+    "go4api/assertion" 
+    "go4api/lib/testcase" 
     
     gjson "github.com/tidwall/gjson"
 )
 
-// (tcDataStore *TcDataStore)
-func GetResponseValue (searchPath string, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) interface{} {
+func (tcDataStore *TcDataStore) GetResponseValue (searchPath string, rowsCount int, rowsData []map[string]interface{}) interface{} {
     // prefix = "$(status).", "$(headers).", "$(body)."
     var value interface{}
-    if len(searchPath) > 1 {
-        if strings.HasPrefix(searchPath, "$(status).") {
-            value = GetStatusActualValue(searchPath, actualStatusCode)
-        } else if strings.HasPrefix(searchPath, "$(headers).") {
-            value = GetHeadersActualValue(searchPath, actualHeader)
-        } else if strings.HasPrefix(searchPath, "$(body).") {
-            value = GetActualValueByJsonPath(searchPath, actualBody)
-        } else if strings.HasPrefix(searchPath, "$.") {
-            value = GetActualValueByJsonPath(searchPath, actualBody)
-        } else {
+
+    switch {
+        case strings.HasPrefix(searchPath, "$(status)."):
+            value = tcDataStore.GetStatusActualValue(searchPath)
+        case strings.HasPrefix(searchPath, "$(headers)."):
+            value = tcDataStore.GetHeadersActualValue(searchPath)
+        case strings.HasPrefix(searchPath, "$(body)."):
+            value = tcDataStore.GetBodyActualValueByPath(searchPath)
+        case strings.HasPrefix(searchPath, "$(sql)."):
+            value = tcDataStore.GetSqlActualValueByPath(searchPath, rowsCount, rowsData)
+        case strings.HasPrefix(searchPath, "$."):
+            value = tcDataStore.GetBodyActualValueByPath(searchPath)
+        default:
             value = searchPath
-        }
-    } else {
-        value = searchPath
     }
     
     return value
 }
 
-func GetStatusActualValue (key string, actualStatusCode int) interface{} {
+func (tcDataStore *TcDataStore) GetStatusActualValue (key string) interface{} {
     var actualValue interface{}
-    // leading "$(status)" is mandatory if want to retrive status
-    if len(key) == 9 && key == "$(status)" {
+    actualStatusCode := tcDataStore.HttpActualStatusCode
+    
+    prefix := "$(status)."
+    lenPrefix := len(prefix)
+
+    if len(key) == lenPrefix && key[0:lenPrefix] == prefix {
         actualValue = actualStatusCode
     } else {
         actualValue = key
@@ -53,9 +59,10 @@ func GetStatusActualValue (key string, actualStatusCode int) interface{} {
     return actualValue
 }
 
-func GetHeadersActualValue (key string, actualHeader map[string][]string) interface{} { 
+func (tcDataStore *TcDataStore) GetHeadersActualValue (key string) interface{} { 
     var actualValue interface{}
-    // leading "$(headers)" is mandatory if want to retrive headers value
+    actualHeader := tcDataStore.HttpActualHeader
+ 
     prefix := "$(headers)."
     lenPrefix := len(prefix)
 
@@ -68,9 +75,10 @@ func GetHeadersActualValue (key string, actualHeader map[string][]string) interf
     return actualValue
 }
 
-func GetActualValueByJsonPath (key string, actualBody []byte) interface{} {  
+func (tcDataStore *TcDataStore) GetBodyActualValueByPath (key string) interface{} {  
     var actualValue interface{}
-    // leading "$." or "$(headers)." is mandatory if want to use path search
+    actualBody := tcDataStore.HttpActualBody
+
     prefix := "$(body)."
     lenPrefix := len(prefix)
     prefix2 := "$."
@@ -90,8 +98,7 @@ func GetActualValueByJsonPath (key string, actualBody []byte) interface{} {
 }
 
 
-func GetSqlActualRespValue (searchPath string, rowsCount int, rowsData []map[string]interface{}) interface{} {
-    // prefix = "$(sql)."
+func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string, rowsCount int, rowsData []map[string]interface{}) interface{} {
     var resValue interface{}
  
     prefix := "$(sql)."
@@ -110,3 +117,47 @@ func GetSqlActualRespValue (searchPath string, rowsCount int, rowsData []map[str
     return resValue
 }
 
+
+func compareCommon (reponsePart string, key string, assertionKey string, actualValue interface{}, expValue interface{}) (bool, *testcase.TestMessage) {
+    // Note: As get Go nil, for JSON null, need special care, two possibilities:
+    // p1: expResult -> null, but can not find out actualValue, go set it to nil, i.e. null (assertion -> false)
+    // p2: expResult -> null, actualValue can be founc, and its value --> null (assertion -> true)
+    // but here can not distinguish them
+    assertionResults := ""
+    var testRes bool
+
+    if actualValue == nil || expValue == nil {
+        // if only one nil
+        if actualValue != nil || expValue != nil {
+            assertionResults = "Failed"
+            testRes = false
+        // both nil
+        } else {
+            assertionResults = "Success"
+            testRes = true
+        }
+    // no nil
+    } else {
+        // call the assertion function
+        testResult := assertion.CallAssertion(assertionKey, actualValue, expValue)
+        
+        if testResult == false {
+            assertionResults = "Failed"
+            testRes = false
+        } else {
+            assertionResults = "Success"
+            testRes = true
+        }
+    }
+    //
+    msg := testcase.TestMessage {
+        AssertionResults: assertionResults,
+        ReponsePart: reponsePart,
+        FieldName: key,
+        AssertionKey:  assertionKey,
+        ActualValue: actualValue,
+        ExpValue: expValue,   
+    }
+
+    return testRes, &msg
+}

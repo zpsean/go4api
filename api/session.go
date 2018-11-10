@@ -11,41 +11,29 @@
 package api
 
 import (    
-    "go4api/lib/session"
+    gsession "go4api/lib/session"
 )
 
 
-func (tcDataStore *TcDataStore) WriteSession (testResult string) {
+func (tcDataStore *TcDataStore) WriteSession (expTcSession map[string]interface{}, rowsCount int, rowsData []map[string]interface{}) {
     var tcSession = make(map[string]interface{})
-    var tcSessionDef = make(map[string]interface{})
-
+ 
     tcData := tcDataStore.TcData
 
-    actualStatusCode := tcDataStore.HttpActualStatusCode
-    actualHeader := tcDataStore.HttpActualHeader
-    actualBody := tcDataStore.HttpActualBody
+    // get its parent session
+    parentTcSession := gsession.LookupTcSession(tcData.ParentTestCase())
+    tcSession = parentTcSession
 
-    if testResult == "Success" {
-        // get its parent session
-        parentTcSession := gsession.LookupParentSession(tcData.ParentTestCase())
-        tcSession = parentTcSession
+    if expTcSession != nil {
+        for k, v := range expTcSession {
+            value := tcDataStore.GetResponseValue(v.(string), rowsCount, rowsData)
 
-        // get its session def
-        tcSessionDef = tcData.TestCase.Session()
-
-        if len(tcSessionDef) > 0 {
-            for k, v := range tcSessionDef {
-                value := GetResponseValue(v.(string), actualStatusCode, actualHeader, actualBody)
-
-                tcSession[k] = value
-            } 
-        }
-        tcName := tcData.TcName()
-        gsession.WriteTcSession(tcName, parentTcSession)
-
-    } else {
-        // fmt.Println("Warning: test execution failed, no OutEnvVariables set!")
+            tcSession[k] = value
+        } 
     }
+    tcName := tcData.TcName()
+    gsession.WriteTcSession(tcName, tcSession)
+
 }
 
 

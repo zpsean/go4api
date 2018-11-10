@@ -24,34 +24,26 @@ import (
 // for each Command, it may have more than one assertion
 func (tcDataStore *TcDataStore) RunTcSetUp () (string, [][]*testcase.TestMessage) {
     tcData := tcDataStore.TcData
-    actualStatusCode := tcDataStore.HttpActualStatusCode
-    actualHeader := tcDataStore.HttpActualHeader
-    actualBody := tcDataStore.HttpActualBody
-
     cmdGroup := tcData.TestCase.SetUp()
 
-    finalResults, finalTestMessages := Command(cmdGroup, actualStatusCode, actualHeader, actualBody)
+    finalResults, finalTestMessages := tcDataStore.CommandGroup(cmdGroup)
 
     return finalResults, finalTestMessages
 }
 
 func (tcDataStore *TcDataStore) RunTcTearDown () (string, [][]*testcase.TestMessage) {
     tcData := tcDataStore.TcData
-    actualStatusCode := tcDataStore.HttpActualStatusCode
-    actualHeader := tcDataStore.HttpActualHeader
-    actualBody := tcDataStore.HttpActualBody
-
     cmdGroup := tcData.TestCase.TearDown()
 
-    finalResults, finalTestMessages := Command(cmdGroup, actualStatusCode, actualHeader, actualBody)
+    finalResults, finalTestMessages := tcDataStore.CommandGroup(cmdGroup)
 
     return finalResults, finalTestMessages
 }
 
-func Command (cmdGroup []*testcase.CommandDetails, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) (string, [][]*testcase.TestMessage) {
+func (tcDataStore *TcDataStore) CommandGroup (cmdGroup []*testcase.CommandDetails) (string, [][]*testcase.TestMessage) {
     finalResults := "Success"
-    var finalTestMessages = [][]*testcase.TestMessage{}
     var cmdsResults []bool
+    var finalTestMessages = [][]*testcase.TestMessage{}
     //
     cmdGroupJsonB, _ := json.Marshal(cmdGroup)
     cmdGroupJson := string(cmdGroupJsonB)
@@ -61,19 +53,26 @@ func Command (cmdGroup []*testcase.CommandDetails, actualStatusCode int, actualH
 
         switch strings.ToLower(cmdType.String()) {
             case "sql":
+                cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + fmt.Sprint(i) + ".cmd"
+                tcDataStore.RenderTcVariables(cmdStrPath)
+                tcDataStore.EvaluateTcBuiltinFunctions(cmdStrPath)
+                //
                 cmdStr := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd")
                 rowsCount, _, rowsData, sqlExecStatus := RunSql(cmdStr.String())
 
                 if sqlExecStatus == "SqlSuccess" {
+                    path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + fmt.Sprint(i) + ".cmdResponse"
+                    tcDataStore.RenderTcVariables(path)
+                    tcDataStore.EvaluateTcBuiltinFunctions(path)
+                    //
                     cmdExpResp := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmdResponse").Map()
 
-                    singleCmdResults, testMessages := compareRespGroup(cmdExpResp, rowsCount, rowsData, actualStatusCode, actualHeader, actualBody)
+                    singleCmdResults, testMessages := tcDataStore.CompareRespGroup(cmdExpResp, rowsCount, rowsData)
 
-                    // <---> 
+                    // HandleSingleCommandResults for out
                     if singleCmdResults == true {
-                        // write out session if has
-                        // write out global variables if has
-                        // write out tc loca variables if hs
+                        cmdDetails := cmdGroup[i]
+                        tcDataStore.HandleCmdResultsForOut(cmdDetails, i, rowsCount, rowsData)
                     }
 
                     cmdsResults = append(cmdsResults, singleCmdResults)
@@ -81,6 +80,10 @@ func Command (cmdGroup []*testcase.CommandDetails, actualStatusCode int, actualH
                 } else {
                     cmdsResults = append(cmdsResults, false)
                 }
+            case "redis":
+                fmt.Println("tbd, redis is not ready yet")
+            default:
+                fmt.Println("!! warning, command ", cmdType.String(), " can not be recognized.")
         }
     }
 
@@ -94,9 +97,9 @@ func Command (cmdGroup []*testcase.CommandDetails, actualStatusCode int, actualH
     return finalResults, finalTestMessages
 }
 
-func compareRespGroup (cmdExpResp map[string]gjson.Result, rowsCount int, rowsData []map[string]interface{},
-    actualStatusCode int, actualHeader map[string][]string, actualBody []byte) (bool, []*testcase.TestMessage) {
-    //------
+func (tcDataStore *TcDataStore) CompareRespGroup (cmdExpResp map[string]gjson.Result, 
+        rowsCount int, rowsData []map[string]interface{}) (bool, []*testcase.TestMessage){
+    //-----------
     singleCmdResults := true
     var testResults []bool
     var testMessages []*testcase.TestMessage
@@ -105,14 +108,14 @@ func compareRespGroup (cmdExpResp map[string]gjson.Result, rowsCount int, rowsDa
         cmdExpResp_sub := value.Value().(map[string]interface{})
         for assertionKey, expValueOrigin := range cmdExpResp_sub {
             
-            actualValue := GetSqlActualRespValue(key, rowsCount, rowsData)
+            actualValue := tcDataStore.GetResponseValue(key, rowsCount, rowsData)
 
             var expValue interface{}
             switch expValueOrigin.(type) {
                 case float64, int64: 
                     expValue = expValueOrigin
                 default:
-                    expValue = GetResponseValue(expValueOrigin.(string), actualStatusCode, actualHeader, actualBody)
+                    expValue = tcDataStore.GetResponseValue(expValueOrigin.(string), rowsCount, rowsData)
             }
             
             testRes, msg := compareCommon("sql", key, assertionKey, actualValue, expValue)
@@ -130,6 +133,32 @@ func compareRespGroup (cmdExpResp map[string]gjson.Result, rowsCount int, rowsDa
     }
 
     return singleCmdResults, testMessages
+}
+
+func (tcDataStore *TcDataStore) HandleCmdResultsForOut (cmdDetails *testcase.CommandDetails, i int, rowsCount int, rowsData []map[string]interface{}) {
+    // write out session if has
+    path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + fmt.Sprint(i) + ".session"
+    tcDataStore.RenderTcVariables(path)
+    tcDataStore.EvaluateTcBuiltinFunctions(path)
+
+    expTcSession := cmdDetails.Session
+    tcDataStore.WriteSession(expTcSession, rowsCount, rowsData)
+
+    // write out global variables if has
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + fmt.Sprint(i) + ".outGlobalVariables"
+    tcDataStore.RenderTcVariables(path)
+    tcDataStore.EvaluateTcBuiltinFunctions(path)
+
+    expOutGlobalVariables := cmdDetails.OutGlobalVariables
+    tcDataStore.WriteOutGlobalVariables(expOutGlobalVariables, rowsCount, rowsData)
+
+    // write out tc loca variables if has
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + fmt.Sprint(i) + ".outLocalVariables"
+    tcDataStore.RenderTcVariables(path)
+    tcDataStore.EvaluateTcBuiltinFunctions(path)
+
+    expOutLocalVariables := cmdDetails.OutLocalVariables
+    tcDataStore.WriteOutGlobalVariables(expOutLocalVariables, rowsCount, rowsData)
 }
 
 func RunSql (stmt string) (int, []string, []map[string]interface{}, string) {

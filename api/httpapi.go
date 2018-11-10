@@ -13,19 +13,31 @@ package api
 import (
     // "fmt" 
     "strings"
-    // "encoding/json"
 
-    // "go4api/cmd"
-    "go4api/lib/testcase"                                                                                                                             
-    "go4api/assertion"
+    "go4api/lib/testcase" 
     g4http "go4api/protocal/http"
 )
 
-func (tcDataStore *TcDataStore) CallHttp(baseUrl string) {
+func (tcDataStore *TcDataStore) CallHttp (baseUrl string) {
     tcData := tcDataStore.TcData
 
+    path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + ".path"
+    tcDataStore.RenderTcVariables(path)
+    tcDataStore.EvaluateTcBuiltinFunctions(path)
     // urlStr := tcData.TestCase.UrlRaw(baseUrl)
     urlStr := tcData.TestCase.UrlEncode(baseUrl)
+    //
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + ".headers"
+    tcDataStore.RenderTcVariables(path)
+    tcDataStore.EvaluateTcBuiltinFunctions(path)
+
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + ".queryString"
+    tcDataStore.RenderTcVariables(path)
+    tcDataStore.EvaluateTcBuiltinFunctions(path)
+
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + ".queryString"
+    tcDataStore.RenderTcVariables(path)
+    tcDataStore.EvaluateTcBuiltinFunctions(path)
     //
     apiMethodSelector, apiMethod, bodyText, bodyMultipart, boundary := GetPayloadInfo(tcData)
     //
@@ -42,6 +54,7 @@ func (tcDataStore *TcDataStore) CallHttp(baseUrl string) {
     var actualBody []byte
     // 
     httpRequest := g4http.HttpRestful{}
+
     if apiMethodSelector == "POSTMultipart" {
         actualStatusCode, actualHeader, actualBody = httpRequest.Request(urlStr, apiMethod, reqHeaders, bodyMultipart)    
     } else {
@@ -55,29 +68,18 @@ func (tcDataStore *TcDataStore) CallHttp(baseUrl string) {
 
 
 func (tcDataStore *TcDataStore) Compare () (string, []*testcase.TestMessage) {
-    // ----
-    tcData := tcDataStore.TcData
-
-    expStatus := tcData.TestCase.RespStatus()
-    expHeader := tcData.TestCase.RespHeaders()
-    expBody := tcData.TestCase.RespBody()
-
-    actualStatusCode := tcDataStore.HttpActualStatusCode
-    actualHeader := tcDataStore.HttpActualHeader
-    actualBody := tcDataStore.HttpActualBody
-
     var testResults []bool
     var testMessages []*testcase.TestMessage
     // status
-    testResultsS, testMessagesS := CompareStatus(actualStatusCode, expStatus)
+    testResultsS, testMessagesS := tcDataStore.CompareStatus()
     testResults = append(testResults, testResultsS[0:]...)
     testMessages = append(testMessages, testMessagesS[0:]...)
     // headers
-    testResultsH, testMessagesH := CompareHeaders(actualHeader, expHeader)
+    testResultsH, testMessagesH := tcDataStore.CompareHeaders()
     testResults = append(testResults, testResultsH[0:]...)
     testMessages = append(testMessages, testMessagesH[0:]...)
     // body
-    testResultsB, testMessagesB := CompareBody(actualBody, expBody)
+    testResultsB, testMessagesB := tcDataStore.CompareBody()
     testResults = append(testResults, testResultsB[0:]...)
     testMessages = append(testMessages, testMessagesB[0:]...)
 
@@ -97,9 +99,13 @@ func (tcDataStore *TcDataStore) Compare () (string, []*testcase.TestMessage) {
 } 
 
 
-func CompareStatus(actualStatusCode int, expStatus map[string]interface{}) ([]bool, []*testcase.TestMessage) {
+func (tcDataStore *TcDataStore) CompareStatus() ([]bool, []*testcase.TestMessage) {
     var testResults []bool
     var testMessages []*testcase.TestMessage
+
+    tcData := tcDataStore.TcData
+    expStatus := tcData.TestCase.RespStatus()
+    actualStatusCode := tcDataStore.HttpActualStatusCode
     // status
     for assertionKey, expValue := range expStatus {
         actualValue := actualStatusCode
@@ -114,9 +120,13 @@ func CompareStatus(actualStatusCode int, expStatus map[string]interface{}) ([]bo
     return testResults, testMessages
 } 
 
-func CompareHeaders(actualHeader map[string][]string, expHeader map[string]interface{}) ([]bool, []*testcase.TestMessage) {
+func (tcDataStore *TcDataStore) CompareHeaders() ([]bool, []*testcase.TestMessage) {
     var testResults []bool
     var testMessages []*testcase.TestMessage
+
+    tcData := tcDataStore.TcData
+    expHeader := tcData.TestCase.RespHeaders()
+    actualHeader := tcDataStore.HttpActualHeader
     // headers
     for key, value := range expHeader {
         expHeader_sub := value.(map[string]interface{})
@@ -134,16 +144,19 @@ func CompareHeaders(actualHeader map[string][]string, expHeader map[string]inter
     return testResults, testMessages
 } 
 
-func CompareBody(actualBody []byte, expBody map[string]interface{}) ([]bool, []*testcase.TestMessage) {
+func (tcDataStore *TcDataStore) CompareBody() ([]bool, []*testcase.TestMessage) {
     var testResults []bool
     var testMessages []*testcase.TestMessage
+
+    tcData := tcDataStore.TcData
+    expBody := tcData.TestCase.RespBody()
     // body
     for key, value := range expBody {
         expBody_sub := value.(map[string]interface{})
 
         for assertionKey, expValue := range expBody_sub {
             // if path, then value - value, otherwise, key - value
-            actualValue := GetActualValueByJsonPath(key, actualBody)
+            actualValue := tcDataStore.GetBodyActualValueByPath(key)
             
             testRes, msg := compareCommon("Body", key, assertionKey, actualValue, expValue)
 
@@ -155,47 +168,30 @@ func CompareBody(actualBody []byte, expBody map[string]interface{}) ([]bool, []*
     return testResults, testMessages
 } 
 
-func compareCommon (reponsePart string, key string, assertionKey string, actualValue interface{}, expValue interface{}) (bool, *testcase.TestMessage) {
-    // Note: As get Go nil, for JSON null, need special care, two possibilities:
-    // p1: expResult -> null, but can not find out actualValue, go set it to nil, i.e. null (assertion -> false)
-    // p2: expResult -> null, actualValue can be founc, and its value --> null (assertion -> true)
-    // but here can not distinguish them
-    assertionResults := ""
-    var testRes bool
+func (tcDataStore *TcDataStore) HandleHttpResultsForOut () {
+    tcData := tcDataStore.TcData
+    // write out session if has
+    path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + ".session"
+    tcDataStore.RenderTcVariables(path)
+    tcDataStore.EvaluateTcBuiltinFunctions(path)
 
-    if actualValue == nil || expValue == nil {
-        // if only one nil
-        if actualValue != nil || expValue != nil {
-            assertionResults = "Failed"
-            testRes = false
-        // both nil
-        } else {
-            assertionResults = "Success"
-            testRes = true
-        }
-    // no nil
-    } else {
-        // call the assertion function
-        testResult := assertion.CallAssertion(assertionKey, actualValue, expValue)
-        // fmt.Println("--->", key, assertionKey, actualValue, expValue, reflect.TypeOf(actualValue), reflect.TypeOf(expValue), testResult)
-        if testResult == false {
-            assertionResults = "Failed"
-            testRes = false
-        } else {
-            assertionResults = "Success"
-            testRes = true
-        }
-    }
-    //
-    msg := testcase.TestMessage {
-        AssertionResults: assertionResults,
-        ReponsePart: reponsePart,
-        FieldName: key,
-        AssertionKey:  assertionKey,
-        ActualValue: actualValue,
-        ExpValue: expValue,   
-    }
+    expTcSession := tcData.TestCase.Session()
+    tcDataStore.WriteSession(expTcSession, 0, []map[string]interface{}{})
 
-    return testRes, &msg
+    // write out global variables if has
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + ".outGlobalVariables"
+    tcDataStore.RenderTcVariables(path)
+    tcDataStore.EvaluateTcBuiltinFunctions(path)
+
+    expOutGlobalVariables := tcData.TestCase.OutGlobalVariables()
+    tcDataStore.WriteOutGlobalVariables(expOutGlobalVariables, 0, []map[string]interface{}{})
+
+    // write out tc loca variables if has
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + ".outLocalVariables"
+    tcDataStore.RenderTcVariables(path)
+    tcDataStore.EvaluateTcBuiltinFunctions(path)
+
+    expOutLocalVariables := tcData.TestCase.OutLocalVariables()
+    tcDataStore.WriteOutGlobalVariables(expOutLocalVariables, 0, []map[string]interface{}{})
 }
 

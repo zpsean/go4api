@@ -26,7 +26,7 @@ import (
 
 
 func ScheduleCases (cReady chan *tree.TcNode, wg *sync.WaitGroup, resultsChan chan testcase.TestCaseExecutionInfo, baseUrl string) {
-    //
+    // ------
     if cmd.Opt.IfConcurrency == true {
         tick := 0
         max := cmd.Opt.ConcurrencyLimit
