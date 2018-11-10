@@ -17,8 +17,8 @@ import (
     "strings"
 
     "go4api/cmd"
-    "go4api/fuzz/fuzz"
-    "go4api/fuzz/mutation"
+    // "go4api/fuzz/fuzz"
+    // "go4api/fuzz/mutation"
     "go4api/sql"
 )
 
@@ -29,6 +29,8 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
     resultsDir := MkResultsDir(gStart_str, cmd.Opt)
     resultsLogFile := resultsDir + gStart_str + ".log"
     //
+    g4Store := InitG4Store()
+    //
     // <!!--> Note: there are two kinds of test cases dependency:
     // type 1. the parent and child has only execution dependency, no data exchange
     // type 2. the parent and child has execution dependency and data exchange dynamically
@@ -37,67 +39,66 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
     //
     if !cmd.Opt.IfScenario {
         if cmd.Opt.IfMutation {
-            WarmUpDBConnection()
-            //
-            originMutationTcArray := GetOriginMutationTcArray()
-            setUpTcSlice := GetSetupTcSlice(originMutationTcArray)
-            setUpTcTreeStats := RunGlobalSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
-            //
-            originMutationTcArray = GetOriginMutationTcArray()
-            originNormalTc := GetNormalTcSlice(originMutationTcArray)
-            mutatedTcArray := mutation.MutateTcArray(originNormalTc)
-            normalTcTreeStats := Run(ch, baseUrl, resultsDir, resultsLogFile, mutatedTcArray)
-            //
-            originMutationTcArray = GetOriginMutationTcArray()
-            teardownTcSlice := GetTeardownTcSlice(originMutationTcArray)
-            teardownTcTreeStats := RunGlobalTeardown(ch, baseUrl, resultsDir, resultsLogFile, teardownTcSlice)
-            //
-            totalTcCount := len(setUpTcSlice) + len(mutatedTcArray) + len(teardownTcSlice)
-            RunFinalConsoleReport(totalTcCount, setUpTcTreeStats, normalTcTreeStats, teardownTcTreeStats)
-            RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
+            // WarmUpDBConnection()
+            // //
+            // originMutationTcArray := GetOriginMutationTcArray()
+            // setUpTcSlice := GetSetupTcSlice(originMutationTcArray)
+            // setUpTcTreeStats := RunGlobalSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
+            // //
+            // originMutationTcArray = GetOriginMutationTcArray()
+            // originNormalTc := GetNormalTcSlice(originMutationTcArray)
+            // mutatedTcArray := mutation.MutateTcArray(originNormalTc)
+            // normalTcTreeStats := Run(ch, baseUrl, resultsDir, resultsLogFile, mutatedTcArray)
+            // //
+            // originMutationTcArray = GetOriginMutationTcArray()
+            // teardownTcSlice := GetTeardownTcSlice(originMutationTcArray)
+            // teardownTcTreeStats := RunGlobalTeardown(ch, baseUrl, resultsDir, resultsLogFile, teardownTcSlice)
+            // //
+            // totalTcCount := len(setUpTcSlice) + len(mutatedTcArray) + len(teardownTcSlice)
+            // RunFinalConsoleReport(totalTcCount, setUpTcTreeStats, normalTcTreeStats, teardownTcTreeStats)
+            // RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
         } else if cmd.Opt.IfFuzzTest {
-            fuzz.PrepFuzzTest()
-            //
-            fuzzTcArray := GetFuzzTcArray()
-            Run(ch, baseUrl, resultsDir, resultsLogFile, fuzzTcArray)
+            // fuzz.PrepFuzzTest()
+            // //
+            // fuzzTcArray := GetFuzzTcArray()
+            // Run(ch, baseUrl, resultsDir, resultsLogFile, fuzzTcArray)
         } else {
             WarmUpDBConnection()
             //
-            tcArray := GetTcArray()
-            setUpTcSlice := GetSetupTcSlice(tcArray)
-            setUpTcTreeStats := RunGlobalSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
+            g4Store.GlobalSetUpRunStore.InitRun()
+            g4Store.GlobalSetUpRunStore.RunPriorities(baseUrl, resultsLogFile)
+            g4Store.GlobalSetUpRunStore.RunConsoleOverallReport()
             //
-            tcArray = GetTcArray()
-            normalTcSlice := GetNormalTcSlice(tcArray)
-            normalTcTreeStats := Run(ch, baseUrl, resultsDir, resultsLogFile, normalTcSlice)
+            g4Store.NormalRunStore.InitRun()
+            g4Store.NormalRunStore.RunPriorities(baseUrl, resultsLogFile)
+            g4Store.NormalRunStore.RunConsoleOverallReport()
             //
-            tcArray = GetTcArray()
-            teardownTcSlice := GetTeardownTcSlice(tcArray)
-            teardownTcTreeStats := RunGlobalTeardown(ch, baseUrl, resultsDir, resultsLogFile, teardownTcSlice)
+            g4Store.GlobalTeardownRunStore.InitRun()
+            g4Store.GlobalTeardownRunStore.RunPriorities(baseUrl, resultsLogFile)
+            g4Store.GlobalTeardownRunStore.RunConsoleOverallReport()
             //
-            totalTcCount := len(setUpTcSlice) + len(normalTcSlice) + len(teardownTcSlice)
-            RunFinalConsoleReport(totalTcCount, setUpTcTreeStats, normalTcTreeStats, teardownTcTreeStats)
-            RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
+            g4Store.RunFinalConsoleReport()
+            g4Store.RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
         }
     } else {
-        WarmUpDBConnection()
-        jsonFileList := GetJsonFiles()
-        //
-        tcArray := ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
-        setUpTcSlice := GetSetupTcSlice(tcArray)
-        setUpTcTreeStats := RunGlobalSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
-        //
-        tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
-        normalTcSlice := GetNormalTcSlice(tcArray)
-        normalTcTreeStats := RunScenario(ch, baseUrl, resultsDir, resultsLogFile, jsonFileList, normalTcSlice)
-        //
-        tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
-        teardownTcSlice := GetTeardownTcSlice(tcArray)
-        teardownTcTreeStats := RunGlobalTeardown(ch, baseUrl, resultsDir, resultsLogFile, teardownTcSlice)
-        //
-        totalTcCount := len(setUpTcSlice) + len(normalTcSlice) + len(teardownTcSlice)
-        RunFinalConsoleReport(totalTcCount, setUpTcTreeStats, normalTcTreeStats, teardownTcTreeStats)
-        RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
+        // WarmUpDBConnection()
+        // jsonFileList := GetJsonFiles()
+        // //
+        // tcArray := ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
+        // setUpTcSlice := GetSetupTcSlice(tcArray)
+        // setUpTcTreeStats := RunGlobalSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
+        // //
+        // tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
+        // normalTcSlice := GetNormalTcSlice(tcArray)
+        // normalTcTreeStats := RunScenario(ch, baseUrl, resultsDir, resultsLogFile, jsonFileList, normalTcSlice)
+        // //
+        // tcArray = ConstructChildTcInfosBasedOnParentRoot(jsonFileList, "root" , "_dt")
+        // teardownTcSlice := GetTeardownTcSlice(tcArray)
+        // teardownTcTreeStats := RunGlobalTeardown(ch, baseUrl, resultsDir, resultsLogFile, teardownTcSlice)
+        // //
+        // totalTcCount := len(setUpTcSlice) + len(normalTcSlice) + len(teardownTcSlice)
+        // RunFinalConsoleReport(totalTcCount, setUpTcTreeStats, normalTcTreeStats, teardownTcTreeStats)
+        // RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
     }
 }
 
@@ -140,3 +141,5 @@ func WarmUpDBConnection () {
     ip, port, user, pw, defaultDB := gsql.GetDBConnInfo()
     gsql.InitConnection(ip, port, user, pw, defaultDB)
 }
+
+

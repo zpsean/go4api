@@ -38,7 +38,10 @@ func GetCsvFromFile(filePath string) [][]string {
         panic(err)
     }
     r2 := csv.NewReader(strings.NewReader(string(fi)))
-    csvRows, _ := r2.ReadAll()
+    csvRows, err := r2.ReadAll()
+    if err != nil {
+        panic(err)
+    }
 
     return csvRows
 }

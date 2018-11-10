@@ -18,7 +18,7 @@ import (
     gjson "github.com/tidwall/gjson"
 )
 
-
+// (tcDataStore *TcDataStore)
 func GetResponseValue (searchPath string, actualStatusCode int, actualHeader map[string][]string, actualBody []byte) interface{} {
     // prefix = "$(status).", "$(headers).", "$(body)."
     var value interface{}

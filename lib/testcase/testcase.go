@@ -65,8 +65,12 @@ func (tc *TestCase) Outputs() []*OutputsDetails {
     return (*tc)[tc.TcName()].Outputs
 }
 
-func (tc *TestCase) OutEnvVariables() map[string]interface{} {
-    return (*tc)[tc.TcName()].OutEnvVariables
+func (tc *TestCase) OutGlobalVariables() map[string]interface{} {
+    return (*tc)[tc.TcName()].OutGlobalVariables
+}
+
+func (tc *TestCase) OutLocalVariables() map[string]interface{} {
+    return (*tc)[tc.TcName()].OutLocalVariables
 }
 
 func (tc *TestCase) Session() map[string]interface{} {

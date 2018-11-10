@@ -73,16 +73,17 @@ func Convert () {
 		    
 		    tCaseBasics := testcase.TestCaseBasics{
 		        priority, 
-		        parentTestCase,
+                parentTestCase,
                 false,
                 false,
                 []*testcase.CommandDetails{},
-		        []interface{}{},
-		        &g4ARequest,
-		        &g4AResponse,
-		        []*testcase.OutputsDetails{},
-                map[string]interface{}{},
-                map[string]interface{}{},
+                []interface{}{},
+                &g4ARequest,
+                &g4AResponse,
+                []*testcase.OutputsDetails{},
+                map[string]interface{}{},  // OutGlobalVariables
+                map[string]interface{}{},  // OutLocalVariables
+                map[string]interface{}{},  // Session
                 []*testcase.CommandDetails{},
 		    }
 		    //

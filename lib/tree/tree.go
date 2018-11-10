@@ -18,8 +18,8 @@ import (
     "go4api/lib/testcase"
 )
 
-type TcNode struct{
-    TestCaseExecutionInfo testcase.TestCaseExecutionInfo
+type TcNode struct {
+    TestCaseExecutionInfo *testcase.TestCaseExecutionInfo
     Children []*TcNode // for child
 }
 
@@ -32,7 +32,7 @@ func CreateTcTree () TcTree {
 }
 
 
-func (tcTree TcTree) BuildTree (tcArray []testcase.TestCaseDataInfo) (*TcNode) {
+func (tcTree TcTree) BuildTree (tcArray []*testcase.TestCaseDataInfo) (*TcNode) {
     fmt.Println("\n---- Build the tcTree - Start ----")
 
     root, ifAdded := tcTree.BuildRootNode()
@@ -74,7 +74,7 @@ func (tcTree TcTree) BuildRootNode () (*TcNode, bool) {
         CsvRow: "",
     }
 
-    rootTcaseExecution := testcase.TestCaseExecutionInfo {
+    rootTcaseExecution := &testcase.TestCaseExecutionInfo {
         TestCaseDataInfo: &rootTcaseData,
         TestResult: "",
         ActualStatusCode: 0,
@@ -91,13 +91,13 @@ func (tcTree TcTree) BuildRootNode () (*TcNode, bool) {
     return root, ifAdded
 }
 
-func (tcTree TcTree) BuildRootDirectChildrenNodes (root *TcNode, tcArray []testcase.TestCaseDataInfo) ([]testcase.TestCaseDataInfo, []testcase.TestCaseDataInfo) {
-    var tcArrayTree []testcase.TestCaseDataInfo
-    var tcArrayNotTree []testcase.TestCaseDataInfo
+func (tcTree TcTree) BuildRootDirectChildrenNodes (root *TcNode, tcArray []*testcase.TestCaseDataInfo) ([]*testcase.TestCaseDataInfo, []*testcase.TestCaseDataInfo) {
+    var tcArrayTree []*testcase.TestCaseDataInfo
+    var tcArrayNotTree []*testcase.TestCaseDataInfo
 
     for i, _ := range tcArray {
-        tcaseExecution := testcase.TestCaseExecutionInfo {
-            TestCaseDataInfo: &tcArray[i],
+        tcaseExecution := &testcase.TestCaseExecutionInfo {
+            TestCaseDataInfo: tcArray[i],
             TestResult: "",
             ActualStatusCode: 0,
             StartTime: "",
@@ -119,17 +119,17 @@ func (tcTree TcTree) BuildRootDirectChildrenNodes (root *TcNode, tcArray []testc
     return tcArrayTree, tcArrayNotTree
 }
 
-func (tcTree TcTree) LoopAndBuildOtherNodes (root *TcNode, tcArrayTree []testcase.TestCaseDataInfo, tcArrayNotTree []testcase.TestCaseDataInfo) {
+func (tcTree TcTree) LoopAndBuildOtherNodes (root *TcNode, tcArrayTree []*testcase.TestCaseDataInfo, tcArrayNotTree []*testcase.TestCaseDataInfo) {
     for {
-        var tcArrayNotTreeTemp []testcase.TestCaseDataInfo
+        var tcArrayNotTreeTemp []*testcase.TestCaseDataInfo
         for i, _ := range tcArrayNotTree {
             tcArrayNotTreeTemp = append(tcArrayNotTreeTemp, tcArrayNotTree[i])
         }
         //
         len1 := len(tcArrayNotTreeTemp)
         for i, _ := range tcArrayNotTreeTemp {
-            tcaseExecution := testcase.TestCaseExecutionInfo {
-                TestCaseDataInfo: &tcArrayNotTreeTemp[i],
+            tcaseExecution := &testcase.TestCaseExecutionInfo {
+                TestCaseDataInfo: tcArrayNotTreeTemp[i],
                 TestResult: "",
                 ActualStatusCode: 0,
                 StartTime: "",
@@ -159,7 +159,7 @@ func (tcTree TcTree) LoopAndBuildOtherNodes (root *TcNode, tcArrayTree []testcas
     }
 }
 
-func (tcTree TcTree) AddRootNode (TcaseExecution testcase.TestCaseExecutionInfo) (*TcNode, bool) {
+func (tcTree TcTree) AddRootNode (TcaseExecution *testcase.TestCaseExecutionInfo) (*TcNode, bool) {
     node := &TcNode{
         TestCaseExecutionInfo: TcaseExecution, 
         Children: []*TcNode{},
@@ -179,7 +179,7 @@ func (tcTree TcTree) AddRootNode (TcaseExecution testcase.TestCaseExecutionInfo)
     return node, ifAdded
 }
 
-func (tcTree TcTree) AddNode (root *TcNode, TcaseExecution testcase.TestCaseExecutionInfo) bool {
+func (tcTree TcTree) AddNode (root *TcNode, TcaseExecution *testcase.TestCaseExecutionInfo) bool {
     node := &TcNode{
         TestCaseExecutionInfo: TcaseExecution, 
         Children: []*TcNode{},
@@ -298,9 +298,9 @@ func (tcTree TcTree) ShowNodes(node *TcNode) {
 }
 
 
-func RemoveArrayItem(sourceArray []testcase.TestCaseDataInfo, tcData testcase.TestCaseDataInfo) []testcase.TestCaseDataInfo {
+func RemoveArrayItem(sourceArray []*testcase.TestCaseDataInfo, tcData *testcase.TestCaseDataInfo) []*testcase.TestCaseDataInfo {
     // fmt.Println("RemoveArryaItem", sourceArray, tc)
-    var resultArray []testcase.TestCaseDataInfo
+    var resultArray []*testcase.TestCaseDataInfo
     // resultArray := append(sourceArray[:index], sourceArray[index + 1:]...)
     for index, tc_i := range sourceArray {
         if tc_i.TcName() == tcData.TcName() {

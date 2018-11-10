@@ -16,6 +16,12 @@ import (
 
 var Gsession sync.Map
 
+func InitNewSession () sync.Map {
+    var session = sync.Map{}
+
+    return session
+}
+
 func LookupParentSession (parentTcName string) map[string]interface{} {
     tcSession := make(map[string]interface{})
 
