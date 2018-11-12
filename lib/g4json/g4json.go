@@ -17,7 +17,7 @@ import (
     "strings"
     "reflect"
     // "encoding/csv"
-    // "encoding/json"
+    "encoding/json"
 )
 
 type FieldDetails struct {
@@ -27,7 +27,14 @@ type FieldDetails struct {
     FieldSubType string  // like ip/email/phone/etc.
 }
 
-func GetFieldsDetails(value interface{}) []FieldDetails {
+func GetFieldsDetails(valueSource interface{}) []FieldDetails {
+    var value interface{}
+    jsonBytes, err := json.Marshal(valueSource)
+    if err != nil {
+        panic(err)
+    }
+    json.Unmarshal(jsonBytes, &value)
+
     var fieldDetailsSlice []FieldDetails
     c := make(chan FieldDetails)
 
@@ -60,7 +67,7 @@ func GetFieldsDetails(value interface{}) []FieldDetails {
 // 1. all Json numbers's type is marked as float64, can not distinguish int with float64
 // 2. if Json number is 1234.00, then the value in Go is 1234 once json.Unmarshal, lost the .00
 // 3. as Json mumbers are treated as float64, it may result in some issue, like use sci a.xxxe+1yy to represent timestamp
-func TraverseFields(c chan FieldDetails, subPath []string, value interface{}, wg *sync.WaitGroup) {
+func TraverseFields (c chan FieldDetails, subPath []string, value interface{}, wg *sync.WaitGroup) {
     defer wg.Done()
 
     switch value.(type) {
@@ -76,12 +83,13 @@ func TraverseFields(c chan FieldDetails, subPath []string, value interface{}, wg
         case []interface{}:
             wg.Add(1)
             go fieldSlice(c, subPath, value, "", wg)
+        default:
+            fmt.Println("!! Warning, unknown type to traverse.")
     }
 }
 
 func fieldNull (c chan FieldDetails, subPath []string, value interface{}, key interface{}, wg *sync.WaitGroup) {
     defer wg.Done()
-
     subPathNew := make([]string, len(subPath))
     if key == "" {
         copy(subPathNew, subPath)
@@ -96,7 +104,6 @@ func fieldNull (c chan FieldDetails, subPath []string, value interface{}, key in
 
 func fieldPrimitive (c chan FieldDetails, subPath []string, value interface{}, key interface{}, wg *sync.WaitGroup) {
     defer wg.Done()
-
     subPathNew := make([]string, len(subPath))
     if key == "" {
         copy(subPathNew, subPath)

@@ -33,7 +33,7 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo) {
     tcReportResults := tcExecution.TcConsoleResults()
     // repJson, _ := json.Marshal(tcReportResults)
 
-    if tcReportResults.HttpResult == "Fail" {
+    if tcReportResults.TestResult == "Fail" {
         length := len(string(tcExecution.ActualBody))
         out_len := 0
         if length > 300 {
@@ -42,8 +42,10 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo) {
             out_len = length
         }
 
-        fmt.Printf("\n%s%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d%s\n", CLR_R, tcReportResults.TcName , tcReportResults.Priority, tcReportResults.ParentTestCase, 
-            tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
+        fmt.Printf("\n%s%-40s%-3s%-30s%-7s[%-7s,%-7s,%-7s] %-30s%-30s%-4s%d%s\n", CLR_R, 
+            tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
+            tcReportResults.TestResult, tcReportResults.SetUpResult, tcReportResults.HttpResult, tcReportResults.TearDownResult, 
+            tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
             tcReportResults.ActualStatusCode, CLR_N)
 
         if cmd.Opt.IfMutation {
@@ -59,8 +61,10 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo) {
 
         fmt.Println(string(tcExecution.ActualBody)[0:out_len], "...")
     } else {
-        fmt.Printf("\n%s%-40s%-3s%-30s%-10s%-30s%-30s%-4s%d%s\n", CLR_G, tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
-            tcReportResults.TestResult, tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
+        fmt.Printf("\n%s%-40s%-3s%-30s%-7s[%-7s,%-7s,%-7s] %-30s%-30s%-4s%d%s\n", CLR_G, 
+            tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
+            tcReportResults.TestResult, tcReportResults.SetUpResult, tcReportResults.HttpResult, tcReportResults.TearDownResult, 
+            tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
             tcReportResults.ActualStatusCode, CLR_N)
 
         if cmd.Opt.IfMutation {

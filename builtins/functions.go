@@ -231,6 +231,12 @@ func ToInt (param interface{}) int {
         case float64:
             // Note: tbd, to cosider format for int, float64 more
             return int(param.(float64))
+        case string:
+            i, err := strconv.Atoi(param.(string))
+            if err != nil {
+                panic(err)
+            }
+            return i
         default:
             return 0
     }

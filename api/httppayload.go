@@ -26,7 +26,7 @@ import (
     gjson "github.com/tidwall/gjson"
 )
 
-func GetPayloadInfo (tcData testcase.TestCaseDataInfo) (string, string, *strings.Reader, *bytes.Buffer, string) {
+func GetPayloadInfo (tcData *testcase.TestCaseDataInfo) (string, string, *strings.Reader, *bytes.Buffer, string) {
     apiMethod := tcData.TestCase.ReqMethod()
     // request payload(body)
     reqPayload := tcData.TestCase.ReqPayload()

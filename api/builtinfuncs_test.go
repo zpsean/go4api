@@ -45,7 +45,8 @@ func init () {
                 "text": { 
                           "builtin6": {"Fn::NextStringNumeric": 31},
                           "builtin11": {"Fn::Split": ["|", "a|b|c"]},
-                          "builtin12": {"Fn::Substitute": ["www.${var1}--${var2}", {"var1": "value1", "var2": 12345}]}
+                          "builtin12": {"Fn::Substitute": ["www.${var1}--${var2}", {"var1": "value1", "var2": 12345}]},
+                          "builtin13": {"Fn::ToInt": "202"}
                         }
               }
             }
@@ -97,7 +98,7 @@ func init () {
     // json.Unmarshal([]byte(tcSampleStr), &value)
     // json.Unmarshal([]byte(tcSampleStr_2), &value_2)
 
-    json.Unmarshal([]byte(tcSampleStr), &tcData)
+    json.Unmarshal([]byte(tcSampleStr_2), &tcData)
     tcJson, _ := json.MarshalIndent(tcData, "", "\t")
     fmt.Println("origin tcdata: ", string(tcJson))
 }

@@ -17,10 +17,10 @@ import (
 var GlobalVariables sync.Map
 var Session         sync.Map
 
-func LookupTcSession (parentTcName string) map[string]interface{} {
+func LookupTcSession (tcName string) map[string]interface{} {
     tcSession := make(map[string]interface{})
 
-    result, ok := Session.Load(parentTcName)
+    result, ok := Session.Load(tcName)
     if ok {
         tcSession = result.(map[string]interface{})
     }

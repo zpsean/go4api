@@ -13,7 +13,7 @@ package gsql
 import (
     "os"
     // "strconv"
-    // "fmt"
+    "fmt"
     // "time"
     // "log"
     "strings"
@@ -54,6 +54,8 @@ func Run (stmt string) (int, []string, []map[string]interface{}, string) {
 
     var err error
     sqlExecStatus := ""
+
+    fmt.Println("sqlcmd: ", stmt)
 
     sqlExec := &SqlExec{stmt, 0, []string{}, []map[string]interface{}{}}
 

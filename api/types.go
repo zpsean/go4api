@@ -23,7 +23,7 @@ import (
 )
 
 type TcDataStore struct {
-    TcData testcase.TestCaseDataInfo
+    TcData *testcase.TestCaseDataInfo
 
     TcLocalVariables map[string]interface{}
     SetUpStore []map[string]interface{}
@@ -39,7 +39,7 @@ type TcDataStore struct {
     TearDownStore []map[string]interface{}
 }
 
-func InitTcDataStore (tcData testcase.TestCaseDataInfo) *TcDataStore {
+func InitTcDataStore (tcData *testcase.TestCaseDataInfo) *TcDataStore {
     tcDataStore := &TcDataStore {
         tcData,
 
@@ -62,6 +62,96 @@ func InitTcDataStore (tcData testcase.TestCaseDataInfo) *TcDataStore {
     return tcDataStore
 }
 
+func (tcDataStore *TcDataStore) RenderTcRequestVariables (path string) {
+    var resTcData testcase.TestCaseDataInfo
+    var resReq testcase.Request
+    dataFeeder := tcDataStore.MergeTestData()
+
+    tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
+    tcDataJson := string(tcDataJsonBytes)
+
+    jsonStr := gjson.Get(tcDataJson, path).String()
+
+    if strings.Contains(jsonStr, "${") {
+        for key, value := range dataFeeder {
+            jsonStr = strings.Replace(jsonStr, "${" + key + "}", fmt.Sprint(value), -1)
+        }
+   
+        json.Unmarshal([]byte(jsonStr), &resReq)
+        tcDataJson, _  = sjson.Set(tcDataJson, path, resReq)
+
+        json.Unmarshal([]byte(tcDataJson), &resTcData)
+        tcDataStore.TcData = &resTcData
+    }
+} 
+
+func (tcDataStore *TcDataStore) EvaluateTcRequestBuiltinFunctions (path string) {
+    var resTcData testcase.TestCaseDataInfo
+    var resReq testcase.Request
+    var resReq2 testcase.Request
+
+    tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
+    tcDataJson := string(tcDataJsonBytes)
+
+    jsonStr := gjson.Get(tcDataJson, path).String()
+    json.Unmarshal([]byte(jsonStr), &resReq)
+
+    // Note: for function EvaluateBuiltinFunctions:
+    // if the input is str, like "request":{"method":"POST","path":"... 
+    // the returned str is: "{\"method\":\"POST\",\"path\":\"...
+    // to be safe, using the underlying struct
+    jsonStr = EvaluateBuiltinFunctions(resReq)
+    json.Unmarshal([]byte(jsonStr), &resReq2)
+ 
+    tcDataJson, _  = sjson.Set(tcDataJson, path, resReq2)
+
+    json.Unmarshal([]byte(tcDataJson), &resTcData)
+    tcDataStore.TcData = &resTcData
+}
+
+func (tcDataStore *TcDataStore) RenderTcResponseVariables (path string) {
+    var resTcData testcase.TestCaseDataInfo
+    var resResp testcase.Response
+    dataFeeder := tcDataStore.MergeTestData()
+
+    tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
+    tcDataJson := string(tcDataJsonBytes)
+
+    jsonStr := gjson.Get(tcDataJson, path).String()
+
+    if strings.Contains(jsonStr, "${") {
+        for key, value := range dataFeeder {
+            jsonStr = strings.Replace(jsonStr, "${" + key + "}", fmt.Sprint(value), -1)
+        }
+   
+        json.Unmarshal([]byte(jsonStr), &resResp)
+        tcDataJson, _  = sjson.Set(tcDataJson, path, resResp)
+
+        json.Unmarshal([]byte(tcDataJson), &resTcData)
+        tcDataStore.TcData = &resTcData
+    }
+} 
+
+func (tcDataStore *TcDataStore) EvaluateTcResponseBuiltinFunctions (path string) {
+    var resTcData testcase.TestCaseDataInfo
+    var resResp testcase.Response
+    var resResp2 testcase.Response
+
+    tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
+    tcDataJson := string(tcDataJsonBytes)
+
+    jsonStr := gjson.Get(tcDataJson, path).String()
+    json.Unmarshal([]byte(jsonStr), &resResp)
+
+    jsonStr = EvaluateBuiltinFunctions(resResp)
+    json.Unmarshal([]byte(jsonStr), &resResp2)
+ 
+    tcDataJson, _  = sjson.Set(tcDataJson, path, resResp2)
+
+    json.Unmarshal([]byte(tcDataJson), &resTcData)
+    tcDataStore.TcData = &resTcData
+}
+
 
 func (tcDataStore *TcDataStore) RenderTcVariables (path string) {
     var resTcData testcase.TestCaseDataInfo
@@ -71,19 +161,19 @@ func (tcDataStore *TcDataStore) RenderTcVariables (path string) {
     tcDataJson := string(tcDataJsonBytes)
 
     jsonStr := gjson.Get(tcDataJson, path).String()
-
+ 
     if strings.Contains(jsonStr, "${") {
         // Warning, this may have performance issues, need to improve, that is, get the Variables first, then replace
         for key, value := range dataFeeder {
             jsonStr = strings.Replace(jsonStr, "${" + key + "}", fmt.Sprint(value), -1)
         }
+ 
         tcDataJson, _  = sjson.Set(tcDataJson, path, jsonStr)
 
         json.Unmarshal([]byte(tcDataJson), &resTcData)
-        tcDataStore.TcData = resTcData
+        tcDataStore.TcData = &resTcData
     }
 } 
-
 
 func (tcDataStore *TcDataStore) EvaluateTcBuiltinFunctions (path string) {
     var resTcData testcase.TestCaseDataInfo
@@ -98,13 +188,5 @@ func (tcDataStore *TcDataStore) EvaluateTcBuiltinFunctions (path string) {
     tcDataJson, _  = sjson.Set(tcDataJson, path, jsonStr)
 
     json.Unmarshal([]byte(tcDataJson), &resTcData)
-    tcDataStore.TcData = resTcData
+    tcDataStore.TcData = &resTcData
 }
-
-func (tcDataStore *TcDataStore) RenderHttpSectionVariables () {
-
-} 
-
-func (tcDataStore *TcDataStore) EvaluateHttpSectionBuiltinFunctions () {
-
-} 

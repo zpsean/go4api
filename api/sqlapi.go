@@ -26,7 +26,7 @@ func (tcDataStore *TcDataStore) RunTcSetUp () (string, [][]*testcase.TestMessage
     tcData := tcDataStore.TcData
     cmdGroup := tcData.TestCase.SetUp()
 
-    finalResults, finalTestMessages := tcDataStore.CommandGroup(cmdGroup)
+    finalResults, finalTestMessages := tcDataStore.CommandGroup("setUp", cmdGroup)
 
     return finalResults, finalTestMessages
 }
@@ -35,12 +35,12 @@ func (tcDataStore *TcDataStore) RunTcTearDown () (string, [][]*testcase.TestMess
     tcData := tcDataStore.TcData
     cmdGroup := tcData.TestCase.TearDown()
 
-    finalResults, finalTestMessages := tcDataStore.CommandGroup(cmdGroup)
+    finalResults, finalTestMessages := tcDataStore.CommandGroup("tearDown", cmdGroup)
 
     return finalResults, finalTestMessages
 }
 
-func (tcDataStore *TcDataStore) CommandGroup (cmdGroup []*testcase.CommandDetails) (string, [][]*testcase.TestMessage) {
+func (tcDataStore *TcDataStore) CommandGroup (section string, cmdGroup []*testcase.CommandDetails) (string, [][]*testcase.TestMessage) {
     finalResults := "Success"
     var cmdsResults []bool
     var finalTestMessages = [][]*testcase.TestMessage{}
@@ -53,15 +53,16 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroup []*testcase.CommandDetail
 
         switch strings.ToLower(cmdType.String()) {
             case "sql":
-                cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + fmt.Sprint(i) + ".cmd"
+                cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + section + "." + fmt.Sprint(i) + ".cmd"
                 tcDataStore.RenderTcVariables(cmdStrPath)
                 tcDataStore.EvaluateTcBuiltinFunctions(cmdStrPath)
                 //
                 cmdStr := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd")
+                fmt.Println("cmdStr: ", cmdStr)
                 rowsCount, _, rowsData, sqlExecStatus := RunSql(cmdStr.String())
 
                 if sqlExecStatus == "SqlSuccess" {
-                    path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + fmt.Sprint(i) + ".cmdResponse"
+                    path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + section + "." + fmt.Sprint(i) + ".cmdResponse"
                     tcDataStore.RenderTcVariables(path)
                     tcDataStore.EvaluateTcBuiltinFunctions(path)
                     //
@@ -72,7 +73,7 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroup []*testcase.CommandDetail
                     // HandleSingleCommandResults for out
                     if singleCmdResults == true {
                         cmdDetails := cmdGroup[i]
-                        tcDataStore.HandleCmdResultsForOut(cmdDetails, i, rowsCount, rowsData)
+                        tcDataStore.HandleCmdResultsForOut(section, cmdDetails, i, rowsCount, rowsData)
                     }
 
                     cmdsResults = append(cmdsResults, singleCmdResults)
@@ -135,9 +136,9 @@ func (tcDataStore *TcDataStore) CompareRespGroup (cmdExpResp map[string]gjson.Re
     return singleCmdResults, testMessages
 }
 
-func (tcDataStore *TcDataStore) HandleCmdResultsForOut (cmdDetails *testcase.CommandDetails, i int, rowsCount int, rowsData []map[string]interface{}) {
+func (tcDataStore *TcDataStore) HandleCmdResultsForOut (section string, cmdDetails *testcase.CommandDetails, i int, rowsCount int, rowsData []map[string]interface{}) {
     // write out session if has
-    path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + fmt.Sprint(i) + ".session"
+    path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + section + "." + fmt.Sprint(i) + ".session"
     tcDataStore.RenderTcVariables(path)
     tcDataStore.EvaluateTcBuiltinFunctions(path)
 
@@ -145,7 +146,7 @@ func (tcDataStore *TcDataStore) HandleCmdResultsForOut (cmdDetails *testcase.Com
     tcDataStore.WriteSession(expTcSession, rowsCount, rowsData)
 
     // write out global variables if has
-    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + fmt.Sprint(i) + ".outGlobalVariables"
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + section + "." + fmt.Sprint(i) + ".outGlobalVariables"
     tcDataStore.RenderTcVariables(path)
     tcDataStore.EvaluateTcBuiltinFunctions(path)
 
@@ -153,7 +154,7 @@ func (tcDataStore *TcDataStore) HandleCmdResultsForOut (cmdDetails *testcase.Com
     tcDataStore.WriteOutGlobalVariables(expOutGlobalVariables, rowsCount, rowsData)
 
     // write out tc loca variables if has
-    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + fmt.Sprint(i) + ".outLocalVariables"
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + section + "." + fmt.Sprint(i) + ".outLocalVariables"
     tcDataStore.RenderTcVariables(path)
     tcDataStore.EvaluateTcBuiltinFunctions(path)
 

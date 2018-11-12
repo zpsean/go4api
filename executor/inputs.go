@@ -125,3 +125,12 @@ func GenerateInputsFileWithConsolidatedData (filePath string, inputsInfos []stri
     return inputsFiles
 }
 
+func writeGcsvToCsv (gcsvPtr *gcsv.Gcsv, outFile string) {
+    // header
+    utils.GenerateCsvFileBasedOnVarOverride(gcsvPtr.Header, outFile)
+    // data
+    for i, _ := range gcsvPtr.DataRows {
+        utils.GenerateCsvFileBasedOnVarAppend(gcsvPtr.DataRows[i], outFile)
+    }
+}
+

@@ -155,7 +155,8 @@ func (tcTree TcTree) LoopAndBuildOtherNodes (root *TcNode, tcArrayTree []*testca
     }
 
     if len(tcArrayNotTree) > 0 {
-        fmt.Println("!!!Attention, there are test cases which parentTestCase does not exists\n", tcArrayNotTree)
+        notTree, _ := json.Marshal(tcArrayNotTree)
+        fmt.Println("!!!Attention, there are test cases which parentTestCase does not exists\n", string(notTree))
     }
 }
 
@@ -236,15 +237,6 @@ func (tcTree TcTree) SearchNode (c chan *TcNode, node *TcNode, testCaseName stri
     }
 }
 
-func (tcTree TcTree) SearchNodeByName (c chan *TcNode, node *TcNode, testCaseName string) {
-    for i, _ := range node.Children {
-        if node.Children[i].TestCaseExecutionInfo.TcName() == testCaseName {
-            c <- node.Children[i]
-        } else {
-            tcTree.SearchNodeByName(c, node.Children[i], testCaseName)
-        }
-    }
-}
 
 func (tcTree TcTree) InitNodesRunResult (node *TcNode, runResult string) {
     for i, _ := range node.Children {
@@ -260,7 +252,6 @@ func (tcTree TcTree) InitNodesRunResult (node *TcNode, runResult string) {
 
 func (tcTree TcTree) RefreshNodeAndDirectChilrenTcResult(node *TcNode, tcRunResult string, tcStart string, tcEnd string, tcRunMessage []*testcase.TestMessage, 
         tcStartUnixNano int64, tcEndUnixNano int64) {
-    // fmt.Println("ccc the node to be refreshed: ", node, &node)
     node.TestCaseExecutionInfo.TestResult = tcRunResult
     node.TestCaseExecutionInfo.StartTime = tcStart
     node.TestCaseExecutionInfo.EndTime = tcEnd
