@@ -11,6 +11,7 @@
 package api
 
 import (
+    // "fmt"
     "time"
     "sync"
 
@@ -18,7 +19,7 @@ import (
     "go4api/lib/testcase" 
 )
 
-func DispatchApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionInfo, baseUrl string, tcData testcase.TestCaseDataInfo) {
+func DispatchApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecutionInfo, baseUrl string, tcData *testcase.TestCaseDataInfo) {
     // -----------
     defer wg.Done()
 
@@ -35,8 +36,7 @@ func DispatchApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecut
     start_str := start_time.Format("2006-01-02 15:04:05.999999999")
 
     if IfValidHttp(tcData) == true {
-        tcDataStore.CallHttp(baseUrl)
-        httpResult, httpTestMessages = tcDataStore.Compare()
+        httpResult, httpTestMessages = tcDataStore.RunHttp(baseUrl)
 
         if httpResult == "Success" {
             tcDataStore.HandleHttpResultsForOut()
@@ -58,7 +58,7 @@ func DispatchApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecut
 
     // get the TestCaseExecutionInfo
     tcExecution := testcase.TestCaseExecutionInfo {
-        TestCaseDataInfo: &tcData,
+        TestCaseDataInfo: tcDataStore.TcData,
         SetUpResult: tcSetUpResult,
         SetUpTestMessages: setUpTestMessages,
         HttpResult: httpResult,
@@ -70,6 +70,7 @@ func DispatchApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecut
         EndTimeUnixNano: end_time.UnixNano(),
         DurationUnixNano: end_time.UnixNano() - start_time.UnixNano(),
         ActualBody: tcDataStore.HttpActualBody,
+        ActualHeader: tcDataStore.HttpActualHeader,
         TearDownResult: tcTearDownResult,
         TearDownTestMessages: tearDownTestMessages,
         TestResult: testResult,
@@ -79,7 +80,7 @@ func DispatchApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecut
     resultsExeChan <- tcExecution
 }
 
-func IfValidHttp (tcData testcase.TestCaseDataInfo) bool {
+func IfValidHttp (tcData *testcase.TestCaseDataInfo) bool {
     ifValidHttp := true
 
     if tcData.TestCase.Request() == nil {

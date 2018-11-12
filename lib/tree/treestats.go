@@ -55,6 +55,15 @@ func CreateTcTreeStats (prioritySet []string) TcTreeStats {
     return tcTreeStats
 }
 
+func (tcTreeStats TcTreeStats) ResetTcTreeStats (priority string) {
+    StatusKeys := []string{"Ready", "Success", "Fail", "ParentFailed"}
+
+    for _, status := range StatusKeys {
+        tcTreeStats.StatusCountByPriority[priority][status] = 0
+    }
+    tcTreeStats.StatusCountByPriority[priority]["Total"] = 0
+}
+
 func (tcTreeStats TcTreeStats) DeductReadyCount(priority string) {
     tcTreeStats.StatusCountByPriority[priority]["Ready"] -= 1
 }

@@ -13,31 +13,29 @@ package api
 import (
     // "fmt" 
     "strings"
+    // "encoding/json"
 
     "go4api/lib/testcase" 
     g4http "go4api/protocal/http"
 )
 
-func (tcDataStore *TcDataStore) CallHttp (baseUrl string) {
-    tcData := tcDataStore.TcData
+func (tcDataStore *TcDataStore) RunHttp (baseUrl string) (string, []*testcase.TestMessage) {
+    tcDataStore.CallHttp(baseUrl)
 
-    path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + ".path"
-    tcDataStore.RenderTcVariables(path)
-    tcDataStore.EvaluateTcBuiltinFunctions(path)
+    httpResult, httpTestMessages := tcDataStore.Compare()
+
+    return httpResult, httpTestMessages
+}
+
+func (tcDataStore *TcDataStore) CallHttp (baseUrl string) {
+    path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "request"
+    tcDataStore.RenderTcRequestVariables(path)
+    tcDataStore.EvaluateTcRequestBuiltinFunctions(path)
+
+    tcData := tcDataStore.TcData
+    
     // urlStr := tcData.TestCase.UrlRaw(baseUrl)
     urlStr := tcData.TestCase.UrlEncode(baseUrl)
-    //
-    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + ".headers"
-    tcDataStore.RenderTcVariables(path)
-    tcDataStore.EvaluateTcBuiltinFunctions(path)
-
-    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + ".queryString"
-    tcDataStore.RenderTcVariables(path)
-    tcDataStore.EvaluateTcBuiltinFunctions(path)
-
-    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + ".queryString"
-    tcDataStore.RenderTcVariables(path)
-    tcDataStore.EvaluateTcBuiltinFunctions(path)
     //
     apiMethodSelector, apiMethod, bodyText, bodyMultipart, boundary := GetPayloadInfo(tcData)
     //
@@ -59,7 +57,7 @@ func (tcDataStore *TcDataStore) CallHttp (baseUrl string) {
         actualStatusCode, actualHeader, actualBody = httpRequest.Request(urlStr, apiMethod, reqHeaders, bodyMultipart)    
     } else {
         actualStatusCode, actualHeader, actualBody = httpRequest.Request(urlStr, apiMethod, reqHeaders, bodyText)
-        }
+    }
 
     tcDataStore.HttpActualStatusCode = actualStatusCode
     tcDataStore.HttpActualHeader = actualHeader
@@ -70,6 +68,10 @@ func (tcDataStore *TcDataStore) CallHttp (baseUrl string) {
 func (tcDataStore *TcDataStore) Compare () (string, []*testcase.TestMessage) {
     var testResults []bool
     var testMessages []*testcase.TestMessage
+
+    path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "response"
+    tcDataStore.RenderTcResponseVariables(path)
+    tcDataStore.EvaluateTcResponseBuiltinFunctions(path)
     // status
     testResultsS, testMessagesS := tcDataStore.CompareStatus()
     testResults = append(testResults, testResultsS[0:]...)
@@ -171,7 +173,7 @@ func (tcDataStore *TcDataStore) CompareBody() ([]bool, []*testcase.TestMessage) 
 func (tcDataStore *TcDataStore) HandleHttpResultsForOut () {
     tcData := tcDataStore.TcData
     // write out session if has
-    path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + ".session"
+    path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "session"
     tcDataStore.RenderTcVariables(path)
     tcDataStore.EvaluateTcBuiltinFunctions(path)
 
@@ -179,7 +181,7 @@ func (tcDataStore *TcDataStore) HandleHttpResultsForOut () {
     tcDataStore.WriteSession(expTcSession, 0, []map[string]interface{}{})
 
     // write out global variables if has
-    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + ".outGlobalVariables"
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outGlobalVariables"
     tcDataStore.RenderTcVariables(path)
     tcDataStore.EvaluateTcBuiltinFunctions(path)
 
@@ -187,7 +189,7 @@ func (tcDataStore *TcDataStore) HandleHttpResultsForOut () {
     tcDataStore.WriteOutGlobalVariables(expOutGlobalVariables, 0, []map[string]interface{}{})
 
     // write out tc loca variables if has
-    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + ".outLocalVariables"
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outLocalVariables"
     tcDataStore.RenderTcVariables(path)
     tcDataStore.EvaluateTcBuiltinFunctions(path)
 

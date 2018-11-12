@@ -17,10 +17,6 @@ import (
     // "sort"
     "strings"
     "net/url" 
-    "path/filepath"
-    // "encoding/json"
-
-    "go4api/cmd"
 )
 
 // test case type - get
@@ -372,75 +368,5 @@ func (tcOutDetails *OutputsDetails) GetOutputsDetailsFormat() string {
 
 func (tcOutDetails *OutputsDetails) GetOutputsDetailsData() map[string][]interface{} {
     return (*tcOutDetails).Data
-}
-
-
-// for report
-func (tcExecution *TestCaseExecutionInfo) TcConsoleResults() *TcConsoleResults {
-    tcConsoleRes := &TcConsoleResults { 
-        TcName: tcExecution.TcName(),
-        Priority: tcExecution.Priority(),
-        ParentTestCase: tcExecution.ParentTestCase(),
-        JsonFilePath: filepath.Base(tcExecution.TestCaseDataInfo.JsonFilePath),
-        CsvFile: filepath.Base(tcExecution.TestCaseDataInfo.CsvFile),
-        CsvRow: tcExecution.TestCaseDataInfo.CsvRow,
-        MutationInfoStr: tcExecution.TestCaseDataInfo.MutationInfoStr,
-        HttpResult: tcExecution.HttpResult,
-        TestResult: tcExecution.TestResult,
-        ActualStatusCode: tcExecution.ActualStatusCode,
-        HttpTestMessages: tcExecution.HttpTestMessages,
-    }
-
-    return tcConsoleRes
-}
-
-
-func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
-    ifGlobalSetUpTearDown := ""
-    if tcExecution.TestCaseDataInfo.TestCase.IfGlobalSetUpTestCase() == true {
-        ifGlobalSetUpTearDown = "GlobalSetUp"
-    } else if tcExecution.TestCaseDataInfo.TestCase.IfGlobalTearDownTestCase() == true {
-        ifGlobalSetUpTearDown = "GlobalTearDown"
-    } else {
-        ifGlobalSetUpTearDown = "RegularCases"
-    }
-
-    var caseOrigin interface{}
-    if cmd.Opt.IfShowOriginRequest == true {
-        caseOrigin = tcExecution.TestCaseDataInfo.TestCase
-    }
-
-    tcReportRes := &TcReportResults { 
-        TcName: tcExecution.TcName(),
-        IfGlobalSetUpTearDown: ifGlobalSetUpTearDown,
-        // CaseType: 
-        Priority: tcExecution.Priority(),
-        ParentTestCase: tcExecution.ParentTestCase(),
-        SetUpResult: tcExecution.SetUpResult,
-        SetUpTestMessages: tcExecution.SetUpTestMessages,
-        Path: tcExecution.ReqPath(),
-        Method: tcExecution.ReqMethod(),
-        JsonFilePath: tcExecution.TestCaseDataInfo.JsonFilePath,
-        CsvFile: tcExecution.TestCaseDataInfo.CsvFile,
-        CsvRow: tcExecution.TestCaseDataInfo.CsvRow,
-        MutationArea: tcExecution.TestCaseDataInfo.MutationArea,
-        MutationCategory:tcExecution.TestCaseDataInfo.MutationCategory,
-        MutationRule: tcExecution.TestCaseDataInfo.MutationRule,
-        MutationInfo: tcExecution.TestCaseDataInfo.MutationInfo,
-        HttpResult: tcExecution.HttpResult,
-        ActualStatusCode: tcExecution.ActualStatusCode,
-        StartTime: tcExecution.StartTime,
-        EndTime: tcExecution.EndTime,
-        HttpTestMessages: tcExecution.HttpTestMessages,
-        StartTimeUnixNano: tcExecution.StartTimeUnixNano,
-        EndTimeUnixNano: tcExecution.EndTimeUnixNano,
-        DurationUnixNano: tcExecution.DurationUnixNano,
-        TearDownResult: tcExecution.TearDownResult,
-        TearDownTestMessages: tcExecution.TearDownTestMessages,
-        TestResult: tcExecution.TestResult,
-        CaseOrigin: caseOrigin,
-    }
-
-    return tcReportRes
 }
 

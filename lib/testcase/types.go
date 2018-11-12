@@ -40,6 +40,7 @@ type TestCaseExecutionInfo struct {
     EndTimeUnixNano int64
     DurationUnixNano int64
     ActualBody []byte
+    ActualHeader map[string][]string
     TearDownResult string
     TearDownTestMessages [][]*TestMessage
     TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
@@ -144,6 +145,10 @@ type TcReportResults struct {
     TearDownTestMessages [][]*TestMessage
     TestResult string  // Success, Fail, ParentFailed
     CaseOrigin interface{}
+    ActualHeader interface{}
+    ActualBody interface{}
+    GlobalVariables interface{}
+    Session interface{}
 }
 
 
@@ -155,8 +160,10 @@ type TcConsoleResults struct {
     CsvFile string
     CsvRow string
     MutationInfoStr interface{}
-    HttpResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
-    TestResult string
+    SetUpResult string
+    HttpResult string  
+    TearDownResult string
+    TestResult string // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
     ActualStatusCode int
     HttpTestMessages []*TestMessage
 }
