@@ -23,19 +23,33 @@ import (
 // Note: for each SetUp, TesrDown, it may have more than one Command (including sql)
 // for each Command, it may have more than one assertion
 func (tcDataStore *TcDataStore) RunTcSetUp () (string, [][]*testcase.TestMessage) {
+    var finalResults string
+    var finalTestMessages = [][]*testcase.TestMessage{}
+
     tcData := tcDataStore.TcData
     cmdGroup := tcData.TestCase.SetUp()
 
-    finalResults, finalTestMessages := tcDataStore.CommandGroup("setUp", cmdGroup)
+    if len(cmdGroup) > 0 {
+        finalResults, finalTestMessages = tcDataStore.CommandGroup("setUp", cmdGroup)
+    } else {
+        finalResults = "NoSetUp"
+    }
 
     return finalResults, finalTestMessages
 }
 
 func (tcDataStore *TcDataStore) RunTcTearDown () (string, [][]*testcase.TestMessage) {
+    var finalResults string
+    var finalTestMessages = [][]*testcase.TestMessage{}
+
     tcData := tcDataStore.TcData
     cmdGroup := tcData.TestCase.TearDown()
 
-    finalResults, finalTestMessages := tcDataStore.CommandGroup("tearDown", cmdGroup)
+    if len(cmdGroup) > 0 {
+        finalResults, finalTestMessages = tcDataStore.CommandGroup("tearDown", cmdGroup)
+    } else {
+        finalResults = "NoTearDown"
+    }
 
     return finalResults, finalTestMessages
 }

@@ -100,6 +100,8 @@ func init() {
     }
 
     // flag.Usage = usage
+    SetTestEnv()
+    GetConfig()
 }
 
 func usage() {

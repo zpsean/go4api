@@ -11,11 +11,9 @@
 package gsql
 
 import (
+    "fmt"
     "os"
     // "strconv"
-    "fmt"
-    // "time"
-    // "log"
     "strings"
     "database/sql"
     // "encoding/json"
@@ -25,24 +23,41 @@ import (
     _ "github.com/go-sql-driver/mysql"
 )
 
-var db = &sql.DB{}
+// var db = &sql.DB{}
+var SqlCons map[string]*sql.DB
 
 type SqlExec struct {
+    TargetDb string
     Stmt string
     RowsCount int
     RowsHeaders []string
     RowsData []map[string]interface{}
 }
 
-func InitConnection (ip string, port string, user string, pw string, defaultDB string) {
-    conInfo := user + ":" + pw + "@tcp(" + ip + ":" + port + ")/" + defaultDB
-    db, _ = sql.Open("mysql", conInfo)
-    db.SetMaxOpenConns(2000)
-    db.SetMaxIdleConns(1000)
+func InitConnection () {
+    SqlCons = make(map[string]*sql.DB)
 
-    err := db.Ping()
-    if err != nil {
-        panic(err)
+    dbs := cmd.GetDbConfig()
+
+    for k, v := range dbs {
+        ip := v.Ip
+        port := v.Port
+        user := v.UserName
+        pw := v.Password
+        defaultSchema := os.Getenv("go4_dev_db_defaultSchema")
+
+        conInfo := user + ":" + pw + "@tcp(" + ip + ":" + fmt.Sprint(port) + ")/" + defaultSchema
+        db, _ := sql.Open("mysql", conInfo)
+        db.SetMaxOpenConns(2000)
+        db.SetMaxIdleConns(1000)
+
+        err := db.Ping()
+        if err != nil {
+            panic(err)
+        }
+
+        key := strings.ToLower(k)
+        SqlCons[key] = db
     }
 } 
 
@@ -57,7 +72,8 @@ func Run (stmt string) (int, []string, []map[string]interface{}, string) {
 
     fmt.Println("sqlcmd: ", stmt)
 
-    sqlExec := &SqlExec{stmt, 0, []string{}, []map[string]interface{}{}}
+    tDb := "master"
+    sqlExec := &SqlExec{tDb, stmt, 0, []string{}, []map[string]interface{}{}}
 
     switch strings.ToUpper(s) {
         case "UPDATE":
@@ -80,6 +96,8 @@ func Run (stmt string) (int, []string, []map[string]interface{}, string) {
 }
 
 func (sqlExec *SqlExec) Update () error {
+    db := SqlCons[sqlExec.TargetDb]
+
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     res, err := sqlStmt.Exec()
 
@@ -92,6 +110,8 @@ func (sqlExec *SqlExec) Update () error {
 }
 
 func (sqlExec *SqlExec) Delete () error {
+    db := SqlCons[sqlExec.TargetDb]
+
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     res, err := sqlStmt.Exec()
 
@@ -106,6 +126,8 @@ func (sqlExec *SqlExec) Delete () error {
 }
 
 func (sqlExec *SqlExec) QueryWithoutParams () error {
+    db := SqlCons[sqlExec.TargetDb]
+
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     rows, err := sqlStmt.Query()
 
@@ -163,6 +185,8 @@ func ScanRows (rows *sql.Rows) (int, []string, []map[string]interface{}) {
 }
 
 func (sqlExec *SqlExec) Insert () error {
+    db := SqlCons[sqlExec.TargetDb]
+
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     res, err := sqlStmt.Exec()
 
@@ -174,30 +198,4 @@ func (sqlExec *SqlExec) Insert () error {
     return err
 }
 
-func GetDBConnInfo () (string, string, string, string, string) {
-    var ip, port, user, pw, defaultDB string
 
-    testEnv := ""
-    if cmd.Opt.TestEnv != "" {
-        testEnv = cmd.Opt.TestEnv
-    } else {
-        testEnv = "QA"
-    }
-
-    switch strings.ToLower(testEnv) {
-        case "qa":
-            ip = os.Getenv("go4_qa_db_ip")
-            port = os.Getenv("go4_qa_db_port")
-            user = os.Getenv("go4_qa_db_username")
-            pw = os.Getenv("go4_qa_db_password")
-            defaultDB = os.Getenv("go4_qa_db_defaultDB")
-        case "dev":
-            ip = os.Getenv("go4_dev_db_ip")
-            port = os.Getenv("go4_dev_db_port")
-            user = os.Getenv("go4_dev_db_username")
-            pw = os.Getenv("go4_dev_db_password")
-            defaultDB = os.Getenv("go4_dev_db_defaultDB")
-    }
-
-    return ip, port, user, pw, defaultDB
-}
