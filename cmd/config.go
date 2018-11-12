@@ -11,33 +11,41 @@
 package cmd
 
 import (
+    // "fmt"
     "encoding/json"
 
     "go4api/utils"
 )
 
+var config Config
+var tEnv string
+
 type Config map[string]*Environment
 
 type Environment struct {
     BaseUrl string
+    Dbs map[string]*DbDetails
+    Redis interface{}
 }
 
-var config Config
+type DbDetails struct {
+    SqlCon interface{}
+    Ip string
+    Port interface{}
+    UserName string
+    Password string
+}
 
-func GetBaseUrlFromConfig() string {
-    if len(Opt.Testconfig) > 0 && len(Opt.TestEnv) > 0 {
-        configJson := utils.GetJsonFromFile(Opt.Testconfig)
-        json.Unmarshal([]byte(configJson), &config)
-
-        return config[Opt.TestEnv].BaseUrl
+func SetTestEnv () {
+    if Opt.TestEnv != "" {
+        tEnv = Opt.TestEnv
     } else {
-        return ""
+        tEnv = "QA"
     }
 }
-
-
+    
 func GetConfig () Config {
-    if len(Opt.Testconfig) > 0 && len(Opt.TestEnv) > 0 {
+    if len(Opt.Testconfig) > 0 {
         configJson := utils.GetJsonFromFile(Opt.Testconfig)
         json.Unmarshal([]byte(configJson), &config)
 
@@ -46,3 +54,13 @@ func GetConfig () Config {
         return map[string]*Environment{}
     }
 }
+
+func GetBaseUrlFromConfig () string {
+        return config[tEnv].BaseUrl
+}
+
+func GetDbConfig () map[string]*DbDetails {
+        return config[tEnv].Dbs
+}
+
+

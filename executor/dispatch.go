@@ -117,8 +117,8 @@ func MkResultsDir(gStart_str string, opt cmd.Options) string {
 }
 
 func WarmUpDBConnection () {
-    ip, port, user, pw, defaultDB := gsql.GetDBConnInfo()
-    gsql.InitConnection(ip, port, user, pw, defaultDB)
+    // ip, port, user, pw, defaultDB := gsql.GetDBConnInfo()
+    gsql.InitConnection()
 }
 
 

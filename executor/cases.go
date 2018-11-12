@@ -102,6 +102,7 @@ func ConstructTcInfosWithoutDt (jsonFile string) []*testcase.TestCaseDataInfo {
     err := json.Unmarshal([]byte(jsonStr), &tcases)
     if err != nil {
         fmt.Println("!! Error, parse Json into cases failed: ", jsonFile, ": ", err)
+        os.Exit(1)
     }
   
     for i, _ := range tcases {
@@ -140,6 +141,7 @@ func ConstructTcInfosWithDt (jsonFile string, csvFileList []string) []*testcase.
                 err := json.Unmarshal([]byte(jsonR), &tcases)
                 if err != nil {
                     fmt.Println("!! Error, parse Json into cases failed: ", jsonFile, ": ", csvFile, ": ", strconv.Itoa(i + 1), ": ", err)
+                    os.Exit(1)
                 }
     
                 for tcI, _ := range tcases {

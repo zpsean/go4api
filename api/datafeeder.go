@@ -14,6 +14,7 @@ import (
     "os"
     // "fmt"
     "strings"
+    // "encoding/json"
 
     gsession "go4api/lib/session"
     // "go4api/cmd"
@@ -38,6 +39,12 @@ func (tcDataStore *TcDataStore) MergeTestData () map[string]interface{} {
     }
 
     // 3
+    pTcName := tcDataStore.TcData.TestCase.ParentTestCase()
+    pSssionMap := gsession.LookupTcSession(pTcName)
+    for k, v := range pSssionMap {
+        finalMap[k] = v
+    }
+
     tcName := tcDataStore.TcData.TestCase.TcName()
     sessionMap := gsession.LookupTcSession(tcName)
     for k, v := range sessionMap {
@@ -54,7 +61,9 @@ func (tcDataStore *TcDataStore) MergeTestData () map[string]interface{} {
     // for k, v := range dtMap {
     //     finalMap[k] = v
     // }
-
+    // var ff interface{}
+    // ss, _ :=  json.Marshal(finalMap)
+    // fmt.Println("finalMap: ", string(ss))
     return finalMap
 }
 
