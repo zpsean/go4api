@@ -17,9 +17,9 @@ import (
     "strings"
 
     "go4api/cmd"
-    // "go4api/fuzz/fuzz"
-    // "go4api/fuzz/mutation"
+    // "go4api/fuzz"
     "go4api/sql"
+    "go4api/redis"
 )
 
 func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) { 
@@ -63,6 +63,7 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
         // Run(ch, baseUrl, resultsDir, resultsLogFile, fuzzTcArray)
     } else {
         WarmUpDBConnection()
+        WarmUpRedisConnection()
         //
         g4Store.GlobalSetUpRunStore.InitRun()
         g4Store.GlobalSetUpRunStore.RunPriorities(baseUrl, resultsLogFile)
@@ -117,8 +118,10 @@ func MkResultsDir(gStart_str string, opt cmd.Options) string {
 }
 
 func WarmUpDBConnection () {
-    // ip, port, user, pw, defaultDB := gsql.GetDBConnInfo()
     gsql.InitConnection()
 }
 
+func WarmUpRedisConnection () {
+    gredis.InitRedisConnection()
+}
 

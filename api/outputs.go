@@ -23,7 +23,7 @@ import (
 )
 
 
-func (tcDataStore *TcDataStore) WriteOutputsDataToFile (testResult string, rowsCount int, rowsData []map[string]interface{}) {
+func (tcDataStore *TcDataStore) WriteOutputsDataToFile (testResult string, rowsCount int, rowsData interface{}) {
     var expOutputs []*testcase.OutputsDetails
 
     tcData := tcDataStore.TcData
@@ -64,7 +64,7 @@ func (tcDataStore *TcDataStore) WriteOutputsDataToFile (testResult string, rowsC
     }
 }
 
-func (tcDataStore *TcDataStore) GetOutputsCsvData (outputsData map[string][]interface{}, rowsCount int, rowsData []map[string]interface{}) ([]string, []string) {
+func (tcDataStore *TcDataStore) GetOutputsCsvData (outputsData map[string][]interface{}, rowsCount int, rowsData interface{}) ([]string, []string) {
     var keyStrList []string
     var valueStrList []string
 
@@ -90,7 +90,7 @@ func (tcDataStore *TcDataStore) GetOutputsCsvData (outputsData map[string][]inte
     return keyStrList, valueStrList
 }
 
-func (tcDataStore *TcDataStore) GetOutputsDetailsDataForFieldString (valueSlice []interface{}, rowsCount int, rowsData []map[string]interface{}) []string {
+func (tcDataStore *TcDataStore) GetOutputsDetailsDataForFieldString (valueSlice []interface{}, rowsCount int, rowsData interface{}) []string {
     var fieldStrList []string
     // check if the valueSlice is [], or [[]], using the valueSlice[0]
     for _, value := range valueSlice {
@@ -114,7 +114,7 @@ func (tcDataStore *TcDataStore) GetOutputsDetailsDataForFieldString (valueSlice 
 }
 
 
-func (tcDataStore *TcDataStore) GetOutputsDetailsDataForFieldSlice (valueSlice []interface{}, rowsCount int, rowsData []map[string]interface{}) []interface{} {
+func (tcDataStore *TcDataStore) GetOutputsDetailsDataForFieldSlice (valueSlice []interface{}, rowsCount int, rowsData interface{}) []interface{} {
     var fieldStrList []interface{}
     // currently, suppose has only one sub slice
     firstSubSlice := valueSlice[0]

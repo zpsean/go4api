@@ -90,4 +90,37 @@ func IfValidHttp (tcData *testcase.TestCaseDataInfo) bool {
     return ifValidHttp
 }
 
+// Note: for each SetUp, TesrDown, it may have more than one Command (including sql)
+// for each Command, it may have more than one assertion
+func (tcDataStore *TcDataStore) RunTcSetUp () (string, [][]*testcase.TestMessage) {
+    var finalResults string
+    var finalTestMessages = [][]*testcase.TestMessage{}
+
+    tcData := tcDataStore.TcData
+    cmdGroup := tcData.TestCase.SetUp()
+
+    if len(cmdGroup) > 0 {
+        finalResults, finalTestMessages = tcDataStore.CommandGroup("setUp", cmdGroup)
+    } else {
+        finalResults = "NoSetUp"
+    }
+
+    return finalResults, finalTestMessages
+}
+
+func (tcDataStore *TcDataStore) RunTcTearDown () (string, [][]*testcase.TestMessage) {
+    var finalResults string
+    var finalTestMessages = [][]*testcase.TestMessage{}
+
+    tcData := tcDataStore.TcData
+    cmdGroup := tcData.TestCase.TearDown()
+
+    if len(cmdGroup) > 0 {
+        finalResults, finalTestMessages = tcDataStore.CommandGroup("tearDown", cmdGroup)
+    } else {
+        finalResults = "NoTearDown"
+    }
+
+    return finalResults, finalTestMessages
+}
 

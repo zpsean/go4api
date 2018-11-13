@@ -100,7 +100,7 @@ type OutputsDetails struct {
 type CommandDetails struct {
     CmdType string                              `json:"cmdType"`
     CmdSource string                            `json:"cmdSource"`
-    Cmd string                                  `json:"cmd"`
+    Cmd interface{}                             `json:"cmd"`
     CmdResponse map[string]interface{}          `json:"cmdResponse"`
     OutGlobalVariables map[string]interface{}   `json:"outGlobalVariables"`
     OutLocalVariables map[string]interface{}    `json:"outLocalVariables"`

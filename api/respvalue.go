@@ -21,7 +21,7 @@ import (
     gjson "github.com/tidwall/gjson"
 )
 
-func (tcDataStore *TcDataStore) GetResponseValue (searchPath string, rowsCount int, rowsData []map[string]interface{}) interface{} {
+func (tcDataStore *TcDataStore) GetResponseValue (searchPath string, rowsCount int, rowsData interface{}) interface{} {
     // prefix = "$(status).", "$(headers).", "$(body)."
     var value interface{}
 
@@ -34,6 +34,8 @@ func (tcDataStore *TcDataStore) GetResponseValue (searchPath string, rowsCount i
             value = tcDataStore.GetBodyActualValueByPath(searchPath)
         case strings.HasPrefix(searchPath, "$(sql)."):
             value = tcDataStore.GetSqlActualValueByPath(searchPath, rowsCount, rowsData)
+        case strings.HasPrefix(searchPath, "$(redis)."):
+            value = tcDataStore.GetRedisActualValueByPath(searchPath, rowsCount, rowsData)
         case strings.HasPrefix(searchPath, "$."):
             value = tcDataStore.GetBodyActualValueByPath(searchPath)
         default:
@@ -98,7 +100,7 @@ func (tcDataStore *TcDataStore) GetBodyActualValueByPath (key string) interface{
 }
 
 
-func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string, rowsCount int, rowsData []map[string]interface{}) interface{} {
+func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string, rowsCount int, rowsData interface{}) interface{} {
     var resValue interface{}
  
     prefix := "$(sql)."
@@ -117,6 +119,24 @@ func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string, rows
     return resValue
 }
 
+func (tcDataStore *TcDataStore) GetRedisActualValueByPath (searchPath string, rowsCount int, rowsData interface{}) interface{} {
+    var resValue interface{}
+ 
+    prefix := "$(redis)."
+    lenPrefix := len(prefix)
+
+    if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
+        rowsDataB, _ := json.Marshal(rowsData)
+        rowsDataJson := string(rowsDataB)
+
+        value := gjson.Get(string(rowsDataJson), searchPath[lenPrefix:])
+        resValue = value.Value()
+    } else {
+        resValue = searchPath
+    }
+
+    return resValue
+}
 
 func compareCommon (reponsePart string, key string, assertionKey string, actualValue interface{}, expValue interface{}) (bool, *testcase.TestMessage) {
     // Note: As get Go nil, for JSON null, need special care, two possibilities:

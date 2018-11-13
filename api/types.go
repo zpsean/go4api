@@ -155,6 +155,7 @@ func (tcDataStore *TcDataStore) EvaluateTcResponseBuiltinFunctions (path string)
 
 func (tcDataStore *TcDataStore) RenderTcVariables (path string) {
     var resTcData testcase.TestCaseDataInfo
+    var res interface{}
     dataFeeder := tcDataStore.MergeTestData()
 
     tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
@@ -167,8 +168,9 @@ func (tcDataStore *TcDataStore) RenderTcVariables (path string) {
         for key, value := range dataFeeder {
             jsonStr = strings.Replace(jsonStr, "${" + key + "}", fmt.Sprint(value), -1)
         }
- 
-        tcDataJson, _  = sjson.Set(tcDataJson, path, jsonStr)
+        
+        json.Unmarshal([]byte(jsonStr), &res)
+        tcDataJson, _  = sjson.Set(tcDataJson, path, res)
 
         json.Unmarshal([]byte(tcDataJson), &resTcData)
         tcDataStore.TcData = &resTcData
@@ -177,16 +179,19 @@ func (tcDataStore *TcDataStore) RenderTcVariables (path string) {
 
 func (tcDataStore *TcDataStore) EvaluateTcBuiltinFunctions (path string) {
     var resTcData testcase.TestCaseDataInfo
+    var res interface{}
 
     tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
     tcDataJson := string(tcDataJsonBytes)
 
     jsonStr := gjson.Get(tcDataJson, path).String()
     jsonStr = EvaluateBuiltinFunctions(jsonStr)
-    // path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + ".setUp"
 
-    tcDataJson, _  = sjson.Set(tcDataJson, path, jsonStr)
+    json.Unmarshal([]byte(jsonStr), &res)
+    tcDataJson, _  = sjson.Set(tcDataJson, path, res)
 
     json.Unmarshal([]byte(tcDataJson), &resTcData)
     tcDataStore.TcData = &resTcData
 }
+
+
