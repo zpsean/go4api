@@ -11,6 +11,13 @@
 package api
 
 import (
+ 	// "fmt"
 
+ 	gredis "go4api/redis"
 )
 
+func RunRedis (stmt string) (int, interface{}, string) {
+   	keysCount, cmdResults, redExecStatus := gredis.Run(stmt)
+
+    return keysCount, cmdResults, redExecStatus
+}

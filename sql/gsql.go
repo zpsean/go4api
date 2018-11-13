@@ -43,7 +43,15 @@ func InitConnection () {
         ip := v.Ip
         port := v.Port
         user := v.UserName
-        pw := v.Password
+    
+        pw := ""
+        pwV := v.Password
+        pwV = strings.Replace(pwV, "${", "", -1)
+        pwV = strings.Replace(pwV, "}", "", -1)
+        if len(pwV) > 0 {
+            pw = os.Getenv(pwV)
+        }
+        
         defaultSchema := os.Getenv("go4_dev_db_defaultSchema")
 
         conInfo := user + ":" + pw + "@tcp(" + ip + ":" + fmt.Sprint(port) + ")/" + defaultSchema
@@ -87,9 +95,9 @@ func Run (stmt string) (int, []string, []map[string]interface{}, string) {
     }
 
     if err == nil {
-        sqlExecStatus = "SqlSuccess"
+        sqlExecStatus = "cmdSuccess"
     } else {
-        sqlExecStatus = "SqlFailed"
+        sqlExecStatus = "cmdFailed"
     }
 
     return sqlExec.RowsCount, sqlExec.RowsHeaders, sqlExec.RowsData, sqlExecStatus

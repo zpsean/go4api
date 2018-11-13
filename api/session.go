@@ -15,7 +15,7 @@ import (
 )
 
 
-func (tcDataStore *TcDataStore) WriteSession (expTcSession map[string]interface{}, rowsCount int, rowsData []map[string]interface{}) {
+func (tcDataStore *TcDataStore) WriteSession (expTcSession map[string]interface{}, rowsCount int, rowsData interface{}) {
     var tcSession = make(map[string]interface{})
  
     tcData := tcDataStore.TcData

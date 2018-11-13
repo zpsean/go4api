@@ -25,11 +25,19 @@ type Config map[string]*Environment
 type Environment struct {
     BaseUrl string
     Dbs map[string]*DbDetails
-    Redis interface{}
+    Redis map[string]*RedisDetails
 }
 
 type DbDetails struct {
     SqlCon interface{}
+    Ip string
+    Port interface{}
+    UserName string
+    Password string
+}
+
+type RedisDetails struct {
+    RedisCon interface{}
     Ip string
     Port interface{}
     UserName string
@@ -63,4 +71,6 @@ func GetDbConfig () map[string]*DbDetails {
         return config[tEnv].Dbs
 }
 
-
+func GetRedisConfig () map[string]*RedisDetails {
+        return config[tEnv].Redis
+}

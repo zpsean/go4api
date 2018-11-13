@@ -16,7 +16,7 @@ import (
 
 
 func (tcDataStore *TcDataStore) WriteOutGlobalVariables (expOutGlobalVariables map[string]interface{}, 
-        rowsCount int, rowsData []map[string]interface{}) {
+        rowsCount int, rowsData interface{}) {
     // -----------------
     if expOutGlobalVariables != nil {
         
@@ -33,7 +33,7 @@ func (tcDataStore *TcDataStore) WriteOutGlobalVariables (expOutGlobalVariables m
 }
 
 func (tcDataStore *TcDataStore) WriteOutTcLocalVariables (expOutLocalVariables map[string]interface{}, 
-        rowsCount int, rowsData []map[string]interface{}) {
+        rowsCount int, rowsData interface{}) {
     // -----------------
     if expOutLocalVariables != nil {
         for k, v := range expOutLocalVariables {
