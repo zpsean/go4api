@@ -13,6 +13,7 @@ package api
 import (
     // "fmt"
     "strings"
+    // "reflect"
     "encoding/json"
 
     "go4api/assertion" 
@@ -21,7 +22,7 @@ import (
     gjson "github.com/tidwall/gjson"
 )
 
-func (tcDataStore *TcDataStore) GetResponseValue (searchPath string, rowsCount int, rowsData interface{}) interface{} {
+func (tcDataStore *TcDataStore) GetResponseValue (searchPath string) interface{} {
     // prefix = "$(status).", "$(headers).", "$(body)."
     var value interface{}
 
@@ -33,9 +34,9 @@ func (tcDataStore *TcDataStore) GetResponseValue (searchPath string, rowsCount i
         case strings.HasPrefix(searchPath, "$(body)."):
             value = tcDataStore.GetBodyActualValueByPath(searchPath)
         case strings.HasPrefix(searchPath, "$(sql)."):
-            value = tcDataStore.GetSqlActualValueByPath(searchPath, rowsCount, rowsData)
+            value = tcDataStore.GetSqlActualValueByPath(searchPath)
         case strings.HasPrefix(searchPath, "$(redis)."):
-            value = tcDataStore.GetRedisActualValueByPath(searchPath, rowsCount, rowsData)
+            value = tcDataStore.GetRedisActualValueByPath(searchPath)
         case strings.HasPrefix(searchPath, "$."):
             value = tcDataStore.GetBodyActualValueByPath(searchPath)
         default:
@@ -100,18 +101,24 @@ func (tcDataStore *TcDataStore) GetBodyActualValueByPath (key string) interface{
 }
 
 
-func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string, rowsCount int, rowsData interface{}) interface{} {
+func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string) interface{} {
     var resValue interface{}
  
     prefix := "$(sql)."
     lenPrefix := len(prefix)
 
-    if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
-        rowsDataB, _ := json.Marshal(rowsData)
-        rowsDataJson := string(rowsDataB)
+    cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
+    cmdResultsJson := string(cmdResultsB)
 
-        value := gjson.Get(string(rowsDataJson), searchPath[lenPrefix:])
-        resValue = value.Value()
+    if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
+        if searchPath == "$(sql).*" {
+            resValue = tcDataStore.CmdResults
+        } else if tcDataStore.IfCmdResultsPrimitive() {
+            resValue = tcDataStore.CmdResults
+        } else {
+            value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
+            resValue = value.Value()
+        }
     } else {
         resValue = searchPath
     }
@@ -119,23 +126,45 @@ func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string, rows
     return resValue
 }
 
-func (tcDataStore *TcDataStore) GetRedisActualValueByPath (searchPath string, rowsCount int, rowsData interface{}) interface{} {
+func (tcDataStore *TcDataStore) GetRedisActualValueByPath (searchPath string) interface{} {
     var resValue interface{}
  
     prefix := "$(redis)."
     lenPrefix := len(prefix)
 
-    if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
-        rowsDataB, _ := json.Marshal(rowsData)
-        rowsDataJson := string(rowsDataB)
+    cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
+    cmdResultsJson := string(cmdResultsB)
 
-        value := gjson.Get(string(rowsDataJson), searchPath[lenPrefix:])
-        resValue = value.Value()
+    if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
+        if searchPath == "$(redis).*" {
+            resValue = tcDataStore.CmdResults
+        } else if tcDataStore.IfCmdResultsPrimitive() {
+            resValue = tcDataStore.CmdResults
+        } else {
+            value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
+            resValue = value.Value()
+        }
     } else {
         resValue = searchPath
     }
 
     return resValue
+}
+
+func (tcDataStore *TcDataStore) IfCmdResultsPrimitive () bool {
+    cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
+    cmdResultsJson := string(cmdResultsB)
+
+    ss := strings.TrimSpace(cmdResultsJson)
+    if len(ss) == 0 {
+        return true
+    } else {
+        if ss[0:1] == "[" || ss[0:1] == "{" {
+            return false
+        } else {
+            return true
+        }
+    }
 }
 
 func compareCommon (reponsePart string, key string, assertionKey string, actualValue interface{}, expValue interface{}) (bool, *testcase.TestMessage) {

@@ -178,7 +178,7 @@ func (tcDataStore *TcDataStore) HandleHttpResultsForOut () {
     tcDataStore.EvaluateTcBuiltinFunctions(path)
 
     expTcSession := tcData.TestCase.Session()
-    tcDataStore.WriteSession(expTcSession, 0, []map[string]interface{}{})
+    tcDataStore.WriteSession(expTcSession)
 
     // write out global variables if has
     path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outGlobalVariables"
@@ -186,7 +186,7 @@ func (tcDataStore *TcDataStore) HandleHttpResultsForOut () {
     tcDataStore.EvaluateTcBuiltinFunctions(path)
 
     expOutGlobalVariables := tcData.TestCase.OutGlobalVariables()
-    tcDataStore.WriteOutGlobalVariables(expOutGlobalVariables, 0, []map[string]interface{}{})
+    tcDataStore.WriteOutGlobalVariables(expOutGlobalVariables)
 
     // write out tc loca variables if has
     path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outLocalVariables"
@@ -194,6 +194,6 @@ func (tcDataStore *TcDataStore) HandleHttpResultsForOut () {
     tcDataStore.EvaluateTcBuiltinFunctions(path)
 
     expOutLocalVariables := tcData.TestCase.OutLocalVariables()
-    tcDataStore.WriteOutGlobalVariables(expOutLocalVariables, 0, []map[string]interface{}{})
+    tcDataStore.WriteOutTcLocalVariables(expOutLocalVariables)
 }
 

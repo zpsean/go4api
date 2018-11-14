@@ -24,8 +24,10 @@ var RedisCons map[string]redigo.Conn
 
 type RedisExec struct {
     TargetRedis string
-    Stmt string
-    KeysCount int
+    CmdStr string
+    CmdKey string
+    CmdValue string
+    CmdAffectedCount int
     CmdResults interface{}
 }
 
@@ -72,12 +74,12 @@ func InitRedisConnection () {
     }
 } 
 
-func Run (stmt string) (int, interface{}, string) {
+func Run (cmdStr string, cmdKey string, cmdValue string) (int, interface{}, string) {
     var err error
     redExecStatus := ""
-
+    
     tDb := "master"
-    redisExec := &RedisExec{tDb, stmt, 0, ""}
+    redisExec := &RedisExec{tDb, cmdStr, cmdKey, cmdValue, 0, ""}
     err = redisExec.Do()
 
     if err == nil {
@@ -86,7 +88,7 @@ func Run (stmt string) (int, interface{}, string) {
         redExecStatus = "cmdFailed"
     }
 
-    return redisExec.KeysCount, redisExec.CmdResults, redExecStatus
+    return redisExec.CmdAffectedCount, redisExec.CmdResults, redExecStatus
 }
 
 func (redisExec *RedisExec) Do () error {
@@ -95,28 +97,37 @@ func (redisExec *RedisExec) Do () error {
     var err error
     var res interface{}
 
-    cmdS := strings.Split(strings.ToUpper(redisExec.Stmt), " ")[0]
     // to support del, set, get first
-    switch strings.ToUpper(cmdS) {
+    switch strings.ToUpper(redisExec.CmdStr) {
         case "SET":
-            res, err = c.Do(redisExec.Stmt) 
-            // if err == nil {
-            //     redisExec.CmdResults = res
-            // }
-        case "GET":
-            res, err = c.Do(redisExec.Stmt) 
+            res, err = c.Do(redisExec.CmdStr, redisExec.CmdKey, redisExec.CmdValue) 
             if err == nil {
+                redisExec.CmdAffectedCount = 1
+                redisExec.CmdResults = res
+            }
+        case "GET":
+            res, err = c.Do(redisExec.CmdStr, redisExec.CmdKey) 
+            if err == nil {
+                redisExec.CmdAffectedCount = 1
                 redisExec.CmdResults = res
             }
         case "DEL":
-            res, err = c.Do(redisExec.Stmt) 
+            res, err = c.Do(redisExec.CmdStr, redisExec.CmdKey) 
             if err == nil {
-                redisExec.KeysCount = res.(int)
+                redisExec.CmdAffectedCount = 1
+                redisExec.CmdResults = res
+            }
+        case "EXISTS":
+            res, err = c.Do(redisExec.CmdStr, redisExec.CmdKey) 
+            if err == nil {
+                redisExec.CmdAffectedCount = 1
+                redisExec.CmdResults = res
             }
         default:
-            fmt.Println("!! Warning, Command ", redisExec.Stmt, " is not supported currently, will enhance it later")
+            redisExec.CmdAffectedCount = -1
+            fmt.Println("!! Warning, Command ", redisExec.CmdStr, " is not supported currently, will enhance it later")
     }
-     
+
     return err
 }
 

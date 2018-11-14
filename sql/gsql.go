@@ -29,9 +29,9 @@ var SqlCons map[string]*sql.DB
 type SqlExec struct {
     TargetDb string
     Stmt string
-    RowsCount int
+    CmdAffectedCount int
     RowsHeaders []string
-    RowsData []map[string]interface{}
+    CmdResults []map[string]interface{}
 }
 
 func InitConnection () {
@@ -61,6 +61,7 @@ func InitConnection () {
 
         err := db.Ping()
         if err != nil {
+            fmt.Println(err)
             panic(err)
         }
 
@@ -76,9 +77,7 @@ func Run (stmt string) (int, []string, []map[string]interface{}, string) {
     s = string([]rune(stmt)[:6])
 
     var err error
-    sqlExecStatus := ""
-
-    fmt.Println("sqlcmd: ", stmt)
+    cmdExecStatus := ""
 
     tDb := "master"
     sqlExec := &SqlExec{tDb, stmt, 0, []string{}, []map[string]interface{}{}}
@@ -95,23 +94,36 @@ func Run (stmt string) (int, []string, []map[string]interface{}, string) {
     }
 
     if err == nil {
-        sqlExecStatus = "cmdSuccess"
+        cmdExecStatus = "cmdSuccess"
     } else {
-        sqlExecStatus = "cmdFailed"
+        cmdExecStatus = "cmdFailed"
     }
 
-    return sqlExec.RowsCount, sqlExec.RowsHeaders, sqlExec.RowsData, sqlExecStatus
+    return sqlExec.CmdAffectedCount, sqlExec.RowsHeaders, sqlExec.CmdResults, cmdExecStatus
 }
 
 func (sqlExec *SqlExec) Update () error {
     db := SqlCons[sqlExec.TargetDb]
 
+    defer func() {  
+        if r := recover(); r != nil {  
+            fmt.Println("!! Err, Catch gsql err:", r)  
+        }  
+    }() 
+
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
+    if err != nil {
+        panic(err)
+    }
+
     res, err := sqlStmt.Exec()
+    if err != nil {
+        panic(err)
+    }
 
     if err == nil {
         rowsAffected, _ := res.RowsAffected()
-        sqlExec.RowsCount = int(rowsAffected)
+        sqlExec.CmdAffectedCount = int(rowsAffected)
     }
 
     return err
@@ -120,12 +132,25 @@ func (sqlExec *SqlExec) Update () error {
 func (sqlExec *SqlExec) Delete () error {
     db := SqlCons[sqlExec.TargetDb]
 
+    defer func() {  
+        if r := recover(); r != nil {  
+            fmt.Println("!! Err, Catch gsql err:", r) 
+        }  
+    }()
+
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
+    if err != nil {
+        panic(err)
+    }
+
     res, err := sqlStmt.Exec()
+    if err != nil {
+        panic(err)
+    }
 
     if err == nil {
         rowsAffected, _ := res.RowsAffected()
-        sqlExec.RowsCount = int(rowsAffected)
+        sqlExec.CmdAffectedCount = int(rowsAffected)
     }
 
     sqlStmt.Close()
@@ -136,15 +161,28 @@ func (sqlExec *SqlExec) Delete () error {
 func (sqlExec *SqlExec) QueryWithoutParams () error {
     db := SqlCons[sqlExec.TargetDb]
 
+    defer func() {  
+        if r := recover(); r != nil {  
+            fmt.Println("!! Err, Catch gsql err:", r)   
+        }  
+    }()  
+
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
+    if err != nil {
+        panic(err)
+    }
+
     rows, err := sqlStmt.Query()
+    if err != nil {
+        panic(err)
+    }
 
     if err == nil {
         rowsCount, rowsHeaders, rowsData := ScanRows(rows)
 
-        sqlExec.RowsCount = rowsCount
+        sqlExec.CmdAffectedCount = rowsCount
         sqlExec.RowsHeaders = rowsHeaders
-        sqlExec.RowsData = rowsData
+        sqlExec.CmdResults = rowsData
     }
 
     defer rows.Close()
@@ -195,12 +233,27 @@ func ScanRows (rows *sql.Rows) (int, []string, []map[string]interface{}) {
 func (sqlExec *SqlExec) Insert () error {
     db := SqlCons[sqlExec.TargetDb]
 
+    defer func() {  
+        if r := recover(); r != nil {  
+            fmt.Println("!! Err, Catch gsql err:", r)   
+        }  
+    }() 
+
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
+    if err != nil {
+        fmt.Println(err)
+        panic(err)
+    }
+
     res, err := sqlStmt.Exec()
+    if err != nil {
+        fmt.Println(err)
+        panic(err)
+    }
 
     if err == nil {
         rowsAffected, _ := res.RowsAffected()
-        sqlExec.RowsCount = int(rowsAffected)
+        sqlExec.CmdAffectedCount = int(rowsAffected)
     }
 
     return err

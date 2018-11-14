@@ -59,7 +59,11 @@ func ValidateCallParams (name string, params []interface{}) bool {
     // consider the type int, float64, they are comparable
     if typeAct == "int" && typeExp == "float64" {
         return true
+    } else if typeAct == "int64" && typeExp == "float64" {
+        return true
     } else if typeAct == "float64" && typeExp == "int" {
+        return true
+    } else if typeAct == "float64" && typeExp == "int64" {
         return true
     }
 
@@ -69,7 +73,7 @@ func ValidateCallParams (name string, params []interface{}) bool {
             switch typeExp {
                 case "slice": 
                     return true
-                case "string", "int", "float64", "bool":
+                case "string", "int", "int64", "float64", "bool":
                     lowerName := strings.ToLower(name)
                     if lowerName == "has" || lowerName == "nothas" {
                         return true
@@ -79,7 +83,7 @@ func ValidateCallParams (name string, params []interface{}) bool {
                 default:
                     return false
             }
-        case "string", "int", "float64", "bool":
+        case "string", "int", "int64", "float64", "bool":
             switch typeExp {
                 case "slice": 
                     lowerName := strings.ToLower(name)
@@ -88,7 +92,7 @@ func ValidateCallParams (name string, params []interface{}) bool {
                     } else {
                         return false
                     }
-                case "string", "int", "float64", "bool":
+                case "string", "int", "int64", "float64", "bool":
                     if typeAct != typeExp {
                         return false
                     }

@@ -23,7 +23,7 @@ import (
 )
 
 
-func (tcDataStore *TcDataStore) WriteOutputsDataToFile (testResult string, rowsCount int, rowsData interface{}) {
+func (tcDataStore *TcDataStore) WriteOutputsDataToFile (testResult string) {
     var expOutputs []*testcase.OutputsDetails
 
     tcData := tcDataStore.TcData
@@ -49,7 +49,7 @@ func (tcDataStore *TcDataStore) WriteOutputsDataToFile (testResult string, rowsC
                 outputsData := expOutputs[i].GetOutputsDetailsData()
                 switch strings.ToLower(outputsFileFormat) {
                     case "csv":
-                        keyStrList, valueStrList = tcDataStore.GetOutputsCsvData(outputsData, rowsCount, rowsData)
+                        keyStrList, valueStrList = tcDataStore.GetOutputsCsvData(outputsData)
                         // write csv header
                         utils.GenerateCsvFileBasedOnVarOverride(keyStrList, outputsFile)
                         // write csv data
@@ -64,7 +64,7 @@ func (tcDataStore *TcDataStore) WriteOutputsDataToFile (testResult string, rowsC
     }
 }
 
-func (tcDataStore *TcDataStore) GetOutputsCsvData (outputsData map[string][]interface{}, rowsCount int, rowsData interface{}) ([]string, []string) {
+func (tcDataStore *TcDataStore) GetOutputsCsvData (outputsData map[string][]interface{}) ([]string, []string) {
     var keyStrList []string
     var valueStrList []string
 
@@ -76,12 +76,12 @@ func (tcDataStore *TcDataStore) GetOutputsCsvData (outputsData map[string][]inte
             // check if the valueSlice is [], or [[]], using the valueSlice[0]
             switch reflect.TypeOf(valueSlice[0]).Kind() {
                 case reflect.Slice:
-                    fieldStrList := tcDataStore.GetOutputsDetailsDataForFieldSlice(valueSlice, rowsCount, rowsData)
+                    fieldStrList := tcDataStore.GetOutputsDetailsDataForFieldSlice(valueSlice)
                     fieldStr := convertSliceAsString(fieldStrList)
                     valueStrList = append(valueStrList, fieldStr)
                 default: 
                     // Note, here may return array also
-                    fieldStrList := tcDataStore.GetOutputsDetailsDataForFieldString(valueSlice, rowsCount, rowsData)
+                    fieldStrList := tcDataStore.GetOutputsDetailsDataForFieldString(valueSlice)
                     valueStrList = append(valueStrList, strings.Join(fieldStrList, "")) 
             }
         }     
@@ -90,12 +90,12 @@ func (tcDataStore *TcDataStore) GetOutputsCsvData (outputsData map[string][]inte
     return keyStrList, valueStrList
 }
 
-func (tcDataStore *TcDataStore) GetOutputsDetailsDataForFieldString (valueSlice []interface{}, rowsCount int, rowsData interface{}) []string {
+func (tcDataStore *TcDataStore) GetOutputsDetailsDataForFieldString (valueSlice []interface{}) []string {
     var fieldStrList []string
     // check if the valueSlice is [], or [[]], using the valueSlice[0]
     for _, value := range valueSlice {
         // actualValue := GetActualValueByJsonPath(fmt.Sprint(value), actualBody)
-        actualValue := tcDataStore.GetResponseValue(fmt.Sprint(value), rowsCount, rowsData)
+        actualValue := tcDataStore.GetResponseValue(fmt.Sprint(value))
         
         if actualValue == nil {
             fieldStrList = append(fieldStrList, "")
@@ -114,14 +114,14 @@ func (tcDataStore *TcDataStore) GetOutputsDetailsDataForFieldString (valueSlice 
 }
 
 
-func (tcDataStore *TcDataStore) GetOutputsDetailsDataForFieldSlice (valueSlice []interface{}, rowsCount int, rowsData interface{}) []interface{} {
+func (tcDataStore *TcDataStore) GetOutputsDetailsDataForFieldSlice (valueSlice []interface{}) []interface{} {
     var fieldStrList []interface{}
     // currently, suppose has only one sub slice
     firstSubSlice := valueSlice[0]
 
     for _, value := range reflect.ValueOf(firstSubSlice).Interface().([]interface{}) {
         // actualValue := GetActualValueByJsonPath(fmt.Sprint(value), actualBody)
-        actualValue := tcDataStore.GetResponseValue(fmt.Sprint(value), rowsCount, rowsData)
+        actualValue := tcDataStore.GetResponseValue(fmt.Sprint(value))
 
         if actualValue == nil {
             fieldStrList = append(fieldStrList, "")

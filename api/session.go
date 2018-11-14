@@ -15,7 +15,7 @@ import (
 )
 
 
-func (tcDataStore *TcDataStore) WriteSession (expTcSession map[string]interface{}, rowsCount int, rowsData interface{}) {
+func (tcDataStore *TcDataStore) WriteSession (expTcSession map[string]interface{}) {
     var tcSession = make(map[string]interface{})
  
     tcData := tcDataStore.TcData
@@ -26,7 +26,7 @@ func (tcDataStore *TcDataStore) WriteSession (expTcSession map[string]interface{
 
     if expTcSession != nil {
         for k, v := range expTcSession {
-            value := tcDataStore.GetResponseValue(v.(string), rowsCount, rowsData)
+            value := tcDataStore.GetResponseValue(v.(string))
 
             tcSession[k] = value
         } 

@@ -26,7 +26,6 @@ type TcDataStore struct {
     TcData *testcase.TestCaseDataInfo
 
     TcLocalVariables map[string]interface{}
-    SetUpStore []map[string]interface{}
 
     HttpExpStatus map[string]interface{}
     HttpExpHeader map[string]interface{}
@@ -35,8 +34,13 @@ type TcDataStore struct {
     HttpActualHeader map[string][]string
     HttpActualBody []byte
 
-    HttpStore map[string]interface{}
-    TearDownStore []map[string]interface{}
+    CmdGroupLength int
+
+    CmdSection string // setUp, tearDown
+    CmdType string // sql, redis, etc.
+    CmdExecStatus string
+    CmdAffectedCount int
+    CmdResults interface{}
 }
 
 func InitTcDataStore (tcData *testcase.TestCaseDataInfo) *TcDataStore {
@@ -44,7 +48,6 @@ func InitTcDataStore (tcData *testcase.TestCaseDataInfo) *TcDataStore {
         tcData,
 
         map[string]interface{}{},
-        []map[string]interface{}{},
 
         map[string]interface{}{},
         map[string]interface{}{},
@@ -53,8 +56,13 @@ func InitTcDataStore (tcData *testcase.TestCaseDataInfo) *TcDataStore {
         map[string][]string{},
         []byte{},
 
-        map[string]interface{}{},
-        []map[string]interface{}{},
+        0,
+
+        "",
+        "",
+        "",
+        -1,
+        -1,
     }
     // aa, _ := json.Marshal(tcData)
     // fmt.Println(string(aa))
@@ -100,10 +108,16 @@ func (tcDataStore *TcDataStore) EvaluateTcRequestBuiltinFunctions (path string) 
     // if the input is str, like "request":{"method":"POST","path":"... 
     // the returned str is: "{\"method\":\"POST\",\"path\":\"...
     // to be safe, using the underlying struct
-    jsonStr = EvaluateBuiltinFunctions(resReq)
-    json.Unmarshal([]byte(jsonStr), &resReq2)
- 
-    tcDataJson, _  = sjson.Set(tcDataJson, path, resReq2)
+    edReq := EvaluateBuiltinFunctions(resReq)
+    switch edReq.(type) {
+        case string:
+            jsonStr = edReq.(string)
+
+            json.Unmarshal([]byte(jsonStr), &resReq2)
+            tcDataJson, _  = sjson.Set(tcDataJson, path, resReq2)
+        default:
+            tcDataJson, _  = sjson.Set(tcDataJson, path, resReq)
+    }
 
     json.Unmarshal([]byte(tcDataJson), &resTcData)
     tcDataStore.TcData = &resTcData
@@ -143,11 +157,17 @@ func (tcDataStore *TcDataStore) EvaluateTcResponseBuiltinFunctions (path string)
     jsonStr := gjson.Get(tcDataJson, path).String()
     json.Unmarshal([]byte(jsonStr), &resResp)
 
-    jsonStr = EvaluateBuiltinFunctions(resResp)
-    json.Unmarshal([]byte(jsonStr), &resResp2)
- 
-    tcDataJson, _  = sjson.Set(tcDataJson, path, resResp2)
+    edResp := EvaluateBuiltinFunctions(resResp)
+    switch edResp.(type) {
+        case string:
+            jsonStr = edResp.(string)
 
+            json.Unmarshal([]byte(jsonStr), &resResp2)
+            tcDataJson, _  = sjson.Set(tcDataJson, path, resResp2)
+        default:
+            tcDataJson, _  = sjson.Set(tcDataJson, path, resResp)
+    }
+    
     json.Unmarshal([]byte(tcDataJson), &resTcData)
     tcDataStore.TcData = &resTcData
 }
@@ -179,13 +199,13 @@ func (tcDataStore *TcDataStore) RenderTcVariables (path string) {
 
 func (tcDataStore *TcDataStore) EvaluateTcBuiltinFunctions (path string) {
     var resTcData testcase.TestCaseDataInfo
-    var res interface{}
+    var res map[string]interface{}
 
     tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
     tcDataJson := string(tcDataJsonBytes)
 
     jsonStr := gjson.Get(tcDataJson, path).String()
-    jsonStr = EvaluateBuiltinFunctions(jsonStr)
+    jsonStr = EvaluateBuiltinFunctions(jsonStr).(string)
 
     json.Unmarshal([]byte(jsonStr), &res)
     tcDataJson, _  = sjson.Set(tcDataJson, path, res)

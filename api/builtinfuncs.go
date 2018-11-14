@@ -32,14 +32,15 @@ type BuiltinFieldDetails struct {
 }
 
 
-func EvaluateBuiltinFunctions (value interface{}) string {
+func EvaluateBuiltinFunctions (value interface{}) interface{} {
     jsonBytes, _ := json.Marshal(value)
     jsonStr := string(jsonBytes)
 
     // check if has builtin function
     if !strings.Contains(jsonStr, "Fn::") {
-        return jsonStr
+        return value
     } else {
+        // fmt.Println(">>...")
         builtinLeavesSlice := GetBuiltinLeavesSlice(value)
         maxLevel := g4json.GetJsonNodesLevel(builtinLeavesSlice)
         jsonStr = IterateBuiltsins(jsonStr, builtinLeavesSlice, maxLevel)

@@ -16,8 +16,8 @@ import (
  	gredis "go4api/redis"
 )
 
-func RunRedis (stmt string) (int, interface{}, string) {
-   	keysCount, cmdResults, redExecStatus := gredis.Run(stmt)
+func RunRedis (cmdStr string, cmdKey string, cmdValue string) (int, interface{}, string) {
+   	keysCount, cmdResults, redExecStatus := gredis.Run(cmdStr, cmdKey, cmdValue)
 
     return keysCount, cmdResults, redExecStatus
 }
