@@ -39,7 +39,7 @@ func GetPayloadInfo (tcData *testcase.TestCaseDataInfo) (string, string, *string
     // Note, has 3 conditions: text (json), form, or multipart file upload
     for key, _ := range reqPayload {
         switch key {
-            case "form-data": {
+            case "multipart-form": {
                 //multipart/form-data
                 apiMethodSelector = "POSTMultipart"
                 multipartFilePath := cmd.Opt.Testresource
@@ -86,11 +86,19 @@ func PrepMultipart (reqPayload map[string]interface {}, path string) (*bytes.Buf
 
     var params = make(map[string]io.Reader)
     var i int64
-    total := gjson.Get(reqPayloadJson, "form-data.#")
+    total := gjson.Get(reqPayloadJson, "multipart-form.#")
     for i = 0; i < total.Int(); i++ {
-        name := gjson.Get(reqPayloadJson, "form-data." + fmt.Sprint(i) + ".name")
-        fieldType := gjson.Get(reqPayloadJson, "form-data." + fmt.Sprint(i) + ".type")
-        value := gjson.Get(reqPayloadJson, "form-data." + fmt.Sprint(i) + ".value")
+        name := gjson.Get(reqPayloadJson, "multipart-form." + fmt.Sprint(i) + ".name")
+        value := gjson.Get(reqPayloadJson, "multipart-form." + fmt.Sprint(i) + ".value")
+        // formMap := gjson.Get(reqPayloadJson, "multipart-form." + fmt.Sprint(i)).Map()
+        // for k, v := range formMap {
+        //     if k != "type" {
+        //         data.Set(k, v.String())
+        //     }
+        // }
+
+        fieldType := gjson.Get(reqPayloadJson, "multipart-form." + fmt.Sprint(i) + ".type")
+        
 
         if strings.ToLower(fieldType.String()) == "file" {
             fp := fileOpen(path, value.String())
@@ -166,9 +174,12 @@ func PrepPostFormPayload (reqPayload map[string]interface{}) *strings.Reader {
     var i int64
     total := gjson.Get(reqPayloadJson, "form.#")
     for i = 0; i < total.Int(); i++ {
+        // formMap := gjson.Get(reqPayloadJson, "form." + fmt.Sprint(i)).Map()
+        // for k, v := range formMap {
+        //     data.Set(k, v.String())
+        // }
         name := gjson.Get(reqPayloadJson, "form." + fmt.Sprint(i) + ".name")
         value := gjson.Get(reqPayloadJson, "form." + fmt.Sprint(i) + ".value")
-        
         data.Set(name.String(), value.String())
     }
 

@@ -24,17 +24,14 @@ func DispatchApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecut
     defer wg.Done()
 
     tcDataStore := InitTcDataStore(tcData)
-    // setUp
-    // if !cmd.Opt.IfMutation {
-    // }
+
     tcSetUpResult, setUpTestMessages := tcDataStore.RunTcSetUp()
     //
-    var httpResult string
-    var httpTestMessages []*testcase.TestMessage
-
     start_time := time.Now()
     start_str := start_time.Format("2006-01-02 15:04:05.999999999")
-
+    
+    var httpResult string
+    var httpTestMessages []*testcase.TestMessage
     if IfValidHttp(tcData) == true {
         httpResult, httpTestMessages = tcDataStore.RunHttp(baseUrl)
 
@@ -96,11 +93,12 @@ func (tcDataStore *TcDataStore) RunTcSetUp () (string, [][]*testcase.TestMessage
     var finalResults string
     var finalTestMessages = [][]*testcase.TestMessage{}
 
-    tcData := tcDataStore.TcData
-    cmdGroup := tcData.TestCase.SetUp()
+    cmdGroup := tcDataStore.TcData.TestCase.SetUp()
 
     if len(cmdGroup) > 0 {
-        finalResults, finalTestMessages = tcDataStore.CommandGroup("setUp", cmdGroup)
+        tcDataStore.CmdGroupLength = len(cmdGroup)
+        tcDataStore.CmdSection = "setUp"
+        finalResults, finalTestMessages = tcDataStore.CommandGroup(cmdGroup)
     } else {
         finalResults = "NoSetUp"
     }
@@ -112,11 +110,12 @@ func (tcDataStore *TcDataStore) RunTcTearDown () (string, [][]*testcase.TestMess
     var finalResults string
     var finalTestMessages = [][]*testcase.TestMessage{}
 
-    tcData := tcDataStore.TcData
-    cmdGroup := tcData.TestCase.TearDown()
+    cmdGroup := tcDataStore.TcData.TestCase.TearDown()
 
     if len(cmdGroup) > 0 {
-        finalResults, finalTestMessages = tcDataStore.CommandGroup("tearDown", cmdGroup)
+        tcDataStore.CmdGroupLength = len(cmdGroup)
+        tcDataStore.CmdSection = "tearDown"
+        finalResults, finalTestMessages = tcDataStore.CommandGroup(cmdGroup)
     } else {
         finalResults = "NoTearDown"
     }

@@ -86,12 +86,16 @@ func convertIntToFloat64 (actualValue interface{}, expValue interface{}) (float6
 
     if reflect.TypeOf(actualValue).String() == "int" {
         actualValueConverted = float64(actualValue.(int))
+    } else if reflect.TypeOf(actualValue).String() == "int64" {
+        actualValueConverted = float64(actualValue.(int64))
     } else {
         actualValueConverted = actualValue.(float64)
     }
 
     if reflect.TypeOf(expValue).String() == "int" {
         expValueConverted = float64(expValue.(int))
+    } else if reflect.TypeOf(expValue).String() == "int64" {
+        expValueConverted = float64(expValue.(int64))
     } else {
         expValueConverted = expValue.(float64)
     }

@@ -15,14 +15,10 @@ import (
 )
 
 
-func (tcDataStore *TcDataStore) WriteOutGlobalVariables (expOutGlobalVariables map[string]interface{}, 
-        rowsCount int, rowsData interface{}) {
-    // -----------------
+func (tcDataStore *TcDataStore) WriteOutGlobalVariables (expOutGlobalVariables map[string]interface{}) {
     if expOutGlobalVariables != nil {
-        
-
         for k, v := range expOutGlobalVariables {
-            value := tcDataStore.GetResponseValue(v.(string), rowsCount, rowsData)
+            value := tcDataStore.GetResponseValue(v.(string))
 
             gsession.WriteGlobalVariables(k, value)
             // if err != nil {
@@ -32,12 +28,10 @@ func (tcDataStore *TcDataStore) WriteOutGlobalVariables (expOutGlobalVariables m
     }
 }
 
-func (tcDataStore *TcDataStore) WriteOutTcLocalVariables (expOutLocalVariables map[string]interface{}, 
-        rowsCount int, rowsData interface{}) {
-    // -----------------
+func (tcDataStore *TcDataStore) WriteOutTcLocalVariables (expOutLocalVariables map[string]interface{}) {
     if expOutLocalVariables != nil {
         for k, v := range expOutLocalVariables {
-            value := tcDataStore.GetResponseValue(v.(string), rowsCount, rowsData)
+            value := tcDataStore.GetResponseValue(v.(string))
 
             tcDataStore.TcLocalVariables[k] = value
             // if err != nil {
