@@ -80,7 +80,7 @@ func Run (stmt string) (int, []string, []map[string]interface{}, string) {
     cmdExecStatus := ""
 
     tDb := "master"
-    sqlExec := &SqlExec{tDb, stmt, 0, []string{}, []map[string]interface{}{}}
+    sqlExec := &SqlExec{tDb, stmt, -1, []string{}, []map[string]interface{}{}}
 
     switch strings.ToUpper(s) {
         case "UPDATE":
@@ -105,19 +105,21 @@ func Run (stmt string) (int, []string, []map[string]interface{}, string) {
 func (sqlExec *SqlExec) Update () error {
     db := SqlCons[sqlExec.TargetDb]
 
-    defer func() {  
-        if r := recover(); r != nil {  
-            fmt.Println("!! Err, Catch gsql err:", r)  
-        }  
-    }() 
+    // defer func() {  
+    //     if r := recover(); r != nil {  
+    //         fmt.Println("!! Err, Catch gsql err:", r)  
+    //     }  
+    // }() 
 
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     if err != nil {
+        fmt.Println("!! Err, Catch gsql err:", err)
         panic(err)
     }
 
     res, err := sqlStmt.Exec()
     if err != nil {
+        fmt.Println("!! Err, Catch gsql err:", err)
         panic(err)
     }
 
@@ -132,19 +134,22 @@ func (sqlExec *SqlExec) Update () error {
 func (sqlExec *SqlExec) Delete () error {
     db := SqlCons[sqlExec.TargetDb]
 
-    defer func() {  
-        if r := recover(); r != nil {  
-            fmt.Println("!! Err, Catch gsql err:", r) 
-        }  
-    }()
+    // defer func() {  
+    //     if r := recover(); r != nil {  
+    //         fmt.Println("!! Err, Catch gsql err:", r) 
+    //         sqlExec.CmdAffectedCount = -1
+    //     }  
+    // }()
 
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     if err != nil {
+        fmt.Println("!! Err, Catch gsql err:", err) 
         panic(err)
     }
 
     res, err := sqlStmt.Exec()
     if err != nil {
+        fmt.Println("!! Err, Catch gsql err:", err)
         panic(err)
     }
 
@@ -161,19 +166,21 @@ func (sqlExec *SqlExec) Delete () error {
 func (sqlExec *SqlExec) QueryWithoutParams () error {
     db := SqlCons[sqlExec.TargetDb]
 
-    defer func() {  
-        if r := recover(); r != nil {  
-            fmt.Println("!! Err, Catch gsql err:", r)   
-        }  
-    }()  
+    // defer func() {  
+    //     if r := recover(); r != nil {  
+    //         fmt.Println("!! Err, Catch gsql err:", r)   
+    //     }  
+    // }()  
 
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     if err != nil {
+        fmt.Println("!! Err, Catch gsql err:", err)
         panic(err)
     }
 
     rows, err := sqlStmt.Query()
     if err != nil {
+        fmt.Println("!! Err, Catch gsql err:", err)
         panic(err)
     }
 
@@ -233,21 +240,21 @@ func ScanRows (rows *sql.Rows) (int, []string, []map[string]interface{}) {
 func (sqlExec *SqlExec) Insert () error {
     db := SqlCons[sqlExec.TargetDb]
 
-    defer func() {  
-        if r := recover(); r != nil {  
-            fmt.Println("!! Err, Catch gsql err:", r)   
-        }  
-    }() 
+    // defer func() {  
+    //     if r := recover(); r != nil {  
+    //         fmt.Println("!! Err, Catch gsql err:", r)   
+    //     }  
+    // }() 
 
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     if err != nil {
-        fmt.Println(err)
+        fmt.Println("!! Err, Catch gsql err:", err)
         panic(err)
     }
 
     res, err := sqlStmt.Exec()
     if err != nil {
-        fmt.Println(err)
+        fmt.Println("!! Err, Catch gsql err:", err)
         panic(err)
     }
 

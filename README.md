@@ -27,12 +27,14 @@ Go4Api aims to the testing difficulty faced to QA, which is different from Devel
 Features
 --------
 
-- **Using Json format to represent API test case(s)**: contains the all info about API request, response and assertion
-- **Test Cases Json file itself can be template**: which will be rendered by csv data table(s)
+- **Using pure Json format to represent test case(s)**: contains the all info about API request, response and assertion 
+- **Each Case has its own setUp and tearDown** 
+- **Test Cases Json file itself can be template**: its variable(s) can be rendered by data feeder 
 - **Test Cases executed concurrently**: based on Priority and Dependency
-- **Support API Fuzz Testing**: includes Mutation and Random testing (embedded pairwise algorithm implementation)
-- **Support Scenario Testing**: when APIs have data dependency and exchange
-- **Convert HAR file / Swagger API file**
+- **Fuzz / Mutation Testing**: includes Mutation and Random testing (embedded pairwise algorithm implementation) 
+- **Scenario Testing**: when APIs have data dependency
+- **Convert HAR file / Swagger API file** 
+- **Built-in functions** 
 
 More information, refer to [wiki](https://github.com/zpsean/go4api/wiki).
 
@@ -184,7 +186,7 @@ SecondTeseCase.json
         "method": "GET",
         "path": "/v2/movie/top250",
         "headers": {
-          "authorization": "{{.authorization}}"
+          "authorization": "${authorization}"
         },
         "queryString": {
           "pageIndex": "1",
@@ -193,7 +195,7 @@ SecondTeseCase.json
       },
       "response": {
         "status": {
-          "Equals": {{.statuscode}}
+          "Equals": {"Fn::ToInt": "${statuscode}"}
         },
         "headers": {
           "Content-Type": {

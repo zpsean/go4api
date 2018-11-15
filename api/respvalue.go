@@ -111,7 +111,9 @@ func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string) inte
     cmdResultsJson := string(cmdResultsB)
 
     if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
-        if searchPath == "$(sql).*" {
+        if searchPath == "$(sql).#" {
+            resValue = tcDataStore.CmdAffectedCount
+        } else if searchPath == "$(sql).*" {
             resValue = tcDataStore.CmdResults
         } else if tcDataStore.IfCmdResultsPrimitive() {
             resValue = tcDataStore.CmdResults
@@ -136,7 +138,9 @@ func (tcDataStore *TcDataStore) GetRedisActualValueByPath (searchPath string) in
     cmdResultsJson := string(cmdResultsB)
 
     if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
-        if searchPath == "$(redis).*" {
+        if searchPath == "$(redis).#" {
+            resValue = tcDataStore.CmdAffectedCount
+        } else if searchPath == "$(redis).*" {
             resValue = tcDataStore.CmdResults
         } else if tcDataStore.IfCmdResultsPrimitive() {
             resValue = tcDataStore.CmdResults
