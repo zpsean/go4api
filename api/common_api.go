@@ -22,11 +22,8 @@ import (
 
 func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.CommandDetails) (string, [][]*testcase.TestMessage) {
     finalResults := "Success"
-    var cmdsResults []bool
-    var finalTestMessages = [][]*testcase.TestMessage{}
-    //
-    // cmdGroupJsonOriginB, _ := json.Marshal(cmdGroupOrigin)
-    // cmdGroupJsonOrigin := string(cmdGroupJsonOriginB)
+    var cmdsResults, sResults []bool
+    var finalTestMessages, sMessages [][]*testcase.TestMessage
 
     for i := 0; i < tcDataStore.CmdGroupLength; i ++ {
         cmdType := cmdGroupOrigin[i].CmdType
@@ -48,7 +45,10 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
                 tcDataStore.CmdAffectedCount = cmdAffectedCount
                 tcDataStore.CmdResults = cmdResults
 
-                cmdsResults, finalTestMessages = tcDataStore.HandleSingleCmdResult(i)
+                sResults, sMessages = tcDataStore.HandleSingleCmdResult(i)
+
+                cmdsResults = append(cmdsResults, sResults[0:]...)
+                finalTestMessages = append(finalTestMessages, sMessages[0:]...)
             case "redis":
                 var cmdStr, cmdKey, cmdValue string
 
@@ -79,19 +79,22 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
                 tcDataStore.CmdAffectedCount = cmdAffectedCount
                 tcDataStore.CmdResults = cmdResults
 
-                cmdsResults, finalTestMessages = tcDataStore.HandleSingleCmdResult(i)
+                sResults, sMessages = tcDataStore.HandleSingleCmdResult(i)
+
+                cmdsResults = append(cmdsResults, sResults[0:]...)
+                finalTestMessages = append(finalTestMessages, sMessages[0:]...)
             default:
                 fmt.Println("!! warning, command ", cmdType, " can not be recognized.")
         }
     }
 
-    for key := range cmdsResults {
-        if cmdsResults[key] == false {
+    for i, _ := range cmdsResults {
+        if cmdsResults[i] == false {
             finalResults = "Fail"
             break
         }
     }
-
+    
     return finalResults, finalTestMessages
 }
 
