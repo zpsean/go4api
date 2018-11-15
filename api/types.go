@@ -199,16 +199,14 @@ func (tcDataStore *TcDataStore) RenderTcVariables (path string) {
 
 func (tcDataStore *TcDataStore) EvaluateTcBuiltinFunctions (path string) {
     var resTcData testcase.TestCaseDataInfo
-    var res map[string]interface{}
 
     tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
     tcDataJson := string(tcDataJsonBytes)
 
-    jsonStr := gjson.Get(tcDataJson, path).String()
-    jsonStr = EvaluateBuiltinFunctions(jsonStr).(string)
+    result := gjson.Get(tcDataJson, path)
+    edResp := EvaluateBuiltinFunctions(result.Value())
 
-    json.Unmarshal([]byte(jsonStr), &res)
-    tcDataJson, _  = sjson.Set(tcDataJson, path, res)
+    tcDataJson, _  = sjson.Set(tcDataJson, path, edResp)
 
     json.Unmarshal([]byte(tcDataJson), &resTcData)
     tcDataStore.TcData = &resTcData

@@ -43,7 +43,7 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
                 tcDataStore.CmdResults = -1
 
                 cmdAffectedCount, _, cmdResults, cmdExecStatus := RunSql(cmdStr.String())
-
+                fmt.Println(">>>>: ", cmdStr, cmdAffectedCount, cmdResults, cmdExecStatus)
                 tcDataStore.CmdExecStatus = cmdExecStatus
                 tcDataStore.CmdAffectedCount = cmdAffectedCount
                 tcDataStore.CmdResults = cmdResults
