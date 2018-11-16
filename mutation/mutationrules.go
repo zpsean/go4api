@@ -172,6 +172,8 @@ func (mtD MFieldDetails) DetermineMutationType() string {
             mType = "MBool"
         case "array", "slice":
             mType = "MArray"
+        case "map":
+            fmt.Println("!! Waning: I'm map")
         default:
             fmt.Println("!! Error: No specific rules mapping matched: ", strings.ToLower(mtD.FieldType))
     }

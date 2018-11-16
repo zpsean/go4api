@@ -84,8 +84,8 @@ func init() {
 }
 
 
-func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase.TestCaseDataInfo {
-    var mutatedTcArray []testcase.TestCaseDataInfo
+func MutateTcArray(originMutationTcArray []*testcase.TestCaseDataInfo) []*testcase.TestCaseDataInfo {
+    var mutatedTcArray []*testcase.TestCaseDataInfo
 
     for _, originTcData := range originMutationTcArray {
         if originTcData.TestCase.IfGlobalSetUpTestCase() == true {
@@ -93,7 +93,7 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
             continue
         }
 
-        tcJson, _ := json.Marshal(originTcData)
+        tcJson, _ := json.Marshal(*originTcData)
         mutatedTcArray = append(mutatedTcArray, originTcData)
 
         // --- here to start the mutation
@@ -102,19 +102,23 @@ func MutateTcArray(originMutationTcArray []testcase.TestCaseDataInfo) []testcase
                 f := reflect.ValueOf(mCategoryFuncSlice[i].MFunc)
 
                 in := make([]reflect.Value, 3)
-                in[0] = reflect.ValueOf(originTcData)
+                in[0] = reflect.ValueOf(*originTcData)
                 in[1] = reflect.ValueOf(tcJson)
                 in[2] = reflect.ValueOf(mCategoryFuncSlice[i])
 
                 result := f.Call(in)
-                mTcArray := result[0].Interface().([]testcase.TestCaseDataInfo)
 
-                mutatedTcArray = append(mutatedTcArray, mTcArray[0:]...)
+                mTcArray := result[0].Interface().([]testcase.TestCaseDataInfo)
+                for ii, _ := range mTcArray {
+                    mutatedTcArray = append(mutatedTcArray, &mTcArray[ii])
+                }
             }
         }
         // for payload
-        mTcArray := MutateRequestPayload(originTcData, tcJson)
-        mutatedTcArray = append(mutatedTcArray, mTcArray[0:]...)
+        mTcArray := MutateRequestPayload(*originTcData, tcJson)
+        for ii, _ := range mTcArray {
+            mutatedTcArray = append(mutatedTcArray, &mTcArray[ii])
+        }
     }
     // aa, _ := json.Marshal(mutatedTcArray)
     // fmt.Println("\nmutatedTcArray: ", string(aa))
