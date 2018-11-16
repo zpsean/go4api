@@ -15,9 +15,11 @@ import (
     "time"
     "os"
     "strings"
+    // "encoding/json"
 
     "go4api/cmd"
     // "go4api/fuzz"
+    "go4api/mutation"
     "go4api/sql"
     "go4api/redis"
 )
@@ -38,24 +40,26 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
     // for type 2, build the cases hierarchy first, then render the child cases using the parent's outputs
     //
     if cmd.Opt.IfMutation {
-        // WarmUpDBConnection()
-        // //
-        // originMutationTcArray := GetOriginMutationTcArray()
-        // setUpTcSlice := GetSetupTcSlice(originMutationTcArray)
-        // setUpTcTreeStats := RunGlobalSetup(ch, baseUrl, resultsDir, resultsLogFile, setUpTcSlice)
-        // //
-        // originMutationTcArray = GetOriginMutationTcArray()
-        // originNormalTc := GetNormalTcSlice(originMutationTcArray)
-        // mutatedTcArray := mutation.MutateTcArray(originNormalTc)
-        // normalTcTreeStats := Run(ch, baseUrl, resultsDir, resultsLogFile, mutatedTcArray)
-        // //
-        // originMutationTcArray = GetOriginMutationTcArray()
-        // teardownTcSlice := GetTeardownTcSlice(originMutationTcArray)
-        // teardownTcTreeStats := RunGlobalTeardown(ch, baseUrl, resultsDir, resultsLogFile, teardownTcSlice)
-        // //
-        // totalTcCount := len(setUpTcSlice) + len(mutatedTcArray) + len(teardownTcSlice)
-        // RunFinalConsoleReport(totalTcCount, setUpTcTreeStats, normalTcTreeStats, teardownTcTreeStats)
-        // RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
+        WarmUpDBConnection()
+        WarmUpRedisConnection()
+        //
+        g4Store.GlobalSetUpRunStore.InitRun()
+        g4Store.GlobalSetUpRunStore.RunPriorities(baseUrl, resultsLogFile)
+        g4Store.GlobalSetUpRunStore.RunConsoleOverallReport()
+        //
+        mutatedTcArray := mutation.MutateTcArray(g4Store.NormalRunStore.TcSlice)
+        g4Store.NormalRunStore.TcSlice = mutatedTcArray
+
+        g4Store.NormalRunStore.InitRun()
+        g4Store.NormalRunStore.RunPriorities(baseUrl, resultsLogFile)
+        g4Store.NormalRunStore.RunConsoleOverallReport()
+        //
+        g4Store.GlobalTeardownRunStore.InitRun()
+        g4Store.GlobalTeardownRunStore.RunPriorities(baseUrl, resultsLogFile)
+        g4Store.GlobalTeardownRunStore.RunConsoleOverallReport()
+        //
+        g4Store.RunFinalConsoleReport()
+        g4Store.RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
     } else if cmd.Opt.IfFuzzTest {
         // fuzz.PrepFuzzTest()
         // //

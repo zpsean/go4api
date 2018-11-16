@@ -32,7 +32,7 @@
         }
       },
       "outputs": [],
-      "outEnvVariables": {"setupkey": "setupvalue"}
+      "outGlobalVariables": {"setupkey": "setupvalue"}
     }
   }
 ]

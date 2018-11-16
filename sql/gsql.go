@@ -68,6 +68,7 @@ func InitConnection () {
         key := strings.ToLower(k)
         SqlCons[key] = db
     }
+    fmt.Println("SqlCons: ", SqlCons)
 } 
 
 func Run (stmt string) (int, []string, []map[string]interface{}, string) {
@@ -143,13 +144,13 @@ func (sqlExec *SqlExec) Delete () error {
 
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     if err != nil {
-        fmt.Println("!! Err, Catch gsql err:", err) 
+        fmt.Println("!! Err, Delete Prepare, Catch gsql err:", err) 
         panic(err)
     }
 
     res, err := sqlStmt.Exec()
     if err != nil {
-        fmt.Println("!! Err, Catch gsql err:", err)
+        fmt.Println("!! Err, Delete Exec, Catch gsql err:", err)
         panic(err)
     }
 
@@ -174,13 +175,13 @@ func (sqlExec *SqlExec) QueryWithoutParams () error {
 
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     if err != nil {
-        fmt.Println("!! Err, Catch gsql err:", err)
+        fmt.Println("!! Err, SELECT Prepare, Catch gsql err:", err)
         panic(err)
     }
 
     rows, err := sqlStmt.Query()
     if err != nil {
-        fmt.Println("!! Err, Catch gsql err:", err)
+        fmt.Println("!! Err, SELECT Query, Catch gsql err:", err)
         panic(err)
     }
 
@@ -248,13 +249,13 @@ func (sqlExec *SqlExec) Insert () error {
 
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     if err != nil {
-        fmt.Println("!! Err, Catch gsql err:", err)
+        fmt.Println("!! Err, Insert Prepare, Catch gsql err:", err)
         panic(err)
     }
 
     res, err := sqlStmt.Exec()
     if err != nil {
-        fmt.Println("!! Err, Catch gsql err:", err)
+        fmt.Println("!! Err, Insert Exec, Catch gsql err:", err)
         panic(err)
     }
 
