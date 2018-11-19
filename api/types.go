@@ -14,6 +14,7 @@ import (
     "fmt"
     "strings"
     "encoding/json"
+    // "reflect"
 
     "go4api/lib/testcase" 
 
@@ -199,6 +200,7 @@ func (tcDataStore *TcDataStore) RenderTcVariables (path string) {
 
 func (tcDataStore *TcDataStore) EvaluateTcBuiltinFunctions (path string) {
     var resTcData testcase.TestCaseDataInfo
+    var resMap interface{}
 
     tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
     tcDataJson := string(tcDataJsonBytes)
@@ -206,7 +208,15 @@ func (tcDataStore *TcDataStore) EvaluateTcBuiltinFunctions (path string) {
     result := gjson.Get(tcDataJson, path)
     edResp := EvaluateBuiltinFunctions(result.Value())
 
-    tcDataJson, _  = sjson.Set(tcDataJson, path, edResp)
+    switch edResp.(type) {
+        case string:
+            jsonStr := edResp.(string)
+
+            json.Unmarshal([]byte(jsonStr), &resMap)
+            tcDataJson, _  = sjson.Set(tcDataJson, path, resMap)
+        default:
+            tcDataJson, _  = sjson.Set(tcDataJson, path, result.Value())
+    }
 
     json.Unmarshal([]byte(tcDataJson), &resTcData)
     tcDataStore.TcData = &resTcData

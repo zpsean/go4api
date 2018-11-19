@@ -83,6 +83,9 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
 
                 cmdsResults = append(cmdsResults, sResults[0:]...)
                 finalTestMessages = append(finalTestMessages, sMessages[0:]...)
+            case "init":
+                // ignore cmStr, cmdResponse, just for out
+                tcDataStore.HandleCmdResultsForOut(i)
             default:
                 fmt.Println("!! warning, command ", cmdType, " can not be recognized.")
         }
