@@ -173,7 +173,7 @@ func (mtD MFieldDetails) DetermineMutationType() string {
         case "array", "slice":
             mType = "MArray"
         case "map":
-            fmt.Println("!! Waning: I'm map")
+            mType = "MMap"
         default:
             fmt.Println("!! Error: No specific rules mapping matched: ", strings.ToLower(mtD.FieldType))
     }
@@ -873,4 +873,11 @@ func M_Array_Set_To_String (currValue interface{}, fieldType string, fieldSubTyp
     return mutatedValue
 }
 
+// < --------------- Map ------------->
+// blank {}
+func M_Map_Set_To_Empty_Map (currValue interface{}, fieldType string, fieldSubType string) interface{} {
+    var mutatedValue = make(map[string]interface{})
+
+    return mutatedValue
+}
 

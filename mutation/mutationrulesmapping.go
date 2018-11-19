@@ -148,6 +148,9 @@ func MutationRulesMapping(key string) []interface{} {
             M_Common_Set_To_Bool_False,
             M_Common_Set_To_Null,
         },
+        "MMap": []interface{} {
+            M_Map_Set_To_Empty_Map,
+        },
     }
 
     return RulesMapping[key]
