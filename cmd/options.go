@@ -42,6 +42,8 @@ type Options struct {
     Harfile string
     Swaggerfile string
     Logfile string
+
+    TimeZone string
 }
 
 var Opt Options
@@ -75,6 +77,8 @@ func init() {
 
     logfile := flag.String("logfile", "", "log file for report generation")
 
+    timeZone := flag.String("timeZone", "", "timezone used, GMT+/-N:00")
+
     //
     flag.Parse()
     //
@@ -94,6 +98,8 @@ func init() {
     Opt.Harfile = *har
     Opt.Swaggerfile = *swagger
     Opt.Logfile = *logfile
+
+    Opt.TimeZone = *timeZone
 
     if h {
         usage()

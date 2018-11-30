@@ -24,6 +24,7 @@ type Config map[string]*Environment
 
 type Environment struct {
     BaseUrl string
+    TimeZone string
     Dbs map[string]*DbDetails
     Redis map[string]*RedisDetails
 }
@@ -67,6 +68,10 @@ func GetBaseUrlFromConfig () string {
         return config[tEnv].BaseUrl
 }
 
+func GetTimeZoneConfig () string {
+        return config[tEnv].TimeZone
+}
+
 func GetDbConfig () map[string]*DbDetails {
         return config[tEnv].Dbs
 }
@@ -74,3 +79,5 @@ func GetDbConfig () map[string]*DbDetails {
 func GetRedisConfig () map[string]*RedisDetails {
         return config[tEnv].Redis
 }
+
+

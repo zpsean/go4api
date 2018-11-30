@@ -32,9 +32,11 @@ func BuiltinFunctionsMapping (key string) interface{} {
         "ToInt": ToInt,
         "CurrentTimeStampString": CurrentTimeStampString,
         "CurrentTimeStampUnix": CurrentTimeStampUnix,
-        "CurrentTimeStampUnixMilli": CurrentTimeStampUnixMilli,
-        "CurrentTimeStampUnixMicro": CurrentTimeStampUnixMicro,
-        "CurrentTimeStampUnixNano": CurrentTimeStampUnixNano,
+        "DayStart": DayStart,
+        "DayEnd": DayEnd,
+        "ConvertTimeToUnix": ConvertTimeToUnix,
+        "ConvertTimeToStr": ConvertTimeToStr,
+        "TimeStampUnixOffset": TimeStampUnixOffset,
     }
 
     return FuncsMapping[key]

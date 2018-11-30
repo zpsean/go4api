@@ -11,6 +11,8 @@
 package api
 
 import (    
+    // "fmt"
+
     gsession "go4api/lib/session"
 )
 
@@ -26,7 +28,14 @@ func (tcDataStore *TcDataStore) WriteSession (expTcSession map[string]interface{
 
     if expTcSession != nil {
         for k, v := range expTcSession {
-            value := tcDataStore.GetResponseValue(v.(string))
+            var value interface{}
+
+            switch v.(type) {
+            case string:
+                value = tcDataStore.GetResponseValue(v.(string))
+            case int, int64, float64:
+                value = v
+            }
 
             tcSession[k] = value
         } 

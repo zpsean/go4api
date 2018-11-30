@@ -95,10 +95,10 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
         TearDownTestMessages: tcExecution.TearDownTestMessages,
         TestResult: tcExecution.TestResult,
         CaseOrigin: caseOrigin,
-        ActualHeader: actualHeader,
-        ActualBody: actualBody,
         GlobalVariables: globalVariables,
         Session: tcSession,
+        ActualHeader: actualHeader,
+        ActualBody: actualBody,
     }
 
     return tcReportRes

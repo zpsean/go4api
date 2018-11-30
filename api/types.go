@@ -14,9 +14,10 @@ import (
     "fmt"
     "strings"
     "encoding/json"
-    // "reflect"
+    "reflect"
 
     "go4api/lib/testcase" 
+    "go4api/utils" 
 
     gjson "github.com/tidwall/gjson"
     sjson "github.com/tidwall/sjson"
@@ -80,10 +81,26 @@ func (tcDataStore *TcDataStore) RenderTcRequestVariables (path string) {
     tcDataJson := string(tcDataJsonBytes)
 
     jsonStr := gjson.Get(tcDataJson, path).String()
+    // fmt.Println("jsonStr 0: ", jsonStr)
 
     if strings.Contains(jsonStr, "${") {
         for key, value := range dataFeeder {
-            jsonStr = strings.Replace(jsonStr, "${" + key + "}", fmt.Sprint(value), -1)
+            // Note: the type of value may be: string, int, float64, etc. 
+            // fmt.Sprint(value) can result in issues, need to fix
+            // 
+            var valueStr = ""
+
+            if value != nil {
+                switch reflect.TypeOf(value).Kind().String() {
+                case "float64":
+                    // fmt.Println("t type float64:", value)
+                    valueStr = utils.FloatToString(value.(float64))
+                default:
+                    valueStr = fmt.Sprint(value)
+                }
+            }
+
+            jsonStr = strings.Replace(jsonStr, "${" + key + "}", valueStr, -1)
         }
    
         json.Unmarshal([]byte(jsonStr), &resReq)
@@ -133,6 +150,7 @@ func (tcDataStore *TcDataStore) RenderTcResponseVariables (path string) {
     tcDataJson := string(tcDataJsonBytes)
 
     jsonStr := gjson.Get(tcDataJson, path).String()
+    // fmt.Println("jsonStr 1: ", jsonStr)
 
     if strings.Contains(jsonStr, "${") {
         for key, value := range dataFeeder {
@@ -183,15 +201,17 @@ func (tcDataStore *TcDataStore) RenderTcVariables (path string) {
     tcDataJson := string(tcDataJsonBytes)
 
     jsonStr := gjson.Get(tcDataJson, path).String()
+    // fmt.Println("jsonStr 2: ", jsonStr)
  
     if strings.Contains(jsonStr, "${") {
         // Warning, this may have performance issues, need to improve, that is, get the Variables first, then replace
         for key, value := range dataFeeder {
             jsonStr = strings.Replace(jsonStr, "${" + key + "}", fmt.Sprint(value), -1)
         }
-        
-        json.Unmarshal([]byte(jsonStr), &res)
-        tcDataJson, _  = sjson.Set(tcDataJson, path, res)
+        // fmt.Println("jsonStr: ", jsonStr)
+        json.Unmarshal([]byte(jsonStr), &res) // notice
+        tcDataJson, _  = sjson.Set(tcDataJson, path, jsonStr)
+        // fmt.Println("tcDataJson: ", tcDataJson)
 
         json.Unmarshal([]byte(tcDataJson), &resTcData)
         tcDataStore.TcData = &resTcData
@@ -204,20 +224,27 @@ func (tcDataStore *TcDataStore) EvaluateTcBuiltinFunctions (path string) {
 
     tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
     tcDataJson := string(tcDataJsonBytes)
+    // fmt.Println(">>> tcDataJson: 0: ", tcDataJson)
 
     result := gjson.Get(tcDataJson, path)
     edResp := EvaluateBuiltinFunctions(result.Value())
+    // fmt.Println(">>> edResp: 0: ", edResp)
 
-    switch edResp.(type) {
+    // to be noticed the special case: result.Value() is string, edResp is string
+    if strings.Contains(result.String(), "Fn::") {
+        switch edResp.(type) {
         case string:
+            // fmt.Println(">>> ----------------->")
             jsonStr := edResp.(string)
 
             json.Unmarshal([]byte(jsonStr), &resMap)
             tcDataJson, _  = sjson.Set(tcDataJson, path, resMap)
         default:
             tcDataJson, _  = sjson.Set(tcDataJson, path, result.Value())
+        }
     }
-
+    
+    // fmt.Println(">>> tcDataJson: 1: ", tcDataJson)
     json.Unmarshal([]byte(tcDataJson), &resTcData)
     tcDataStore.TcData = &resTcData
 }

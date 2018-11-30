@@ -145,10 +145,10 @@ type TcReportResults struct {
     TearDownTestMessages [][]*TestMessage
     TestResult string  // Success, Fail, ParentFailed
     CaseOrigin interface{}
-    ActualHeader interface{}
-    ActualBody interface{}
     GlobalVariables interface{}
     Session interface{}
+    ActualHeader interface{}
+    ActualBody interface{}
 }
 
 

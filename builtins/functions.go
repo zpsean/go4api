@@ -242,44 +242,182 @@ func ToInt (param interface{}) int {
     }
 }
 
+
 func CurrentTimeStampString (param interface{}) string {
     t := time.Now()
-
     format := "2006-01-02 15:04:05"
-    if len(fmt.Sprint(param)) > 0{
-        format = fmt.Sprint(param)
-    }
-    // note: tbd, for more format according to param using yyyy mm dd hh mm ss 
-    // "2006-01-02 15:04:05"
-    // "2006-01-02 15:04:05.999" MilliString
-    // "2006-01-02 15:04:05.999999" MicroString
-    // "2006-01-02 15:04:05.999999999" NanoString
 
-    return t.Format(format)
+    switch strings.ToLower(param.(string)) {
+    case "milli":
+        format = "2006-01-02 15:04:05.999"
+        return t.Format(format)
+    case "micro":
+        format = "2006-01-02 15:04:05.999999"
+        return t.Format(format)
+    case "nano":
+        format = "2006-01-02 15:04:05.999999999"
+        return t.Format(format)
+    default:
+        return t.Format(format)
+        }
 }
 
 func CurrentTimeStampUnix (param interface{}) int64 {
 	t := time.Now()
 
-	return t.Unix()
+    switch strings.ToLower(param.(string)) {
+    case "milli":
+        return t.UnixNano() / 1000000
+    case "micro":
+        return t.UnixNano() / 1000
+    case "nano":
+        return t.UnixNano()
+    default:
+        return t.Unix()
+    }
 }
 
-func CurrentTimeStampUnixMilli (param interface{}) int64 {
-	t := time.Now()
+// 2006-01-02 00:00:00
+func DayStart (param interface{}) interface{} {
+    var ts int64
 
-	return t.UnixNano() / 1000000
+    switch param.(type) {
+    // case string:
+        //
+    case int64:
+        t := time.Unix(param.(int64) / 1000, 0)
+        y, m, d := t.Date()
+        tStart := time.Date(y, m, d, 0, 0, 0, 0, time.Local)
+        // fmt.Println("Go launched at start int64: ", t, tStart.Local())
+
+        ts = tStart.Unix()
+    case float64:
+        t := time.Unix(int64(param.(float64)) / 1000, 0)
+        y, m, d := t.Date()
+        tStart := time.Date(y, m, d, 0, 0, 0, 0, time.Local)
+
+        ts = tStart.Unix()
+    default:
+        fmt.Println("can not recognized type")
+    }
+
+    return ts * 1000
 }
 
-func CurrentTimeStampUnixMicro (param interface{}) int64 {
-	t := time.Now()
+// 2006-01-02 23:59:59
+func DayEnd (param interface{}) interface{} {
+    var ts int64
 
-	return t.UnixNano() / 1000
+    switch param.(type) {
+    // case string:
+        //
+    case int64:
+        t := time.Unix(param.(int64) / 1000, 0)
+        y, m, d := t.Date()
+        tStart := time.Date(y, m, d, 23, 59, 59, 0, time.Local)
+        // fmt.Println("Go launched at end int64: ", t, tStart.Local())
+
+        ts = tStart.Unix()
+    case float64:
+        t := time.Unix(int64(param.(float64)) / 1000, 0)
+        y, m, d := t.Date()
+        tStart := time.Date(y, m, d, 23, 59, 59, 0, time.Local)
+
+        ts = tStart.Unix()
+    default:
+        fmt.Println("can not recognized type")
+    }
+
+    return ts * 1000
 }
 
-func CurrentTimeStampUnixNano (param interface{}) int64 {
-	t := time.Now()
+// param is time str
+func ConvertTimeToUnix (param interface{}) int64 {
+    format := "2006-01-02 15:04:05 +0800 CST"
+    t, err := time.Parse(format, param.(string))
+    if err != nil {
+        panic(err)
+    }
 
-	return t.UnixNano()
+    fmt.Println(param.(string), t, t.UnixNano() / 1000000)
+
+    return t.UnixNano() / 1000000
+}
+
+// param is time str
+func ConvertTimeToStr (param interface{}) int64 {
+    format := "2006-01-02 15:04:05 +0800 CST"
+    t, err := time.Parse(format, param.(string))
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Println(param.(string), t, t.UnixNano() / 1000000)
+
+    return t.UnixNano() / 1000000
+}
+
+// { "Fn::TimeStampOffset" : [ "time" , "offset", "unit" ] }
+func TimeStampUnixOffset (param interface{}) interface{} {
+    // unit: years, months, days, hours, minutes, seconds, millis, micros, nanos
+    var res int64
+
+    switch param.(type) {
+    case []interface{}:
+        paramSlice := reflect.ValueOf(param).Interface().([]interface{})
+
+        if len(paramSlice) <= 2 {
+            fmt.Println("Not enough params for TimeStampUnixOffset")
+        } else if len(paramSlice) > 2 {
+            var timeSource int64
+            var offSet int
+            var err error
+
+            switch paramSlice[0].(type) {
+            case int:
+                timeSource = int64(paramSlice[0].(int))
+            case int64:
+                timeSource = int64(paramSlice[0].(int64))
+            case float64:
+                timeSource = int64(paramSlice[0].(float64))
+            }
+            
+            t := time.Unix(timeSource / 1000, 0)
+            // fmt.Println("TimeStampUnixOffset day: ", t)
+            
+            offSet, err = strconv.Atoi(paramSlice[1].(string))
+            if err != nil {
+                panic(err)
+            }
+
+            switch paramSlice[2].(string) {
+                // case years:
+                // case months:
+                case "day":
+                    // oD := offSet * 24
+                    // oDStr := strconv.ItoA(oD) + "h"
+                    // d, _ := time.ParseDuration(oDStr)
+                    resT := t.AddDate(0, 0, offSet)
+                    // fmt.Println("TimeStampUnixOffset day: ", offSet, resT)
+
+                    res = resT.Unix()
+                // case hours:
+                // case minutes:
+                // case seconds:
+                // case millis:
+                // case micros:
+                // case nanos:
+                default:
+                    fmt.Println("can not read the offset unit, it must be one of years, months, days, hours, minutes, seconds, millis, micros, nanos ")
+            }
+        }
+
+        return res * 1000
+    default:
+        return res * 1000
+    }
+
+    return res * 1000
 }
 
 // conditions
