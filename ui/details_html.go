@@ -174,7 +174,7 @@ var Details = `<!DOCTYPE html>
                                     newTd6.innerText = tcResults[i].TestResult;
                                     newTd7.innerText = tcResults[i].DurationUnixNano / 1000000;
                                     newTd8.innerText = tcResults[i].JsonFilePath + "\n\n" + tcResults[i].CsvFile  + "\n\n" + tcResults[i].CsvRow;
-                                    newTd9.innerText = JSON.stringify(tcResults[i].TestMessages, null, 4);
+                                    newTd9.innerText = JSON.stringify(tcResults[i].HttpTestMessages, null, 4);
                                 }
                               </script>
 
@@ -205,8 +205,9 @@ var Details = `<!DOCTYPE html>
     list1[3] = "ParentTestCase";
     list1[4] = "ActualStatusCode";
     list1[5] = "TestResult";
-    list1[6] = "CaseData";
-    list1[7] = "Message";
+    list1[6] = "DurationUnixNano";
+    list1[7] = "CaseData";
+    list1[8] = "TestMessages";
 
     li2[0] = new Array;
     li2[1] = new Array;
@@ -216,6 +217,7 @@ var Details = `<!DOCTYPE html>
     li2[5] = new Array;
     li2[6] = new Array;
     li2[7] = new Array;
+    li2[8] = new Array;
 
     list2[0] = new Array;
     list2[1] = new Array;
@@ -225,12 +227,20 @@ var Details = `<!DOCTYPE html>
     list2[5] = new Array;
     list2[6] = new Array;
     list2[7] = new Array;
+    list2[8] = new Array;
 
     for(var i = 0; i < list1.length; i++)
-    {
-      for (var j = 0; j < tcResults.length; j++)
-      { 
-        li2[i].push(tcResults[j][list1[i]])
+    { 
+      if (i == 6) {
+        for (var j = 0; j < tcResults.length; j++)
+        { 
+          li2[i].push(tcResults[j][list1[i]] / 1000000)
+        }
+      } else {
+        for (var j = 0; j < tcResults.length; j++)
+        { 
+          li2[i].push(tcResults[j][list1[i]])
+        }
       }
 
       var distinctItems = Array.from(new Set(li2[i]))
@@ -248,6 +258,8 @@ var Details = `<!DOCTYPE html>
           option.value = list2Element[i];
           dataList.appendChild(option);
       }
+
+      console.log(dataList)
     }
   </script>
 
@@ -262,6 +274,7 @@ var Details = `<!DOCTYPE html>
       populateDatalist("ParentTestCase_datalist", 3)
       populateDatalist("HttpResult_datalist", 4)
       populateDatalist("TestResult_datalist", 5)
+      populateDatalist("Duration_datalist", 6)
       // populateDatalist("CaseData_datalist", 4)
       // populateDatalist("Message_datalist", 5)
     }
@@ -273,17 +286,18 @@ var Details = `<!DOCTYPE html>
       var v4 = document.getElementById("ParentTestCase_input").value
       var v5 = document.getElementById("HttpResult_input").value
       var v6 = document.getElementById("TestResult_input").value
-      var v7 = document.getElementById("CaseData_input").value
-      var v8 = document.getElementById("Message_input").value
+      var v7 = document.getElementById("Duration_input").value
+      var v8 = document.getElementById("CaseData_input").value
+      var v9 = document.getElementById("Message_input").value
 
       clearRows()
-      insertRows(v1, v2, v3, v4, v5, v6, v7, v8)
+      insertRows(v1, v2, v3, v4, v5, v6, v7, v8, v9)
     }
 
-    function insertRows(v1, v2, v3, v4, v5, v6, v7, v8){
+    function insertRows(v1, v2, v3, v4, v5, v6, v7, v8, v9){
       for (var i = 0; i < tcResults.length; i++)
       {   
-          if (searchCriteria(i, v1, v2, v3, v4, v5, v6, v7, v8)) {
+          if (searchCriteria(i, v1, v2, v3, v4, v5, v6, v7, v8, v9)) {
             var newTr = container_statistics_body.insertRow();
                 
             var newTd0 = newTr.insertCell();
@@ -317,18 +331,19 @@ var Details = `<!DOCTYPE html>
             newTd6.innerText = tcResults[i].TestResult;
             newTd7.innerText = tcResults[i].DurationUnixNano / 1000000;
             newTd8.innerText = tcResults[i].JsonFilePath + "\n\n" + tcResults[i].CsvFile  + "\n\n" + tcResults[i].CsvRow;
-            newTd9.innerText = JSON.stringify(tcResults[i].TestMessages, null, 4);
+            newTd9.innerText = JSON.stringify(tcResults[i].HttpTestMessages, null, 4);
           }   
       }
     }
 
-    function searchCriteria(i, v1, v2, v3, v4, v5, v6, v7, v8){
+    function searchCriteria(i, v1, v2, v3, v4, v5, v6, v7, v8, v9){
       if (searchStr(tcResults[i].IfGlobalSetUpTearDown, v1) && searchStr(tcResults[i].Priority, v2) 
         && searchStr(tcResults[i].TcName, v3)
         && searchStr(tcResults[i].ParentTestCase, v4) && searchStr(tcResults[i].ActualStatusCode, v5)
         && searchStr(tcResults[i].TestResult, v6)
-        && searchStr(tcResults[i].JsonFilePath + " / " + tcResults[i].CsvFile  + " / " + tcResults[i].CsvRow, v7)
-        && searchStr(JSON.stringify(tcResults[i].TestMessages), v8)) {
+        && searchStr(tcResults[i].DurationUnixNano / 1000000, v7)
+        && searchStr(tcResults[i].JsonFilePath + " / " + tcResults[i].CsvFile  + " / " + tcResults[i].CsvRow, v8)
+        && searchStr(JSON.stringify(tcResults[i].HttpTestMessages), v9)) {
         return true
       } else {
         return false
