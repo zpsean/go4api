@@ -15,6 +15,7 @@ Menu
 - [Why another API Testing Tool?](#why-another-api-testing-tool)
 - [Features](#features)
 - [Install](#install)
+- [Basic Concepts](#basic-concepts)
 - [Quick Start](#quick-start)
 - [CheatSheet](#cheatsheet)
 - [Need help or want to contribute?](#need-help-or-want-to-contribute)
@@ -68,6 +69,19 @@ To run from source you need **[Go](https://golang.org/doc/install)** (1.10 or ne
   - Move to the path: `cd $GOPATH/src/github.com/zpsean/go4api`
 - Make sure you have `$GOPATH` in your PATH
 - You can now run go4api using `$go run main.go ...`
+
+
+Basic Concepts
+-----------
+<p align="center">
+  <img width="900" src="https://cdn.rawgit.com/zpsean/go4api/master/doc/1-CaseStructure.jpeg">
+</p>
+<p align="center">
+  <img width="900" src="https://cdn.rawgit.com/zpsean/go4api/master/doc/2-CasesRelationship.jpeg">
+</p>
+<p align="center">
+  <img width="900" src="https://cdn.rawgit.com/zpsean/go4api/master/doc/3-BigPicture.jpeg">
+</p>
 
 Quick start
 -----------
