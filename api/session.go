@@ -42,7 +42,6 @@ func (tcDataStore *TcDataStore) WriteSession (expTcSession map[string]interface{
     }
     tcName := tcData.TcName()
     gsession.WriteTcSession(tcName, tcSession)
-
 }
 
 
