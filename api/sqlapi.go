@@ -16,10 +16,10 @@ import (
     gsql "go4api/sql"
 )
 
-func RunSql (stmt string) (int, []string, []map[string]interface{}, string) {
+func RunSql (tgtDb string, stmt string) (int, []string, []map[string]interface{}, string) {
     // gsql.Run will return: <impacted rows : int>, <rows for select : [][]interface{}{}>, <sql status : string>
     // status: SqlSuccess, SqlFailed
-    rowsCount, rowsHeaders, rowsData, sqlExecStatus := gsql.Run(stmt)
+    rowsCount, rowsHeaders, rowsData, sqlExecStatus := gsql.Run(tgtDb, stmt)
 
     return rowsCount, rowsHeaders, rowsData, sqlExecStatus
 }

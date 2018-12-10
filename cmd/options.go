@@ -44,6 +44,9 @@ type Options struct {
     Logfile string
 
     TimeZone string
+
+    IfSqlDb bool
+    IfCache bool
 }
 
 var Opt Options
@@ -79,6 +82,9 @@ func init() {
 
     timeZone := flag.String("timeZone", "", "timezone used, GMT+/-N:00")
 
+    ifSqlDb := flag.Bool("ifSqlDb", true, "if test has Sql, such as MySql")
+    ifCache := flag.Bool("ifCache", true, "if test has cache, such as Redis")
+
     //
     flag.Parse()
     //
@@ -100,6 +106,9 @@ func init() {
     Opt.Logfile = *logfile
 
     Opt.TimeZone = *timeZone
+
+    Opt.IfSqlDb = *ifSqlDb
+    Opt.IfCache = *ifCache
 
     if h {
         usage()

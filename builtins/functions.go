@@ -234,6 +234,7 @@ func ToInt (param interface{}) int {
         case string:
             i, err := strconv.Atoi(param.(string))
             if err != nil {
+                fmt.Println("ToInt param is: ", param)
                 panic(err)
             }
             return i

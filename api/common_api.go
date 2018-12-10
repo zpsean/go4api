@@ -13,6 +13,8 @@ package api
 import (
     "fmt"
     "strings" 
+    "time"
+    "strconv"
     "encoding/json"
 
     "go4api/lib/testcase"
@@ -32,14 +34,20 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
             case "sql":
                 cmdGroupJson := tcDataStore.PrepCmd(i, ".cmd")
                 //
-                cmdStr := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd")
+                cmdStr := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd").String()
+                tgtDb := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmdSource").String()
                 // init
                 tcDataStore.CmdType = "sql"
                 tcDataStore.CmdExecStatus = ""
                 tcDataStore.CmdAffectedCount = -1
                 tcDataStore.CmdResults = -1
 
-                cmdAffectedCount, _, cmdResults, cmdExecStatus := RunSql(cmdStr.String())
+                // call sql
+                if len(tgtDb) == 0 {
+                    fmt.Println("No target db provided, default to master")
+                    tgtDb = "master"
+                }
+                cmdAffectedCount, _, cmdResults, cmdExecStatus := RunSql(tgtDb, cmdStr)
                 
                 tcDataStore.CmdExecStatus = cmdExecStatus
                 tcDataStore.CmdAffectedCount = cmdAffectedCount
@@ -84,8 +92,28 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
                 cmdsResults = append(cmdsResults, sResults[0:]...)
                 finalTestMessages = append(finalTestMessages, sMessages[0:]...)
             case "init":
-                // ignore cmStr, cmdResponse, just for out
-                tcDataStore.HandleCmdResultsForOut(i)
+                cmdGroupJson := tcDataStore.PrepCmd(i, ".cmd")
+                cmdStr := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd").String()
+                s := strings.ToLower(cmdStr)
+
+                if len(cmdStr) > 0 && strings.Contains(s, "sleep") {
+                    // here may has cmd "sleep xx" for debug purpose
+                    t := strings.Split(s, " ")
+                    if len(t) == 1 {
+                        fmt.Println("No sleep duration provided, no sleep")
+                    } else {
+                        tm, err := strconv.Atoi(t[1])
+                        if err != nil {
+                            fmt.Println("Provided sleep duration is not number, please fix")
+                        }
+
+                        time.Sleep(time.Duration(tm)*time.Second)
+                    }
+                } else {
+                    // ignore cmStr, cmdResponse, just for out
+                    tcDataStore.HandleCmdResultsForOut(i)
+                }
+                
             default:
                 fmt.Println("!! warning, command ", cmdType, " can not be recognized.")
         }
