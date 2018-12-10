@@ -111,7 +111,7 @@ func GenerateFuzzData(fuzzFile string) FuzzData {
 
 func GenerateFuzzValidDataFiles(fuzzFile string, fuzzData FuzzData) {
     outputsFile := filepath.Join(filepath.Dir(fuzzFile), 
-        strings.TrimRight(filepath.Base(fuzzFile), ".fuzz") + "_fuzz_dt_valid.csv")
+        strings.TrimSuffix(filepath.Base(fuzzFile), ".fuzz") + "_fuzz_dt_valid.csv")
     // write csv header, data
     validHeaderStr := ""
     validHeaderStr = validHeaderStr + "tcid"
@@ -145,7 +145,7 @@ func GenerateFuzzValidDataFiles(fuzzFile string, fuzzData FuzzData) {
 
 func GenerateFuzzInvalidDataFiles(fuzzFile string, fuzzData FuzzData) {
     outputsFile := filepath.Join(filepath.Dir(fuzzFile), 
-        strings.TrimRight(filepath.Base(fuzzFile), ".fuzz") + "_fuzz_dt_invalid.csv")
+        strings.TrimSuffix(filepath.Base(fuzzFile), ".fuzz") + "_fuzz_dt_invalid.csv")
     // write csv header
     invalidHeaderStr := ""
     invalidHeaderStr = invalidHeaderStr + "tcid"

@@ -23,6 +23,7 @@ import (
 // data lookup sequence, latter override former one(s)
 // config (json) -> env variables (key, value) -> session (key, value) -> data file (*_dt) / data file (inputs)
 
+// Note: here may occur: fatal error: concurrent map iteration and map write, => need to fix
 func (tcDataStore *TcDataStore) MergeTestData () map[string]interface{} {
     var finalMap = make(map[string]interface{})
     // check if config
@@ -41,13 +42,13 @@ func (tcDataStore *TcDataStore) MergeTestData () map[string]interface{} {
     // 3
     pTcName := tcDataStore.TcData.TestCase.ParentTestCase()
     pSssionMap := gsession.LookupTcSession(pTcName)
-    for k, v := range pSssionMap {
+    for k, v := range pSssionMap {  // => concurrent map iteration and map write?
         finalMap[k] = v
     }
 
     tcName := tcDataStore.TcData.TestCase.TcName()
     sessionMap := gsession.LookupTcSession(tcName)
-    for k, v := range sessionMap {
+    for k, v := range sessionMap { // => concurrent map iteration and map write?
         finalMap[k] = v
     }
 

@@ -79,8 +79,8 @@ func GetCsvDataFilesForJsonFile (jsonFile string, suffix string) []string {
     // 
     var csvFileList []string
     for _, csvFile := range csvFileListTemp {
-        csvFileName := strings.TrimRight(filepath.Base(csvFile), ".csv")
-        jsonFileName := strings.TrimRight(filepath.Base(jsonFile), ".json")
+        csvFileName := strings.TrimSuffix(filepath.Base(csvFile), ".csv")
+        jsonFileName := strings.TrimSuffix(filepath.Base(jsonFile), ".json")
         // Note: the json file realted data table files is pattern: jsonFileName + "_dt[*]"
         if strings.HasPrefix(csvFileName, jsonFileName + suffix) {
             csvFileList = append(csvFileList, csvFile)

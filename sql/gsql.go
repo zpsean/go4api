@@ -65,13 +65,13 @@ func InitConnection () {
             panic(err)
         }
 
-        key := strings.ToLower(k)
-        SqlCons[key] = db
+        dbIndicator := strings.ToLower(k)
+        SqlCons[dbIndicator] = db
     }
-    fmt.Println("SqlCons: ", SqlCons)
+    // fmt.Println("SqlCons: ", SqlCons)
 } 
 
-func Run (stmt string) (int, []string, []map[string]interface{}, string) {
+func Run (tgtDb string, stmt string) (int, []string, []map[string]interface{}, string) {
     // update, delete, select, insert
     s := strings.TrimSpace(stmt)
     s = strings.ToUpper(s)
@@ -80,7 +80,8 @@ func Run (stmt string) (int, []string, []map[string]interface{}, string) {
     var err error
     cmdExecStatus := ""
 
-    tDb := "master"
+    // tDb := "master"
+    tDb := tgtDb
     sqlExec := &SqlExec{tDb, stmt, -1, []string{}, []map[string]interface{}{}}
 
     switch strings.ToUpper(s) {

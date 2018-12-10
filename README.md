@@ -179,8 +179,8 @@ SecondTeseCase.json
 ```js
 [
   {
-    "SecondTestCase-{{.tc}}": {
-      "priority": "{{.priority}}",
+    "SecondTestCase-${tc}": {
+      "priority": "${priority}",
       "parentTestCase": "root",
       "request": {
         "method": "GET",

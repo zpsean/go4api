@@ -122,10 +122,14 @@ func MkResultsDir(gStart_str string, opt cmd.Options) string {
 }
 
 func WarmUpDBConnection () {
-    gsql.InitConnection()
+    if cmd.Opt.IfSqlDb == true {
+        gsql.InitConnection()
+    }
 }
 
 func WarmUpRedisConnection () {
-    gredis.InitRedisConnection()
+    if cmd.Opt.IfCache == true {
+        gredis.InitRedisConnection()
+    }
 }
 

@@ -1,7 +1,7 @@
 [
   {
-    "SecondTestCase-{{.tc}}": {
-      "priority": "{{.priority}}",
+    "SecondTestCase-${tc}": {
+      "priority": "${priority}",
       "parentTestCase": "root",
       "request": {
         "method": "GET",
@@ -16,7 +16,7 @@
       },
       "response": {
         "status": {
-          "Equals": {{.statuscode}}
+          "Equals": {"Fn::ToInt": "${statuscode}"}
         },
         "headers": {
           "Content-Type": {
