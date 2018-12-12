@@ -160,16 +160,16 @@ testresults/
           }
         },
         "body": {
-          "$.start": {
+          "$(body).start": {
             "GreaterOrEquals": 0
           },
-          "$.subjects.#": {
+          "$(body).subjects.#": {
             "Equals": 20
           },
-          "$.total": {
+          "$(body).total": {
             "Equals": 250
           },
-          "$.subjects.0.title": {
+          "$(body).subjects.0.title": {
             "Contains": "肖申克的救赎"
           }
         }
