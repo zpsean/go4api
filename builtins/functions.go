@@ -243,6 +243,23 @@ func ToInt (param interface{}) int {
     }
 }
 
+func ToBool (param interface{}) bool {
+    switch param.(type) {
+        case float64:
+            if param.(float64) == 0 {
+                return false
+            } else {
+                return true
+            }
+        default:
+            if fmt.Sprint(param) == "0" || strings.ToLower(fmt.Sprint(param)) == "false" {
+                return false
+            } else {
+                return true
+            }
+    }
+}
+
 
 func CurrentTimeStampString (param interface{}) string {
     t := time.Now()
