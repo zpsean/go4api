@@ -30,6 +30,7 @@ func BuiltinFunctionsMapping (key string) interface{} {
         "Split": Split,
         "ToString": ToString,
         "ToInt": ToInt,
+        "ToBool": ToBool,
         "CurrentTimeStampString": CurrentTimeStampString,
         "CurrentTimeStampUnix": CurrentTimeStampUnix,
         "DayStart": DayStart,
