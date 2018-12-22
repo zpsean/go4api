@@ -72,6 +72,8 @@ func (tcDataStore *TcDataStore) Compare () (string, []*testcase.TestMessage) {
     path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "response"
     tcDataStore.RenderTcResponseVariables(path)
     tcDataStore.EvaluateTcResponseBuiltinFunctions(path)
+    // tcDataStore.EvaluateTcBuiltinFunctions(path)
+    
     // status
     testResultsS, testMessagesS := tcDataStore.CompareStatus()
     testResults = append(testResults, testResultsS[0:]...)

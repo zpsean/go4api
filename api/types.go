@@ -177,6 +177,7 @@ func (tcDataStore *TcDataStore) EvaluateTcResponseBuiltinFunctions (path string)
     json.Unmarshal([]byte(jsonStr), &resResp)
 
     edResp := EvaluateBuiltinFunctions(resResp)
+    // fmt.Println("edResp: ", edResp)
     switch edResp.(type) {
         case string:
             jsonStr = edResp.(string)
