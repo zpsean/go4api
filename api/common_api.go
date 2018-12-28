@@ -109,10 +109,15 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
 
                         time.Sleep(time.Duration(tm)*time.Second)
                     }
-                } else {
-                    // ignore cmStr, cmdResponse, just for out
-                    tcDataStore.HandleCmdResultsForOut(i)
                 }
+
+                // as maybe no cmd is executed, the CmdExecStatus is always "cmdSuccess"
+                tcDataStore.CmdExecStatus = "cmdSuccess"
+
+                sResults, sMessages = tcDataStore.HandleSingleCmdResult(i)
+
+                cmdsResults = append(cmdsResults, sResults[0:]...)
+                finalTestMessages = append(finalTestMessages, sMessages[0:]...)
                 
             default:
                 fmt.Println("!! warning, command ", cmdType, " can not be recognized.")
@@ -155,6 +160,8 @@ func (tcDataStore *TcDataStore) PrepCmd (i int, subPath string) string {
 
     cmdGroupJsonB, _ = json.Marshal(cmdGroup)
     cmdGroupJson = string(cmdGroupJsonB)
+
+    // fmt.Println("cmdGroupJson: ", cmdGroupJson)
 
     return cmdGroupJson
 }

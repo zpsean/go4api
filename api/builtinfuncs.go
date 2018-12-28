@@ -11,7 +11,7 @@
 package api
 
 import (
-    // "fmt"
+    "fmt"
     "strings"
     // "reflect"
     "encoding/json"
@@ -74,15 +74,13 @@ func GetBuiltinLeavesSlice (value interface{}) []g4json.FieldDetails {
 //              "request.payload.text.field2.Fn::F2.1.Fn::F3.1",
 //              "request.payload.text.field2.Fn::F2.1.Fn::F3.0"
 //
-// !! Warning: specail case, if the key has dot itself, need specail handle:
-// for example: 
-// json origin:  {"body":{"$(body).msg_code":{"Equals":{"Fn::ToInt":"5109"}}}
-// need mark the path as:  body.$(body)\.msg_code.Equals
-// for convenience, here will use specila string (NdotReplacerN) to replace the dot: body.$(body)NdotReplacerNmsg_code.Equals
-// otherwise, it will return unexpected results after sjson.Set()
+// !! Warning: specail case, if the key is complex key, as contains ., \, ", etc., need specail handle
+
 func IterateBuiltsins (jsonStr string, builtinLeavesSlice []g4json.FieldDetails, maxLevel int) string {
     var evaluatedSlice []g4json.FieldDetails
     var evaluatedFuncPaths []string
+
+    var replacerMap = make(map[string]string)
 
     for i := maxLevel; i > 0; i-- {
         for j, _ := range builtinLeavesSlice {
@@ -99,13 +97,20 @@ func IterateBuiltsins (jsonStr string, builtinLeavesSlice []g4json.FieldDetails,
                     var nodePathStr string
                     for ii, _ := range builtinLeavesSlice[j].FieldPath[0:i - 1] {
                         oKey := builtinLeavesSlice[j].FieldPath[0:i - 1][ii]
-                        
-                        // reset the jsonStr with replacing NdotReplacerN
-                        if strings.Contains(oKey, ".") {
-                            cKey := strings.Replace(oKey, ".", "NdotReplacerN", -1)
-                            jsonStr = strings.Replace(jsonStr, oKey, cKey, -1)
 
-                            tempSlice = append(tempSlice, cKey)
+                        // if the key is complex key, as contains dot (.)
+                        if strings.Contains(oKey, ".") {
+                            rkey := "go4Api_efdvberipz_ReplacerKey_" + fmt.Sprint(i) + "_" + fmt.Sprint(j) + "_" + fmt.Sprint(ii)
+
+                            // if the key is complex key, as contains \"
+                            if strings.Contains(oKey, "\"") {
+                                oKey = strings.Replace(oKey, "\"", "\\\"", -1)
+                                replacerMap[rkey] = oKey
+                            } else {
+                                replacerMap[rkey] = oKey
+                            }
+
+                            tempSlice = append(tempSlice, rkey)
                         } else {
                             tempSlice = append(tempSlice, oKey)
                         }
@@ -133,6 +138,11 @@ func IterateBuiltsins (jsonStr string, builtinLeavesSlice []g4json.FieldDetails,
                     }
 
                     resValue := builtins.CallBuiltinFunc(funcName, funcParams)
+
+                    for key, _ := range replacerMap {
+                        jsonStr = strings.Replace(jsonStr, replacerMap[key], key, -1)
+                    }
+
                     jsonStr, _  = sjson.Set(jsonStr, nodePathStr, resValue)
       
                     evaluatedFuncPaths = append(evaluatedFuncPaths, funcParamsPath)
@@ -141,7 +151,9 @@ func IterateBuiltsins (jsonStr string, builtinLeavesSlice []g4json.FieldDetails,
         }
     }
 
-    jsonStr = strings.Replace(jsonStr, "NdotReplacerN", ".", -1)
+    for key, _ := range replacerMap {
+        jsonStr = strings.Replace(jsonStr, key, replacerMap[key], -1)
+    }
 
     return jsonStr
 }

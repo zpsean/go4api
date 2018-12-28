@@ -202,8 +202,7 @@ func (tcDataStore *TcDataStore) RenderTcVariables (path string) {
     tcDataJson := string(tcDataJsonBytes)
 
     jsonStr := gjson.Get(tcDataJson, path).String()
-    // fmt.Println("jsonStr 2: ", jsonStr)
- 
+  
     if strings.Contains(jsonStr, "${") {
         // Warning, this may have performance issues, need to improve, that is, get the Variables first, then replace
         for key, value := range dataFeeder {
