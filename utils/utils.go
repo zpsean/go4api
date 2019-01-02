@@ -11,6 +11,7 @@
 package utils
 
 import (
+    "fmt"
     "io/ioutil"                                                                                                                                              
     "os"
     "io"
@@ -35,11 +36,13 @@ func GetCurrentDir() string{
 func GetCsvFromFile(filePath string) [][]string {
     fi,err := ioutil.ReadFile(filePath)
     if err != nil {
+        fmt.Println("!! Error: ", filePath)
         panic(err)
     }
     r2 := csv.NewReader(strings.NewReader(string(fi)))
     csvRows, err := r2.ReadAll()
     if err != nil {
+        fmt.Println("!! Error: ", filePath)
         panic(err)
     }
 

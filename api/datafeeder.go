@@ -63,8 +63,8 @@ func (tcDataStore *TcDataStore) MergeTestData () map[string]interface{} {
     //     finalMap[k] = v
     // }
     // var ff interface{}
-    // ss, _ :=  json.Marshal(finalMap)
-    // fmt.Println("finalMap: ", string(ss))
+    // ss, _ :=  json.Marshal(tcDataStore.TcLocalVariables)
+    // fmt.Println("TcLocalVariables: ", string(ss))
     return finalMap
 }
 
