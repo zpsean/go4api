@@ -245,7 +245,7 @@ func (tcDataStore *TcDataStore) HandleCmdResultsForOut (i int) {
     // write out tc loca variables if has
     cmdGroup = tcDataStore.PrepCmdGroup(i, ".outLocalVariables")
     expOutLocalVariables := cmdGroup[i].OutLocalVariables
-    tcDataStore.WriteOutGlobalVariables(expOutLocalVariables)
+    tcDataStore.WriteOutTcLocalVariables(expOutLocalVariables)
 }
 
 func (tcDataStore *TcDataStore) PrepCmdGroup (i int, subPath string) []*testcase.CommandDetails {
