@@ -266,10 +266,10 @@ func CurrentTimeStampString (param interface{}) string {
     format := "2006-01-02 15:04:05"
 
     switch strings.ToLower(param.(string)) {
-    case "milli":
+    case "micro":
         format = "2006-01-02 15:04:05.999"
         return t.Format(format)
-    case "micro":
+    case "milli":
         format = "2006-01-02 15:04:05.999999"
         return t.Format(format)
     case "nano":
@@ -362,17 +362,33 @@ func ConvertTimeToUnix (param interface{}) int64 {
     return t.UnixNano() / 1000000
 }
 
-// param is time str
-func ConvertTimeToStr (param interface{}) int64 {
-    format := "2006-01-02 15:04:05 +0800 CST"
-    t, err := time.Parse(format, param.(string))
-    if err != nil {
-        panic(err)
+// param is time int, to str
+func ConvertTimeToStr (param interface{}) string {
+    format := "2006-01-02 15:04:05"
+    timeStr := ""
+   
+    switch param.(type) {
+    case string:
+        i, err := strconv.ParseInt(param.(string), 10, 64)
+        if err != nil {
+            panic(err)
+        }
+        t := time.Unix(i / 1000, 0)
+
+        timeStr = t.Format(format)
+    case int64:
+        t := time.Unix(param.(int64) / 1000, 0)
+
+        timeStr = t.Format(format)
+    case float64:
+        t := time.Unix(int64(param.(float64)) / 1000, 0)
+        
+        timeStr = t.Format(format)
+    default:
+        fmt.Println("can not recognized time")
     }
 
-    fmt.Println(param.(string), t, t.UnixNano() / 1000000)
-
-    return t.UnixNano() / 1000000
+    return timeStr
 }
 
 // { "Fn::TimeStampOffset" : [ "time" , "offset", "unit" ] }

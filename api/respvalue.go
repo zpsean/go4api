@@ -111,16 +111,28 @@ func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string) inte
     cmdResultsJson := string(cmdResultsB)
 
     if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
-        if searchPath == "$(sql).#" {
+        switch {
+        case searchPath == "$(sql).affectedCount":
             resValue = tcDataStore.CmdAffectedCount
-        } else if searchPath == "$(sql).*" {
+        case searchPath == "$(sql).*":
             resValue = tcDataStore.CmdResults
-        } else if tcDataStore.IfCmdResultsPrimitive() {
+        case tcDataStore.IfCmdResultsPrimitive():
             resValue = tcDataStore.CmdResults
-        } else {
+        default:
             value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
             resValue = value.Value()
         }
+
+        // if searchPath == "$(sql).#" {
+        //     resValue = tcDataStore.CmdAffectedCount
+        // } else if searchPath == "$(sql).*" {
+        //     resValue = tcDataStore.CmdResults
+        // } else if tcDataStore.IfCmdResultsPrimitive() {
+        //     resValue = tcDataStore.CmdResults
+        // } else {
+        //     value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
+        //     resValue = value.Value()
+        // }
     } else {
         resValue = searchPath
     }
