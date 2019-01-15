@@ -78,7 +78,7 @@ func (tcReportSlice TcReportSlice) GetCirclePositions () (map[string][]interface
         if tcReportSlice[i].TestResult == "Success" {
           ccolor = "green"
         } else if tcReportSlice[i].TestResult == "Fail" {
-          // ccolor = "red"
+          ccolor = "red"
         } else {
           ccolor = "gray"
         }
