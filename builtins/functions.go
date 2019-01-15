@@ -218,28 +218,28 @@ func ToString (param interface{}) string {
     // fmt.Println(">>>>>>>>>>>: ", param)
     // fmt.Println(">>>>>>>>>>>: ", int(param.(float64)))
     switch param.(type) {
-        case float64:
-            // Note: tbd, to cosider format for int, float64 more
-            return fmt.Sprint(int(param.(float64)))
-        default:
-            return fmt.Sprint(param)
+    case float64:
+        // Note: tbd, to cosider format for int, float64 more
+        return fmt.Sprint(int(param.(float64)))
+    default:
+        return fmt.Sprint(param)
     }
 }
 
 func ToInt (param interface{}) int {
     switch param.(type) {
-        case float64:
-            // Note: tbd, to cosider format for int, float64 more
-            return int(param.(float64))
-        case string:
-            i, err := strconv.Atoi(param.(string))
-            if err != nil {
-                fmt.Println("ToInt param is: ", param)
-                panic(err)
-            }
-            return i
-        default:
-            return 0
+    case float64:
+        // Note: tbd, to cosider format for int, float64 more
+        return int(param.(float64))
+    case string:
+        i, err := strconv.Atoi(param.(string))
+        if err != nil {
+            fmt.Println("ToInt param is: ", param)
+            panic(err)
+        }
+        return i
+    default:
+        return 0
     }
 }
 

@@ -91,6 +91,7 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
         StartTimeUnixNano: tcExecution.StartTimeUnixNano,
         EndTimeUnixNano: tcExecution.EndTimeUnixNano,
         DurationUnixNano: tcExecution.DurationUnixNano,
+        DurationUnixMillis: tcExecution.DurationUnixNano / 1000000,
         TearDownResult: tcExecution.TearDownResult,
         TearDownTestMessages: tcExecution.TearDownTestMessages,
         TestResult: tcExecution.TestResult,

@@ -60,7 +60,7 @@ func (tcReportSlice TcReportSlice) GetCirclePositions () (map[string][]interface
         cy := (i / 20 + 2) * 50 + offset
 
         cradius := 0
-        du := tcReportSlice[i].DurationUnixNano / 1000000
+        du := tcReportSlice[i].DurationUnixMillis
         switch {
             case du >= 1500:
                 cradius = 14
@@ -78,7 +78,7 @@ func (tcReportSlice TcReportSlice) GetCirclePositions () (map[string][]interface
         if tcReportSlice[i].TestResult == "Success" {
           ccolor = "green"
         } else if tcReportSlice[i].TestResult == "Fail" {
-          ccolor = "red"
+          // ccolor = "red"
         } else {
           ccolor = "gray"
         }
