@@ -16,6 +16,7 @@ import (
     // "strconv"
     "strings"
     "database/sql"
+    // "reflect"
     // "encoding/json"
 
     "go4api/cmd"
@@ -223,12 +224,16 @@ func ScanRows (rows *sql.Rows) (int, []string, []map[string]interface{}) {
             if col != nil {
                 // note, try best to get the type information to interface{}
                 switch col.(type) {
-                    case int64:
-                        record[rowsHeaders[i]] = col.(int64)
-                    case float64:
-                        record[rowsHeaders[i]] = col.(float64)
-                    default:
-                        record[rowsHeaders[i]] = string(col.([]byte))
+                case int:
+                    record[rowsHeaders[i]] = col.(int)
+                case int64:
+                    record[rowsHeaders[i]] = col.(int64)
+                case float32:
+                    record[rowsHeaders[i]] = col.(float32)
+                case float64:
+                    record[rowsHeaders[i]] = col.(float64)
+                default:
+                    record[rowsHeaders[i]] = string(col.([]byte))
                 }
             }
         }

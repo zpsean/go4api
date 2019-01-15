@@ -141,6 +141,7 @@ type TcReportResults struct {
     StartTimeUnixNano int64
     EndTimeUnixNano int64
     DurationUnixNano int64
+    DurationUnixMillis int64
     TearDownResult string // Success, Fail
     TearDownTestMessages [][]*TestMessage
     TestResult string  // Success, Fail, ParentFailed
