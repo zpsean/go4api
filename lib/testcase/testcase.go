@@ -61,6 +61,10 @@ func (tc *TestCase) Outputs() []*OutputsDetails {
     return (*tc)[tc.TcName()].Outputs
 }
 
+func (tc *TestCase) OutFiles() []*OutFilesDetails {
+    return (*tc)[tc.TcName()].OutFiles
+}
+
 func (tc *TestCase) OutGlobalVariables() map[string]interface{} {
     return (*tc)[tc.TcName()].OutGlobalVariables
 }
@@ -368,5 +372,27 @@ func (tcOutDetails *OutputsDetails) GetOutputsDetailsFormat() string {
 
 func (tcOutDetails *OutputsDetails) GetOutputsDetailsData() map[string][]interface{} {
     return (*tcOutDetails).Data
+}
+
+
+//outFiles
+func (tcOutFiles *OutFilesDetails) GetTargetFileName() string {
+    return (*tcOutFiles).TargetFile
+}
+
+func (tcOutFiles *OutFilesDetails) GetTargetHeader() []string {
+    return (*tcOutFiles).TargetHeader
+}
+
+func (tcOutFiles *OutFilesDetails) GetSources() []string {
+    return (*tcOutFiles).Sources
+}
+
+func (tcOutFiles *OutFilesDetails) GetOperation() string {
+    return (*tcOutFiles).Operation
+}
+
+func (tcOutFiles *OutFilesDetails) GetData() map[string][]interface{} {
+    return (*tcOutFiles).Data
 }
 

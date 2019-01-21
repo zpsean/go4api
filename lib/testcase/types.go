@@ -71,6 +71,7 @@ type TestCaseBasics struct {
     Request *Request            `json:"request"`
     Response *Response          `json:"response"`
     Outputs []*OutputsDetails   `json:"outputs"`
+    OutFiles []*OutFilesDetails   `json:"outFiles"`
     OutGlobalVariables map[string]interface{}   `json:"outGlobalVariables"`
     OutLocalVariables map[string]interface{}   `json:"outLocalVariables"`
     Session map[string]interface{}           `json:"session"`
@@ -94,6 +95,14 @@ type Response struct {
 type OutputsDetails struct {
     FileName string
     Format string
+    Data map[string][]interface{}
+}
+
+type OutFilesDetails struct {
+    TargetFile string
+    TargetHeader []string
+    Sources []string
+    Operation string
     Data map[string][]interface{}
 }
 

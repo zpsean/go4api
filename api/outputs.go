@@ -23,7 +23,7 @@ import (
 )
 
 
-func (tcDataStore *TcDataStore) WriteOutputsDataToFile (testResult string) {
+func (tcDataStore *TcDataStore) WriteOutputsDataToFile () {
     var expOutputs []*testcase.OutputsDetails
 
     tcData := tcDataStore.TcData
@@ -32,36 +32,33 @@ func (tcDataStore *TcDataStore) WriteOutputsDataToFile (testResult string) {
     // actualHeader := tcDataStore.HttpActualHeader
     actualBody := tcDataStore.HttpActualBody
 
-    if testResult == "Success" {
-        expOutputs = tcData.TestCase.Outputs()
-        if len(expOutputs) > 0 {
-            // get the actual value from actual body based on the fields in json outputs
-            for i, _ := range expOutputs {
-                var keyStrList []string
-                var valueStrList []string
-                // (1). get the full path of outputsfile
-                tempDir := utils.CreateTempDir(tcData.JsonFilePath)
-                outputsFile := filepath.Join(tempDir, expOutputs[i].GetOutputsDetailsFileName())
-                os.Remove(outputsFile)
-                // (2). get the outputsfile format, may be csv, excel, etc.
-                outputsFileFormat := expOutputs[i].GetOutputsDetailsFormat()
-                // (3). get the outputsfile data
-                outputsData := expOutputs[i].GetOutputsDetailsData()
-                switch strings.ToLower(outputsFileFormat) {
-                    case "csv":
-                        keyStrList, valueStrList = tcDataStore.GetOutputsCsvData(outputsData)
-                        // write csv header
-                        utils.GenerateCsvFileBasedOnVarOverride(keyStrList, outputsFile)
-                        // write csv data
-                        utils.GenerateCsvFileBasedOnVarAppend(valueStrList, outputsFile)
-                    case "xlsx":
-                        SaveHttpRespFile(actualBody, outputsFile)
-                }   
-            } 
-        }
-    } else {
-        // fmt.Println("Warning: test execution failed, no outputs file!")
+    expOutputs = tcData.TestCase.Outputs()
+    if len(expOutputs) > 0 {
+        // get the actual value from actual body based on the fields in json outputs
+        for i, _ := range expOutputs {
+            var keyStrList []string
+            var valueStrList []string
+            // (1). get the full path of outputsfile
+            tempDir := utils.CreateTempDir(tcData.JsonFilePath)
+            outputsFile := filepath.Join(tempDir, expOutputs[i].GetOutputsDetailsFileName())
+            os.Remove(outputsFile)
+            // (2). get the outputsfile format, may be csv, excel, etc.
+            outputsFileFormat := expOutputs[i].GetOutputsDetailsFormat()
+            // (3). get the outputsfile data
+            outputsData := expOutputs[i].GetOutputsDetailsData()
+            switch strings.ToLower(outputsFileFormat) {
+                case "csv":
+                    keyStrList, valueStrList = tcDataStore.GetOutputsCsvData(outputsData)
+                    // write csv header
+                    utils.GenerateCsvFileBasedOnVarOverride(keyStrList, outputsFile)
+                    // write csv data
+                    utils.GenerateCsvFileBasedOnVarAppend(valueStrList, outputsFile)
+                case "xlsx":
+                    SaveHttpRespFile(actualBody, outputsFile)
+            }   
+        } 
     }
+
 }
 
 func (tcDataStore *TcDataStore) GetOutputsCsvData (outputsData map[string][]interface{}) ([]string, []string) {

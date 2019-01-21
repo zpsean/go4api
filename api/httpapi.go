@@ -197,5 +197,13 @@ func (tcDataStore *TcDataStore) HandleHttpResultsForOut () {
 
     expOutLocalVariables := tcData.TestCase.OutLocalVariables()
     tcDataStore.WriteOutTcLocalVariables(expOutLocalVariables)
+
+    // write outputs files if has
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outputs"
+    tcDataStore.RenderTcVariables(path)
+    tcDataStore.EvaluateTcBuiltinFunctions(path)
+
+    // expOutputs := tcData.TestCase.Outputs()
+    tcDataStore.WriteOutputsDataToFile()
 }
 

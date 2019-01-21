@@ -81,6 +81,7 @@ func Convert () {
                 &g4ARequest,
                 &g4AResponse,
                 []*testcase.OutputsDetails{},
+                []*testcase.OutFilesDetails{},
                 map[string]interface{}{},  // OutGlobalVariables
                 map[string]interface{}{},  // OutLocalVariables
                 map[string]interface{}{},  // Session
