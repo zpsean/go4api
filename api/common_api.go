@@ -91,6 +91,29 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
 
                 cmdsResults = append(cmdsResults, sResults[0:]...)
                 finalTestMessages = append(finalTestMessages, sMessages[0:]...)
+            case "excel":
+                // var cmdStr, cmdKey, cmdValue string
+
+                // cmdGroupJson := tcDataStore.PrepCmd(i, ".cmd")
+                // //
+                // cmdMap := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd").Map()
+       
+                // for k, v := range cmdMap {
+                //     cmdStr = k
+                //     if len(v.Array()) == 1 {
+                //         cmdKey = v.Array()[0].String()
+                //         cmdValue = ""
+                //     }
+                //     if len(v.Array()) > 1 {
+                //         cmdKey = v.Array()[0].String()
+                //         cmdValue = v.Array()[1].String()
+                //     }
+                // }
+                // init
+                tcDataStore.CmdType = "excel"
+                tcDataStore.CmdExecStatus = ""
+                tcDataStore.CmdAffectedCount = -1
+                tcDataStore.CmdResults = -1
             case "init":
                 cmdGroupJson := tcDataStore.PrepCmd(i, ".cmd")
                 cmdStr := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd").String()
