@@ -87,7 +87,9 @@ func (tcDataStore *TcDataStore) GetBodyActualValueByPath (key string) interface{
     prefix2 := "$."
     lenPrefix2 := len(prefix2)
 
-    if len(key) > lenPrefix && key[0:lenPrefix] == prefix {
+    if key == prefix + "*" || key == prefix2 + "*" {
+        actualValue = string(actualBody)
+    } else if len(key) > lenPrefix && key[0:lenPrefix] == prefix {
         value := gjson.Get(string(actualBody), key[lenPrefix:])
         actualValue = value.Value()
     } else if len(key) > lenPrefix2 && key[0:lenPrefix2] == prefix2 {

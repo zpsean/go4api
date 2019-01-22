@@ -265,10 +265,15 @@ func (tcDataStore *TcDataStore) HandleCmdResultsForOut (i int) {
     expOutGlobalVariables := cmdGroup[i].OutGlobalVariables
     tcDataStore.WriteOutGlobalVariables(expOutGlobalVariables)
 
-    // write out tc loca variables if has
+    // write out tc local variables if has
     cmdGroup = tcDataStore.PrepCmdGroup(i, ".outLocalVariables")
     expOutLocalVariables := cmdGroup[i].OutLocalVariables
     tcDataStore.WriteOutTcLocalVariables(expOutLocalVariables)
+
+    // write out files if has
+    cmdGroup = tcDataStore.PrepCmdGroup(i, ".outFiles")
+    expOutFiles := cmdGroup[i].OutFiles
+    tcDataStore.HandleOutFiles(expOutFiles)
 }
 
 func (tcDataStore *TcDataStore) PrepCmdGroup (i int, subPath string) []*testcase.CommandDetails {

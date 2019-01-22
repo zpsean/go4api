@@ -388,6 +388,10 @@ func (tcOutFiles *OutFilesDetails) GetSources() []string {
     return (*tcOutFiles).Sources
 }
 
+func (tcOutFiles *OutFilesDetails) GetSourcesFields() []string {
+    return (*tcOutFiles).SourcesFields
+}
+
 func (tcOutFiles *OutFilesDetails) GetOperation() string {
     return (*tcOutFiles).Operation
 }
@@ -395,4 +399,5 @@ func (tcOutFiles *OutFilesDetails) GetOperation() string {
 func (tcOutFiles *OutFilesDetails) GetData() map[string][]interface{} {
     return (*tcOutFiles).Data
 }
+
 
