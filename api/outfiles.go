@@ -12,27 +12,27 @@ package api
 
 import (
     "os"
-    // "fmt"
+    "fmt"
     "strings"
-    // "reflect"
+    "reflect"
     "path/filepath"
-    // "encoding/json"
+    "encoding/json"
+    "encoding/csv"
 
     "go4api/lib/testcase"
     "go4api/utils"
+
+    gjson "github.com/tidwall/gjson"
+    xlsx "github.com/tealeg/xlsx"
 )
 
 
-func (tcDataStore *TcDataStore) HandleOutFiles () {
-    var expOutFiles []*testcase.OutFilesDetails
+func (tcDataStore *TcDataStore) HandleOutFiles (expOutFiles []*testcase.OutFilesDetails) {
+    fmt.Println("----> 1")
 
     tcData := tcDataStore.TcData
-
-    // actualStatusCode := tcDataStore.HttpActualStatusCode
-    // actualHeader := tcDataStore.HttpActualHeader
     actualBody := tcDataStore.HttpActualBody
 
-    expOutFiles = tcData.TestCase.OutFiles()
     if len(expOutFiles) > 0 {
         // get the actual value from actual body based on the fields in json outputs
         for i, _ := range expOutFiles {
@@ -56,10 +56,19 @@ func (tcDataStore *TcDataStore) HandleOutFiles () {
                 utils.GenerateCsvFileBasedOnVarAppend(valueStrList, outputsFile)
             case "ObjectToExcel":
                 SaveHttpRespFile(actualBody, outputsFile)
-            case "JsonToCsv":
-                SaveHttpRespFile(actualBody, outputsFile)
-            case "JsonToExcel":
-                SaveHttpRespFile(actualBody, outputsFile)
+            case "jsontocsv":
+                fmt.Println("---->")
+                sources := expOutFiles[i].GetSources()
+                sourcesFields := expOutFiles[i].GetSourcesFields()
+                targetHeader := expOutFiles[i].GetTargetHeader()
+
+                SaveJsonToCsvFile(tcDataStore, sources, sourcesFields, targetHeader, outputsFile)
+            case "jsontoexcel":
+                sources := expOutFiles[i].GetSources()
+                sourcesFields := expOutFiles[i].GetSourcesFields()
+                targetHeader := expOutFiles[i].GetTargetHeader()
+
+                SaveJsonToExcelFile(tcDataStore, sources, sourcesFields, targetHeader, outputsFile)
             case "UnionExcel":
                 SaveHttpRespFile(actualBody, outputsFile)
             case "UnionCsv":
@@ -74,62 +83,105 @@ func (tcDataStore *TcDataStore) HandleOutFiles () {
 }
 
 
+func SaveJsonToCsvFile (tcDataStore *TcDataStore, sources []string, sourcesFields []string, targetHeader []string, outputsFile string) {
+    outFile := OpenOutFileForAppend(outputsFile)
+    w := csv.NewWriter(outFile)
 
-  //     "outFiles": [
-  //       {
-  //         "filename": "storeManagementInfo.xlsx",
-  //         "format": "xlsx",
-  //         "data": {
-  //           "content": ["$(body)"]
-  //         }
-  //       },
-  //       {
-  //         "filename": "storeManagementInfo.csv",
-  //         "format": "DataToCsv",
-  //         "data": {
-  //           "title": ["titlevalue"],
-  //           "count2": [20]
-  //         }
-  //       },
-  //       {
-  //         "targetFile": "storeManagementInfo.xlsx",
-  //         "targetHeader": [],
-  //         "sources": [],
-  //         "operation": "DataToExcel",
-  //         "data": {
-  //           "content": ["$(body)"]
-  //         }
-  //       },
-  //       {
-  //         "targetFile": "storeManagementInfo.xlsx",
-  //         "targetHeader": [],
-  //         "sources": ["$(body)"],
-  //         "operation": "JsonToCsv"
-  //       },
-  //       {
-  //         "targetFile": "storeManagementInfo.xlsx",
-  //         "targetHeader": [],
-  //         "sources": ["$(sql).*"],
-  //         "operation": "JsonToExcel"
-  //       },
-  //       {
-  //         "targetFile": "storeManagementInfo.xlsx",
-  //         "targetHeader": [],
-  //         "sources": ["file1", "file2"],
-  //         "operation": "Union"
-  //       },
-  //       {
-  //         "targetFile": "storeManagementInfo.xlsx",
-  //         "targetHeader": [],
-  //         "sources": ["file1"],
-  //         "operation": "CsvToExcel"
-  //       },
-  //       {
-  //         "targetFile": "storeManagementInfo.xlsx",
-  //         "targetHeader": [],
-  //         "sources": ["file1"],
-  //         "operation": "ExcelToCsv"
-  //       }
-  //     ]
-  //   }
-  // }
+    w.Write(targetHeader)
+ 
+    jsonValue := tcDataStore.GetResponseValue(sources[0])
+    valueType := reflect.TypeOf(jsonValue).Kind().String()
+
+    // http returns []bytes -> string, sql returns []map[string]interface{}
+    jsonStr := ""
+    if valueType == "string" {
+        jsonStr = jsonValue.(string)
+    } else {
+        jsonBytes, _ := json.Marshal(jsonValue)
+        jsonStr = string(jsonBytes)
+    }
+    fmt.Println("jsonStr: ", jsonStr)
+
+    jsonLength := int(gjson.Get(jsonStr, "#").Int())
+
+    for i := 0; i < jsonLength; i++ {
+        if len(sourcesFields) == 0 {
+        } else {
+            var tmpSlice []string
+            for ii, _ := range sourcesFields {
+                fValue := gjson.Get(jsonStr, fmt.Sprint(i) + "." + sourcesFields[ii])
+                tmpSlice = append(tmpSlice, fValue.String())
+            }
+
+            w.Write(tmpSlice)
+        }
+    }
+
+    w.Flush()
+    outFile.Close()
+}
+
+func SaveJsonToExcelFile (tcDataStore *TcDataStore, sources []string, sourcesFields []string, targetHeader []string, outputsFile string) {
+    var file *xlsx.File
+    var sheet *xlsx.Sheet
+    var row *xlsx.Row
+    var cell *xlsx.Cell
+    var err error
+
+    file = xlsx.NewFile()
+    sheet, err = file.AddSheet("Sheet1")
+    if err != nil {
+        fmt.Printf(err.Error())
+    }
+
+    row = sheet.AddRow()
+    for i, _ := range targetHeader {
+        cell = row.AddCell()
+        cell.Value = targetHeader[i]
+    }
+
+    jsonValue := tcDataStore.GetResponseValue(sources[0])
+    valueType := reflect.TypeOf(jsonValue).Kind().String()
+
+    // http returns []bytes -> string, sql returns []map[string]interface{}
+    jsonStr := ""
+    if valueType == "string" {
+        jsonStr = jsonValue.(string)
+    } else {
+        jsonBytes, _ := json.Marshal(jsonValue)
+        jsonStr = string(jsonBytes)
+    }
+    fmt.Println("jsonStr: ", jsonStr)
+
+    jsonLength := int(gjson.Get(jsonStr, "#").Int())
+
+    for i := 0; i < jsonLength; i++ {
+        row = sheet.AddRow()
+
+        if len(sourcesFields) == 0 {
+        } else {
+            for ii, _ := range sourcesFields {
+                fValue := gjson.Get(jsonStr, fmt.Sprint(i) + "." + sourcesFields[ii])
+
+                cell = row.AddCell()
+                cell.Value = fValue.String()
+            }
+        }
+    }
+
+    err = file.Save(outputsFile)
+    if err != nil {
+        fmt.Printf(err.Error())
+    }
+}
+
+
+func OpenOutFileForAppend(logFile string) *os.File {
+    file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+    if err != nil {
+      panic(err) 
+    }
+
+    return file
+}
+

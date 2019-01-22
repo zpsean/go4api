@@ -102,6 +102,7 @@ type OutFilesDetails struct {
     TargetFile string
     TargetHeader []string
     Sources []string
+    SourcesFields []string
     Operation string
     Data map[string][]interface{}
 }
@@ -114,6 +115,7 @@ type CommandDetails struct {
     OutGlobalVariables map[string]interface{}   `json:"outGlobalVariables"`
     OutLocalVariables map[string]interface{}    `json:"outLocalVariables"`
     Session map[string]interface{}              `json:"session"`
+    OutFiles []*OutFilesDetails                 `json:"outFiles"`
 }
 
 type MutationInfo struct {
