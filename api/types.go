@@ -103,7 +103,7 @@ func (tcDataStore *TcDataStore) PrepVariablesBuiltins (path string) {
         tcDataStore.RenderTcVariables(path, res)
         tcDataStore.EvaluateTcBuiltinFunctions(path, res)
     case "cmd":
-        var res testcase.CommandDetails
+        var res string
 
         tcDataStore.RenderTcVariables(path, res)
         tcDataStore.EvaluateTcBuiltinFunctions(path, res)
@@ -142,19 +142,18 @@ func (tcDataStore *TcDataStore) RenderTcVariables (path string, res interface{})
 
             jsonStr = strings.Replace(jsonStr, "${" + key + "}", valueStr, -1)
         }
-
-        fmt.Println("")
-        fmt.Println("jsonStr: ", jsonStr)
-
         // Note: if the jsonStr is string, like "request":{"method":"POST","path":"... 
         // the returned string tcDataJson is: "{\"method\":\"POST\",\"path\":\"...
-        // then 
-        json.Unmarshal([]byte(jsonStr), &res) 
-        tcDataJson, _  = sjson.Set(tcDataJson, path, &res)
+        // for this issue, be kind to use the right struct but not string
+        switch res.(type) {
+        case string:
+            tcDataJson, _  = sjson.Set(tcDataJson, path, jsonStr)
+        default:
+            json.Unmarshal([]byte(jsonStr), &res) 
 
-        fmt.Println("")
-        fmt.Println("tcDataJson: ", tcDataJson)
-
+            tcDataJson, _  = sjson.Set(tcDataJson, path, res)
+        }
+        
         json.Unmarshal([]byte(tcDataJson), &resTcData)
         tcDataStore.TcData = &resTcData
     }

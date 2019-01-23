@@ -28,8 +28,6 @@ import (
 
 
 func (tcDataStore *TcDataStore) HandleOutFiles (expOutFiles []*testcase.OutFilesDetails) {
-    fmt.Println("----> 1")
-
     tcData := tcDataStore.TcData
     actualBody := tcDataStore.HttpActualBody
 
@@ -57,7 +55,6 @@ func (tcDataStore *TcDataStore) HandleOutFiles (expOutFiles []*testcase.OutFiles
             case "ObjectToExcel":
                 SaveHttpRespFile(actualBody, outputsFile)
             case "jsontocsv":
-                fmt.Println("---->")
                 sources := expOutFiles[i].GetSources()
                 sourcesFields := expOutFiles[i].GetSourcesFields()
                 targetHeader := expOutFiles[i].GetTargetHeader()
@@ -151,7 +148,6 @@ func SaveJsonToExcelFile (tcDataStore *TcDataStore, sources []string, sourcesFie
         jsonBytes, _ := json.Marshal(jsonValue)
         jsonStr = string(jsonBytes)
     }
-    // fmt.Println("jsonStr: ", jsonStr)
 
     jsonLength := int(gjson.Get(jsonStr, "#").Int())
 

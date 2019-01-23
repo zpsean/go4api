@@ -208,7 +208,6 @@ func (tcDataStore *TcDataStore) HandleSingleCmdResult (i int) ([]bool, [][]*test
 
         singleCmdResults, testMessages := tcDataStore.CompareRespGroup(cmdExpResp)
 
-        fmt.Println("singleCmdResults, testMessages: ", singleCmdResults, testMessages)
         // HandleSingleCommandResults for out
         if singleCmdResults == true {
             tcDataStore.HandleCmdResultsForOut(i)

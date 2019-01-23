@@ -298,15 +298,28 @@ func (tc *TestCase) DelReqPayload (key string) {
 
 // type Response struct
 func (tc *TestCase) RespStatus() map[string]interface{} {
-    return (*tc)[tc.TcName()].Response.Status
+    if (*tc)[tc.TcName()].Response == nil {
+        return nil
+    } else {
+        return (*tc)[tc.TcName()].Response.Status
+    }
+    
 }
 
 func (tc *TestCase) RespHeaders() map[string]interface{} {
-    return (*tc)[tc.TcName()].Response.Headers
+    if (*tc)[tc.TcName()].Response == nil {
+        return nil
+    } else {
+        return (*tc)[tc.TcName()].Response.Headers
+    }
 }
 
 func (tc *TestCase) RespBody() map[string]interface{} {
-    return (*tc)[tc.TcName()].Response.Body
+    if (*tc)[tc.TcName()].Response == nil {
+        return nil
+    } else {
+        return (*tc)[tc.TcName()].Response.Body
+    }
 }
 
 // !! ---------------------------------------
