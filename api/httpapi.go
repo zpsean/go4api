@@ -29,11 +29,10 @@ func (tcDataStore *TcDataStore) RunHttp (baseUrl string) (string, []*testcase.Te
 
 func (tcDataStore *TcDataStore) CallHttp (baseUrl string) {
     path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "request"
-    tcDataStore.RenderTcRequestVariables(path)
-    tcDataStore.EvaluateTcRequestBuiltinFunctions(path)
+    tcDataStore.PrepVariablesBuiltins(path)
 
     tcData := tcDataStore.TcData
-    
+
     // urlStr := tcData.TestCase.UrlRaw(baseUrl)
     urlStr := tcData.TestCase.UrlEncode(baseUrl)
     //
@@ -70,9 +69,7 @@ func (tcDataStore *TcDataStore) Compare () (string, []*testcase.TestMessage) {
     var testMessages []*testcase.TestMessage
 
     path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "response"
-    tcDataStore.RenderTcResponseVariables(path)
-    tcDataStore.EvaluateTcResponseBuiltinFunctions(path)
-    // tcDataStore.EvaluateTcBuiltinFunctions(path)
+    tcDataStore.PrepVariablesBuiltins(path)
     
     // status
     testResultsS, testMessagesS := tcDataStore.CompareStatus()
@@ -176,40 +173,28 @@ func (tcDataStore *TcDataStore) HandleHttpResultsForOut () {
     tcData := tcDataStore.TcData
     // write out session if has
     path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "session"
-    tcDataStore.RenderTcVariables(path)
-    tcDataStore.EvaluateTcBuiltinFunctions(path)
+    tcDataStore.PrepVariablesBuiltins(path)
 
     expTcSession := tcData.TestCase.Session()
     tcDataStore.WriteSession(expTcSession)
 
     // write out global variables if has
     path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outGlobalVariables"
-    tcDataStore.RenderTcVariables(path)
-    tcDataStore.EvaluateTcBuiltinFunctions(path)
+    tcDataStore.PrepVariablesBuiltins(path)
 
     expOutGlobalVariables := tcData.TestCase.OutGlobalVariables()
     tcDataStore.WriteOutGlobalVariables(expOutGlobalVariables)
 
     // write out tc loca variables if has
     path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outLocalVariables"
-    tcDataStore.RenderTcVariables(path)
-    tcDataStore.EvaluateTcBuiltinFunctions(path)
+    tcDataStore.PrepVariablesBuiltins(path)
 
     expOutLocalVariables := tcData.TestCase.OutLocalVariables()
     tcDataStore.WriteOutTcLocalVariables(expOutLocalVariables)
 
-    // write outputs if has
-    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outputs"
-    tcDataStore.RenderTcVariables(path)
-    tcDataStore.EvaluateTcBuiltinFunctions(path)
-
-    // expOutputs := tcData.TestCase.Outputs()
-    tcDataStore.WriteOutputsDataToFile()
-
     // write out files if has
     path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outFiles"
-    tcDataStore.RenderTcVariables(path)
-    tcDataStore.EvaluateTcBuiltinFunctions(path)
+    tcDataStore.PrepVariablesBuiltins(path)
 
     expOutFiles := tcData.TestCase.OutFiles()
     tcDataStore.HandleOutFiles(expOutFiles)
