@@ -56,6 +56,8 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
     var actualHeader interface{}
     var globalVariables interface{}
     var tcSession interface{}
+    var tcLocalVariables interface{}
+
     if cmd.Opt.IfShowOriginRequest == true {
         caseOrigin = tcExecution.TestCaseDataInfo.TestCase
 
@@ -64,6 +66,7 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
         actualHeader = tcExecution.ActualHeader
         globalVariables = gsession.LoopGlobalVariables()
         tcSession = gsession.LookupTcSession(tcExecution.TcName())
+        tcLocalVariables = tcExecution.LocalVariables
     }
 
     tcReportRes := &TcReportResults { 
@@ -98,6 +101,7 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
         CaseOrigin: caseOrigin,
         GlobalVariables: globalVariables,
         Session: tcSession,
+        LocalVariables: tcLocalVariables,
         ActualHeader: actualHeader,
         ActualBody: actualBody,
     }

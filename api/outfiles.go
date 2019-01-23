@@ -100,7 +100,7 @@ func SaveJsonToCsvFile (tcDataStore *TcDataStore, sources []string, sourcesField
         jsonBytes, _ := json.Marshal(jsonValue)
         jsonStr = string(jsonBytes)
     }
-    fmt.Println("jsonStr: ", jsonStr)
+    // fmt.Println("jsonStr: ", jsonStr)
 
     jsonLength := int(gjson.Get(jsonStr, "#").Int())
 
@@ -151,7 +151,7 @@ func SaveJsonToExcelFile (tcDataStore *TcDataStore, sources []string, sourcesFie
         jsonBytes, _ := json.Marshal(jsonValue)
         jsonStr = string(jsonBytes)
     }
-    fmt.Println("jsonStr: ", jsonStr)
+    // fmt.Println("jsonStr: ", jsonStr)
 
     jsonLength := int(gjson.Get(jsonStr, "#").Int())
 

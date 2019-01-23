@@ -28,6 +28,8 @@ func BuiltinFunctionsMapping (key string) interface{} {
         "Select": Select,
         "Join": Join,
         "Split": Split,
+        "Replace": Replace,
+        "SubString": SubString,
         "ToString": ToString,
         "ToInt": ToInt,
         "ToBool": ToBool,

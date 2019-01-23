@@ -71,6 +71,7 @@ func DispatchApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecut
         TearDownResult: tcTearDownResult,
         TearDownTestMessages: tearDownTestMessages,
         TestResult: testResult,
+        LocalVariables: tcDataStore.TcLocalVariables,
     }
 
     // (6). write the channel to executor for scheduler and log

@@ -32,112 +32,19 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
 
         switch strings.ToLower(cmdType) {
             case "sql":
-                cmdGroupJson := tcDataStore.PrepCmd(i, ".cmd")
-                //
-                cmdStr := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd").String()
-                tgtDb := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmdSource").String()
-                // init
-                tcDataStore.CmdType = "sql"
-                tcDataStore.CmdExecStatus = ""
-                tcDataStore.CmdAffectedCount = -1
-                tcDataStore.CmdResults = -1
-
-                // call sql
-                if len(tgtDb) == 0 {
-                    fmt.Println("No target db provided, default to master")
-                    tgtDb = "master"
-                }
-                cmdAffectedCount, _, cmdResults, cmdExecStatus := RunSql(tgtDb, cmdStr)
-                
-                tcDataStore.CmdExecStatus = cmdExecStatus
-                tcDataStore.CmdAffectedCount = cmdAffectedCount
-                tcDataStore.CmdResults = cmdResults
-
-                sResults, sMessages = tcDataStore.HandleSingleCmdResult(i)
+                sResults, sMessages = tcDataStore.HandleSqlCmd(i)
 
                 cmdsResults = append(cmdsResults, sResults[0:]...)
                 finalTestMessages = append(finalTestMessages, sMessages[0:]...)
             case "redis":
-                var cmdStr, cmdKey, cmdValue string
-
-                cmdGroupJson := tcDataStore.PrepCmd(i, ".cmd")
-                //
-                cmdMap := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd").Map()
-       
-                for k, v := range cmdMap {
-                    cmdStr = k
-                    if len(v.Array()) == 1 {
-                        cmdKey = v.Array()[0].String()
-                        cmdValue = ""
-                    }
-                    if len(v.Array()) > 1 {
-                        cmdKey = v.Array()[0].String()
-                        cmdValue = v.Array()[1].String()
-                    }
-                }
-                // init
-                tcDataStore.CmdType = "redis"
-                tcDataStore.CmdExecStatus = ""
-                tcDataStore.CmdAffectedCount = -1
-                tcDataStore.CmdResults = -1
-
-                cmdAffectedCount, cmdResults, cmdExecStatus := RunRedis(cmdStr, cmdKey, cmdValue)
-                
-                tcDataStore.CmdExecStatus = cmdExecStatus
-                tcDataStore.CmdAffectedCount = cmdAffectedCount
-                tcDataStore.CmdResults = cmdResults
-
-                sResults, sMessages = tcDataStore.HandleSingleCmdResult(i)
+                sResults, sMessages = tcDataStore.HandleRedisCmd(i)
 
                 cmdsResults = append(cmdsResults, sResults[0:]...)
                 finalTestMessages = append(finalTestMessages, sMessages[0:]...)
-            case "excel":
-                // var cmdStr, cmdKey, cmdValue string
-
-                // cmdGroupJson := tcDataStore.PrepCmd(i, ".cmd")
-                // //
-                // cmdMap := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd").Map()
-       
-                // for k, v := range cmdMap {
-                //     cmdStr = k
-                //     if len(v.Array()) == 1 {
-                //         cmdKey = v.Array()[0].String()
-                //         cmdValue = ""
-                //     }
-                //     if len(v.Array()) > 1 {
-                //         cmdKey = v.Array()[0].String()
-                //         cmdValue = v.Array()[1].String()
-                //     }
-                // }
-                // init
-                tcDataStore.CmdType = "excel"
-                tcDataStore.CmdExecStatus = ""
-                tcDataStore.CmdAffectedCount = -1
-                tcDataStore.CmdResults = -1
             case "init":
-                cmdGroupJson := tcDataStore.PrepCmd(i, ".cmd")
-                cmdStr := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd").String()
-                s := strings.ToLower(cmdStr)
+                
 
-                if len(cmdStr) > 0 && strings.Contains(s, "sleep") {
-                    // here may has cmd "sleep xx" for debug purpose
-                    t := strings.Split(s, " ")
-                    if len(t) == 1 {
-                        fmt.Println("No sleep duration provided, no sleep")
-                    } else {
-                        tm, err := strconv.Atoi(t[1])
-                        if err != nil {
-                            fmt.Println("Provided sleep duration is not number, please fix")
-                        }
-
-                        time.Sleep(time.Duration(tm)*time.Second)
-                    }
-                }
-
-                // as maybe no cmd is executed, the CmdExecStatus is always "cmdSuccess"
-                tcDataStore.CmdExecStatus = "cmdSuccess"
-
-                sResults, sMessages = tcDataStore.HandleSingleCmdResult(i)
+                sResults, sMessages = tcDataStore.HandleInitCmd(i)
 
                 cmdsResults = append(cmdsResults, sResults[0:]...)
                 finalTestMessages = append(finalTestMessages, sMessages[0:]...)
@@ -155,6 +62,105 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
     }
 
     return finalResults, finalTestMessages
+}
+
+func (tcDataStore *TcDataStore) HandleSqlCmd (i int) ([]bool, [][]*testcase.TestMessage) {
+    var sResults []bool
+    var sMessages [][]*testcase.TestMessage
+
+    cmdGroupJson := tcDataStore.PrepCmd(i, ".cmd")
+    //
+    cmdStr := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd").String()
+    tgtDb := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmdSource").String()
+    // init
+    tcDataStore.CmdType = "sql"
+    tcDataStore.CmdExecStatus = ""
+    tcDataStore.CmdAffectedCount = -1
+    tcDataStore.CmdResults = -1
+
+    // call sql
+    if len(tgtDb) == 0 {
+        fmt.Println("No target db provided, default to master")
+        tgtDb = "master"
+    }
+    cmdAffectedCount, _, cmdResults, cmdExecStatus := RunSql(tgtDb, cmdStr)
+    
+    tcDataStore.CmdExecStatus = cmdExecStatus
+    tcDataStore.CmdAffectedCount = cmdAffectedCount
+    tcDataStore.CmdResults = cmdResults
+
+    sResults, sMessages = tcDataStore.HandleSingleCmdResult(i)
+
+    return sResults, sMessages
+}
+
+func (tcDataStore *TcDataStore) HandleRedisCmd (i int) ([]bool, [][]*testcase.TestMessage) {
+    var sResults []bool
+    var sMessages [][]*testcase.TestMessage
+
+    var cmdStr, cmdKey, cmdValue string
+
+    cmdGroupJson := tcDataStore.PrepCmd(i, ".cmd")
+    //
+    cmdMap := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd").Map()
+
+    for k, v := range cmdMap {
+        cmdStr = k
+        if len(v.Array()) == 1 {
+            cmdKey = v.Array()[0].String()
+            cmdValue = ""
+        }
+        if len(v.Array()) > 1 {
+            cmdKey = v.Array()[0].String()
+            cmdValue = v.Array()[1].String()
+        }
+    }
+    // init
+    tcDataStore.CmdType = "redis"
+    tcDataStore.CmdExecStatus = ""
+    tcDataStore.CmdAffectedCount = -1
+    tcDataStore.CmdResults = -1
+
+    cmdAffectedCount, cmdResults, cmdExecStatus := RunRedis(cmdStr, cmdKey, cmdValue)
+    
+    tcDataStore.CmdExecStatus = cmdExecStatus
+    tcDataStore.CmdAffectedCount = cmdAffectedCount
+    tcDataStore.CmdResults = cmdResults
+
+    sResults, sMessages = tcDataStore.HandleSingleCmdResult(i)
+
+    return sResults, sMessages
+}
+
+func (tcDataStore *TcDataStore) HandleInitCmd (i int) ([]bool, [][]*testcase.TestMessage) {
+    var sResults []bool
+    var sMessages [][]*testcase.TestMessage
+
+    cmdGroupJson := tcDataStore.PrepCmd(i, ".cmd")
+    cmdStr := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd").String()
+    s := strings.ToLower(cmdStr)
+
+    if len(cmdStr) > 0 && strings.Contains(s, "sleep") {
+        // here may has cmd "sleep xx" for debug purpose
+        t := strings.Split(s, " ")
+        if len(t) == 1 {
+            fmt.Println("No sleep duration provided, no sleep")
+        } else {
+            tm, err := strconv.Atoi(t[1])
+            if err != nil {
+                fmt.Println("Provided sleep duration is not number, please fix")
+            }
+
+            time.Sleep(time.Duration(tm)*time.Second)
+        }
+    }
+
+    // as maybe no cmd is executed, the CmdExecStatus is always "cmdSuccess"
+    tcDataStore.CmdExecStatus = "cmdSuccess"
+
+    sResults, sMessages = tcDataStore.HandleSingleCmdResult(i)
+
+    return sResults, sMessages
 }
 
 func (tcDataStore *TcDataStore) PrepCmd (i int, subPath string) string {
@@ -201,6 +207,7 @@ func (tcDataStore *TcDataStore) HandleSingleCmdResult (i int) ([]bool, [][]*test
 
         singleCmdResults, testMessages := tcDataStore.CompareRespGroup(cmdExpResp)
 
+        fmt.Println("singleCmdResults, testMessages: ", singleCmdResults, testMessages)
         // HandleSingleCommandResults for out
         if singleCmdResults == true {
             tcDataStore.HandleCmdResultsForOut(i)
@@ -255,17 +262,29 @@ func (tcDataStore *TcDataStore) CompareRespGroup (cmdExpResp map[string]gjson.Re
 func (tcDataStore *TcDataStore) HandleCmdResultsForOut (i int) {
     var cmdGroup []*testcase.CommandDetails
 
+    // aa, _ := json.Marshal(tcDataStore)
+    // fmt.Println("tcDataStore: ", string(aa))
+
     // write out session if has
     cmdGroup = tcDataStore.PrepCmdGroup(i, ".session")
     expTcSession := cmdGroup[i].Session
     tcDataStore.WriteSession(expTcSession)
 
     // write out global variables if has
+    // path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + "outGlobalVariables"
+    // tcDataStore.RenderTcVariables(path)
+    // tcDataStore.EvaluateTcBuiltinFunctions(path)
+ 
     cmdGroup = tcDataStore.PrepCmdGroup(i, ".outGlobalVariables")
+    
     expOutGlobalVariables := cmdGroup[i].OutGlobalVariables
     tcDataStore.WriteOutGlobalVariables(expOutGlobalVariables)
 
     // write out tc local variables if has
+    // path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + "outLocalVariables"
+    // tcDataStore.RenderTcVariables(path)
+    // tcDataStore.EvaluateTcBuiltinFunctions(path)
+
     cmdGroup = tcDataStore.PrepCmdGroup(i, ".outLocalVariables")
     expOutLocalVariables := cmdGroup[i].OutLocalVariables
     tcDataStore.WriteOutTcLocalVariables(expOutLocalVariables)
