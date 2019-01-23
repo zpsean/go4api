@@ -24,10 +24,13 @@ import (
 
 func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.CommandDetails) (string, [][]*testcase.TestMessage) {
     finalResults := "Success"
-    var cmdsResults, sResults []bool
-    var finalTestMessages, sMessages [][]*testcase.TestMessage
+    var cmdsResults []bool
+    var finalTestMessages [][]*testcase.TestMessage
 
     for i := 0; i < tcDataStore.CmdGroupLength; i ++ {
+        var sResults []bool
+        var sMessages [][]*testcase.TestMessage
+
         cmdType := cmdGroupOrigin[i].CmdType
 
         switch strings.ToLower(cmdType) {
@@ -42,13 +45,10 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
                 cmdsResults = append(cmdsResults, sResults[0:]...)
                 finalTestMessages = append(finalTestMessages, sMessages[0:]...)
             case "init":
-                
-
                 sResults, sMessages = tcDataStore.HandleInitCmd(i)
 
                 cmdsResults = append(cmdsResults, sResults[0:]...)
                 finalTestMessages = append(finalTestMessages, sMessages[0:]...)
-                
             default:
                 fmt.Println("!! warning, command ", cmdType, " can not be recognized.")
         }
@@ -68,10 +68,16 @@ func (tcDataStore *TcDataStore) HandleSqlCmd (i int) ([]bool, [][]*testcase.Test
     var sResults []bool
     var sMessages [][]*testcase.TestMessage
 
-    cmdGroupJson := tcDataStore.PrepCmd(i, ".cmd")
-    //
-    cmdStr := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd").String()
-    tgtDb := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmdSource").String()
+    cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmd"
+    tcDataStore.PrepVariablesBuiltins(cmdStrPath)
+
+    tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
+    tcDataJson := string(tcDataJsonB)
+
+    cmdStr := gjson.Get(tcDataJson, cmdStrPath).String()
+
+    cmdTgtDb := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdSource"
+    tgtDb := gjson.Get(tcDataJson, cmdTgtDb).String()
     // init
     tcDataStore.CmdType = "sql"
     tcDataStore.CmdExecStatus = ""
@@ -100,9 +106,16 @@ func (tcDataStore *TcDataStore) HandleRedisCmd (i int) ([]bool, [][]*testcase.Te
 
     var cmdStr, cmdKey, cmdValue string
 
-    cmdGroupJson := tcDataStore.PrepCmd(i, ".cmd")
-    //
-    cmdMap := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd").Map()
+    cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmd"
+    tcDataStore.PrepVariablesBuiltins(cmdStrPath)
+
+    tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
+    tcDataJson := string(tcDataJsonB)
+
+    cmdMap := gjson.Get(tcDataJson, cmdStrPath).Map()
+
+    // cmdTgtDb := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdSource"
+    // tgtDb := gjson.Get(tcDataJson, cmdTgtDb).String()
 
     for k, v := range cmdMap {
         cmdStr = k
@@ -136,8 +149,14 @@ func (tcDataStore *TcDataStore) HandleInitCmd (i int) ([]bool, [][]*testcase.Tes
     var sResults []bool
     var sMessages [][]*testcase.TestMessage
 
-    cmdGroupJson := tcDataStore.PrepCmd(i, ".cmd")
-    cmdStr := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmd").String()
+    cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmd"
+    tcDataStore.PrepVariablesBuiltins(cmdStrPath)
+
+    tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
+    tcDataJson := string(tcDataJsonB)
+
+    cmdStr := gjson.Get(tcDataJson, cmdStrPath).String()
+
     s := strings.ToLower(cmdStr)
 
     if len(cmdStr) > 0 && strings.Contains(s, "sleep") {
@@ -156,54 +175,36 @@ func (tcDataStore *TcDataStore) HandleInitCmd (i int) ([]bool, [][]*testcase.Tes
     }
 
     // as maybe no cmd is executed, the CmdExecStatus is always "cmdSuccess"
+    // init
+    tcDataStore.CmdType = "init"
     tcDataStore.CmdExecStatus = "cmdSuccess"
+    tcDataStore.CmdAffectedCount = -1
+    tcDataStore.CmdResults = -1
 
     sResults, sMessages = tcDataStore.HandleSingleCmdResult(i)
 
     return sResults, sMessages
 }
 
-func (tcDataStore *TcDataStore) PrepCmd (i int, subPath string) string {
-    var cmdGroup []*testcase.CommandDetails
-
-    cmdGroupJsonB, _ := json.Marshal(tcDataStore.TcData)
-    cmdGroupJson := string(cmdGroupJsonB)
-
-    cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + subPath
-    tcDataStore.RenderTcVariables(cmdStrPath)
-
-    cmdGroupJsonB, _ = json.Marshal(tcDataStore.TcData)
-    cmdGroupJson = string(cmdGroupJsonB)
-
-    tcDataStore.EvaluateTcBuiltinFunctions(cmdStrPath)
-
-    cmdGroupJsonB, _ = json.Marshal(tcDataStore.TcData)
-    cmdGroupJson = string(cmdGroupJsonB)
-
-    switch tcDataStore.CmdSection {
-        case "setUp":
-            cmdGroup = tcDataStore.TcData.TestCase.SetUp()
-        case "tearDown":
-            cmdGroup = tcDataStore.TcData.TestCase.TearDown()
-    }
-
-    cmdGroupJsonB, _ = json.Marshal(cmdGroup)
-    cmdGroupJson = string(cmdGroupJsonB)
-
-    // fmt.Println("cmdGroupJson: ", cmdGroupJson)
-
-    return cmdGroupJson
-}
 
 func (tcDataStore *TcDataStore) HandleSingleCmdResult (i int) ([]bool, [][]*testcase.TestMessage) {
     // --------
     var cmdsResults []bool
     var finalTestMessages = [][]*testcase.TestMessage{}
+    var cmdGroup []*testcase.CommandDetails
 
     if tcDataStore.CmdExecStatus == "cmdSuccess" {
-        cmdGroupJson := tcDataStore.PrepCmd(i, ".cmdResponse")
+        path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdResponse"
+        tcDataStore.PrepVariablesBuiltins(path)
         //
-        cmdExpResp := gjson.Get(cmdGroupJson, fmt.Sprint(i) + "." + "cmdResponse").Map()
+        switch tcDataStore.CmdSection {
+        case "setUp":
+            cmdGroup = tcDataStore.TcData.TestCase.SetUp()
+        case "tearDown":
+            cmdGroup = tcDataStore.TcData.TestCase.TearDown()
+        }
+
+        cmdExpResp := cmdGroup[i].CmdResponse
 
         singleCmdResults, testMessages := tcDataStore.CompareRespGroup(cmdExpResp)
 
@@ -222,14 +223,14 @@ func (tcDataStore *TcDataStore) HandleSingleCmdResult (i int) ([]bool, [][]*test
     return cmdsResults, finalTestMessages
 }
 
-func (tcDataStore *TcDataStore) CompareRespGroup (cmdExpResp map[string]gjson.Result) (bool, []*testcase.TestMessage){
+func (tcDataStore *TcDataStore) CompareRespGroup (cmdExpResp map[string]interface{}) (bool, []*testcase.TestMessage){
     //-----------
     singleCmdResults := true
     var testResults []bool
     var testMessages []*testcase.TestMessage
 
     for key, value := range cmdExpResp {
-        cmdExpResp_sub := value.Value().(map[string]interface{})
+        cmdExpResp_sub := value.(map[string]interface{})
         for assertionKey, expValueOrigin := range cmdExpResp_sub {
             
             actualValue := tcDataStore.GetResponseValue(key)
@@ -266,39 +267,8 @@ func (tcDataStore *TcDataStore) HandleCmdResultsForOut (i int) {
     // fmt.Println("tcDataStore: ", string(aa))
 
     // write out session if has
-    cmdGroup = tcDataStore.PrepCmdGroup(i, ".session")
-    expTcSession := cmdGroup[i].Session
-    tcDataStore.WriteSession(expTcSession)
-
-    // write out global variables if has
-    // path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + "outGlobalVariables"
-    // tcDataStore.RenderTcVariables(path)
-    // tcDataStore.EvaluateTcBuiltinFunctions(path)
- 
-    cmdGroup = tcDataStore.PrepCmdGroup(i, ".outGlobalVariables")
-    
-    expOutGlobalVariables := cmdGroup[i].OutGlobalVariables
-    tcDataStore.WriteOutGlobalVariables(expOutGlobalVariables)
-
-    // write out tc local variables if has
-    // path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + "outLocalVariables"
-    // tcDataStore.RenderTcVariables(path)
-    // tcDataStore.EvaluateTcBuiltinFunctions(path)
-
-    cmdGroup = tcDataStore.PrepCmdGroup(i, ".outLocalVariables")
-    expOutLocalVariables := cmdGroup[i].OutLocalVariables
-    tcDataStore.WriteOutTcLocalVariables(expOutLocalVariables)
-
-    // write out files if has
-    cmdGroup = tcDataStore.PrepCmdGroup(i, ".outFiles")
-    expOutFiles := cmdGroup[i].OutFiles
-    tcDataStore.HandleOutFiles(expOutFiles)
-}
-
-func (tcDataStore *TcDataStore) PrepCmdGroup (i int, subPath string) []*testcase.CommandDetails {
-    var cmdGroup []*testcase.CommandDetails
-
-    tcDataStore.PrepCmd(i, subPath)
+    path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".session"
+    tcDataStore.PrepVariablesBuiltins(path)
 
     switch tcDataStore.CmdSection {
         case "setUp":
@@ -307,5 +277,49 @@ func (tcDataStore *TcDataStore) PrepCmdGroup (i int, subPath string) []*testcase
             cmdGroup = tcDataStore.TcData.TestCase.TearDown()
     }
 
-    return cmdGroup
+    expTcSession := cmdGroup[i].Session
+    tcDataStore.WriteSession(expTcSession)
+
+    // write out global variables if has
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".outGlobalVariables"
+    tcDataStore.PrepVariablesBuiltins(path)
+
+    switch tcDataStore.CmdSection {
+        case "setUp":
+            cmdGroup = tcDataStore.TcData.TestCase.SetUp()
+        case "tearDown":
+            cmdGroup = tcDataStore.TcData.TestCase.TearDown()
+    }
+    
+    expOutGlobalVariables := cmdGroup[i].OutGlobalVariables
+    tcDataStore.WriteOutGlobalVariables(expOutGlobalVariables)
+
+    // write out tc local variables if has
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".outLocalVariables"
+    tcDataStore.PrepVariablesBuiltins(path)
+
+    switch tcDataStore.CmdSection {
+        case "setUp":
+            cmdGroup = tcDataStore.TcData.TestCase.SetUp()
+        case "tearDown":
+            cmdGroup = tcDataStore.TcData.TestCase.TearDown()
+    }
+
+    expOutLocalVariables := cmdGroup[i].OutLocalVariables
+    tcDataStore.WriteOutTcLocalVariables(expOutLocalVariables)
+
+    // write out files if has
+    path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".outFiles"
+    tcDataStore.PrepVariablesBuiltins(path)
+
+    switch tcDataStore.CmdSection {
+        case "setUp":
+            cmdGroup = tcDataStore.TcData.TestCase.SetUp()
+        case "tearDown":
+            cmdGroup = tcDataStore.TcData.TestCase.TearDown()
+    }
+
+    expOutFiles := cmdGroup[i].OutFiles
+    tcDataStore.HandleOutFiles(expOutFiles)
 }
+

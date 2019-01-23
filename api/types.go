@@ -13,11 +13,11 @@ package api
 import (
     "fmt"
     "strings"
-    "encoding/json"
     "reflect"
+    "encoding/json"
 
-    "go4api/lib/testcase" 
     "go4api/utils" 
+    "go4api/lib/testcase" 
 
     gjson "github.com/tidwall/gjson"
     sjson "github.com/tidwall/sjson"
@@ -36,10 +36,10 @@ type TcDataStore struct {
     HttpActualHeader map[string][]string
     HttpActualBody []byte
 
-    CmdGroupLength int
-
     CmdSection string // setUp, tearDown
-    CmdType string // sql, redis, etc.
+    CmdGroupLength int
+    
+    CmdType string // sql, redis, init, etc.
     CmdExecStatus string
     CmdAffectedCount int
     CmdResults interface{}
@@ -58,9 +58,9 @@ func InitTcDataStore (tcData *testcase.TestCaseDataInfo) *TcDataStore {
         map[string][]string{},
         []byte{},
 
+        "",
         0,
 
-        "",
         "",
         "",
         -1,
@@ -72,130 +72,53 @@ func InitTcDataStore (tcData *testcase.TestCaseDataInfo) *TcDataStore {
     return tcDataStore
 }
 
-func (tcDataStore *TcDataStore) RenderTcRequestVariables (path string) {
-    var resTcData testcase.TestCaseDataInfo
-    var resReq testcase.Request
-    dataFeeder := tcDataStore.MergeTestData()
 
-    tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
-    tcDataJson := string(tcDataJsonBytes)
+// for http: .request, .response, .session, .outGlobalVariables, .outLocalVariables, .outFiles
+// for cmd (setUp, tearDown): .cmd, .cmdResponse, .session, .outGlobalVariables, .outLocalVariables, .outFiles
+func (tcDataStore *TcDataStore) PrepVariablesBuiltins (path string) {
+    pathSlice := strings.Split(path, ".")
+    pathLength := len(pathSlice)
+    pathType := pathSlice[pathLength - 1]
 
-    jsonStr := gjson.Get(tcDataJson, path).String()
-    // fmt.Println("jsonStr 0: ", jsonStr)
+    switch pathType {
+    case "request":
+        var res testcase.Request
 
-    if strings.Contains(jsonStr, "${") {
-        for key, value := range dataFeeder {
-            // Note: the type of value may be: string, int, float64, etc. 
-            // fmt.Sprint(value) can result in issues, need to fix
-            // 
-            var valueStr = ""
+        tcDataStore.RenderTcVariables(path, res)
+        tcDataStore.EvaluateTcBuiltinFunctions(path, res)
+    case "response":
+        var res testcase.Response
 
-            if value != nil {
-                switch reflect.TypeOf(value).Kind().String() {
-                case "float64":
-                    // fmt.Println("t type float64:", value)
-                    valueStr = utils.FloatToString(value.(float64))
-                default:
-                    valueStr = fmt.Sprint(value)
-                }
-            }
+        tcDataStore.RenderTcVariables(path, res)
+        tcDataStore.EvaluateTcBuiltinFunctions(path, res)
 
-            jsonStr = strings.Replace(jsonStr, "${" + key + "}", valueStr, -1)
-        }
-   
-        json.Unmarshal([]byte(jsonStr), &resReq)
-        tcDataJson, _  = sjson.Set(tcDataJson, path, resReq)
+    case "session", "outGlobalVariables", "outLocalVariables":
+        var res map[string]interface{}
 
-        json.Unmarshal([]byte(tcDataJson), &resTcData)
-        tcDataStore.TcData = &resTcData
+        tcDataStore.RenderTcVariables(path, res)
+        tcDataStore.EvaluateTcBuiltinFunctions(path, res)
+    case "outFiles":
+        var res []*testcase.OutFilesDetails
+
+        tcDataStore.RenderTcVariables(path, res)
+        tcDataStore.EvaluateTcBuiltinFunctions(path, res)
+    case "cmd":
+        var res testcase.CommandDetails
+
+        tcDataStore.RenderTcVariables(path, res)
+        tcDataStore.EvaluateTcBuiltinFunctions(path, res)
+    case "cmdResponse":
+        var res map[string]interface{}
+
+        tcDataStore.RenderTcVariables(path, res)
+        tcDataStore.EvaluateTcBuiltinFunctions(path, res)
     }
-} 
-
-func (tcDataStore *TcDataStore) EvaluateTcRequestBuiltinFunctions (path string) {
-    var resTcData testcase.TestCaseDataInfo
-    var resReq testcase.Request
-    var resReq2 testcase.Request
-
-    tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
-    tcDataJson := string(tcDataJsonBytes)
-
-    jsonStr := gjson.Get(tcDataJson, path).String()
-    json.Unmarshal([]byte(jsonStr), &resReq)
-
-    // Note: for function EvaluateBuiltinFunctions:
-    // if the input is str, like "request":{"method":"POST","path":"... 
-    // the returned str is: "{\"method\":\"POST\",\"path\":\"...
-    // to be safe, using the underlying struct
-    edReq := EvaluateBuiltinFunctions(resReq)
-    switch edReq.(type) {
-        case string:
-            jsonStr = edReq.(string)
-
-            json.Unmarshal([]byte(jsonStr), &resReq2)
-            tcDataJson, _  = sjson.Set(tcDataJson, path, resReq2)
-        default:
-            tcDataJson, _  = sjson.Set(tcDataJson, path, resReq)
-    }
-
-    json.Unmarshal([]byte(tcDataJson), &resTcData)
-    tcDataStore.TcData = &resTcData
-}
-
-func (tcDataStore *TcDataStore) RenderTcResponseVariables (path string) {
-    var resTcData testcase.TestCaseDataInfo
-    var resResp testcase.Response
-    dataFeeder := tcDataStore.MergeTestData()
-
-    tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
-    tcDataJson := string(tcDataJsonBytes)
-
-    jsonStr := gjson.Get(tcDataJson, path).String()
-    // fmt.Println("jsonStr 1: ", jsonStr)
-
-    if strings.Contains(jsonStr, "${") {
-        for key, value := range dataFeeder {
-            jsonStr = strings.Replace(jsonStr, "${" + key + "}", fmt.Sprint(value), -1)
-        }
-   
-        json.Unmarshal([]byte(jsonStr), &resResp)
-        tcDataJson, _  = sjson.Set(tcDataJson, path, resResp)
-
-        json.Unmarshal([]byte(tcDataJson), &resTcData)
-        tcDataStore.TcData = &resTcData
-    }
-} 
-
-func (tcDataStore *TcDataStore) EvaluateTcResponseBuiltinFunctions (path string) {
-    var resTcData testcase.TestCaseDataInfo
-    var resResp testcase.Response
-    var resResp2 testcase.Response
-
-    tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
-    tcDataJson := string(tcDataJsonBytes)
-
-    jsonStr := gjson.Get(tcDataJson, path).String()
-    json.Unmarshal([]byte(jsonStr), &resResp)
-
-    edResp := EvaluateBuiltinFunctions(resResp)
-    // fmt.Println("edResp: ", edResp)
-    switch edResp.(type) {
-        case string:
-            jsonStr = edResp.(string)
-
-            json.Unmarshal([]byte(jsonStr), &resResp2)
-            tcDataJson, _  = sjson.Set(tcDataJson, path, resResp2)
-        default:
-            tcDataJson, _  = sjson.Set(tcDataJson, path, resResp)
-    }
-    
-    json.Unmarshal([]byte(tcDataJson), &resTcData)
-    tcDataStore.TcData = &resTcData
 }
 
 
-func (tcDataStore *TcDataStore) RenderTcVariables (path string) {
+func (tcDataStore *TcDataStore) RenderTcVariables (path string, res interface{}) {
     var resTcData testcase.TestCaseDataInfo
-    var res interface{}
+
     dataFeeder := tcDataStore.MergeTestData()
 
     tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
@@ -204,47 +127,61 @@ func (tcDataStore *TcDataStore) RenderTcVariables (path string) {
     jsonStr := gjson.Get(tcDataJson, path).String()
   
     if strings.Contains(jsonStr, "${") {
-        // Warning, this may have performance issues, need to improve, that is, get the Variables first, then replace
+        // Warning, there may have performance issues
         for key, value := range dataFeeder {
-            jsonStr = strings.Replace(jsonStr, "${" + key + "}", fmt.Sprint(value), -1)
+            var valueStr = ""
+
+            if value != nil {
+                switch reflect.TypeOf(value).Kind().String() {
+                case "float64":
+                    valueStr = utils.FloatToString(value.(float64))
+                default:
+                    valueStr = fmt.Sprint(value)
+                }
+            }
+
+            jsonStr = strings.Replace(jsonStr, "${" + key + "}", valueStr, -1)
         }
-        // fmt.Println("jsonStr: ", jsonStr)
-        json.Unmarshal([]byte(jsonStr), &res) // notice
-        tcDataJson, _  = sjson.Set(tcDataJson, path, jsonStr)
-        // fmt.Println("tcDataJson: ", tcDataJson)
+
+        fmt.Println("")
+        fmt.Println("jsonStr: ", jsonStr)
+
+        // Note: if the jsonStr is string, like "request":{"method":"POST","path":"... 
+        // the returned string tcDataJson is: "{\"method\":\"POST\",\"path\":\"...
+        // then 
+        json.Unmarshal([]byte(jsonStr), &res) 
+        tcDataJson, _  = sjson.Set(tcDataJson, path, &res)
+
+        fmt.Println("")
+        fmt.Println("tcDataJson: ", tcDataJson)
 
         json.Unmarshal([]byte(tcDataJson), &resTcData)
         tcDataStore.TcData = &resTcData
     }
 } 
 
-func (tcDataStore *TcDataStore) EvaluateTcBuiltinFunctions (path string) {
+func (tcDataStore *TcDataStore) EvaluateTcBuiltinFunctions (path string, res interface{}) {
     var resTcData testcase.TestCaseDataInfo
-    var resMap interface{}
 
     tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
     tcDataJson := string(tcDataJsonBytes)
-    // fmt.Println(">>> tcDataJson: 0: ", tcDataJson)
 
     result := gjson.Get(tcDataJson, path)
     edResp := EvaluateBuiltinFunctions(result.Value())
-    // fmt.Println(">>> edResp: 0: ", edResp)
 
     // to be noticed the special case: result.Value() is string, edResp is string
     if strings.Contains(result.String(), "Fn::") {
         switch edResp.(type) {
         case string:
-            // fmt.Println(">>> ----------------->")
             jsonStr := edResp.(string)
 
-            json.Unmarshal([]byte(jsonStr), &resMap)
-            tcDataJson, _  = sjson.Set(tcDataJson, path, resMap)
+            json.Unmarshal([]byte(jsonStr), &res)
+            tcDataJson, _  = sjson.Set(tcDataJson, path, res)
         default:
             tcDataJson, _  = sjson.Set(tcDataJson, path, result.Value())
         }
     }
-    
-    // fmt.Println(">>> tcDataJson: 1: ", tcDataJson)
+
     json.Unmarshal([]byte(tcDataJson), &resTcData)
     tcDataStore.TcData = &resTcData
 }
