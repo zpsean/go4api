@@ -57,11 +57,9 @@ func (tcDataStore *TcDataStore) MergeTestData () map[string]interface{} {
         finalMap[k] = v
     }
 
-    // inputs file(s)
-    // dtMap := ConvertCsvRowToMap(csvHeader, csvRow)
-    // for k, v := range dtMap {
-    //     finalMap[k] = v
-    // }
+    // fmt.Println("")
+    // fmt.Println("finalMap: ", finalMap)
+
     // var ff interface{}
     // ss, _ :=  json.Marshal(tcDataStore.TcLocalVariables)
     // fmt.Println("TcLocalVariables: ", string(ss))

@@ -214,6 +214,55 @@ func Split (param interface{}) []string {
     }
 }
 
+// Replace(s, old, new string, n int) string
+// { "Fn::Replace" : ["2019-01-01" , "-", "/"] } => "2019/01/01"
+func Replace (param interface{}) string {
+    switch param.(type) {
+        case []interface{}:
+            var res string
+            var err error
+
+            paramSlice := reflect.ValueOf(param).Interface().([]interface{})
+
+            if len(paramSlice) <= 2 {
+                panic(err)
+            } else if len(paramSlice) > 2 {
+                res = strings.Replace(paramSlice[0].(string), paramSlice[1].(string), paramSlice[2].(string), -1)
+            }
+
+            return res
+        default:
+            return ""
+    }
+}
+
+// SubString(s, start_position, end_position) string
+// { "Fn::SubString" : ["2019-01-01" , 1, 3] } => "019"
+func SubString (param interface{}) string {
+    switch param.(type) {
+        case []interface{}:
+            var res string
+            var err error
+
+            paramSlice := reflect.ValueOf(param).Interface().([]interface{})
+
+            if len(paramSlice) <= 2 {
+                panic(err)
+            } else if len(paramSlice) > 2 {
+                start_pos := int(paramSlice[1].(float64))
+                end_pos := int(paramSlice[2].(float64))
+
+                res = paramSlice[0].(string)[start_pos:end_pos]
+            }
+
+            return res
+        default:
+            return ""
+    }
+}
+
+
+//
 func ToString (param interface{}) string {
     // fmt.Println(">>>>>>>>>>>: ", param)
     // fmt.Println(">>>>>>>>>>>: ", int(param.(float64)))

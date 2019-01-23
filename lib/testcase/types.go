@@ -44,6 +44,7 @@ type TestCaseExecutionInfo struct {
     TearDownResult string
     TearDownTestMessages [][]*TestMessage
     TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
+    LocalVariables interface{}
 }
 
 type TestMessage struct {  
@@ -159,6 +160,7 @@ type TcReportResults struct {
     CaseOrigin interface{}
     GlobalVariables interface{}
     Session interface{}
+    LocalVariables interface{}
     ActualHeader interface{}
     ActualBody interface{}
 }
