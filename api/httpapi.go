@@ -70,7 +70,7 @@ func (tcDataStore *TcDataStore) Compare () (string, []*testcase.TestMessage) {
 
     path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "response"
     tcDataStore.PrepVariablesBuiltins(path)
-    
+
     // status
     testResultsS, testMessagesS := tcDataStore.CompareStatus()
     testResults = append(testResults, testResultsS[0:]...)
@@ -108,16 +108,18 @@ func (tcDataStore *TcDataStore) CompareStatus() ([]bool, []*testcase.TestMessage
     expStatus := tcData.TestCase.RespStatus()
     actualStatusCode := tcDataStore.HttpActualStatusCode
     // status
-    for assertionKey, expValue := range expStatus {
-        actualValue := actualStatusCode
-        key := "status"
+    if expStatus != nil {
+        for assertionKey, expValue := range expStatus {
+            actualValue := actualStatusCode
+            key := "status"
 
-        testRes, msg := compareCommon("Status", key, assertionKey, actualValue, expValue)
-        
-        testMessages = append(testMessages, msg)
-        testResults = append(testResults, testRes)
+            testRes, msg := compareCommon("Status", key, assertionKey, actualValue, expValue)
+            
+            testMessages = append(testMessages, msg)
+            testResults = append(testResults, testRes)
+        }
     }
-
+        
     return testResults, testMessages
 } 
 
@@ -129,19 +131,21 @@ func (tcDataStore *TcDataStore) CompareHeaders() ([]bool, []*testcase.TestMessag
     expHeader := tcData.TestCase.RespHeaders()
     actualHeader := tcDataStore.HttpActualHeader
     // headers
-    for key, value := range expHeader {
-        expHeader_sub := value.(map[string]interface{})
-        //
-        for assertionKey, expValue := range expHeader_sub {
-            actualValue := strings.Join(actualHeader[key], ",")
+    if expHeader != nil {
+        for key, value := range expHeader {
+            expHeader_sub := value.(map[string]interface{})
+            //
+            for assertionKey, expValue := range expHeader_sub {
+                actualValue := strings.Join(actualHeader[key], ",")
 
-            testRes, msg := compareCommon("Headers", key, assertionKey, actualValue, expValue)
+                testRes, msg := compareCommon("Headers", key, assertionKey, actualValue, expValue)
 
-            testMessages = append(testMessages, msg)
-            testResults = append(testResults, testRes)
-        } 
+                testMessages = append(testMessages, msg)
+                testResults = append(testResults, testRes)
+            } 
+        }
     }
-
+        
     return testResults, testMessages
 } 
 
@@ -152,20 +156,22 @@ func (tcDataStore *TcDataStore) CompareBody() ([]bool, []*testcase.TestMessage) 
     tcData := tcDataStore.TcData
     expBody := tcData.TestCase.RespBody()
     // body
-    for key, value := range expBody {
-        expBody_sub := value.(map[string]interface{})
+    if expBody != nil {
+        for key, value := range expBody {
+            expBody_sub := value.(map[string]interface{})
 
-        for assertionKey, expValue := range expBody_sub {
-            // if path, then value - value, otherwise, key - value
-            actualValue := tcDataStore.GetBodyActualValueByPath(key)
-            
-            testRes, msg := compareCommon("Body", key, assertionKey, actualValue, expValue)
+            for assertionKey, expValue := range expBody_sub {
+                // if path, then value - value, otherwise, key - value
+                actualValue := tcDataStore.GetBodyActualValueByPath(key)
+                
+                testRes, msg := compareCommon("Body", key, assertionKey, actualValue, expValue)
 
-            testMessages = append(testMessages, msg)
-            testResults = append(testResults, testRes)
+                testMessages = append(testMessages, msg)
+                testResults = append(testResults, testRes)
+            }
         }
     }
-
+        
     return testResults, testMessages
 } 
 
