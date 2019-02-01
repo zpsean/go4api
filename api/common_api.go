@@ -261,10 +261,7 @@ func (tcDataStore *TcDataStore) CompareRespGroup (cmdExpResp map[string]interfac
 
 func (tcDataStore *TcDataStore) HandleCmdResultsForOut (i int) {
     var cmdGroup []*testcase.CommandDetails
-
-    // aa, _ := json.Marshal(tcDataStore)
-    // fmt.Println("tcDataStore: ", string(aa))
-
+    
     // write out session if has
     path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".session"
     tcDataStore.PrepVariablesBuiltins(path)

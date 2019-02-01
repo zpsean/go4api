@@ -32,7 +32,7 @@ type BuiltinFieldDetails struct {
 }
 
 
-func EvaluateBuiltinFunctions (value interface{}) interface{} {
+func (tcDataStore *TcDataStore) EvaluateBuiltinFunctions (value interface{}) interface{} {
     jsonBytes, _ := json.Marshal(value)
     jsonStr := string(jsonBytes)
 
@@ -45,7 +45,7 @@ func EvaluateBuiltinFunctions (value interface{}) interface{} {
 
         maxLevel := g4json.GetJsonNodesLevel(builtinLeavesSlice)
 
-        jsonStr = IterateBuiltsins(jsonStr, builtinLeavesSlice, maxLevel)
+        jsonStr = tcDataStore.IterateBuiltsins(jsonStr, builtinLeavesSlice, maxLevel)
 
         return jsonStr
     }
@@ -76,7 +76,7 @@ func GetBuiltinLeavesSlice (value interface{}) []g4json.FieldDetails {
 //
 // !! Warning: specail case, if the key is complex key, as contains ., \, ", etc., need specail handle
 
-func IterateBuiltsins (jsonStr string, builtinLeavesSlice []g4json.FieldDetails, maxLevel int) string {
+func (tcDataStore *TcDataStore) IterateBuiltsins (jsonStr string, builtinLeavesSlice []g4json.FieldDetails, maxLevel int) string {
     var evaluatedSlice []g4json.FieldDetails
     var evaluatedFuncPaths []string
 
@@ -137,7 +137,17 @@ func IterateBuiltsins (jsonStr string, builtinLeavesSlice []g4json.FieldDetails,
                         }
                     }
 
-                    resValue := builtins.CallBuiltinFunc(funcName, funcParams)
+                    var funcParams_f interface{}
+                    // Note: if funcParams is string, it has chance to be the json lookup path, like $(sql).xxx, $(body).xxx
+                    switch funcParams.(type) {
+                    case string:
+                        funcParams_f = tcDataStore.GetResponseValue(funcParams.(string))
+                    default:
+                        funcParams_f = funcParams
+                    }
+                    
+                    // call
+                    resValue := builtins.CallBuiltinFunc(funcName, funcParams_f)
 
                     for key, _ := range replacerMap {
                         jsonStr = strings.Replace(jsonStr, replacerMap[key], key, -1)

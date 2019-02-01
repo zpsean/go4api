@@ -31,6 +31,7 @@ func BuiltinFunctionsMapping (key string) interface{} {
         "Replace": Replace,
         "SubString": SubString,
         "ToString": ToString,
+        "Length": Length,
         "ToInt": ToInt,
         "ToBool": ToBool,
         "CurrentTimeStampString": CurrentTimeStampString,

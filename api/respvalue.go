@@ -37,8 +37,8 @@ func (tcDataStore *TcDataStore) GetResponseValue (searchPath string) interface{}
             value = tcDataStore.GetSqlActualValueByPath(searchPath)
         case strings.HasPrefix(searchPath, "$(redis)."):
             value = tcDataStore.GetRedisActualValueByPath(searchPath)
-        case strings.HasPrefix(searchPath, "$."):
-            value = tcDataStore.GetBodyActualValueByPath(searchPath)
+        // case strings.HasPrefix(searchPath, "$."):
+        //     value = tcDataStore.GetBodyActualValueByPath(searchPath)
         default:
             value = searchPath
     }

@@ -176,33 +176,32 @@ func (tcDataStore *TcDataStore) CompareBody() ([]bool, []*testcase.TestMessage) 
 } 
 
 func (tcDataStore *TcDataStore) HandleHttpResultsForOut () {
-    tcData := tcDataStore.TcData
     // write out session if has
     path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "session"
     tcDataStore.PrepVariablesBuiltins(path)
 
-    expTcSession := tcData.TestCase.Session()
+    expTcSession := tcDataStore.TcData.TestCase.Session()
     tcDataStore.WriteSession(expTcSession)
 
     // write out global variables if has
     path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outGlobalVariables"
     tcDataStore.PrepVariablesBuiltins(path)
 
-    expOutGlobalVariables := tcData.TestCase.OutGlobalVariables()
+    expOutGlobalVariables := tcDataStore.TcData.TestCase.OutGlobalVariables()
     tcDataStore.WriteOutGlobalVariables(expOutGlobalVariables)
 
     // write out tc loca variables if has
     path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outLocalVariables"
     tcDataStore.PrepVariablesBuiltins(path)
 
-    expOutLocalVariables := tcData.TestCase.OutLocalVariables()
+    expOutLocalVariables := tcDataStore.TcData.TestCase.OutLocalVariables()
     tcDataStore.WriteOutTcLocalVariables(expOutLocalVariables)
 
     // write out files if has
     path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outFiles"
     tcDataStore.PrepVariablesBuiltins(path)
 
-    expOutFiles := tcData.TestCase.OutFiles()
+    expOutFiles := tcDataStore.TcData.TestCase.OutFiles()
     tcDataStore.HandleOutFiles(expOutFiles)
 }
 
