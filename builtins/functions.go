@@ -275,6 +275,24 @@ func ToString (param interface{}) string {
     }
 }
 
+//
+func Length (param interface{}) int {
+    var l int
+
+    switch param.(type) {
+    case []interface{}:
+        l = len(param.([]interface{}))
+    case string:
+        // check if [] string
+        l = len(param.(string))
+    default:
+        l = 0
+    }
+
+    return l
+}
+
+//
 func ToInt (param interface{}) int {
     switch param.(type) {
     case float64:

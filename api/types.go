@@ -130,11 +130,19 @@ func (tcDataStore *TcDataStore) RenderTcVariables (path string, res interface{})
         // Warning, there may have performance issues
         for key, value := range dataFeeder {
             var valueStr = ""
-
             if value != nil {
                 switch reflect.TypeOf(value).Kind().String() {
                 case "float64":
                     valueStr = utils.FloatToString(value.(float64))
+                case "string":
+                    valueStr = value.(string)
+                case "slice":
+                    // for slice, []string or []float64, may have better solution later
+                    // for example:
+                    // valueB, _ := json.Marshal(value)
+                    // valueStr = "`" + string(valueB) + "`"
+
+                    valueStr = fmt.Sprint(value)
                 default:
                     valueStr = fmt.Sprint(value)
                 }
@@ -166,7 +174,7 @@ func (tcDataStore *TcDataStore) EvaluateTcBuiltinFunctions (path string, res int
     tcDataJson := string(tcDataJsonBytes)
 
     result := gjson.Get(tcDataJson, path)
-    edResp := EvaluateBuiltinFunctions(result.Value())
+    edResp := tcDataStore.EvaluateBuiltinFunctions(result.Value())
 
     // to be noticed the special case: result.Value() is string, edResp is string
     if strings.Contains(result.String(), "Fn::") {
