@@ -68,6 +68,7 @@ func DispatchApi(wg *sync.WaitGroup, resultsExeChan chan testcase.TestCaseExecut
         DurationUnixNano: end_time.UnixNano() - start_time.UnixNano(),
         ActualBody: tcDataStore.HttpActualBody,
         ActualHeader: tcDataStore.HttpActualHeader,
+        HttpUrl: tcDataStore.HttpUrl,
         TearDownResult: tcTearDownResult,
         TearDownTestMessages: tearDownTestMessages,
         TestResult: testResult,

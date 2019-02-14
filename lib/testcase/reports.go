@@ -98,6 +98,7 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
         TearDownResult: tcExecution.TearDownResult,
         TearDownTestMessages: tcExecution.TearDownTestMessages,
         TestResult: tcExecution.TestResult,
+        HttpUrl: tcExecution.HttpUrl,
         CaseOrigin: caseOrigin,
         GlobalVariables: globalVariables,
         Session: tcSession,

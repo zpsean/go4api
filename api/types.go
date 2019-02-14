@@ -36,6 +36,8 @@ type TcDataStore struct {
     HttpActualHeader map[string][]string
     HttpActualBody []byte
 
+    HttpUrl string
+
     CmdSection string // setUp, tearDown
     CmdGroupLength int
     
@@ -57,6 +59,8 @@ func InitTcDataStore (tcData *testcase.TestCaseDataInfo) *TcDataStore {
         -1,
         map[string][]string{},
         []byte{},
+
+        "",
 
         "",
         0,
