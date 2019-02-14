@@ -35,6 +35,8 @@ func (tcDataStore *TcDataStore) CallHttp (baseUrl string) {
 
     // urlStr := tcData.TestCase.UrlRaw(baseUrl)
     urlStr := tcData.TestCase.UrlEncode(baseUrl)
+
+    tcDataStore.HttpUrl = urlStr
     //
     apiMethodSelector, apiMethod, bodyText, bodyMultipart, boundary := GetPayloadInfo(tcData)
     //

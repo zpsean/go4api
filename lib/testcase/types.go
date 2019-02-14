@@ -41,6 +41,7 @@ type TestCaseExecutionInfo struct {
     DurationUnixNano int64
     ActualBody []byte
     ActualHeader map[string][]string
+    HttpUrl string
     TearDownResult string
     TearDownTestMessages [][]*TestMessage
     TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
@@ -157,6 +158,7 @@ type TcReportResults struct {
     TearDownResult string // Success, Fail
     TearDownTestMessages [][]*TestMessage
     TestResult string  // Success, Fail, ParentFailed
+    HttpUrl string
     CaseOrigin interface{}
     GlobalVariables interface{}
     Session interface{}
