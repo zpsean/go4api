@@ -27,7 +27,7 @@ type TcTreeStats struct{
 
 
 func CreateTcTreeStats (prioritySet []string) TcTreeStats {
-    StatusKeys := []string{"Ready", "Success", "Fail", "ParentFailed"}
+    StatusKeys := []string{"Ready", "Success", "Fail", "ParentFailed", "ParentSkipped"}
     statusCountByPriority := map[string]map[string]int{} 
     tcNotExecutedByPriority := map[string]map[string][]*testcase.TestCaseExecutionInfo{}
 
@@ -56,7 +56,7 @@ func CreateTcTreeStats (prioritySet []string) TcTreeStats {
 }
 
 func (tcTreeStats TcTreeStats) ResetTcTreeStats (priority string) {
-    StatusKeys := []string{"Ready", "Success", "Fail", "ParentFailed"}
+    StatusKeys := []string{"Ready", "Success", "Fail", "ParentFailed", "ParentSkipped"}
 
     for _, status := range StatusKeys {
         tcTreeStats.StatusCountByPriority[priority][status] = 0
@@ -77,6 +77,7 @@ func (tcTreeStats TcTreeStats) CollectNodeStatusByPriority(node *TcNode, priorit
     }
 }
 
+// key can be "Overall"
 func (tcTreeStats TcTreeStats) CollectOverallNodeStatus(node *TcNode, key string) {
     for i, _ := range node.Children {
         tcTreeStats.collectNodeStatusCommon(node, i, key)
@@ -94,9 +95,12 @@ func (tcTreeStats TcTreeStats) collectNodeStatusCommon(node *TcNode, i int, key 
             tcTreeStats.StatusCountByPriority[key]["Success"] += 1
         case "Fail":
             tcTreeStats.StatusCountByPriority[key]["Fail"] += 1
-        default: 
+        case "ParentFailed":
             tcTreeStats.StatusCountByPriority[key]["ParentFailed"] += 1
             tcTreeStats.TcNotExecutedByPriority[key]["ParentFailed"] = append(tcTreeStats.TcNotExecutedByPriority[key]["ParentFailed"], node.Children[i].TestCaseExecutionInfo)
+        case "ParentSkipped":
+            tcTreeStats.StatusCountByPriority[key]["ParentSkipped"] += 1
+            tcTreeStats.TcNotExecutedByPriority[key]["ParentSkipped"] = append(tcTreeStats.TcNotExecutedByPriority[key]["ParentSkipped"], node.Children[i].TestCaseExecutionInfo)
     }
 }
 

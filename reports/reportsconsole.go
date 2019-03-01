@@ -60,7 +60,7 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo) {
         fmt.Println(string(failedTMBytes))
 
         fmt.Println(string(tcExecution.ActualBody)[0:out_len], "...")
-    } else {
+    } else if tcReportResults.TestResult == "Fail" {
         fmt.Printf("\n%s%-40s%-3s%-30s%-7s[%-7s,%-7s,%-10s] %-30s%-30s%-4s%d%s\n", CLR_G, 
             tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
             tcReportResults.TestResult, tcReportResults.SetUpResult, tcReportResults.HttpResult, tcReportResults.TearDownResult, 
@@ -70,6 +70,12 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo) {
         if cmd.Opt.IfMutation {
             fmt.Println(tcReportResults.MutationInfoStr)
         }
+    } else {
+        fmt.Printf("\n%s%-40s%-3s%-30s%-7s[%-7s,%-7s,%-10s] %-30s%-30s%-4s%d%s\n", CLR_W, 
+            tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
+            tcReportResults.TestResult, tcReportResults.SetUpResult, tcReportResults.HttpResult, tcReportResults.TearDownResult, 
+            tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
+            tcReportResults.ActualStatusCode, CLR_N)
     }
 }
 
@@ -79,7 +85,7 @@ func ReportConsoleByPriority (totalTc int, priority string, statusCountByPriorit
     var totalCount = statusCountByPriority[priority]["Total"]
     var successCount = statusCountByPriority[priority]["Success"]
     var failCount = statusCountByPriority[priority]["Fail"]
-    var skipCount = statusCountByPriority[priority]["ParentFailed"]
+    var skipCount = statusCountByPriority[priority]["ParentFailed"] + statusCountByPriority[priority]["ParentSkipped"]
     //
     fmt.Println("---------------------------------------------------------------------------------")
     fmt.Println("----- Priority " + priority + ": " + strconv.Itoa(totalTc) + " Cases in Source")
@@ -102,7 +108,7 @@ func ReportConsoleOverall (totalTc int, key string, params ... map[string]map[st
         totalCount = totalCount + param[key]["Total"]
         successCount = successCount + param[key]["Success"]
         failCount = failCount + param[key]["Fail"]
-        skipCount = skipCount + param[key]["ParentFailed"]
+        skipCount = skipCount + param[key]["ParentFailed"] + param[key]["ParentSkipped"]
     }
     
     //

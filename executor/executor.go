@@ -94,13 +94,16 @@ func (tcsRunStore *TcsRunStore) RunEachPriority (baseUrl string, priority string
             tcsRunStore.TcTreeStats.ResetTcTreeStats(priority)
             tcsRunStore.TcTreeStats.CollectNodeStatusByPriority(tcsRunStore.Root, priority)
 
-            tcsRunStore.TcTree.RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
+            // tcsRunStore.TcTree.RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
+            //     tcExecution.HttpTestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
+
+            tcsRunStore.TcTree.RefreshNodeAndChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
                 tcExecution.HttpTestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
 
             tcsRunStore.TcTreeStats.ResetTcTreeStats(priority)
             tcsRunStore.TcTreeStats.CollectNodeStatusByPriority(tcsRunStore.Root, priority)
 
-            // (3). <--> for log write to file
+            // console 1. to print status to console (i.e. executed cases: "Success", "Fail")
             tcReportResults := tcExecution.TcReportResults()
             repJson, _ := json.Marshal(tcReportResults)
 
@@ -112,6 +115,10 @@ func (tcsRunStore *TcsRunStore) RunEachPriority (baseUrl string, priority string
             break miniLoop
         }
     }
+
+    // fixed report issue: to display report for cases if have parent-child relationship, but not same priority
+    tcsRunStore.TcTreeStats.ResetTcTreeStats(priority)
+    tcsRunStore.TcTreeStats.CollectNodeStatusByPriority(tcsRunStore.Root, priority)
 }
 
 func (tcsRunStore *TcsRunStore) RunConsoleOverallReport () {
@@ -194,6 +201,9 @@ func WriteNotNotExecutedToLog (priority string, logFilePtr *os.File, tcTreeStats
                 repJson, _ := json.Marshal(tcReportResults)
                 //
                 reports.WriteExecutionResults(string(repJson), logFilePtr)
+
+                // console 2. to print status to console (i.e. not executed cases: "ParentFailed", "ParentSkipped")
+                reports.ReportConsoleByTc(*tcExecution)
             }
         }
     }
