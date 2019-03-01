@@ -252,6 +252,7 @@ func (tcTree TcTree) InitNodesRunResult (node *TcNode, runResult string) {
 
 func (tcTree TcTree) RefreshNodeAndDirectChilrenTcResult(node *TcNode, tcRunResult string, tcStart string, tcEnd string, tcRunMessage []*testcase.TestMessage, 
         tcStartUnixNano int64, tcEndUnixNano int64) {
+    // --------
     node.TestCaseExecutionInfo.TestResult = tcRunResult
     node.TestCaseExecutionInfo.StartTime = tcStart
     node.TestCaseExecutionInfo.EndTime = tcEnd
@@ -264,6 +265,40 @@ func (tcTree TcTree) RefreshNodeAndDirectChilrenTcResult(node *TcNode, tcRunResu
         if tcRunResult == "Fail"{
             node.Children[i].TestCaseExecutionInfo.TestResult = "ParentFailed"
         } else if tcRunResult == "Success"{
+            node.Children[i].TestCaseExecutionInfo.TestResult = "Ready"
+        }
+    }
+}
+
+func (tcTree TcTree) RefreshNodeAndChilrenTcResult(node *TcNode, tcRunResult string, tcStart string, tcEnd string, tcRunMessage []*testcase.TestMessage, 
+        tcStartUnixNano int64, tcEndUnixNano int64) {
+    // --------
+    node.TestCaseExecutionInfo.TestResult = tcRunResult
+    node.TestCaseExecutionInfo.StartTime = tcStart
+    node.TestCaseExecutionInfo.EndTime = tcEnd
+    node.TestCaseExecutionInfo.HttpTestMessages = tcRunMessage
+    node.TestCaseExecutionInfo.StartTimeUnixNano = tcStartUnixNano
+    node.TestCaseExecutionInfo.EndTimeUnixNano = tcEndUnixNano
+    node.TestCaseExecutionInfo.DurationUnixNano = tcEndUnixNano - tcStartUnixNano
+
+    for i, _ := range node.Children {
+        switch tcRunResult { 
+        case "Fail": 
+            // node.Children[i].TestCaseExecutionInfo.TestResult = "ParentFailed"
+
+            tcTree.RefreshNodeAndChilrenTcResult(node.Children[i], "ParentFailed", tcStart, tcEnd, 
+                tcRunMessage, tcStartUnixNano, tcEndUnixNano)
+        case "ParentFailed": 
+            // node.Children[i].TestCaseExecutionInfo.TestResult = "ParentSkipped"
+
+            tcTree.RefreshNodeAndChilrenTcResult(node.Children[i], "ParentSkipped", tcStart, tcEnd, 
+                tcRunMessage, tcStartUnixNano, tcEndUnixNano)
+        case "ParentSkipped": 
+            // node.Children[i].TestCaseExecutionInfo.TestResult = "ParentSkipped"
+
+            tcTree.RefreshNodeAndChilrenTcResult(node.Children[i], "ParentSkipped", tcStart, tcEnd, 
+                tcRunMessage, tcStartUnixNano, tcEndUnixNano)
+        case "Success":
             node.Children[i].TestCaseExecutionInfo.TestResult = "Ready"
         }
     }
