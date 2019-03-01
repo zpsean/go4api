@@ -60,7 +60,7 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo) {
         fmt.Println(string(failedTMBytes))
 
         fmt.Println(string(tcExecution.ActualBody)[0:out_len], "...")
-    } else if tcReportResults.TestResult == "Fail" {
+    } else if tcReportResults.TestResult == "Success" {
         fmt.Printf("\n%s%-40s%-3s%-30s%-7s[%-7s,%-7s,%-10s] %-30s%-30s%-4s%d%s\n", CLR_G, 
             tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
             tcReportResults.TestResult, tcReportResults.SetUpResult, tcReportResults.HttpResult, tcReportResults.TearDownResult, 
