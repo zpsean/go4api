@@ -91,8 +91,8 @@ func (tcsRunStore *TcsRunStore) RunEachPriority (baseUrl string, priority string
                 tcsRunStore.TcTree.SearchNode(c, tcsRunStore.Root, tcExecution.TcName())
             }(c)
             //
-            tcsRunStore.TcTreeStats.ResetTcTreeStats(priority)
-            tcsRunStore.TcTreeStats.CollectNodeStatusByPriority(tcsRunStore.Root, priority)
+            // tcsRunStore.TcTreeStats.ResetTcTreeStats(priority)
+            // tcsRunStore.TcTreeStats.CollectNodeStatusByPriority(tcsRunStore.Root, priority)
 
             // tcsRunStore.TcTree.RefreshNodeAndDirectChilrenTcResult(<-c, tcExecution.TestResult, tcExecution.StartTime, tcExecution.EndTime, 
             //     tcExecution.HttpTestMessages, tcExecution.StartTimeUnixNano, tcExecution.EndTimeUnixNano)
@@ -189,7 +189,7 @@ func WriteNotNotExecutedToLog (priority string, logFilePtr *os.File, tcTreeStats
     notRunTime := time.Now()
     for i, _ := range tcTreeStats.TcNotExecutedByPriority[priority] {
         for _, tcExecution := range tcTreeStats.TcNotExecutedByPriority[priority][i] {
-            // [casename, priority, parentTestCase, ...], tc, jsonFile, csvFile, row in csv
+            //
             if tcExecution.Priority() == priority {
                 // set some dummy time for the tc not executed
                 tcExecution.StartTimeUnixNano = notRunTime.UnixNano()

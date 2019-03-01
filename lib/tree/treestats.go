@@ -60,6 +60,8 @@ func (tcTreeStats TcTreeStats) ResetTcTreeStats (priority string) {
 
     for _, status := range StatusKeys {
         tcTreeStats.StatusCountByPriority[priority][status] = 0
+        //
+        tcTreeStats.TcNotExecutedByPriority[priority] = map[string][]*testcase.TestCaseExecutionInfo{}
     }
     tcTreeStats.StatusCountByPriority[priority]["Total"] = 0
 }
