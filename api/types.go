@@ -89,33 +89,33 @@ func (tcDataStore *TcDataStore) PrepVariablesBuiltins (path string) {
         var res testcase.Request
 
         tcDataStore.RenderTcVariables(path, res)
-        tcDataStore.EvaluateTcBuiltinFunctions(path, res)
+        tcDataStore.EvaluateTcEmbeddedFunctions(path, res)
     case "response":
         var res testcase.Response
 
         tcDataStore.RenderTcVariables(path, res)
-        tcDataStore.EvaluateTcBuiltinFunctions(path, res)
+        tcDataStore.EvaluateTcEmbeddedFunctions(path, res)
 
     case "session", "outGlobalVariables", "outLocalVariables":
         var res map[string]interface{}
 
         tcDataStore.RenderTcVariables(path, res)
-        tcDataStore.EvaluateTcBuiltinFunctions(path, res)
+        tcDataStore.EvaluateTcEmbeddedFunctions(path, res)
     case "outFiles":
         var res []*testcase.OutFilesDetails
 
         tcDataStore.RenderTcVariables(path, res)
-        tcDataStore.EvaluateTcBuiltinFunctions(path, res)
+        tcDataStore.EvaluateTcEmbeddedFunctions(path, res)
     case "cmd":
         var res string
 
         tcDataStore.RenderTcVariables(path, res)
-        tcDataStore.EvaluateTcBuiltinFunctions(path, res)
+        tcDataStore.EvaluateTcEmbeddedFunctions(path, res)
     case "cmdResponse":
         var res map[string]interface{}
 
         tcDataStore.RenderTcVariables(path, res)
-        tcDataStore.EvaluateTcBuiltinFunctions(path, res)
+        tcDataStore.EvaluateTcEmbeddedFunctions(path, res)
     }
 }
 
@@ -171,14 +171,14 @@ func (tcDataStore *TcDataStore) RenderTcVariables (path string, res interface{})
     }
 } 
 
-func (tcDataStore *TcDataStore) EvaluateTcBuiltinFunctions (path string, res interface{}) {
+func (tcDataStore *TcDataStore) EvaluateTcEmbeddedFunctions (path string, res interface{}) {
     var resTcData testcase.TestCaseDataInfo
 
     tcDataJsonBytes, _ := json.Marshal(tcDataStore.TcData)
     tcDataJson := string(tcDataJsonBytes)
 
     result := gjson.Get(tcDataJson, path)
-    edResp := tcDataStore.EvaluateBuiltinFunctions(result.Value())
+    edResp := tcDataStore.EvaluateEmbeddedFunctions(result.Value())
 
     // to be noticed the special case: result.Value() is string, edResp is string
     if strings.Contains(result.String(), "Fn::") {
