@@ -104,8 +104,8 @@ func init () {
 }
 
 
-func Test_EvaluateBuiltinFunctions_1 (t *testing.T) {
-    res := api.EvaluateBuiltinFunctions(tcData)
+func Test_EvaluateEmbeddedFunctions_1 (t *testing.T) {
+    res := api.EvaluateEmbeddedFunctions(tcData)
     
     resj, _ := json.MarshalIndent(res, "", "\t")
     fmt.Println(string(resj))
@@ -118,8 +118,8 @@ func Test_EvaluateBuiltinFunctions_1 (t *testing.T) {
     }
 }
 
-// func Test_EvaluateBuiltinFunctions (t *testing.T) {
-//     res := api.EvaluateBuiltinFunctions(tcData)
+// func Test_EvaluateEmbeddedFunctions (t *testing.T) {
+//     res := api.EvaluateEmbeddedFunctions(tcData)
     
 //     resj, _ := json.MarshalIndent(res, "", "\t")
 //     fmt.Println(string(resj))

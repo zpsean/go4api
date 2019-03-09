@@ -16,44 +16,36 @@ import (
     // "reflect"
     "encoding/json"
 
-    "go4api/builtins"
     "go4api/lib/g4json"
-    "go4api/js"
+    "go4api/builtins"
+    gjs "go4api/js"
 
     // gjson "github.com/tidwall/gjson"
     sjson "github.com/tidwall/sjson"
 )
 
-type BuiltinFieldDetails struct {
-    FieldPath []string
-    CurrValue interface{}
-    FieldType string // the json supported types
-    FieldSubType string  // like ip/email/phone/etc.
-    EvaluatedValue interface{}
-}
 
-
-func (tcDataStore *TcDataStore) EvaluateBuiltinFunctions (value interface{}) interface{} {
+func (tcDataStore *TcDataStore) EvaluateEmbeddedFunctions (value interface{}) interface{} {
     jsonBytes, _ := json.Marshal(value)
     jsonStr := string(jsonBytes)
 
-    // check if has builtin function
+    // check if has embedded function
     if !strings.Contains(jsonStr, "Fn::") {
         return value
     } else {
         // fmt.Println(">>...")
-        builtinLeavesSlice := GetBuiltinLeavesSlice(value)
+        funcLeavesSlice := GetFuncLeavesSlice(value)
 
-        maxLevel := g4json.GetJsonNodesLevel(builtinLeavesSlice)
+        maxLevel := g4json.GetJsonNodesLevel(funcLeavesSlice)
 
-        jsonStr = tcDataStore.IterateBuiltsins(jsonStr, builtinLeavesSlice, maxLevel)
+        jsonStr = tcDataStore.IterateFuncs(jsonStr, funcLeavesSlice, maxLevel)
 
         return jsonStr
     }
 }
 
-func GetBuiltinLeavesSlice (value interface{}) []g4json.FieldDetails {
-    var builtinLeavesSlice []g4json.FieldDetails
+func GetFuncLeavesSlice (value interface{}) []g4json.FieldDetails {
+    var funcLeavesSlice []g4json.FieldDetails
 
     fieldDetailsSlice := g4json.GetFieldsDetails(value)
     leavesSlice := g4json.GetJsonLeaves(fieldDetailsSlice)
@@ -62,14 +54,14 @@ func GetBuiltinLeavesSlice (value interface{}) []g4json.FieldDetails {
         nodePathStr := strings.Join(leavesSlice[i].FieldPath, ".")
 
         if strings.Contains(nodePathStr, "Fn::") {
-            builtinLeavesSlice = append(builtinLeavesSlice, leavesSlice[i])
+            funcLeavesSlice = append(funcLeavesSlice, leavesSlice[i])
         }   
     }
 
-    return builtinLeavesSlice
+    return funcLeavesSlice
 }
 
-// need to consider the nested builtin functions, like:
+// need to consider the nested functions, like:
 // definition:  "field2": {"Fn::F2": [12, {"Fn::F3": ["aaa", "bbbb"]}]},
 // leafpath:    "request.payload.text.field2.Fn::F2.0",
 //              "request.payload.text.field2.Fn::F2.1.Fn::F3.1",
@@ -77,18 +69,18 @@ func GetBuiltinLeavesSlice (value interface{}) []g4json.FieldDetails {
 //
 // !! Warning: specail case, if the key is complex key, as contains ., \, ", etc., need specail handle
 
-func (tcDataStore *TcDataStore) IterateBuiltsins (jsonStr string, builtinLeavesSlice []g4json.FieldDetails, maxLevel int) string {
+func (tcDataStore *TcDataStore) IterateFuncs (jsonStr string, funcLeavesSlice []g4json.FieldDetails, maxLevel int) string {
     var evaluatedSlice []g4json.FieldDetails
     var evaluatedFuncPaths []string
 
     var replacerMap = make(map[string]string)
 
     for i := maxLevel; i > 0; i-- {
-        for j, _ := range builtinLeavesSlice {
-            pathLength := len(builtinLeavesSlice[j].FieldPath)
+        for j, _ := range funcLeavesSlice {
+            pathLength := len(funcLeavesSlice[j].FieldPath)
             if pathLength >= i && i > 1 {
                 // the last node (leaf), take its own CurrValue as the funcParams 
-                if strings.Contains(builtinLeavesSlice[j].FieldPath[i - 1], "Fn::") {
+                if strings.Contains(funcLeavesSlice[j].FieldPath[i - 1], "Fn::") {
                     var value interface{}
                     json.Unmarshal([]byte(jsonStr), &value)
 
@@ -96,8 +88,8 @@ func (tcDataStore *TcDataStore) IterateBuiltsins (jsonStr string, builtinLeavesS
 
                     var tempSlice []string
                     var nodePathStr string
-                    for ii, _ := range builtinLeavesSlice[j].FieldPath[0:i - 1] {
-                        oKey := builtinLeavesSlice[j].FieldPath[0:i - 1][ii]
+                    for ii, _ := range funcLeavesSlice[j].FieldPath[0:i - 1] {
+                        oKey := funcLeavesSlice[j].FieldPath[0:i - 1][ii]
 
                         // if the key is complex key, as contains dot (.)
                         if strings.Contains(oKey, ".") {
@@ -118,11 +110,11 @@ func (tcDataStore *TcDataStore) IterateBuiltsins (jsonStr string, builtinLeavesS
                     }
                     nodePathStr = strings.Join(tempSlice, ".")
                     
-                    funcName := strings.TrimLeft(builtinLeavesSlice[j].FieldPath[i - 1], "Fn::")
+                    funcName := strings.TrimLeft(funcLeavesSlice[j].FieldPath[i - 1], "Fn::")
 
                     var funcParams interface{}
                     ifExists := false
-                    funcParamsPath := strings.Join(builtinLeavesSlice[j].FieldPath[0:i], ".")
+                    funcParamsPath := strings.Join(funcLeavesSlice[j].FieldPath[0:i], ".")
                     for ind, _ := range evaluatedFuncPaths {
                         if funcParamsPath == evaluatedFuncPaths[ind] {
                             ifExists = true
@@ -169,9 +161,10 @@ func (tcDataStore *TcDataStore) IterateBuiltsins (jsonStr string, builtinLeavesS
     return jsonStr
 }
 
+
 // CallFunc for BuiltinFunc and User defined func (i.e. in js files)
 func CallFunc(funcName string, funcParams_f interface{}) interface{} {
-    // check if the funcName is user defined func
+    // user defined func has high priority than builtin func
     idx := -1
     var returnValue interface{}
 
@@ -190,6 +183,3 @@ func CallFunc(funcName string, funcParams_f interface{}) interface{} {
 
     return returnValue
 }
-
-
-
