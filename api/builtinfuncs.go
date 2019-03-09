@@ -18,6 +18,7 @@ import (
 
     "go4api/builtins"
     "go4api/lib/g4json"
+    "go4api/js"
 
     // gjson "github.com/tidwall/gjson"
     sjson "github.com/tidwall/sjson"
@@ -146,8 +147,8 @@ func (tcDataStore *TcDataStore) IterateBuiltsins (jsonStr string, builtinLeavesS
                         funcParams_f = funcParams
                     }
                     
-                    // call
-                    resValue := builtins.CallBuiltinFunc(funcName, funcParams_f)
+                    // call func
+                    resValue := CallFunc(funcName, funcParams_f)
 
                     for key, _ := range replacerMap {
                         jsonStr = strings.Replace(jsonStr, replacerMap[key], key, -1)
@@ -167,4 +168,28 @@ func (tcDataStore *TcDataStore) IterateBuiltsins (jsonStr string, builtinLeavesS
 
     return jsonStr
 }
+
+// CallFunc for BuiltinFunc and User defined func (i.e. in js files)
+func CallFunc(funcName string, funcParams_f interface{}) interface{} {
+    // check if the funcName is user defined func
+    idx := -1
+    var returnValue interface{}
+
+    for i, _ := range gjs.JsFunctions {
+        if gjs.JsFunctions[i].JsFunctionName == funcName {
+            idx = i
+            break
+        }
+    } 
+
+    if idx != -1 {
+        returnValue = gjs.RunProgram(gjs.JsFunctions[idx].JsProgram, funcParams_f)
+    } else {
+        returnValue = builtins.CallBuiltinFunc(funcName, funcParams_f)
+    }
+
+    return returnValue
+}
+
+
 
