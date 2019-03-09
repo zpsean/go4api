@@ -17,8 +17,9 @@ import (
 
     // "go4api/cmd"
 
-    // goja "github.com/dop251/goja"
+    goja "github.com/dop251/goja"
 )
+
 
 // mvp, one js file has only one function
 type GJsBasics struct {
@@ -27,6 +28,6 @@ type GJsBasics struct {
     JsFunctionName string
     JsFunctionInParams interface{}
     JsFunctionOut interface{}
+    JsProgram *goja.Program
 }
 
-type GJsSet []GJsBasics
