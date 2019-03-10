@@ -69,7 +69,7 @@ func (tcDataStore *TcDataStore) HandleSqlCmd (i int) ([]bool, [][]*testcase.Test
     var sMessages [][]*testcase.TestMessage
 
     cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmd"
-    tcDataStore.PrepVariablesBuiltins(cmdStrPath)
+    tcDataStore.PrepEmbeddedFunctions(cmdStrPath)
 
     tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
     tcDataJson := string(tcDataJsonB)
@@ -107,7 +107,7 @@ func (tcDataStore *TcDataStore) HandleRedisCmd (i int) ([]bool, [][]*testcase.Te
     var cmdStr, cmdKey, cmdValue string
 
     cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmd"
-    tcDataStore.PrepVariablesBuiltins(cmdStrPath)
+    tcDataStore.PrepEmbeddedFunctions(cmdStrPath)
 
     tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
     tcDataJson := string(tcDataJsonB)
@@ -150,7 +150,7 @@ func (tcDataStore *TcDataStore) HandleInitCmd (i int) ([]bool, [][]*testcase.Tes
     var sMessages [][]*testcase.TestMessage
 
     cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmd"
-    tcDataStore.PrepVariablesBuiltins(cmdStrPath)
+    tcDataStore.PrepEmbeddedFunctions(cmdStrPath)
 
     tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
     tcDataJson := string(tcDataJsonB)
@@ -195,7 +195,7 @@ func (tcDataStore *TcDataStore) HandleSingleCmdResult (i int) ([]bool, [][]*test
 
     if tcDataStore.CmdExecStatus == "cmdSuccess" {
         path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdResponse"
-        tcDataStore.PrepVariablesBuiltins(path)
+        tcDataStore.PrepEmbeddedFunctions(path)
         //
         switch tcDataStore.CmdSection {
         case "setUp":
@@ -264,7 +264,7 @@ func (tcDataStore *TcDataStore) HandleCmdResultsForOut (i int) {
     
     // write out session if has
     path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".session"
-    tcDataStore.PrepVariablesBuiltins(path)
+    tcDataStore.PrepEmbeddedFunctions(path)
 
     switch tcDataStore.CmdSection {
         case "setUp":
@@ -278,7 +278,7 @@ func (tcDataStore *TcDataStore) HandleCmdResultsForOut (i int) {
 
     // write out global variables if has
     path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".outGlobalVariables"
-    tcDataStore.PrepVariablesBuiltins(path)
+    tcDataStore.PrepEmbeddedFunctions(path)
 
     switch tcDataStore.CmdSection {
         case "setUp":
@@ -292,7 +292,7 @@ func (tcDataStore *TcDataStore) HandleCmdResultsForOut (i int) {
 
     // write out tc local variables if has
     path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".outLocalVariables"
-    tcDataStore.PrepVariablesBuiltins(path)
+    tcDataStore.PrepEmbeddedFunctions(path)
 
     switch tcDataStore.CmdSection {
         case "setUp":
@@ -306,7 +306,7 @@ func (tcDataStore *TcDataStore) HandleCmdResultsForOut (i int) {
 
     // write out files if has
     path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".outFiles"
-    tcDataStore.PrepVariablesBuiltins(path)
+    tcDataStore.PrepEmbeddedFunctions(path)
 
     switch tcDataStore.CmdSection {
         case "setUp":

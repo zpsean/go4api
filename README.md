@@ -36,6 +36,7 @@ Features
 - **Scenario Testing**: when APIs have data dependency
 - **Convert HAR file / Swagger API file** 
 - **Built-in functions** 
+- **User defined functions**: use ECMAScript 5.1(+)  
 
 More information, refer to [wiki](https://github.com/zpsean/go4api/wiki).
 
@@ -245,9 +246,13 @@ CheatSheet
 
 ---
 
-Need help or want to contribute?
+Reference
 --------------------------------
+- [gjson](https://github.com/tidwall/gjson)
+- [sjson](https://github.com/tidwall/sjson)
+- [go-linq](https://github.com/ahmetb/go-linq)
+- [mysql](https://github.com/go-sql-driver/mysql)
+- [redigo](https://github.com/gomodule/redigo)
+- [xlsx](https://github.com/tealeg/xlsx)
+- [goja](https://github.com/dop251/goja)
 
-Types of questions and where to ask:
-
-- How do I?
