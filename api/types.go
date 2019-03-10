@@ -79,7 +79,7 @@ func InitTcDataStore (tcData *testcase.TestCaseDataInfo) *TcDataStore {
 
 // for http: .request, .response, .session, .outGlobalVariables, .outLocalVariables, .outFiles
 // for cmd (setUp, tearDown): .cmd, .cmdResponse, .session, .outGlobalVariables, .outLocalVariables, .outFiles
-func (tcDataStore *TcDataStore) PrepVariablesBuiltins (path string) {
+func (tcDataStore *TcDataStore) PrepEmbeddedFunctions (path string) {
     pathSlice := strings.Split(path, ".")
     pathLength := len(pathSlice)
     pathType := pathSlice[pathLength - 1]

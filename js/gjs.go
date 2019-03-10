@@ -95,7 +95,5 @@ func RunProgram(p *goja.Program, funcParams interface{}) interface{} {
         panic(err)
     }
 
-    fmt.Println("the sum results is:", v.Export())
-
     return v.Export()
 }

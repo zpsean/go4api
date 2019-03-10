@@ -29,7 +29,7 @@ func (tcDataStore *TcDataStore) RunHttp (baseUrl string) (string, []*testcase.Te
 
 func (tcDataStore *TcDataStore) CallHttp (baseUrl string) {
     path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "request"
-    tcDataStore.PrepVariablesBuiltins(path)
+    tcDataStore.PrepEmbeddedFunctions(path)
 
     tcData := tcDataStore.TcData
 
@@ -71,7 +71,7 @@ func (tcDataStore *TcDataStore) Compare () (string, []*testcase.TestMessage) {
     var testMessages []*testcase.TestMessage
 
     path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "response"
-    tcDataStore.PrepVariablesBuiltins(path)
+    tcDataStore.PrepEmbeddedFunctions(path)
 
     // status
     testResultsS, testMessagesS := tcDataStore.CompareStatus()
@@ -180,28 +180,28 @@ func (tcDataStore *TcDataStore) CompareBody() ([]bool, []*testcase.TestMessage) 
 func (tcDataStore *TcDataStore) HandleHttpResultsForOut () {
     // write out session if has
     path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "session"
-    tcDataStore.PrepVariablesBuiltins(path)
+    tcDataStore.PrepEmbeddedFunctions(path)
 
     expTcSession := tcDataStore.TcData.TestCase.Session()
     tcDataStore.WriteSession(expTcSession)
 
     // write out global variables if has
     path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outGlobalVariables"
-    tcDataStore.PrepVariablesBuiltins(path)
+    tcDataStore.PrepEmbeddedFunctions(path)
 
     expOutGlobalVariables := tcDataStore.TcData.TestCase.OutGlobalVariables()
     tcDataStore.WriteOutGlobalVariables(expOutGlobalVariables)
 
     // write out tc loca variables if has
     path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outLocalVariables"
-    tcDataStore.PrepVariablesBuiltins(path)
+    tcDataStore.PrepEmbeddedFunctions(path)
 
     expOutLocalVariables := tcDataStore.TcData.TestCase.OutLocalVariables()
     tcDataStore.WriteOutTcLocalVariables(expOutLocalVariables)
 
     // write out files if has
     path = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "outFiles"
-    tcDataStore.PrepVariablesBuiltins(path)
+    tcDataStore.PrepEmbeddedFunctions(path)
 
     expOutFiles := tcDataStore.TcData.TestCase.OutFiles()
     tcDataStore.HandleOutFiles(expOutFiles)
