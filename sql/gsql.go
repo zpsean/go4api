@@ -119,6 +119,7 @@ func (sqlExec *SqlExec) Update () error {
         fmt.Println("!! Err, Catch gsql err:", err)
         panic(err)
     }
+    defer sqlStmt.Close()
 
     res, err := sqlStmt.Exec()
     if err != nil {
@@ -149,6 +150,7 @@ func (sqlExec *SqlExec) Delete () error {
         fmt.Println("!! Err, Delete Prepare, Catch gsql err:", err) 
         panic(err)
     }
+    defer sqlStmt.Close()
 
     res, err := sqlStmt.Exec()
     if err != nil {
@@ -160,8 +162,6 @@ func (sqlExec *SqlExec) Delete () error {
         rowsAffected, _ := res.RowsAffected()
         sqlExec.CmdAffectedCount = int(rowsAffected)
     }
-
-    sqlStmt.Close()
 
     return err
 }
@@ -180,6 +180,7 @@ func (sqlExec *SqlExec) QueryWithoutParams () error {
         fmt.Println("!! Err, SELECT Prepare, Catch gsql err:", err)
         panic(err)
     }
+    defer sqlStmt.Close()
 
     rows, err := sqlStmt.Query()
     if err != nil {
@@ -194,9 +195,6 @@ func (sqlExec *SqlExec) QueryWithoutParams () error {
         sqlExec.RowsHeaders = rowsHeaders
         sqlExec.CmdResults = rowsData
     }
-
-    defer rows.Close()
-    sqlStmt.Close()
 
     return err
 }
@@ -258,6 +256,7 @@ func (sqlExec *SqlExec) Insert () error {
         fmt.Println("!! Err, Insert Prepare, Catch gsql err:", err)
         panic(err)
     }
+    defer sqlStmt.Close()
 
     res, err := sqlStmt.Exec()
     if err != nil {

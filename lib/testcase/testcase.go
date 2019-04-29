@@ -244,8 +244,17 @@ func (tc *TestCase) UrlEncode(baseUrl string) string {
 
     reqQueryStringEncoded := tc.ComposeReqQueryStringEncode()
 
+    // net/url's base url format is:
+    // scheme://[userinfo@]host/path[?query][#fragment]
+    // but if the ? is preceded by #, like: .../str1/#/str2?q=str3...
+    // then all the query string will be truncated, then one issue happes
+    // to avoid this issue, here set a replacer for #
+    urlStr = strings.Replace(urlStr, "#", "go4Api_wregwvasdst_ReplacerKey", -1)
+
     u, _ := url.Parse(urlStr)
+
     urlEncodedQry := u.Query().Encode()
+
     if len(urlEncodedQry) > 0 && len(reqQueryStringEncoded) > 0 {
         urlStr = u.Scheme + "://" + u.Host + "" + u.Path + "?" + urlEncodedQry + "&" + reqQueryStringEncoded
     } else if len (urlEncodedQry) > 0 {
@@ -255,6 +264,9 @@ func (tc *TestCase) UrlEncode(baseUrl string) string {
     } else {
         urlStr = u.Scheme + "://" + u.Host + "" + u.Path
     }
+
+    urlStr = strings.Replace(urlStr, "go4Api_wregwvasdst_ReplacerKey", "#", -1)
+
     return urlStr
 }
 
@@ -271,6 +283,9 @@ func (tc *TestCase) UrlRaw(baseUrl string) string {
 
     reqQueryStringRaw := tc.ComposeReqQueryString()
 
+    //
+    urlStr = strings.Replace(urlStr, "#", "go4Api_wregwvasdst_ReplacerKey", -1)
+
     u, _ := url.Parse(urlStr)
     urlQry := u.RawQuery
     if len(urlQry) > 0 && len(reqQueryStringRaw) > 0 {
@@ -282,6 +297,9 @@ func (tc *TestCase) UrlRaw(baseUrl string) string {
     } else {
         urlStr = u.Scheme + "://" + u.Host + "" + u.Path
     }
+    
+    urlStr = strings.Replace(urlStr, "go4Api_wregwvasdst_ReplacerKey", "#", -1)
+
     return urlStr
 }
 
