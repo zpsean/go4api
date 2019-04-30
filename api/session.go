@@ -23,7 +23,7 @@ func (tcDataStore *TcDataStore) WriteSession (expTcSession map[string]interface{
  
     tcData := tcDataStore.TcData
 
-    // get current tc has no out session yet, then init it from parent
+    // if current tc has no out session yet, then init it from parent
     tcSessionTemp := gsession.LookupTcSession(tcData.TcName())
 
     if len(tcSessionTemp) == 0 {
