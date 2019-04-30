@@ -23,14 +23,23 @@ func (tcDataStore *TcDataStore) WriteSession (expTcSession map[string]interface{
  
     tcData := tcDataStore.TcData
 
-    // get its parent session
-    parentTcSession := gsession.LookupTcSession(tcData.ParentTestCase())
+    // get current tc has no out session yet, then init it from parent
+    tcSessionTemp := gsession.LookupTcSession(tcData.TcName())
 
-    // copy the parentTcSession to tcSession
-    for k, v := range parentTcSession {
-        tcSession[k] = v
+    if len(tcSessionTemp) == 0 {
+        parentTcSession := gsession.LookupTcSession(tcData.ParentTestCase())
+
+        // copy the parentTcSession to tcSession
+        for k, v := range parentTcSession {
+            tcSession[k] = v
+        }
+    } else {
+        for k, v := range tcSessionTemp {
+            tcSession[k] = v
+        }
     }
-
+    
+    //
     if expTcSession != nil {
         for k, v := range expTcSession {
             var value interface{}
