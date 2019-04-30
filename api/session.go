@@ -25,7 +25,11 @@ func (tcDataStore *TcDataStore) WriteSession (expTcSession map[string]interface{
 
     // get its parent session
     parentTcSession := gsession.LookupTcSession(tcData.ParentTestCase())
-    tcSession = parentTcSession
+
+    // copy the parentTcSession to tcSession
+    for k, v := range parentTcSession {
+        tcSession[k] = v
+    }
 
     if expTcSession != nil {
         for k, v := range expTcSession {
