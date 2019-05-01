@@ -1,4 +1,4 @@
-<h3 align="center">Go4Api - a API testing tool written in Go</h3>
+<h3 align="center">Go4Api - an API testing tool written in Go</h3>
 <p align="center">Implementing Data-Driven Test, Mutation Test, Fuzz Test.</p>
 
 ---
