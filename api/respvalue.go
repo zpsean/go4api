@@ -210,6 +210,8 @@ func (tcDataStore *TcDataStore) IfCmdResultsPrimitive () bool {
     if len(ss) == 0 {
         return true
     } else {
+        // if read content from file, there may have " at left-most, so use ss[1:2]
+        // to be fixed later !!! 
         if ss[0:1] == "[" || ss[0:1] == "{" || ss[1:2] == "[" || ss[1:2] == "{" {
             return false
         } else {

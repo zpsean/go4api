@@ -17,6 +17,7 @@ import (
     "strconv"
     "encoding/json"
 
+    "go4api/cmd"
     "go4api/lib/testcase"
     "go4api/utils"
 
@@ -70,6 +71,7 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
     return finalResults, finalTestMessages
 }
 
+// file
 func (tcDataStore *TcDataStore) HandleJsonFile (i int) ([]bool, [][]*testcase.TestMessage) {
     var sResults []bool
     var sMessages [][]*testcase.TestMessage
@@ -83,8 +85,21 @@ func (tcDataStore *TcDataStore) HandleJsonFile (i int) ([]bool, [][]*testcase.Te
     cmdTgtJsonFile := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdSource"
     tgtJsonFile := gjson.Get(tcDataJson, cmdTgtJsonFile).String()
 
-    // get json content
-    jsonStr := utils.GetJsonFromFile(tgtJsonFile)
+    tgtJsonFileFullPath := ""
+    // check if tgtJsonFile is absolute path
+    if len(tgtJsonFile) > 0 {
+        if tgtJsonFile[0:1] == "/" {
+            tgtJsonFileFullPath = tgtJsonFile
+        } else {
+            testResourcePath := cmd.Opt.Testresource
+
+            if string(testResourcePath[len(testResourcePath) - 1]) != "/" {
+                tgtJsonFileFullPath = testResourcePath + "/" + tgtJsonFile
+            }
+        }
+    }
+
+    jsonStr := utils.GetJsonFromFile(tgtJsonFileFullPath)
 
     // as no cmd is executed, the CmdExecStatus is always "cmdSuccess"
     tcDataStore.CmdType = "jsonFile"
@@ -97,6 +112,8 @@ func (tcDataStore *TcDataStore) HandleJsonFile (i int) ([]bool, [][]*testcase.Te
     return sResults, sMessages
 }
 
+
+//sql
 func (tcDataStore *TcDataStore) HandleSqlCmd (i int) ([]bool, [][]*testcase.TestMessage) {
     var sResults []bool
     var sMessages [][]*testcase.TestMessage
@@ -133,6 +150,7 @@ func (tcDataStore *TcDataStore) HandleSqlCmd (i int) ([]bool, [][]*testcase.Test
     return sResults, sMessages
 }
 
+// redis
 func (tcDataStore *TcDataStore) HandleRedisCmd (i int) ([]bool, [][]*testcase.TestMessage) {
     var sResults []bool
     var sMessages [][]*testcase.TestMessage
@@ -178,6 +196,7 @@ func (tcDataStore *TcDataStore) HandleRedisCmd (i int) ([]bool, [][]*testcase.Te
     return sResults, sMessages
 }
 
+// init
 func (tcDataStore *TcDataStore) HandleInitCmd (i int) ([]bool, [][]*testcase.TestMessage) {
     var sResults []bool
     var sMessages [][]*testcase.TestMessage
