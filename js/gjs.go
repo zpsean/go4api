@@ -26,7 +26,7 @@ var JsFunctions []GJsBasics
 
 // trial code for js
 func InitJsFunctions () {
-    jsFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".js")
+    jsFileList, _ := utils.WalkPath(cmd.Opt.JsFuncs, ".js")
     // fmt.Println(jsFileList)
 
     for i, _ := range jsFileList {

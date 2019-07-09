@@ -29,8 +29,21 @@ import (
 
 func InitFullTcSlice () []*testcase.TestCaseDataInfo { 
     var fullTcSlice []*testcase.TestCaseDataInfo
+    var jsonFileList []string
 
-    jsonFileList, _ := utils.WalkPath(cmd.Opt.Testcase, ".json")
+    // tend to support cmd.Opt.Testcase accepting comma delimited paths
+    // path istself can be regular expression
+    // for example: path1,path2,path3,path4*,...
+    filePathSlice := strings.Split(cmd.Opt.Testcase, ",")
+
+    for i, _ := range filePathSlice {
+        // to support pattern later
+        // matches, _ := filepath.Glob(filePathSlice[i])
+
+        jsonFileListTemp, _ := utils.WalkPath(filePathSlice[i], ".json")
+        jsonFileList = append(jsonFileList, jsonFileListTemp[0:]...)
+    }
+
     for _, jsonFile := range jsonFileList {
         csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_dt")
         //

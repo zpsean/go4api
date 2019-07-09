@@ -30,6 +30,7 @@ type Options struct {
     Testcase string 
     Testresource string
     Testresults string
+    JsFuncs string
     TestEnv string
     BaseUrl string
     IfScenario  bool
@@ -66,6 +67,7 @@ func init() {
     testcase := flag.String("tc", defaultTestDir + "/testcase", "the path which test json in")
     testresource := flag.String("tr", defaultTestDir + "/testresource", "the path which test resource in")
     testresults := flag.String("r", defaultTestDir + "/testresults", "the path which test results in")
+    js := flag.String("js", defaultTestDir + "/js", "the path which functions defined with js in")
     testEnv := flag.String("testEnv", "QA", "the testEnv, i.e. dev, qa, uat, etc.")
     baseUrl := flag.String("baseUrl", "", "the baseUrl")
     ifScenario := flag.Bool("S", false, "if the target cases are for scenarios, which have data dependency")
@@ -92,6 +94,7 @@ func init() {
     Opt.Testcase = *testcase
     Opt.Testresource = *testresource
     Opt.Testresults = *testresults
+    Opt.JsFuncs = *js
     Opt.TestEnv = *testEnv
     Opt.BaseUrl = *baseUrl
     Opt.IfScenario = *ifScenario
