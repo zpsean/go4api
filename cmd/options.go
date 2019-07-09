@@ -27,7 +27,9 @@ var (
 
 type Options struct {
     Testconfig string
+    Testsuite string 
     Testcase string 
+
     Testresource string
     Testresults string
     JsFuncs string
@@ -66,7 +68,9 @@ func init() {
     flag.BoolVar(&report, "report", false, "Generate report only from log file")
     //
     testconfig := flag.String("c", defaultTestDir + "/testconfig", "the path which test config in")
+    testsuite := flag.String("tsuite", defaultTestDir + "/testsuite", "the path which testsuite json in")
     testcase := flag.String("tc", defaultTestDir + "/testcase", "the path which test json in")
+
     testresource := flag.String("tr", defaultTestDir + "/testresource", "the path which test resource in")
     testresults := flag.String("r", defaultTestDir + "/testresults", "the path which test results in")
     js := flag.String("js", defaultTestDir + "/js", "the path which functions defined with js in")
@@ -96,7 +100,9 @@ func init() {
     flag.Parse()
     //
     Opt.Testconfig = *testconfig
+    Opt.Testsuite = *testsuite
     Opt.Testcase = *testcase
+
     Opt.Testresource = *testresource
     Opt.Testresults = *testresults
     Opt.JsFuncs = *js

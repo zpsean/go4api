@@ -14,10 +14,10 @@ import (
 
 )
 
-type TestSuites []TestSuite
+type TestSuites []*TestSuite
 
 // test suite type,
-type TestSuite map[string]*TestCaseBasics
+type TestSuite map[string]*TestSuiteBasics
 
 type TestSuiteBasics struct {
     Priority string         `json:"priority"`   // is the highest of the testcases included (i.e. get p1 if has p1, p2, p9)

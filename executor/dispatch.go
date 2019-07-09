@@ -66,7 +66,16 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
         // fuzzTcArray := GetFuzzTcArray()
         // Run(ch, baseUrl, resultsDir, resultsLogFile, fuzzTcArray)
     } else if cmd.Opt.IfKeyWord {
+        // WarmUpDBConnection()
+        // WarmUpRedisConnection()
         //
+        // InitTestSuiteSlice()
+        // filter cases with fullTcSlice for Normal cases (i.e. not global cases)
+        // combines the Normal cases (may put ts prefix)
+
+        // g4Store.NormalRunStore.InitRun()
+        // g4Store.NormalRunStore.RunPriorities(baseUrl, resultsLogFile)
+        // g4Store.NormalRunStore.RunConsoleOverallReport()
     } else {
         WarmUpDBConnection()
         WarmUpRedisConnection()

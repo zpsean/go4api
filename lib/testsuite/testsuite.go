@@ -40,9 +40,9 @@ func (ts *TestSuite) TcRootPath() string {
 }
 
 func (ts *TestSuite) TestCases() []string {
-    return (*ts)[tc.TsName()].TestCases
+    return (*ts)[ts.TsName()].TestCases
 }
 
 func (ts *TestSuite) Parameters() map[string]interface{} {
-    return (*ts)[tc.TsName()].Parameters
+    return (*ts)[ts.TsName()].Parameters
 }
