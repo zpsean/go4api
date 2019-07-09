@@ -11,7 +11,7 @@
 package api
 
 import (
-    // "fmt"
+    "fmt"
     "strings"
     // "reflect"
     "encoding/json"
@@ -37,6 +37,8 @@ func (tcDataStore *TcDataStore) GetResponseValue (searchPath string) interface{}
             value = tcDataStore.GetSqlActualValueByPath(searchPath)
         case strings.HasPrefix(searchPath, "$(redis)."):
             value = tcDataStore.GetRedisActualValueByPath(searchPath)
+        case strings.HasPrefix(searchPath, "$(file)."):
+            value = tcDataStore.GetFileActualValueByPath(searchPath)
         // case strings.HasPrefix(searchPath, "$."):
         //     value = tcDataStore.GetBodyActualValueByPath(searchPath)
         default:
@@ -102,7 +104,7 @@ func (tcDataStore *TcDataStore) GetBodyActualValueByPath (key string) interface{
     return actualValue
 }
 
-
+// sql
 func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string) interface{} {
     var resValue interface{}
  
@@ -142,6 +144,7 @@ func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string) inte
     return resValue
 }
 
+// redis
 func (tcDataStore *TcDataStore) GetRedisActualValueByPath (searchPath string) interface{} {
     var resValue interface{}
  
@@ -169,6 +172,37 @@ func (tcDataStore *TcDataStore) GetRedisActualValueByPath (searchPath string) in
     return resValue
 }
 
+// file
+func (tcDataStore *TcDataStore) GetFileActualValueByPath (searchPath string) interface{} {
+    var resValue interface{}
+ 
+    prefix := "$(file)."
+    lenPrefix := len(prefix)
+
+    // cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
+    // cmdResultsJson := string(cmdResultsB)
+
+    fmt.Println(tcDataStore.CmdResults.(string))
+
+    cmdResultsJson := tcDataStore.CmdResults.(string)
+
+    if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
+        switch {
+        case tcDataStore.IfCmdResultsPrimitive():
+            resValue = tcDataStore.CmdResults
+        default:
+            value := gjson.Get(cmdResultsJson, searchPath[lenPrefix:])
+            resValue = value.Value()
+        }
+    } else {
+        resValue = searchPath
+    }
+
+    return resValue
+}
+
+
+//
 func (tcDataStore *TcDataStore) IfCmdResultsPrimitive () bool {
     cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
     cmdResultsJson := string(cmdResultsB)
@@ -185,6 +219,7 @@ func (tcDataStore *TcDataStore) IfCmdResultsPrimitive () bool {
     }
 }
 
+//
 func compareCommon (reponsePart string, key string, assertionKey string, actualValue interface{}, expValue interface{}) (bool, *testcase.TestMessage) {
     // Note: As get Go nil, for JSON null, need special care, two possibilities:
     // p1: expResult -> null, but can not find out actualValue, go set it to nil, i.e. null (assertion -> false)

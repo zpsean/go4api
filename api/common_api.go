@@ -18,6 +18,7 @@ import (
     "encoding/json"
 
     "go4api/lib/testcase"
+    "go4api/utils"
 
     gjson "github.com/tidwall/gjson"
 )
@@ -49,6 +50,11 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
 
                 cmdsResults = append(cmdsResults, sResults[0:]...)
                 finalTestMessages = append(finalTestMessages, sMessages[0:]...)
+            case "jsonfile":
+                sResults, sMessages = tcDataStore.HandleJsonFile(i)
+
+                cmdsResults = append(cmdsResults, sResults[0:]...)
+                finalTestMessages = append(finalTestMessages, sMessages[0:]...)
             default:
                 fmt.Println("!! warning, command ", cmdType, " can not be recognized.")
         }
@@ -62,6 +68,33 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
     }
 
     return finalResults, finalTestMessages
+}
+
+func (tcDataStore *TcDataStore) HandleJsonFile (i int) ([]bool, [][]*testcase.TestMessage) {
+    var sResults []bool
+    var sMessages [][]*testcase.TestMessage
+
+    // cmd is always ""
+    // cmdStr := ""
+
+    tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
+    tcDataJson := string(tcDataJsonB)
+
+    cmdTgtJsonFile := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdSource"
+    tgtJsonFile := gjson.Get(tcDataJson, cmdTgtJsonFile).String()
+
+    // get json content
+    jsonStr := utils.GetJsonFromFile(tgtJsonFile)
+
+    // as no cmd is executed, the CmdExecStatus is always "cmdSuccess"
+    tcDataStore.CmdType = "jsonFile"
+    tcDataStore.CmdExecStatus = "cmdSuccess"
+    tcDataStore.CmdAffectedCount = -1
+    tcDataStore.CmdResults = jsonStr
+
+    sResults, sMessages = tcDataStore.HandleSingleCmdResult(i)
+
+    return sResults, sMessages
 }
 
 func (tcDataStore *TcDataStore) HandleSqlCmd (i int) ([]bool, [][]*testcase.TestMessage) {
