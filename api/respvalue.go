@@ -11,7 +11,7 @@
 package api
 
 import (
-    "fmt"
+    // "fmt"
     "strings"
     // "reflect"
     "encoding/json"
@@ -179,13 +179,8 @@ func (tcDataStore *TcDataStore) GetFileActualValueByPath (searchPath string) int
     prefix := "$(file)."
     lenPrefix := len(prefix)
 
-    // cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
-    // cmdResultsJson := string(cmdResultsB)
-
-    fmt.Println(tcDataStore.CmdResults.(string))
-
     cmdResultsJson := tcDataStore.CmdResults.(string)
-
+ 
     if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
         switch {
         case tcDataStore.IfCmdResultsPrimitive():
@@ -207,11 +202,15 @@ func (tcDataStore *TcDataStore) IfCmdResultsPrimitive () bool {
     cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
     cmdResultsJson := string(cmdResultsB)
 
-    ss := strings.TrimSpace(cmdResultsJson)
+    // remove left \n
+    ss := strings.TrimLeft(cmdResultsJson, "\n")
+    // remove space
+    ss = strings.TrimSpace(ss)
+
     if len(ss) == 0 {
         return true
     } else {
-        if ss[0:1] == "[" || ss[0:1] == "{" {
+        if ss[0:1] == "[" || ss[0:1] == "{" || ss[1:2] == "[" || ss[1:2] == "{" {
             return false
         } else {
             return true
