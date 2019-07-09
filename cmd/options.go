@@ -36,6 +36,8 @@ type Options struct {
     IfScenario  bool
     IfFuzzTest  bool
     IfMutation  bool
+    IfKeyWord   bool
+
     IfConcurrency bool
     ConcurrencyLimit int
     IfShowOriginRequest bool
@@ -70,9 +72,12 @@ func init() {
     js := flag.String("js", defaultTestDir + "/js", "the path which functions defined with js in")
     testEnv := flag.String("testEnv", "QA", "the testEnv, i.e. dev, qa, uat, etc.")
     baseUrl := flag.String("baseUrl", "", "the baseUrl")
+
     ifScenario := flag.Bool("S", false, "if the target cases are for scenarios, which have data dependency")
     ifFuzzTest := flag.Bool("F", false, "if to run the Fuzz test")
     ifMutation := flag.Bool("M", false, "if to run the Mutation test")
+    ifKeyWord := flag.Bool("K", false, "if to run with keyword driven / testsuite mode")
+
     ifConcurrency := flag.Bool("ifCon", true, "if to run the with concurrency mode")
     concurrency := flag.Int("cl", 100, "concurrency limitation")
     ifShowOriginRequest := flag.Bool("ifOriginReq", false, "if to show origin request, be careful, it may expose confidential info")
@@ -100,6 +105,8 @@ func init() {
     Opt.IfScenario = *ifScenario
     Opt.IfFuzzTest = *ifFuzzTest
     Opt.IfMutation = *ifMutation
+    Opt.IfKeyWord = *ifKeyWord
+
     Opt.IfConcurrency = *ifConcurrency
     Opt.ConcurrencyLimit = *concurrency
     Opt.IfShowOriginRequest = *ifShowOriginRequest

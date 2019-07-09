@@ -65,6 +65,8 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
         // //
         // fuzzTcArray := GetFuzzTcArray()
         // Run(ch, baseUrl, resultsDir, resultsLogFile, fuzzTcArray)
+    } else if cmd.Opt.IfKeyWord {
+        //
     } else {
         WarmUpDBConnection()
         WarmUpRedisConnection()
