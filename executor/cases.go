@@ -27,15 +27,20 @@ import (
     "go4api/lib/testcase"
 )
 
-func InitFullTcSlice () []*testcase.TestCaseDataInfo { 
+func GetTcFilePaths () []string {
+    filePathSlice := strings.Split(cmd.Opt.Testcase, ",")
+
+    return filePathSlice
+}
+
+
+func InitFullTcSlice (filePathSlice []string) []*testcase.TestCaseDataInfo { 
     var fullTcSlice []*testcase.TestCaseDataInfo
     var jsonFileList []string
 
     // tend to support cmd.Opt.Testcase accepting comma delimited paths
     // path istself can be regular expression
     // for example: path1,path2,path3,path4*,...
-    filePathSlice := strings.Split(cmd.Opt.Testcase, ",")
-
     for i, _ := range filePathSlice {
         // to support pattern later
         // matches, _ := filepath.Glob(filePathSlice[i])

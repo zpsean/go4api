@@ -11,7 +11,7 @@
 package testsuite
 
 import (
-
+    "go4api/lib/testcase"
 )
 
 type TestSuites []*TestSuite
@@ -20,9 +20,10 @@ type TestSuites []*TestSuite
 type TestSuite map[string]*TestSuiteBasics
 
 type TestSuiteBasics struct {
-    Priority string         `json:"priority"`   // is the highest of the testcases included (i.e. get p1 if has p1, p2, p9)
-    TcRootPath string       `json:"tcRootPath"` // has highpriority than attribute TestCases
-    TestCases []string      `json:"testCases"`
+    Priority string            `json:"priority"`      // is the highest of the testcases included (i.e. get p1 if has p1, p2, p9)
+    TestCasePaths []string     `json:"testCasePaths"` // has highp riority than attribute TestCases
+    OriginalTestCases []string      `json:"originalTestCases"`
+    AnalyzedTestCases []*testcase.TestCaseDataInfo      `json:"analyzedTestCases"`
     Parameters map[string]interface{}   `json:"parameters"`
 }
 

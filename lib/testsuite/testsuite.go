@@ -15,6 +15,8 @@ import (
     // "time"
     // "os"
     // "sort"
+
+    "go4api/lib/testcase"
 )
 
 // test suite type - get
@@ -35,14 +37,21 @@ func (ts *TestSuite) Priority() string {
     return (*ts)[ts.TsName()].Priority
 }
 
-func (ts *TestSuite) TcRootPath() string {
-    return (*ts)[ts.TsName()].TcRootPath
+func (ts *TestSuite) TestCasePaths() []string {
+    return (*ts)[ts.TsName()].TestCasePaths
 }
 
-func (ts *TestSuite) TestCases() []string {
-    return (*ts)[ts.TsName()].TestCases
+func (ts *TestSuite) OriginalTestCases() []string {
+    return (*ts)[ts.TsName()].OriginalTestCases
 }
 
 func (ts *TestSuite) Parameters() map[string]interface{} {
     return (*ts)[ts.TsName()].Parameters
 }
+
+//
+// set AnalyzedTestCases
+func (ts *TestSuite) SetAnalyzedTestCases (tcSlice []*testcase.TestCaseDataInfo) {
+    (*ts)[ts.TsName()].AnalyzedTestCases = tcSlice
+}
+

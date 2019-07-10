@@ -14,6 +14,7 @@ import (
     "go4api/lib/testcase"
     "go4api/lib/tree"
     "go4api/js"
+    "go4api/cmd"
 )
 
 type G4Store struct {
@@ -35,7 +36,15 @@ type TcsRunStore struct {
 }
 
 func InitG4Store () *G4Store {
-    fullTcSlice := InitFullTcSlice()
+    var fullTcSlice []*testcase.TestCaseDataInfo
+
+    if cmd.Opt.IfKeyWord {
+        fullTcSlice = InitFullTsTcSlice(fullTcSlice)
+    } else {
+        filePaths := GetTcFilePaths()
+        fullTcSlice = InitFullTcSlice(filePaths)
+    }
+
     // js files
     gjs.InitJsFunctions()
 
@@ -79,5 +88,4 @@ func InitG4Store () *G4Store {
 
     return g4Store
 }
-
 

@@ -19,8 +19,25 @@ import (
 
     "go4api/cmd"
     "go4api/utils"
+    "go4api/lib/testcase"
     "go4api/lib/testsuite"
 )
+
+func InitFullTsTcSlice (fullTcSlice []*testcase.TestCaseDataInfo) []*testcase.TestCaseDataInfo {
+    var fullTsTcSlice []*testcase.TestCaseDataInfo
+
+    tsSlice := InitTestSuiteSlice()
+
+    for i, _ := range tsSlice {
+        tsuite := AnalyzeTestSuiteTestCases(tsSlice[i])
+
+        fullTsTcSlice = append(fullTsTcSlice, (*tsuite)[tsuite.TsName()].AnalyzedTestCases[0:]...)
+    }
+
+    // Note: to avoid the possibility of the case duplication, here is to put the TestSuite prefix to tcName
+
+    return fullTsTcSlice
+}
 
 func InitTestSuiteSlice () []*testsuite.TestSuite { 
     var tsSlice []*testsuite.TestSuite
@@ -46,6 +63,19 @@ func InitTestSuiteSlice () []*testsuite.TestSuite {
     }
 
     return tsSlice
+}
+
+// to populate AnalyzedTestCases, 
+// if TestCasePaths is defined, use path to generate
+// otherwise, use OriginalTestCases
+func AnalyzeTestSuiteTestCases (tsuite *testsuite.TestSuite) *testsuite.TestSuite {
+    if len(tsuite.TestCasePaths()) > 0 {
+        fullTcSlice := InitFullTcSlice(tsuite.TestCasePaths())
+
+        tsuite.SetAnalyzedTestCases(fullTcSlice)
+    }
+
+    return tsuite
 }
 
 
