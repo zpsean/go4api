@@ -31,11 +31,25 @@ func InitFullTsTcSlice (fullTcSlice []*testcase.TestCaseDataInfo) []*testcase.Te
     for i, _ := range tsSlice {
         tsuite := AnalyzeTestSuiteTestCases(tsSlice[i])
 
-        fullTsTcSlice = append(fullTsTcSlice, (*tsuite)[tsuite.TsName()].AnalyzedTestCases[0:]...)
-    }
+        analyzedTestCases := (*tsuite)[tsuite.TsName()].AnalyzedTestCases
 
-    // Note: to avoid the possibility of the case duplication, here is to put the TestSuite prefix to tcName
-    // to be added ...
+        // Note: to avoid the possibility of the case duplication, here is to put the TestSuite prefix to tcName
+        // Please remember also need to update the ParentTestCase name
+        for i, _ := range analyzedTestCases {
+            tsName := tsuite.TsName()
+
+            tcName := analyzedTestCases[i].TestCase.TcName()
+            parentTestCaseName := analyzedTestCases[i].TestCase.ParentTestCase()
+
+            analyzedTestCases[i].TestCase.UpdateTcName(tsName + "-" + tcName)
+            if parentTestCaseName != "root" {
+                analyzedTestCases[i].TestCase.SetParentTestCase(tsName + "-" + parentTestCaseName)
+            }
+
+        }
+
+        fullTsTcSlice = append(fullTsTcSlice, analyzedTestCases[0:]...)
+    }
 
     return fullTsTcSlice
 }

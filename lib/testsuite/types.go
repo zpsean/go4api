@@ -21,6 +21,7 @@ type TestSuite map[string]*TestSuiteBasics
 
 type TestSuiteBasics struct {
     Priority string            `json:"priority"`      // is the highest of the testcases included (i.e. get p1 if has p1, p2, p9)
+    Description string         `json:"description"`   
     TestCasePaths []string     `json:"testCasePaths"` // has highp riority than attribute TestCases
     OriginalTestCases []string      `json:"originalTestCases"`
     AnalyzedTestCases []*testcase.TestCaseDataInfo      `json:"analyzedTestCases"`
