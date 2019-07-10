@@ -38,7 +38,7 @@ type TcsRunStore struct {
 func InitG4Store () *G4Store {
     var fullTcSlice []*testcase.TestCaseDataInfo
 
-    if cmd.Opt.IfKeyWord {
+    if cmd.Opt.IfTestSuite {
         fullTcSlice = InitFullTsTcSlice(fullTcSlice)
     } else {
         filePaths := GetTcFilePaths()

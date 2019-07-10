@@ -35,10 +35,10 @@ type Options struct {
     JsFuncs string
     TestEnv string
     BaseUrl string
-    IfScenario  bool
+
     IfFuzzTest  bool
     IfMutation  bool
-    IfKeyWord   bool
+    IfTestSuite   bool
 
     IfConcurrency bool
     ConcurrencyLimit int
@@ -77,10 +77,9 @@ func init() {
     testEnv := flag.String("testEnv", "QA", "the testEnv, i.e. dev, qa, uat, etc.")
     baseUrl := flag.String("baseUrl", "", "the baseUrl")
 
-    ifScenario := flag.Bool("S", false, "if the target cases are for scenarios, which have data dependency")
     ifFuzzTest := flag.Bool("F", false, "if to run the Fuzz test")
     ifMutation := flag.Bool("M", false, "if to run the Mutation test")
-    ifKeyWord := flag.Bool("K", false, "if to run with keyword driven / testsuite mode")
+    ifTestSuite := flag.Bool("TS", false, "if to run with keyword driven / testsuite mode")
 
     ifConcurrency := flag.Bool("ifCon", true, "if to run the with concurrency mode")
     concurrency := flag.Int("cl", 100, "concurrency limitation")
@@ -108,10 +107,10 @@ func init() {
     Opt.JsFuncs = *js
     Opt.TestEnv = *testEnv
     Opt.BaseUrl = *baseUrl
-    Opt.IfScenario = *ifScenario
+    
     Opt.IfFuzzTest = *ifFuzzTest
     Opt.IfMutation = *ifMutation
-    Opt.IfKeyWord = *ifKeyWord
+    Opt.IfTestSuite = *ifTestSuite
 
     Opt.IfConcurrency = *ifConcurrency
     Opt.ConcurrencyLimit = *concurrency

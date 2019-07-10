@@ -35,6 +35,7 @@ func InitFullTsTcSlice (fullTcSlice []*testcase.TestCaseDataInfo) []*testcase.Te
     }
 
     // Note: to avoid the possibility of the case duplication, here is to put the TestSuite prefix to tcName
+    // to be added ...
 
     return fullTsTcSlice
 }
