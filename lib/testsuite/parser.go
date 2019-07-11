@@ -85,14 +85,14 @@ func AnalyzeTestSuiteTestCases (tsuite *TestSuite) *TestSuite {
     return tsuite
 }
 
-func ConstructTsInfosWithoutDt (jsonFile string) TestSuite {
+func ConstructTsInfosWithoutDt (suiteFile string) TestSuite {
     var tsuite TestSuite
 
-    jsonStr := utils.GetJsonFromFile(jsonFile)
+    jsonStr := utils.GetJsonFromFile(suiteFile)
 
     err := json.Unmarshal([]byte(jsonStr), &tsuite)
     if err != nil {
-        fmt.Println("!! Error, parse Json into testsuite failed: ", jsonFile, ": ", err)
+        fmt.Println("!! Error, parse Json into testsuite failed: ", suiteFile, ": ", err)
         os.Exit(1)
     }
   

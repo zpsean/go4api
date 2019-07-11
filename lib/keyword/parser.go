@@ -11,65 +11,99 @@
 package keyword
 
 import (
-    // "fmt"
-    // "time"
-    // "os"
-    // "sort"
+    "fmt"
+    "os"
+    "strings"
+    "bufio"
+    "io"
+
+    "go4api/utils"
+    "go4api/lib/testcase"
+    // "go4api/lib/testsuite"
 )
 
+func InitFullKwTcSlice (filePathSlice []string) []*testcase.TestCaseDataInfo {
+    var fullKwTcSlice []*testcase.TestCaseDataInfo
 
-func GetContent (kwFileList []string) KWBlocks {
+    // fullTsTcSlice := testsuite.InitFullTsTcSlice(filePaths)
+    // fullTcSlice := testcase.InitFullTcSlice(filePaths)
+
+    // kwSlice := InitKeyWordSlice(filePathSlice)
+
+    // for i, _ := range kwSlice {
+    //     gKw := AnalyzeKeyWordTestCases(kwSlice[i])
+
+    //     gKw := LookupTestSuiteOrTestCases(gKw.TestCases, fullTsTcSlice, fullTcSlice)
+
+    //     analyzedTestCases := (*gKw).TestCases
+
+    //     // Note: to avoid the possibility of the case duplication, here is to put the keyword prefix to tsName or tcName
+    //     // Please remember also need to update the ParentTestCase name, and except for root
+    //     for i, _ := range analyzedTestCases {
+    //         tsName := tsuite.TsName()
+
+    //         tcName := analyzedTestCases[i].TestCase.TcName()
+    //         parentTestCaseName := analyzedTestCases[i].TestCase.ParentTestCase()
+
+    //         analyzedTestCases[i].TestCase.UpdateTcName(tsName + "-" + tcName)
+    //         if parentTestCaseName != "root" {
+    //             analyzedTestCases[i].TestCase.SetParentTestCase(tsName + "-" + parentTestCaseName)
+    //         }
+
+    //     }
+
+    //     fullTsTcSlice = append(fullTsTcSlice, analyzedTestCases[0:]...)
+    // }
+
+    return fullKwTcSlice
+}
+
+func AnalyzeKeyWordTestCases () {
+
+}
+
+func LookupTestCases () {
+
+}
+
+func InitKeyWordSlice (filePathSlice []string) []*GKeyWord { 
+    var kwSlice []*GKeyWord
+    var kwFileList []string
+
+    for i, _ := range filePathSlice {
+        // to support pattern later
+        // matches, _ := filepath.Glob(filePathSlice[i])
+
+        kwFileListTemp, _ := utils.WalkPath(filePathSlice[i], ".keyword")
+        kwFileList = append(kwFileList, kwFileListTemp[0:]...)
+    }
+
+    for _, kwFile := range kwFileList {
+        gKw := ConstructKwInfosWithoutDt(kwFile)
+
+        kwSlice = append(kwSlice, &gKw)
+    }
+
+    return kwSlice
+}
+
+
+func ConstructKwInfosWithoutDt (kwFile string) GKeyWord {
+    var gKw GKeyWord
     var lines []string
 
-    // to be replaced
-    kwFileList, _ := WalkPath("/Users/pingzhu/Downloads/goState/testdata", ".keyword")
-
-    for _, jsonFile := range kwFileList {
-        lines, _ = readLines(jsonFile)
-    }
-
-    kwBlocks := GetBlocks(lines)
-    kwBlocks = FullfillBlocks(kwBlocks, lines)
-
-    // fmt.Println("mdBlocks: ", mdBlocks, len(mdBlocks))
-
-    return kwBlocks
+    lines, _ = readLines(kwFile)
+    gKw = GetGKeyWord(lines)
+  
+    return gKw
 }
 
-func FullfillBlocks (kwBlocks KWBlocks, lines []string) KWBlocks {
-    for index, _ := range kwBlocks {
-        // set block OriginalContent
-        for i := kwBlocks[index].StartLine; i <= kwBlocks[index].EndLine; i++ {
-            kwBlocks[index].OriginalContent = append(kwBlocks[index].OriginalContent, lines[i])
-        }
-
-        // set block BlockType
-        kwBlocks[index].BlockType = GetBlockType(kwBlocks[index])
-
-        // set block ParsedContent
-        switch kwBlocks[index].BlockType {
-        case "TestCases":
-            //
-        case "Settings":
-            //
-        case "Keywords":
-            //
-        case "Variables":
-            //
-        default:
-            fmt.Println("Warning, can not recognize the block type")
-        }
-    }
-
-    return kwBlocks
-}
-
-func GetBlocks (lines []string) KWBlocks {
+func GetGKeyWord (lines []string) GKeyWord {
     // Note: each block has the leading line with prefix '*** TestCases / Settings / Keywords / Variables /...''
     var blockHeaderLines []int
+    gKeyWord := GKeyWord{}
 
     linesCount := len(lines)
-
     // get the block header line numbers, starting from line 0
     for i, line := range lines {
         if strings.HasPrefix(strings.TrimSpace(line), "***") {
@@ -77,37 +111,59 @@ func GetBlocks (lines []string) KWBlocks {
         }
     }
 
-    var kwBlocks KWBlocks
-    var kwBlock  KWBlock
-
     headerCount := len(blockHeaderLines)
 
     for i, _ := range blockHeaderLines {
         if i != headerCount - 1 {
-            kwBlock = &kwBlock {
-                StartLine: blockHeaderLines[i],
-                EndLine: blockHeaderLines[i + 1] - 1,
-            }
+            // passing starting line, ending line, line for each block
+            FullfillBlock(&gKeyWord, blockHeaderLines[i], blockHeaderLines[i + 1] - 1, lines)
         } else {
-            kwBlock = &kwBlock {
-                StartLine: blockHeaderLines[i],
-                EndLine: linesCount - 1,
-            }
+            FullfillBlock(&gKeyWord, blockHeaderLines[i], linesCount - 1, lines)
         }
-
-        kwBlocks = append(kwBlocks, kwBlock)
     }
 
-    return kwBlocks
+    return gKeyWord
 }
 
-func GetBlockType (kwBlock KWBlock) string {
+func FullfillBlock (gKeyWord *GKeyWord, startLine int, endLine int, lines []string) {
+    blockType := GetBlockType(lines[startLine])
+
+    switch blockType {
+    case "Settings":
+        settings := &Settings {
+            StartLine: startLine,
+            EndLine: endLine,
+        }
+
+        gKeyWord.Settings = settings
+    case "TestCases":
+        testCases := &TestCases {
+            StartLine: startLine,
+            EndLine: endLine,
+        }
+
+        gKeyWord.TestCases = testCases
+    // case "Keywords":
+        //
+    case "Variables":
+        variables := &Variables {
+            StartLine: startLine,
+            EndLine: endLine,
+        }
+
+        gKeyWord.Variables = variables
+    default:
+        fmt.Println("Warning, can not recognize the block type")
+    }
+}
+
+func GetBlockType (headerLine string) string {
     var blockType string
 
     blockTypes := []string{"TestCases", "Settings", "Keywords", "Variables"}
 
     for i, _ := range blockTypes {
-        strings.Count(kwBlock.OriginalContent[0], blockTypes[i]) > 1 {
+        if strings.Count(headerLine, blockTypes[i]) > 1 {
             blockType = blockTypes[i]
             break
         }

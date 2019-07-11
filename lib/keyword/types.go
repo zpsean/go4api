@@ -15,20 +15,51 @@ import (
 )
 
 
-type KWBlocks []*KWBlock
+type GKeyWords []*GKeyWord
 
-type KWBlock struct {
+// currently, supports TestCases, Settings, Keywords, Variables
+type GKeyWord struct {
+    Settings  *Settings
+    TestCases *TestCases
+    // Keywords  Keywords
+    Variables *Variables
+}
+
+//
+type Settings struct {
     StartLine        int
     EndLine          int
     OriginalContent  []string
     ParsedContent    interface{}
-    BlockType        string  // currently, supports TestCases, Settings, Keywords, Variables
+}
+
+type TestCases struct {
+    StartLine        int
+    EndLine          int
+    OriginalContent  []string
+    ParsedTestCases  []*KWTestCase
 }
 
 type KWTestCase struct {
     OriginalLine     int
     OriginalTestCase string
     ParsedTestCase   []string   // format: ["tsName / tcNmae", "arg1 / v", "arg2 / v", ...]
+}
+
+type Variables struct {
+    StartLine        int
+    EndLine          int
+    OriginalContent  []string
+    ParsedContent    interface{}
+}
+
+//
+type KWBlock struct {
+    StartLine        int
+    EndLine          int
+    OriginalContent  []string
+    ParsedContent    interface{}
+    BlockType        string  // currently, supports TestCases, Settings, Keywords, Variables
 }
 
 // for report format 

@@ -29,6 +29,7 @@ type Options struct {
     Testconfig string
     Testsuite string 
     Testcase string 
+    KeyWord string 
 
     Testresource string
     Testresults string
@@ -70,6 +71,7 @@ func init() {
     testconfig := flag.String("c", defaultTestDir + "/testconfig", "the path which test config in")
     testsuite := flag.String("tsuite", defaultTestDir + "/testsuite", "the path which testsuite json in")
     testcase := flag.String("tc", defaultTestDir + "/testcase", "the path which test json in")
+    keyword := flag.String("kw", defaultTestDir + "/keyword", "the path which keyword in")
 
     testresource := flag.String("tr", defaultTestDir + "/testresource", "the path which test resource in")
     testresults := flag.String("r", defaultTestDir + "/testresults", "the path which test results in")
@@ -101,6 +103,7 @@ func init() {
     Opt.Testconfig = *testconfig
     Opt.Testsuite = *testsuite
     Opt.Testcase = *testcase
+    Opt.KeyWord = *keyword
 
     Opt.Testresource = *testresource
     Opt.Testresults = *testresults
