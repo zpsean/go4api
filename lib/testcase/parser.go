@@ -1,6 +1,6 @@
 /*
  * go4api - a api testing tool written in Go
- * Created by: Ping Zhu 2018
+ * Created by: Ping Zhu 2019.07
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -8,34 +8,24 @@
  *
  */
 
-package executor
+package testcase
 
 import (
     "fmt"
     // "time"
     "os"
-    "sort"
-    // "sync"
     "path/filepath"
     "strings"
     "io/ioutil"
     "strconv"
     "encoding/json"
 
-    "go4api/cmd"
     "go4api/utils"
-    "go4api/lib/testcase"
 )
 
-func GetTcFilePaths () []string {
-    filePathSlice := strings.Split(cmd.Opt.Testcase, ",")
 
-    return filePathSlice
-}
-
-
-func InitFullTcSlice (filePathSlice []string) []*testcase.TestCaseDataInfo { 
-    var fullTcSlice []*testcase.TestCaseDataInfo
+func InitFullTcSlice (filePathSlice []string) []*TestCaseDataInfo { 
+    var fullTcSlice []*TestCaseDataInfo
     var jsonFileList []string
 
     // tend to support cmd.Opt.Testcase accepting comma delimited paths
@@ -52,7 +42,7 @@ func InitFullTcSlice (filePathSlice []string) []*testcase.TestCaseDataInfo {
     for _, jsonFile := range jsonFileList {
         csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_dt")
         //
-        var tcInfos []*testcase.TestCaseDataInfo
+        var tcInfos []*TestCaseDataInfo
 
         if len(csvFileList) > 0 {
             tcInfos = ConstructTcInfosWithDt(jsonFile, csvFileList)
@@ -66,17 +56,6 @@ func InitFullTcSlice (filePathSlice []string) []*testcase.TestCaseDataInfo {
     }
 
     return fullTcSlice
-}
-
-func InitNormalTcSlice (fullTcSlice []*testcase.TestCaseDataInfo) []*testcase.TestCaseDataInfo {
-    var tcSlice []*testcase.TestCaseDataInfo
-    for i, _ := range fullTcSlice {
-        if fullTcSlice[i].TestCase.IfGlobalSetUpTestCase() != true && fullTcSlice[i].TestCase.IfGlobalTearDownTestCase() != true {
-            tcSlice = append(tcSlice, fullTcSlice[i])
-        }
-    }
-    
-    return tcSlice
 }
 
 
@@ -108,9 +87,9 @@ func GetCsvDataFilesForJsonFile (jsonFile string, suffix string) []string {
     return csvFileList
 }
 
-func ConstructTcInfosWithoutDt (jsonFile string) []*testcase.TestCaseDataInfo {
-    var tcInfos []*testcase.TestCaseDataInfo
-    var tcases testcase.TestCases
+func ConstructTcInfosWithoutDt (jsonFile string) []*TestCaseDataInfo {
+    var tcInfos []*TestCaseDataInfo
+    var tcases TestCases
 
     jsonStr := utils.GetJsonFromFile(jsonFile)
 
@@ -124,7 +103,7 @@ func ConstructTcInfosWithoutDt (jsonFile string) []*testcase.TestCaseDataInfo {
     }
   
     for i, _ := range tcases {
-        tcaseData := &testcase.TestCaseDataInfo {
+        tcaseData := &TestCaseDataInfo {
             TestCase: &tcases[i],
             JsonFilePath: jsonFile,
             CsvFile: csvFile,
@@ -137,8 +116,8 @@ func ConstructTcInfosWithoutDt (jsonFile string) []*testcase.TestCaseDataInfo {
 }
 
 // not using "text/template"
-func ConstructTcInfosWithDt (jsonFile string, csvFileList []string) []*testcase.TestCaseDataInfo {
-    var tcInfos []*testcase.TestCaseDataInfo
+func ConstructTcInfosWithDt (jsonFile string, csvFileList []string) []*TestCaseDataInfo {
+    var tcInfos []*TestCaseDataInfo
 
     for _, csvFile := range csvFileList {
         jsonStr := utils.GetJsonFromFile(jsonFile)
@@ -155,7 +134,7 @@ func ConstructTcInfosWithDt (jsonFile string, csvFileList []string) []*testcase.
                     jsonR = strings.Replace(jsonR, "${" + key + "}", fmt.Sprint(value), -1)
                 }
 
-                var tcases testcase.TestCases
+                var tcases TestCases
                 err := json.Unmarshal([]byte(jsonR), &tcases)
                 if err != nil {
                     fmt.Println("!! Error, parse Json into cases failed: ", jsonFile, ": ", csvFile, ": ", strconv.Itoa(i + 1), ": ", err)
@@ -163,7 +142,7 @@ func ConstructTcInfosWithDt (jsonFile string, csvFileList []string) []*testcase.
                 }
     
                 for tcI, _ := range tcases {
-                    tcaseData := &testcase.TestCaseDataInfo {
+                    tcaseData := &TestCaseDataInfo {
                         TestCase: &tcases[tcI],
                         JsonFilePath: jsonFile,
                         CsvFile: csvFile,
@@ -187,12 +166,12 @@ func ConstructTcInfosWithDt (jsonFile string, csvFileList []string) []*testcase.
 }
 
 
-func IfCaseNameDuplicated (tcInfos []*testcase.TestCaseDataInfo) bool {
+func IfCaseNameDuplicated (tcInfos []*TestCaseDataInfo) bool {
     keys := make(map[string]bool)
     var caseNameSet []string
 
     for _, tcDataInfo := range tcInfos {
-        entry := tcDataInfo.TestCase.TcName()
+        entry := tcDataInfo.TcName()
         if _, ok := keys[entry]; !ok {
             keys[entry] = true
             caseNameSet = append(caseNameSet, entry)
@@ -205,71 +184,3 @@ func IfCaseNameDuplicated (tcInfos []*testcase.TestCaseDataInfo) bool {
         return false
     }
 }
-
-
-func GetTcNameSet (tcArray []*testcase.TestCaseDataInfo) []string {
-    var tcNames []string
-
-    for _, tcaseInfo := range tcArray {
-        var ifExists bool
-        ifExists = false
-        for _, tcN := range tcNames {
-            if tcaseInfo.TcName() == tcN {
-                ifExists = true
-                break
-            }
-        } 
-        if ifExists == false {
-            tcNames = append(tcNames, tcaseInfo.TcName())
-        }   
-    }
-    return tcNames
-}
-
-
-func GetPrioritySet (tcArray []*testcase.TestCaseDataInfo) []string {
-    // get the priorities
-    var priorities []string
-    for _, tcaseInfo := range tcArray {
-        priorities = append(priorities, tcaseInfo.Priority())
-    }
-    // go get the distinct key in priorities
-    keys := make(map[string]bool)
-    var prioritySet []string
-    for _, entry := range priorities {
-        // uses 'value, ok := map[key]' to determine if map's key exists, if ok, then true
-        if _, ok := keys[entry]; !ok {
-            keys[entry] = true
-            prioritySet = append(prioritySet, entry)
-        }
-    }
-
-    prioritySet = SortPrioritySet(prioritySet)
-
-    return prioritySet
-}
-
-func SortPrioritySet (prioritySet []string) []string {
-    // Note: here is a bug, if sort as string, as the sort results is 1, 10, 11, 2, 3, etc. => fixed
-    prioritySet_Int := utils.ConvertStringArrayToIntArray(prioritySet)
-    sort.Ints(prioritySet_Int)
-    prioritySet = utils.ConvertIntArrayToStringArray(prioritySet_Int)
-
-    return prioritySet
-}
-
-func GetFuzzTcArray () []testcase.TestCaseDataInfo {
-    var tcArray []testcase.TestCaseDataInfo
-
-    // csvFileList := GetCsvDataFilesForJsonFile(jsonFile, "_fuzz_dt")
-
-    return tcArray
-}
-
-func GetOriginMutationTcArray () []testcase.TestCaseDataInfo {
-    var tcArray []testcase.TestCaseDataInfo
-    
-    return tcArray
-}
-
-

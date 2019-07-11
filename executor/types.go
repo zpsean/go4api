@@ -39,7 +39,8 @@ func InitG4Store () *G4Store {
     var fullTcSlice []*testcase.TestCaseDataInfo
 
     if cmd.Opt.IfTestSuite {
-        fullTcSlice = InitFullTsTcSlice(fullTcSlice)
+        filePaths := GetTsFilePaths()
+        fullTcSlice = InitFullTsTcSlice(filePaths)
     } else {
         filePaths := GetTcFilePaths()
         fullTcSlice = InitFullTcSlice(filePaths)
