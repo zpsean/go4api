@@ -35,6 +35,8 @@ func InitFullKwTcSlice (kwfilePathSlice []string) ([]*testcase.TestCaseDataInfo,
     
     // set kwSlice - kwSlice[i].TestCases.ParsedTestCases[k].KWTestCaseName
     for i, _ := range kwSlice {
+        kwId := kwSlice[i].Settings.ID
+
         for j, _ := range kwSlice[i].TestCases.ParsedTestCases {
             matched := SetKwTestSuiteInfo(kwSlice[i].TestCases.ParsedTestCases[j], tsNameFileMap)
 
@@ -53,6 +55,8 @@ func InitFullKwTcSlice (kwfilePathSlice []string) ([]*testcase.TestCaseDataInfo,
                 fullKwTcSlice = append(fullKwTcSlice, kwTcsFromBasicTcs[0:]...)
             }  
         }
+        //
+        ResetTcNameAndParentTcName(kwId, fullKwTcSlice)
 
         // for js
         for _, p := range kwSlice[0].Settings.JsFuncPaths {
@@ -60,32 +64,6 @@ func InitFullKwTcSlice (kwfilePathSlice []string) ([]*testcase.TestCaseDataInfo,
             fullKwJsPathSlice = append(fullKwJsPathSlice, absPath)
         }
     }
-
-    // for i, _ := range kwSlice {
-    //     gKw := AnalyzeKeyWordTestCases(kwSlice[i])
-
-    //     tc1 := LookupTestSuites(gKw.TestCases, fullTsNameSlice)
-    //     tc2 := LookupTestSuites(gKw.TestCases, fullTcSlice)
-
-    //     analyzedTestCases := Consolidate(tc1, tc2)
-
-    //     // Note: to avoid the possibility of the case duplication, here is to put the keyword prefix to tsName or tcName
-    //     // Please remember also need to update the ParentTestCase name, and except for root
-    //     for i, _ := range analyzedTestCases {
-    //         tsName := tsuite.TsName()
-
-    //         tcName := analyzedTestCases[i].TestCase.TcName()
-    //         parentTestCaseName := analyzedTestCases[i].TestCase.ParentTestCase()
-
-    //         analyzedTestCases[i].TestCase.UpdateTcName(tsName + "-" + tcName)
-    //         if parentTestCaseName != "root" {
-    //             analyzedTestCases[i].TestCase.SetParentTestCase(tsName + "-" + parentTestCaseName)
-    //         }
-
-    //     }
-
-    //     fullTsTcSlice = append(fullTsTcSlice, analyzedTestCases[0:]...)
-    // }
 
     return fullKwTcSlice, fullKwJsPathSlice
 }
@@ -119,6 +97,18 @@ func LookupKwTestCase(ktc *KWTestCase, fullBasicTcSlice []*testcase.TestCaseData
     return fullKwTcSlice
 }
 
+func ResetTcNameAndParentTcName(kwId string, fullKwTcSlice []*testcase.TestCaseDataInfo) {
+    // reset the tc name
+    for i, _ := range fullKwTcSlice {
+        tcName := fullKwTcSlice[i].TestCase.TcName()
+        parentTestCaseName := fullKwTcSlice[i].TestCase.ParentTestCase()
+
+        fullKwTcSlice[i].TestCase.UpdateTcName(kwId + "-" + tcName)
+        if parentTestCaseName != "root" {
+            fullKwTcSlice[i].TestCase.SetParentTestCase(kwId + "-" + parentTestCaseName)
+        }
+    }
+}
 
 func GetTsNameFileMap (kwSlice []*GKeyWord) map[string]string {
     tsNameFileMap := make(map[string]string)
