@@ -16,7 +16,7 @@ import (
     "strings"
     "path/filepath"
 
-    "go4api/cmd"
+    // "go4api/cmd"
     "go4api/utils"
 
     goja "github.com/dop251/goja"
@@ -25,10 +25,7 @@ import (
 var JsFunctions []GJsBasics
 
 // trial code for js
-func InitJsFunctions () {
-    jsFileList, _ := utils.WalkPath(cmd.Opt.JsFuncs, ".js")
-    // fmt.Println(jsFileList)
-
+func InitJsFunctions (jsFileList []string) {
     for i, _ := range jsFileList {
         srcBytes := utils.GetContentFromFile(jsFileList[i])
         src := string(srcBytes)

@@ -27,27 +27,28 @@ var (
 
 type Options struct {
     Testconfig string
-    Testsuite string 
-    Testcase string 
-    KeyWord string 
+    Testsuite  string 
+    Testcase   string 
+    KeyWord    string 
 
     Testresource string
-    Testresults string
-    JsFuncs string
-    TestEnv string
-    BaseUrl string
+    Testresults  string
+    JsFuncs      string
+    TestEnv      string
+    BaseUrl      string
 
-    IfFuzzTest  bool
-    IfMutation  bool
+    IfFuzzTest    bool
+    IfMutation    bool
     IfTestSuite   bool
+    IfKeyWord     bool
 
-    IfConcurrency bool
-    ConcurrencyLimit int
+    IfConcurrency       bool
+    ConcurrencyLimit    int
     IfShowOriginRequest bool
 
-    Harfile string
-    Swaggerfile string
-    Logfile string
+    Harfile      string
+    Swaggerfile  string
+    Logfile      string
 
     TimeZone string
 
@@ -82,6 +83,7 @@ func init() {
     ifFuzzTest := flag.Bool("F", false, "if to run the Fuzz test")
     ifMutation := flag.Bool("M", false, "if to run the Mutation test")
     ifTestSuite := flag.Bool("TS", false, "if to run with keyword driven / testsuite mode")
+    ifKeyWord := flag.Bool("K", false, "if to run with keyword driven / testsuite mode")
 
     ifConcurrency := flag.Bool("ifCon", true, "if to run the with concurrency mode")
     concurrency := flag.Int("cl", 100, "concurrency limitation")
@@ -114,6 +116,7 @@ func init() {
     Opt.IfFuzzTest = *ifFuzzTest
     Opt.IfMutation = *ifMutation
     Opt.IfTestSuite = *ifTestSuite
+    Opt.IfKeyWord = *ifKeyWord
 
     Opt.IfConcurrency = *ifConcurrency
     Opt.ConcurrencyLimit = *concurrency
@@ -150,7 +153,7 @@ Available Commands:
   report      Generate report only from log file
 
 Command: run
-Usage: go4api -run [-?hFMS] [-c config filename] [-t testcase path] [-d test resource path] [-r test results path] 
+Usage: go4api -run [-?hFM] [-c config filename] [-t testcase path] [-d test resource path] [-r test results path] 
 
 Options:
 

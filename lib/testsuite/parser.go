@@ -72,6 +72,27 @@ func InitTestSuiteSlice (filePathSlice []string) []*TestSuite {
     return tsSlice
 }
 
+func GetTsNames (filePathSlice []string) []string { 
+    var tsNames []string
+    var suiteFileList []string
+
+    for i, _ := range filePathSlice {
+        // to support pattern later
+        // matches, _ := filepath.Glob(filePathSlice[i])
+
+        suiteFileListTemp, _ := utils.WalkPath(filePathSlice[i], ".testsuite")
+        suiteFileList = append(suiteFileList, suiteFileListTemp[0:]...)
+    }
+
+    for _, suiteFile := range suiteFileList {
+        tsuite := ConstructTsInfosWithoutDt(suiteFile)
+        tsName := tsuite.TsName()
+        tsNames = append(tsNames, tsName)
+    }
+
+    return tsNames
+}
+
 // to populate AnalyzedTestCases, 
 // if TestCasePaths is defined, use path to generate
 // otherwise, use OriginalTestCases

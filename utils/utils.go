@@ -14,6 +14,7 @@ import (
     "fmt"
     "io/ioutil"                                                                                                                                              
     "os"
+    "os/user"
     "io"
     "strings"
     "strconv"
@@ -72,6 +73,43 @@ func GetJsonFromFile(filePath string) string {
     }
 
     return string(fd)
+}
+
+// for path contains ~
+func GetAbsPath (path string) string {
+    var absPath string
+
+    u, _ := user.Current()
+
+    if path == "~" {
+        absPath = u.HomeDir
+    } else if strings.HasPrefix(path, "~/") {
+        absPath = filepath.Join(u.HomeDir, path[2:])
+    } else {
+        absPath = path
+    }
+
+    return absPath
+}
+
+func GetAbsPaths (paths []string) []string {
+    var absPaths []string
+
+    for _, path := range paths {
+        u, _ := user.Current()
+
+        if path == "~" {
+            p := u.HomeDir
+            absPaths = append(absPaths, p)
+        } else if strings.HasPrefix(path, "~/") {
+            p := filepath.Join(u.HomeDir, path[2:])
+            absPaths = append(absPaths, p)
+        } else {
+            absPaths = append(absPaths, path)
+        }
+    }
+
+    return absPaths
 }
 
 // for the dir and sub-dir

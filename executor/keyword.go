@@ -25,10 +25,10 @@ func GetKwFilePaths () []string {
     return filePathSlice
 }
 
-func InitFullKwTcSlice (filePaths []string) []*testcase.TestCaseDataInfo {
+func InitFullKwTcSlice (filePaths []string) ([]*testcase.TestCaseDataInfo, []string) {
     // filePathSlice := GetTsFilePaths()
 
-    fullKwTcSlice := keyword.InitFullKwTcSlice(filePaths)
+    fullKwTcSlice, fullKwJsSlice := keyword.InitFullKwTcSlice(filePaths)
 
-    return fullKwTcSlice
+    return fullKwTcSlice, fullKwJsSlice
 }

@@ -11,7 +11,7 @@
 package keyword
 
 import (
-    // "go4api/lib/testcase"
+    "go4api/lib/testcase"
 )
 
 
@@ -27,10 +27,13 @@ type GKeyWord struct {
 
 //
 type Settings struct {
-    StartLine        int
-    EndLine          int
-    OriginalContent  []string
-    ParsedContent    interface{}
+    StartLine          int
+    EndLine            int
+    OriginalContent    []string
+    ID                 string
+    TestSuitePaths     []string  // paths
+    BasicTestCasePaths []string  // paths
+    JsFuncPaths        []string  // paths
 }
 
 type TestCases struct {
@@ -41,9 +44,13 @@ type TestCases struct {
 }
 
 type KWTestCase struct {
-    OriginalLine     int
-    OriginalTestCase string
-    ParsedTestCase   []string   // format: ["tsName / tcNmae", "arg1 / v", "arg2 / v", ...]
+    OriginalLine            int
+    OriginalTestCase        string
+    KWTestCaseName          string   
+    ParsedTestCase          []string   // format: ["tsName / tcNmae", "arg1 / v", "arg2 / v", ...]
+    MappingToTestSuiteId    string     // 
+    MappingToTestSuiteFile  string     // 
+    MappingToBasicTestCase  *testcase.TestCaseDataInfo     // 
 }
 
 type Variables struct {
@@ -51,15 +58,6 @@ type Variables struct {
     EndLine          int
     OriginalContent  []string
     ParsedContent    interface{}
-}
-
-//
-type KWBlock struct {
-    StartLine        int
-    EndLine          int
-    OriginalContent  []string
-    ParsedContent    interface{}
-    BlockType        string  // currently, supports TestCases, Settings, Keywords, Variables
 }
 
 // for report format 

@@ -16,26 +16,58 @@ import (
     "strings"
     "bufio"
     "io"
+    // "path/filepath"
 
     "go4api/utils"
     "go4api/lib/testcase"
-    // "go4api/lib/testsuite"
+    "go4api/lib/testsuite"
 )
 
-func InitFullKwTcSlice (filePathSlice []string) []*testcase.TestCaseDataInfo {
+func InitFullKwTcSlice (kwfilePathSlice []string) ([]*testcase.TestCaseDataInfo, []string) {
     var fullKwTcSlice []*testcase.TestCaseDataInfo
+    var fullKwJsPathSlice []string
 
-    // fullTsTcSlice := testsuite.InitFullTsTcSlice(filePaths)
-    // fullTcSlice := testcase.InitFullTcSlice(filePaths)
+    kwSlice := InitKeyWordSlice(kwfilePathSlice)
 
-    // kwSlice := InitKeyWordSlice(filePathSlice)
+    // 
+    tsNameFileMap := GetTsNameFileMap(kwSlice)
+    fullBasicTcSlice := GetBasicTcsInfo(kwSlice)
+    
+    // set kwSlice - kwSlice[i].TestCases.ParsedTestCases[k].KWTestCaseName
+    for i, _ := range kwSlice {
+        for j, _ := range kwSlice[i].TestCases.ParsedTestCases {
+            matched := SetKwTestSuiteInfo(kwSlice[i].TestCases.ParsedTestCases[j], tsNameFileMap)
+
+            if matched == true {
+                var files []string
+                tsFile := kwSlice[i].TestCases.ParsedTestCases[j].MappingToTestSuiteFile
+                files = append(files, tsFile)
+
+                kwTcsFromTs := testsuite.InitFullTsTcSlice(files)
+
+                fullKwTcSlice = append(fullKwTcSlice, kwTcsFromTs[0:]...)
+
+            } else {
+                kwTcsFromBasicTcs := LookupKwTestCase(kwSlice[i].TestCases.ParsedTestCases[j], fullBasicTcSlice)
+
+                fullKwTcSlice = append(fullKwTcSlice, kwTcsFromBasicTcs[0:]...)
+            }  
+        }
+
+        // for js
+        for _, p := range kwSlice[0].Settings.JsFuncPaths {
+            absPath := utils.GetAbsPath(p)
+            fullKwJsPathSlice = append(fullKwJsPathSlice, absPath)
+        }
+    }
 
     // for i, _ := range kwSlice {
     //     gKw := AnalyzeKeyWordTestCases(kwSlice[i])
 
-    //     gKw := LookupTestSuiteOrTestCases(gKw.TestCases, fullTsTcSlice, fullTcSlice)
+    //     tc1 := LookupTestSuites(gKw.TestCases, fullTsNameSlice)
+    //     tc2 := LookupTestSuites(gKw.TestCases, fullTcSlice)
 
-    //     analyzedTestCases := (*gKw).TestCases
+    //     analyzedTestCases := Consolidate(tc1, tc2)
 
     //     // Note: to avoid the possibility of the case duplication, here is to put the keyword prefix to tsName or tcName
     //     // Please remember also need to update the ParentTestCase name, and except for root
@@ -55,16 +87,70 @@ func InitFullKwTcSlice (filePathSlice []string) []*testcase.TestCaseDataInfo {
     //     fullTsTcSlice = append(fullTsTcSlice, analyzedTestCases[0:]...)
     // }
 
+    return fullKwTcSlice, fullKwJsPathSlice
+}
+
+
+
+func SetKwTestSuiteInfo(ktc *KWTestCase, tsNameFileMap map[string]string) bool {
+    var matched = false
+    for k, v := range tsNameFileMap {
+        if ktc.KWTestCaseName == k {
+            ktc.MappingToTestSuiteId = k
+            ktc.MappingToTestSuiteFile = v
+
+            matched = true
+            break
+        }
+    }
+
+    return matched
+}
+
+func LookupKwTestCase(ktc *KWTestCase, fullBasicTcSlice []*testcase.TestCaseDataInfo) []*testcase.TestCaseDataInfo {
+    var fullKwTcSlice []*testcase.TestCaseDataInfo
+
+    for i, _ := range fullBasicTcSlice {
+        if ktc.KWTestCaseName == fullBasicTcSlice[i].TcName() {
+            fullKwTcSlice = append(fullKwTcSlice, fullBasicTcSlice[i])
+        }
+    }
+
     return fullKwTcSlice
 }
 
-func AnalyzeKeyWordTestCases () {
 
+func GetTsNameFileMap (kwSlice []*GKeyWord) map[string]string {
+    tsNameFileMap := make(map[string]string)
+
+    for i, _ := range kwSlice {
+        paths := utils.GetAbsPaths(kwSlice[i].Settings.TestSuitePaths)
+
+        for _, p := range paths {
+            var ps []string
+            ps = append(ps, p)
+
+            tsNames := testsuite.GetTsNames(ps)
+            tsNameFileMap[tsNames[0]] = p
+        }
+    }
+
+    return tsNameFileMap
 }
 
-func LookupTestCases () {
+func GetBasicTcsInfo (kwSlice []*GKeyWord) ([]*testcase.TestCaseDataInfo) {
+    var TcPaths []string
 
+    for i, _ := range kwSlice {
+        paths := utils.GetAbsPaths(kwSlice[i].Settings.BasicTestCasePaths)
+        TcPaths = append(TcPaths, paths[0:]...)
+    }
+
+    fullTcSlice := testcase.InitFullTcSlice(TcPaths)
+
+    return fullTcSlice
 }
+
 
 func InitKeyWordSlice (filePathSlice []string) []*GKeyWord { 
     var kwSlice []*GKeyWord
@@ -93,12 +179,12 @@ func ConstructKwInfosWithoutDt (kwFile string) GKeyWord {
     var lines []string
 
     lines, _ = readLines(kwFile)
-    gKw = GetGKeyWord(lines)
+    gKw = InitGKeyWord(lines)
   
     return gKw
 }
 
-func GetGKeyWord (lines []string) GKeyWord {
+func InitGKeyWord (lines []string) GKeyWord {
     // Note: each block has the leading line with prefix '*** TestCases / Settings / Keywords / Variables /...''
     var blockHeaderLines []int
     gKeyWord := GKeyWord{}
@@ -130,28 +216,15 @@ func FullfillBlock (gKeyWord *GKeyWord, startLine int, endLine int, lines []stri
 
     switch blockType {
     case "Settings":
-        settings := &Settings {
-            StartLine: startLine,
-            EndLine: endLine,
-        }
-
-        gKeyWord.Settings = settings
+        gKeyWord.PopulateSettingsOriginalContent(startLine, endLine, lines)
+        gKeyWord.ParseSettingsOriginalContent()
     case "TestCases":
-        testCases := &TestCases {
-            StartLine: startLine,
-            EndLine: endLine,
-        }
-
-        gKeyWord.TestCases = testCases
+        gKeyWord.PopulateTestCasesOriginalContent(startLine, endLine, lines)
+        gKeyWord.ParseTestCasesOriginalContent()
     // case "Keywords":
         //
     case "Variables":
-        variables := &Variables {
-            StartLine: startLine,
-            EndLine: endLine,
-        }
-
-        gKeyWord.Variables = variables
+        gKeyWord.PopulateVariablesOriginalContent(startLine, endLine, lines)
     default:
         fmt.Println("Warning, can not recognize the block type")
     }
@@ -163,7 +236,7 @@ func GetBlockType (headerLine string) string {
     blockTypes := []string{"TestCases", "Settings", "Keywords", "Variables"}
 
     for i, _ := range blockTypes {
-        if strings.Count(headerLine, blockTypes[i]) > 1 {
+        if strings.Count(headerLine, blockTypes[i]) > 0 {
             blockType = blockTypes[i]
             break
         }

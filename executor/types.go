@@ -15,6 +15,7 @@ import (
     "go4api/lib/tree"
     "go4api/js"
     "go4api/cmd"
+    "go4api/utils"
 )
 
 type G4Store struct {
@@ -37,17 +38,27 @@ type TcsRunStore struct {
 
 func InitG4Store () *G4Store {
     var fullTcSlice []*testcase.TestCaseDataInfo
+    var jsFileList, fullKwJsPathSlice []string
 
     if cmd.Opt.IfTestSuite {
         filePaths := GetTsFilePaths()
         fullTcSlice = InitFullTsTcSlice(filePaths)
+
+        jsFileList, _ = utils.WalkPath(cmd.Opt.JsFuncs, ".js")
+    } else if cmd.Opt.IfKeyWord {
+        filePaths := GetKwFilePaths()
+        fullTcSlice, fullKwJsPathSlice = InitFullKwTcSlice(filePaths)
+
+        jsFileList, _ = utils.WalkPath(fullKwJsPathSlice[0], ".js")
     } else {
         filePaths := GetTcFilePaths()
         fullTcSlice = InitFullTcSlice(filePaths)
+
+        jsFileList, _ = utils.WalkPath(cmd.Opt.JsFuncs, ".js")
     }
 
     // js files
-    gjs.InitJsFunctions()
+    gjs.InitJsFunctions(jsFileList)
 
     globalSetUpTcSlice := InitGlobalSetUpTcSlice(fullTcSlice)
     globalSetUpRunStore := &TcsRunStore {

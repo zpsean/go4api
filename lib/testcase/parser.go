@@ -165,7 +165,7 @@ func ConstructTcInfosWithDt (jsonFile string, csvFileList []string) []*TestCaseD
     return tcInfos
 }
 
-
+//
 func IfCaseNameDuplicated (tcInfos []*TestCaseDataInfo) bool {
     keys := make(map[string]bool)
     var caseNameSet []string
@@ -184,3 +184,24 @@ func IfCaseNameDuplicated (tcInfos []*TestCaseDataInfo) bool {
         return false
     }
 }
+
+//
+func GetTcNameSet (tcArray []*TestCaseDataInfo) []string {
+    var tcNames []string
+
+    for _, tcaseInfo := range tcArray {
+        var ifExists bool
+        ifExists = false
+        for _, tcN := range tcNames {
+            if tcaseInfo.TcName() == tcN {
+                ifExists = true
+                break
+            }
+        } 
+        if ifExists == false {
+            tcNames = append(tcNames, tcaseInfo.TcName())
+        }   
+    }
+    return tcNames
+}
+

@@ -45,27 +45,6 @@ func InitNormalTcSlice (fullTcSlice []*testcase.TestCaseDataInfo) []*testcase.Te
     return tcSlice
 }
 
-//
-func GetTcNameSet (tcArray []*testcase.TestCaseDataInfo) []string {
-    var tcNames []string
-
-    for _, tcaseInfo := range tcArray {
-        var ifExists bool
-        ifExists = false
-        for _, tcN := range tcNames {
-            if tcaseInfo.TcName() == tcN {
-                ifExists = true
-                break
-            }
-        } 
-        if ifExists == false {
-            tcNames = append(tcNames, tcaseInfo.TcName())
-        }   
-    }
-    return tcNames
-}
-
-
 func GetPrioritySet (tcArray []*testcase.TestCaseDataInfo) []string {
     // get the priorities
     var priorities []string
