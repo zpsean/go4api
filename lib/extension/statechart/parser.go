@@ -35,29 +35,14 @@ func InitFullScTcSlice (scfilePathSlice []string) []*testcase.TestCaseDataInfo {
         for _, path := range suiteFileListTemp {
             content := utils.GetContentFromFile(path)
 
-            f1(content)
-
-            f2(content) 
+            XmlDecode(content) 
         }
     }
 
     return fullScTcSlice
 }
-
-func f1 (content []byte) {
-    v := Recurlyservers{}
-
-    err := xml.Unmarshal(content, &v)
-
-    fmt.Println(err)
-    fmt.Println(v.XMLName)
-    fmt.Println(v.VersionAttr)
-    fmt.Println(v.DatamodelAttr)
-    fmt.Println(v.Datamodel)
-    fmt.Println(v.State)
-}
     
-func f2 (data []byte) {
+func XmlDecode (data []byte) {
     decoder := xml.NewDecoder(strings.NewReader(string(data)))
 
     // result  := make(map[string]string)
@@ -77,28 +62,30 @@ func f2 (data []byte) {
             break
             // return result
         }
-        
+
         switch tp := token.(type) {
         case xml.StartElement:
             se := xml.StartElement(tp) 
-            if se.Name.Local != "xml" {
-                // key = se.Name.Local
-            }
-            if len(se.Attr) != 0{ 
-                fmt.Println("Attrs:", se.Attr)
-            }
-            fmt.Println("SE.NAME.SPACE:", se.Name.Space) 
-            fmt.Println("SE.NAME.LOCAL:", se.Name.Local) 
+ 
+            fmt.Println("se.Name:", se.Name) 
+            fmt.Println("se.Attr:", se.Attr)
             fmt.Println()
         case xml.EndElement:
             ee := xml.EndElement(tp)
-            if ee.Name.Local == "xml" {
-                // return result
-            }
-            fmt.Println("EE.NAME.SPACE:", ee.Name.Space)
-            fmt.Println("EE.NAME.LOCAL:", ee.Name.Local)
+
+            fmt.Println("ee.Name:", ee.Name) 
+            fmt.Println()
+        case xml.CharData:
+            // cd := xml.CharData(tp)
+
+            // data := string(cd)
+            // fmt.Println("cd.content:", data) 
+            // fmt.Println()
         }
     }
 }
+
+
+
 
 
