@@ -20,7 +20,7 @@ import (
 
     "go4api/utils"
     "go4api/lib/testcase"
-    "go4api/lib/testsuite"
+    "go4api/lib/extension/testsuite"
 )
 
 func InitFullKwTcSlice (kwfilePathSlice []string) ([]*testcase.TestCaseDataInfo, []string) {

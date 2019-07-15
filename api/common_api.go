@@ -211,21 +211,26 @@ func (tcDataStore *TcDataStore) HandleInitCmd (i int) ([]bool, [][]*testcase.Tes
 
     s := strings.ToLower(cmdStr)
 
-    if len(cmdStr) > 0 && strings.Contains(s, "sleep") {
-        // here may has cmd "sleep xx" for debug purpose
-        t := strings.Split(s, " ")
-        if len(t) == 1 {
-            fmt.Println("No sleep duration provided, no sleep")
-        } else {
-            tm, err := strconv.Atoi(t[1])
-            if err != nil {
-                fmt.Println("Provided sleep duration is not number, please fix")
-            }
+    ss := strings.Fields(strings.TrimSpace(s))
 
-            time.Sleep(time.Duration(tm)*time.Second)
+    if len(ss) == 0 {
+        fmt.Println("No cmd is provided")
+    } else {
+        switch ss[0] {
+        case "sleep":
+            if len(ss) == 1 {
+                fmt.Println("No sleep duration provided, not slept")
+            } else {
+                tm, err := strconv.Atoi(ss[1])
+                if err != nil {
+                    fmt.Println("Provided sleep duration is not number, please fix")
+                } else {
+                    time.Sleep(time.Duration(tm)*time.Second)
+                }
+            }
         }
     }
-
+        
     // as maybe no cmd is executed, the CmdExecStatus is always "cmdSuccess"
     // init
     tcDataStore.CmdType = "init"

@@ -8,7 +8,7 @@
  *
  */
 
-package executor
+package extension
 
 import (
     // "fmt"
@@ -16,19 +16,19 @@ import (
 
     "go4api/cmd"
     "go4api/lib/testcase"
-    "go4api/lib/keyword"
+    "go4api/lib/extension/statechart"
 )
 
-func GetKwFilePaths () []string {
-    filePathSlice := strings.Split(cmd.Opt.KeyWord, ",")
+func GetScFilePaths () []string {
+    filePathSlice := strings.Split(cmd.Opt.StateChart, ",")
 
     return filePathSlice
 }
 
-func InitFullKwTcSlice (filePaths []string) ([]*testcase.TestCaseDataInfo, []string) {
+func InitFullScTcSlice (filePaths []string) ([]*testcase.TestCaseDataInfo) {
     // filePathSlice := GetTsFilePaths()
 
-    fullKwTcSlice, fullKwJsSlice := keyword.InitFullKwTcSlice(filePaths)
+    fullKwTcSlice := statechart.InitFullScTcSlice(filePaths)
 
-    return fullKwTcSlice, fullKwJsSlice
+    return fullKwTcSlice
 }

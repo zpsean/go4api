@@ -27,9 +27,10 @@ var (
 
 type Options struct {
     Testconfig string
-    Testsuite  string 
-    Testcase   string 
-    KeyWord    string 
+    Testsuite  string
+    Testcase   string
+    KeyWord    string
+    StateChart string
 
     Testresource string
     Testresults  string
@@ -41,6 +42,7 @@ type Options struct {
     IfMutation    bool
     IfTestSuite   bool
     IfKeyWord     bool
+    IfStateChart  bool
 
     IfConcurrency       bool
     ConcurrencyLimit    int
@@ -73,6 +75,7 @@ func init() {
     testsuite := flag.String("tsuite", defaultTestDir + "/testsuite", "the path which testsuite json in")
     testcase := flag.String("tc", defaultTestDir + "/testcase", "the path which test json in")
     keyword := flag.String("kw", defaultTestDir + "/keyword", "the path which keyword in")
+    statechart := flag.String("sc", defaultTestDir + "/statechart", "the path which statechart in")
 
     testresource := flag.String("tr", defaultTestDir + "/testresource", "the path which test resource in")
     testresults := flag.String("r", defaultTestDir + "/testresults", "the path which test results in")
@@ -84,6 +87,7 @@ func init() {
     ifMutation := flag.Bool("M", false, "if to run the Mutation test")
     ifTestSuite := flag.Bool("TS", false, "if to run with keyword driven / testsuite mode")
     ifKeyWord := flag.Bool("K", false, "if to run with keyword driven / testsuite mode")
+    ifStateChart := flag.Bool("SC", false, "if to run with keyword driven / testsuite mode")
 
     ifConcurrency := flag.Bool("ifCon", true, "if to run the with concurrency mode")
     concurrency := flag.Int("cl", 100, "concurrency limitation")
@@ -106,6 +110,7 @@ func init() {
     Opt.Testsuite = *testsuite
     Opt.Testcase = *testcase
     Opt.KeyWord = *keyword
+    Opt.StateChart = *statechart
 
     Opt.Testresource = *testresource
     Opt.Testresults = *testresults
@@ -117,6 +122,7 @@ func init() {
     Opt.IfMutation = *ifMutation
     Opt.IfTestSuite = *ifTestSuite
     Opt.IfKeyWord = *ifKeyWord
+    Opt.IfStateChart = *ifStateChart
 
     Opt.IfConcurrency = *ifConcurrency
     Opt.ConcurrencyLimit = *concurrency

@@ -16,6 +16,7 @@ import (
     "go4api/js"
     "go4api/cmd"
     "go4api/utils"
+    "go4api/executor/extension"
 )
 
 type G4Store struct {
@@ -41,15 +42,20 @@ func InitG4Store () *G4Store {
     var jsFileList, fullKwJsPathSlice []string
 
     if cmd.Opt.IfTestSuite {
-        filePaths := GetTsFilePaths()
-        fullTcSlice = InitFullTsTcSlice(filePaths)
+        filePaths := extension.GetTsFilePaths()
+        fullTcSlice = extension.InitFullTsTcSlice(filePaths)
 
         jsFileList, _ = utils.WalkPath(cmd.Opt.JsFuncs, ".js")
     } else if cmd.Opt.IfKeyWord {
-        filePaths := GetKwFilePaths()
-        fullTcSlice, fullKwJsPathSlice = InitFullKwTcSlice(filePaths)
+        filePaths := extension.GetKwFilePaths()
+        fullTcSlice, fullKwJsPathSlice = extension.InitFullKwTcSlice(filePaths)
 
         jsFileList, _ = utils.WalkPath(fullKwJsPathSlice[0], ".js")
+    } else if cmd.Opt.IfStateChart {
+        filePaths := extension.GetScFilePaths()
+        fullTcSlice = extension.InitFullScTcSlice(filePaths)
+
+        jsFileList, _ = utils.WalkPath(cmd.Opt.JsFuncs, ".js")
     } else {
         filePaths := GetTcFilePaths()
         fullTcSlice = InitFullTcSlice(filePaths)
