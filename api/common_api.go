@@ -214,7 +214,7 @@ func (tcDataStore *TcDataStore) HandleInitCmd (i int) ([]bool, [][]*testcase.Tes
     ss := strings.Fields(strings.TrimSpace(s))
 
     if len(ss) == 0 {
-        fmt.Println("No cmd is provided")
+        // fmt.Println("No cmd is provided")
     } else {
         switch ss[0] {
         case "sleep":

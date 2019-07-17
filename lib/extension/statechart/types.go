@@ -11,29 +11,29 @@
 package statechart
 
 import (
-	"encoding/xml"
 
-    // "go4api/lib/testcase"
 )
 
-
-type Recurlyservers struct {
-    XMLName          xml.Name     `xml:"scxml"` 
-    VersionAttr      string       `xml:"version,attr"` 
-    DatamodelAttr    string       `xml:"datamodel,attr"`
-    Datamodel        Datamodel    `xml:"datamodel"`
-    State            []State      `xml:"state"`
-    Description      string       `xml:",innerxml"` 
-}
-
-type Datamodel struct {
-    Data []Data    
-}
-
-type Data struct {
-    Id string       `xml:"id,attr"` 
-}
-
 type State struct {
-    StateId string  `xml:"id,attr"`
+	Id             	string        `json:"id"`
+	Type 			string   	  `json:"type"`     // optional: atomic, compound. mandatory: parallel, final, history
+	Initial        	string 		  `json:"initial"`
+	Entry			[]string      `json:"entry"`    // entry actions
+	Exit 			[]string      `json:"exit"`     // exit actions
+	On 				*Transition   `json:"on"`       // map["on"]...
+	States		    States   	  `json:"states"`   // map["states"]...
+	Activities 		[]string      `json:"activities"`
+	// Invoke  		interface{}  // External Communications: send, cancel, invoke, finalize
+}
+
+//
+type States	map[string]*State  // map[stateName]state
+
+type Transition map[string]*Target  // map[event]target
+
+type Target map[string]*TargetAttr  // map[targetName]attr
+
+type TargetAttr struct {
+	Cond 			string 		`json:"cond"`
+	Actions 		[]string    `json:"actions"`  // Executable Content
 }
