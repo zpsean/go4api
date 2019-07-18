@@ -13,6 +13,7 @@ package statechart
 import (
     "fmt"
     "os"
+    "sync"
     // "strings"
     // "bufio"
     // "io"
@@ -46,6 +47,7 @@ func InitFullScTcSlice (scfilePathSlice []string) []*testcase.TestCaseDataInfo {
 
 func ConstructXstate (xstateFile string) {
     var xstate State
+    var transitions []*Transition
 
     jsonStr := utils.GetJsonFromFile(xstateFile)
 
@@ -55,17 +57,24 @@ func ConstructXstate (xstateFile string) {
         os.Exit(1)
     }
         
-    b, _ := json.Marshal(xstate)
-    fmt.Println(string(b))
+    // here to use channel to avoid the global variable for transitions
+    ch := make(chan *Transition)
 
-    xstate.SetStateIds()
-    xstate.GetStateIds()
+    go func(ch chan *Transition) {
+        defer close(ch)
+        wg := &sync.WaitGroup{}
 
-    b, _ = json.Marshal(xstate)
-    fmt.Println(string(b))
+        wg.Add(1)
+        xstate.GetStateTransitions(ch, wg)
 
-    xstate.GetStateTransitions()
+        wg.Wait()
+    }(ch)
 
+    for v := range ch {
+        transitions = append(transitions, v)
+    }
+
+    fmt.Println("222: ", transitions)
 }
 
 

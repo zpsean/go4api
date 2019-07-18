@@ -20,7 +20,7 @@ type State struct {
 	Initial        	string 		  `json:"initial"`
 	Entry			[]string      `json:"entry"`    // entry actions
 	Exit 			[]string      `json:"exit"`     // exit actions
-	On 				*Transition   `json:"on"`       // map["on"]...
+	On 				map[string]map[string]*TargetAttr   `json:"on"` // map[event]map[targetName]attr
 	States		    States   	  `json:"states"`   // map["states"]...
 	Activities 		[]string      `json:"activities"`
 	// Invoke  		interface{}  // External Communications: send, cancel, invoke, finalize
@@ -29,11 +29,18 @@ type State struct {
 //
 type States	map[string]*State  // map[stateName]state
 
-type Transition map[string]*Target  // map[event]target
-
-type Target map[string]*TargetAttr  // map[targetName]attr
-
 type TargetAttr struct {
 	Cond 			string 		`json:"cond"`
 	Actions 		[]string    `json:"actions"`  // Executable Content
 }
+
+type Transition struct {
+	FromState       string
+	Event           string
+	ToState         string
+	Cond            string
+	Actions         []string
+}
+
+
+// type Target map[string]*TargetAttr  // map[targetName]attr

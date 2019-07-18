@@ -12,11 +12,15 @@ package statechart
 
 import (
     "fmt"
+    "sync"
     // "time"
     // "os"
     // "sort"
     // "strings"
 )
+
+// Note: Moore -> Mealy 100%, but Mealy -> Moore possible 100%
+// Here take care Mealy only
 
 // set
 func (st *State) SetStateIds () {
@@ -37,12 +41,37 @@ func (st *State) GetStateIds () {
 	}
 }
 
-func (st *State) GetStateTransitions () {
-	fmt.Println("--> tx: ", st.Id, st.On)
-	for _, v := range st.States {
-		// fmt.Println("-->: ", k, v)
+func (st *State) GetStateTransitions (ch chan *Transition, wg *sync.WaitGroup) {	
+	defer wg.Done()
 
-		v.GetStateTransitions()
+	for event, v1 := range st.On {
+		for target, v2 := range v1 {
+			transition := &Transition {
+				FromState:  st.Id,
+				Event:      event,
+				ToState:    target,
+				Cond:       v2.Cond,
+				Actions:    v2.Actions,
+			}
+			
+			ch <- transition
+		}
 	}
+
+	// next
+	for _, v := range st.States {
+		wg.Add(1)
+		go v.GetStateTransitions(ch, wg)
+	}
+}
+
+// get state - event (json node: On)
+func (st *State) GetStateEvents () {
+
+}
+
+// get Transition event - target names
+func (st *State) GetTransitionInfos () {
+
 }
 
