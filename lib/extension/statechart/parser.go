@@ -55,7 +55,10 @@ func ConstructXstate (xstateFile string) {
     if err != nil {
         fmt.Println("!! Error, parse xstate into xstate failed: ", xstateFile, ". Cause: ", err)
         os.Exit(1)
-    }
+    } 
+
+    // reset the state id
+    xstate.SetStateIds()
         
     // here to use channel to avoid the global variable for transitions
     ch := make(chan *Transition)
@@ -72,6 +75,8 @@ func ConstructXstate (xstateFile string) {
 
     for v := range ch {
         transitions = append(transitions, v)
+        kwStr := v.FromState + " " + v.Event + " " + v.ToState
+        fmt.Println("111: ", kwStr)
     }
 
     fmt.Println("222: ", transitions)
