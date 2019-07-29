@@ -1,5 +1,5 @@
 /*
- * go4api - a api testing tool written in Go
+ * go4api - an api testing tool written in Go
  * Created by: Ping Zhu 2018
  *
  * This program is distributed in the hope that it will be useful,

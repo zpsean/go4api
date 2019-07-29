@@ -1,5 +1,5 @@
 /*
- * go4api - a api testing tool written in Go
+ * go4api - an api testing tool written in Go
  * Created by: Ping Zhu 2018
  *
  * This program is distributed in the hope that it will be useful,
@@ -38,6 +38,8 @@ func (tcDataStore *TcDataStore) MergeTestData () map[string]interface{} {
     for k, v := range globalVariables {
         finalMap[k] = v
     }
+
+    // take care the test suite params
 
     // 3
     pTcName := tcDataStore.TcData.TestCase.ParentTestCase()
