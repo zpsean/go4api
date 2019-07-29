@@ -66,6 +66,8 @@ type TestCase map[string]*TestCaseBasics
 type TestCaseBasics struct {
     Priority string         `json:"priority"`
     ParentTestCase string   `json:"parentTestCase"`
+    FunctionAreas []string  `json:"functionAreas"`
+    TestSuite string        `json:"testSuite"`
     IfGlobalSetUpTestCase bool    `json:"ifGlobalSetUpTestCase"`
     IfGlobalTearDownTestCase bool `json:"ifGlobalTearDownTestCase"`
     SetUp []*CommandDetails     `json:"setUp"`
@@ -135,6 +137,8 @@ type TcReportResults struct {
     // CaseType string // Normal, Scenario, Mutation, Fuzz
     Priority string
     ParentTestCase string
+    FunctionAreas []string
+    TestSuite string   
     SetUpResult string // Success, Fail
     SetUpTestMessages [][]*TestMessage
     Path string

@@ -41,6 +41,14 @@ func (tc *TestCase) ParentTestCase() string {
     return (*tc)[tc.TcName()].ParentTestCase
 }
 
+func (tc *TestCase) FunctionAreas() []string {
+    return (*tc)[tc.TcName()].FunctionAreas
+}
+
+func (tc *TestCase) TestSuite() string {
+    return (*tc)[tc.TcName()].TestSuite
+}
+
 func (tc *TestCase) IfGlobalSetUpTestCase() bool {
     return (*tc)[tc.TcName()].IfGlobalSetUpTestCase
 }
@@ -90,6 +98,10 @@ func (tc *TestCase) SetPriority(newValue string) {
 
 func (tc *TestCase) SetParentTestCase(newValue string) {
     (*tc)[tc.TcName()].ParentTestCase = newValue
+}
+
+func (tc *TestCase) SetTestSuite(newValue string) {
+    (*tc)[tc.TcName()].TestSuite = newValue
 }
 
 func (tc *TestCase) SetInputs(newValue string) {
@@ -353,6 +365,14 @@ func (tcData *TestCaseDataInfo) Priority() string {
 
 func (tcData *TestCaseDataInfo) ParentTestCase() string {
     return tcData.TestCase.ParentTestCase()
+}
+
+func (tcData *TestCaseDataInfo) FunctionAreas() []string {
+    return tcData.TestCase.FunctionAreas()
+}
+
+func (tcData *TestCaseDataInfo) TestSuite() string {
+    return tcData.TestCase.TestSuite()
 }
 
 func (tcData *TestCaseDataInfo) ReqMethod() string {

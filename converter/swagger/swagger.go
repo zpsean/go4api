@@ -72,20 +72,20 @@ func Convert () {
 		    tCase := make(map[string]*(testcase.TestCaseBasics))
 		    
 		    tCaseBasics := testcase.TestCaseBasics{
-		        priority, 
-                parentTestCase,
-                false,
-                false,
-                []*testcase.CommandDetails{},
-                []interface{}{},
-                &g4ARequest,
-                &g4AResponse,
-                []*testcase.OutputsDetails{},
-                []*testcase.OutFilesDetails{},
-                map[string]interface{}{},  // OutGlobalVariables
-                map[string]interface{}{},  // OutLocalVariables
-                map[string]interface{}{},  // Session
-                []*testcase.CommandDetails{},
+                Priority:                 priority, 
+                ParentTestCase:           parentTestCase,
+                IfGlobalSetUpTestCase:    false,
+                IfGlobalTearDownTestCase: false,
+                SetUp:                    []*testcase.CommandDetails{},
+                Inputs:                   []interface{}{},
+                Request:                  &g4ARequest,
+                Response:                 &g4AResponse,
+                Outputs:                  []*testcase.OutputsDetails{},
+                OutFiles:                 []*testcase.OutFilesDetails{},
+                OutGlobalVariables:       map[string]interface{}{},  // OutGlobalVariables
+                OutLocalVariables:        map[string]interface{}{},  // OutLocalVariables
+                Session:                  map[string]interface{}{},  // Session
+                TearDown:                 []*testcase.CommandDetails{},
 		    }
 		    //
 		    tCase[g4ATcName] = &tCaseBasics
