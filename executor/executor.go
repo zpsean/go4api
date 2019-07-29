@@ -121,6 +121,7 @@ func (tcsRunStore *TcsRunStore) RunEachPriority (baseUrl string, priority string
     tcsRunStore.TcTreeStats.CollectNodeStatusByPriority(tcsRunStore.Root, priority)
 }
 
+// for each global setup, normal, global teardown
 func (tcsRunStore *TcsRunStore) RunConsoleOverallReport () {
     tcsRunStore.TcTreeStats.CollectOverallNodeStatus(tcsRunStore.Root, "Overall")
 
@@ -129,10 +130,10 @@ func (tcsRunStore *TcsRunStore) RunConsoleOverallReport () {
     reports.ReportConsoleOverall(len(tcsRunStore.TcSlice), "Overall", tcsRunStore.TcTreeStats.StatusCountByPriority)
 }
 
-
+// for all (global setup, normal, global teardown)
 func (g4Store *G4Store) RunFinalConsoleReport () {
     fmt.Println("")
-    fmt.Println("Final Test Execution Statistics")
+    fmt.Println("Final Test Case Execution Statistics")
 
     totalTcCount := len(g4Store.FullTcSlice)
 
@@ -142,6 +143,7 @@ func (g4Store *G4Store) RunFinalConsoleReport () {
         g4Store.GlobalTeardownRunStore.TcTreeStats.StatusCountByPriority)
 }
 
+// for file report
 func (g4Store *G4Store) RunFinalReport (ch chan int, gStart_str string, resultsDir string, resultsLogFile string) {
     gEnd_time := time.Now()
     gEnd_str := gEnd_time.Format("2006-01-02 15:04:05.000000000 +0800 CST")

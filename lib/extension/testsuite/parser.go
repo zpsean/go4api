@@ -38,12 +38,14 @@ func InitFullTsTcSlice (filePathSlice []string) []*testcase.TestCaseDataInfo {
             tcName := analyzedTestCases[i].TestCase.TcName()
             parentTestCaseName := analyzedTestCases[i].TestCase.ParentTestCase()
 
+            // re-set the tc's id
             analyzedTestCases[i].TestCase.UpdateTcName(tsName + "-" + tcName)
+            // re-set the tc's ts name
+            analyzedTestCases[i].TestCase.SetTestSuite(tsName)
+
             if parentTestCaseName != "root" {
-                // re-set the tc id
+                // re-set the parent tc id
                 analyzedTestCases[i].TestCase.SetParentTestCase(tsName + "-" + parentTestCaseName)
-                // re-set the tc's ts name
-                analyzedTestCases[i].TestCase.SetTestSuite(tsName)
             }
 
         }
