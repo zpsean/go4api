@@ -26,6 +26,10 @@ func InitFullTsTcSlice (filePathSlice []string) []*testcase.TestCaseDataInfo {
     tsSlice := InitTestSuiteSlice(filePathSlice)
 
     for i, _ := range tsSlice {
+        // init test suite session (it is read only)
+        tsSlice[i].WriteSession()
+
+        //
         tsuite := AnalyzeTestSuiteTestCases(tsSlice[i])
 
         analyzedTestCases := (*tsuite)[tsuite.TsName()].AnalyzedTestCases
@@ -124,4 +128,5 @@ func ConstructTsInfosWithoutDt (suiteFile string) TestSuite {
   
     return tsuite
 }
+
 

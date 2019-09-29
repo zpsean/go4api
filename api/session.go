@@ -58,4 +58,3 @@ func (tcDataStore *TcDataStore) WriteSession (expTcSession map[string]interface{
     gsession.WriteTcSession(tcName, tcSession)
 }
 
-

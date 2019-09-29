@@ -40,20 +40,27 @@ func (tcDataStore *TcDataStore) MergeTestData () map[string]interface{} {
     }
 
     // take care the test suite params
-
+    tsName := tcDataStore.TcData.TestCase.TestSuite()
+    tsSessionMap := gsession.LookupTcSession(tsName)
+    for k, v := range tsSessionMap {
+        finalMap[k] = v
+    }
+    
     // 3
     pTcName := tcDataStore.TcData.TestCase.ParentTestCase()
     pSssionMap := gsession.LookupTcSession(pTcName)
-    for k, v := range pSssionMap {  // => concurrent map iteration and map write?
+    for k, v := range pSssionMap {  
         finalMap[k] = v
     }
 
+    //
     tcName := tcDataStore.TcData.TestCase.TcName()
     sessionMap := gsession.LookupTcSession(tcName)
-    for k, v := range sessionMap { // => concurrent map iteration and map write?
+    for k, v := range sessionMap {
         finalMap[k] = v
     }
 
+    //
     tcLocalVariables := tcDataStore.TcLocalVariables
     for k, v := range tcLocalVariables {
         finalMap[k] = v
