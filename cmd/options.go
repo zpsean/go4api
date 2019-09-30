@@ -56,6 +56,7 @@ type Options struct {
 
     IfSqlDb bool
     IfCache bool
+    IfMongoDB bool
 }
 
 var Opt Options
@@ -102,6 +103,7 @@ func init() {
 
     ifSqlDb := flag.Bool("ifSqlDb", true, "if test has Sql, such as MySql")
     ifCache := flag.Bool("ifCache", true, "if test has cache, such as Redis")
+    ifMongoDB := flag.Bool("ifMongoDB", true, "if test has MongoDb, such as MongoDB")
 
     //
     flag.Parse()
@@ -136,6 +138,7 @@ func init() {
 
     Opt.IfSqlDb = *ifSqlDb
     Opt.IfCache = *ifCache
+    Opt.IfMongoDB = *ifMongoDB
 
     if h {
         usage()

@@ -27,8 +27,10 @@ type Environment struct {
     TimeZone string
     Dbs map[string]*DbDetails
     Redis map[string]*RedisDetails
+    MongoDB map[string]*MongDBDetails
 }
 
+//
 type DbDetails struct {
     SqlCon interface{}
     Ip string
@@ -45,6 +47,15 @@ type RedisDetails struct {
     Password string
 }
 
+type MongDBDetails struct {
+    MongDBCon interface{}
+    Ip string
+    Port interface{}
+    UserName string
+    Password string
+}
+
+//
 func SetTestEnv () {
     if Opt.TestEnv != "" {
         tEnv = Opt.TestEnv
@@ -78,6 +89,10 @@ func GetDbConfig () map[string]*DbDetails {
 
 func GetRedisConfig () map[string]*RedisDetails {
         return config[tEnv].Redis
+}
+
+func GetMongoDBConfig () map[string]*MongDBDetails {
+        return config[tEnv].MongoDB
 }
 
 

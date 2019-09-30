@@ -46,6 +46,11 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
 
                 cmdsResults = append(cmdsResults, sResults[0:]...)
                 finalTestMessages = append(finalTestMessages, sMessages[0:]...)
+            case "mongodb":
+                sResults, sMessages = tcDataStore.HandleMongoDBCmd(i)
+
+                cmdsResults = append(cmdsResults, sResults[0:]...)
+                finalTestMessages = append(finalTestMessages, sMessages[0:]...)
             case "init":
                 sResults, sMessages = tcDataStore.HandleInitCmd(i)
 
@@ -186,6 +191,36 @@ func (tcDataStore *TcDataStore) HandleRedisCmd (i int) ([]bool, [][]*testcase.Te
     tcDataStore.CmdResults = -1
 
     cmdAffectedCount, cmdResults, cmdExecStatus := RunRedis(cmdStr, cmdKey, cmdValue)
+    
+    tcDataStore.CmdExecStatus = cmdExecStatus
+    tcDataStore.CmdAffectedCount = cmdAffectedCount
+    tcDataStore.CmdResults = cmdResults
+
+    sResults, sMessages = tcDataStore.HandleSingleCmdResult(i)
+
+    return sResults, sMessages
+}
+
+// mongodb
+func (tcDataStore *TcDataStore) HandleMongoDBCmd (i int) ([]bool, [][]*testcase.TestMessage) {
+    var sResults []bool
+    var sMessages [][]*testcase.TestMessage
+
+    cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmd"
+    tcDataStore.PrepEmbeddedFunctions(cmdStrPath)
+
+    tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
+    tcDataJson := string(tcDataJsonB)
+
+    cmdStr := gjson.Get(tcDataJson, cmdStrPath).String()
+
+    // init
+    tcDataStore.CmdType = "mongodb"
+    tcDataStore.CmdExecStatus = ""
+    tcDataStore.CmdAffectedCount = -1
+    tcDataStore.CmdResults = -1
+
+    cmdAffectedCount, cmdResults, cmdExecStatus := RunMongoDB(cmdStr)
     
     tcDataStore.CmdExecStatus = cmdExecStatus
     tcDataStore.CmdAffectedCount = cmdAffectedCount

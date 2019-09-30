@@ -22,6 +22,7 @@ import (
     "go4api/mutation"
     "go4api/sql"
     "go4api/redis"
+    "go4api/mongodb"
 )
 
 func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) { 
@@ -40,6 +41,7 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
     if cmd.Opt.IfMutation {
         WarmUpDBConnection()
         WarmUpRedisConnection()
+        WarmUpMongoDBConnection()
         //
         g4Store := InitG4Store()
         //
@@ -68,6 +70,7 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
     } else {
         WarmUpDBConnection()
         WarmUpRedisConnection()
+        WarmUpMongoDBConnection()
         //
         g4Store := InitG4Store()
         //
@@ -134,4 +137,11 @@ func WarmUpRedisConnection () {
         gredis.InitRedisConnection()
     }
 }
+
+func WarmUpMongoDBConnection () {
+    if cmd.Opt.IfMongoDB == true {
+        gmongodb.InitMongoDBConnection()
+    }
+}
+
 
