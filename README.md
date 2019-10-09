@@ -246,4 +246,5 @@ Reference
 - [redigo](https://github.com/gomodule/redigo)
 - [xlsx](https://github.com/tealeg/xlsx)
 - [goja](https://github.com/dop251/goja)
+- [mongo-go-driver](https://github.com/mongodb/mongo-go-driver)
 
