@@ -31,9 +31,12 @@ type MongoDBExec struct {
     TargetMongoDB string
     Database string
     Collection string
-    CmdSlice []string
-    CmdAffectedCount int
+    Cmd string
+    Filter interface{}
+    FindFilter interface{}
+    UpdateFilter interface{}
     CmdResults interface{}
+    CmdAffectedCount int
 }
 
 func InitMongoDBConnection () {
@@ -83,12 +86,43 @@ func Run (cmdStr string) (int, interface{}, string) {
     mongoExecStatus := ""
     
     tDb := "master"
-    sl := strings.Split(cmdStr, ", ")
-    cmdSlice := sl[2:]
 
-    mongoDBExec := &MongoDBExec{tDb, sl[0], sl[1], cmdSlice, 0, ""}
+    // if strings.HasPrefix(cmdStr, "db.") {
+    // example: cmdStr => "dbname, db.getCollection('collectionName').deleteMany({'name': 'value'});"
+    // example: cmdStr => "dbname, db.getCollection('collectionName').updateOne({'_id': ObjectId('xxx')}, {$set: {'key': 'value'}});"
+
+    sl := strings.SplitN(cmdStr, ",", 2)
+
+    db := strings.TrimSpace(sl[0])
+    // content in first () is collection name
+    pos1 := strings.Index(sl[1], "(")
+    pos2 := strings.Index(sl[1], ")")
+
+    coll := sl[1][pos1 + 2: pos2 - 1]
+    // content in second () is filter / updatefilter, to be safe, use second "(" and last ")"
+    sR := strings.Replace(sl[1], "(", "R", 1)
+    pos3 := strings.Index(sR, "(")
+
+    pos4 := strings.LastIndex(sl[1], ")")
+
+    filter := sl[1][pos3 + 1: pos4]
+    cmd := sl[1][pos2 + 2: pos3]
+
+    //    
+    mongoDBExec := &MongoDBExec {
+            TargetMongoDB: tDb,
+            Database: db,
+            Collection: coll,
+            Cmd: cmd,
+            Filter: filter,
+            FindFilter: "",
+            UpdateFilter: "",
+            CmdResults: "",
+    }
+
+    // fmt.Println(">>>>>>>>: ", mongoDBExec)
+
     err = mongoDBExec.Do()
-
     if err == nil {
         mongoExecStatus = "cmdSuccess"
     } else {
@@ -105,41 +139,46 @@ func (mongoDBExec *MongoDBExec) Do () error {
     var err error
     var res interface{}
 
-    fmt.Println(">>>>>>>>: ", mongoDBExec.CmdSlice[0])
-
+    ctx, _ := context.WithTimeout(context.Background(), 2 * time.Second)
     //
-    switch strings.ToUpper(mongoDBExec.CmdSlice[0]) {
-        case "GET":
+    switch strings.ToUpper(mongoDBExec.Cmd) {
+        // case "FIND":
+        //     collection := client.Database(mongoDBExec.Database).Collection(mongoDBExec.Collection)
+
+        //     // get data
+        //     objID, _ := primitive.ObjectIDFromHex(mongoDBExec.CmdSlice[2])
+        //     filter := bson.M{"_id": objID}
+        //     res := collection.FindOne(ctx, filter)
+
+        //     rr, err := res.DecodeBytes()
+
+        //     if err != nil {
+        //         panic(err)
+        //     }
+
+        //     if err == nil {
+        //         mongoDBExec.CmdAffectedCount = 1
+        //         mongoDBExec.CmdResults = rr
+        //     }
+
+        //     fmt.Println(">>>>>>>>: ", string(rr))
+
+        case "UPDATEONE":
             collection := client.Database(mongoDBExec.Database).Collection(mongoDBExec.Collection)
 
-            ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+            //
+            sl := strings.Split(mongoDBExec.Filter.(string), ",")
+            findFilter := sl[0]
+            findFilterKey, findFilterValue := getFindFilterKeyValue(findFilter)
+            //
+            updateFilter := sl[1]
+            updateFilterKey, updateFilterValue := getUpdateFilterKeyValue(updateFilter)
 
-            // get data
-            objID, _ := primitive.ObjectIDFromHex(mongoDBExec.CmdSlice[2])
-            filter := bson.M{"_id": objID}
-            res := collection.FindOne(ctx, filter)
-
-            rr, err := res.DecodeBytes()
-
-            if err != nil {
-                panic(err)
-            }
-
-            if err == nil {
-                mongoDBExec.CmdAffectedCount = 1
-                mongoDBExec.CmdResults = rr
-            }
-
-            fmt.Println(">>>>>>>>: ", string(rr))
-
-        case "UPDATE":
-            collection := client.Database(mongoDBExec.Database).Collection(mongoDBExec.Collection)
-
-            ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
-
-            // update data
-            objID, _ := primitive.ObjectIDFromHex(mongoDBExec.CmdSlice[2])
-            res, err = collection.UpdateOne(ctx, bson.M{"_id": objID}, bson.M{"$set": bson.M{mongoDBExec.CmdSlice[3]: mongoDBExec.CmdSlice[4]}})
+            //
+            res, err = collection.UpdateOne(ctx, 
+                                        bson.D{{findFilterKey, findFilterValue}}, 
+                                        bson.M{"$set": bson.M{updateFilterKey: updateFilterValue}},
+                                    )
 
             if err != nil {
                 panic(err)
@@ -150,12 +189,76 @@ func (mongoDBExec *MongoDBExec) Do () error {
                 mongoDBExec.CmdResults = res
             }
 
-            fmt.Println(">>>>>>>>: ", res)
+            // fmt.Println(">>>>>>>>: ", res)
+        case "DELETEMANY":
+            collection := client.Database(mongoDBExec.Database).Collection(mongoDBExec.Collection)
+
+            //
+            sl := strings.Split(mongoDBExec.Filter.(string), ",")
+            findFilter := sl[0]
+
+            findFilterKey, findFilterValue := getFindFilterKeyValue(findFilter)
+
+            ff := findFilterValue.(string)
+            ff = ff[2: len(ff) - 1]
+
+            filter := bson.D{{findFilterKey, primitive.Regex{Pattern: ff, Options: ""}}}
+            res, err = collection.DeleteMany(ctx, filter)
+
+            if err != nil {
+                panic(err)
+            }
+
+            if err == nil {
+                mongoDBExec.CmdAffectedCount = -1
+                mongoDBExec.CmdResults = res
+            }
+
+            // fmt.Println(">>>>>>>> res: ", res)
 
         default:
             mongoDBExec.CmdAffectedCount = -1
-            fmt.Println("!! Warning, Command ", mongoDBExec.CmdSlice, " is not supported currently, will enhance it later")
+            fmt.Println("!! Warning, Command ", mongoDBExec.Cmd, " is not supported currently, will enhance it later")
     }
 
     return err
 }
+
+func getFindFilterKeyValue (findFilter string) (string, interface{}) {
+    findFilterKey := strings.TrimSpace(strings.Split(findFilter, ":")[0])
+    findFilterKey = findFilterKey[2: len(findFilterKey) - 1]
+
+    findFilterValue := strings.TrimSpace(strings.Split(findFilter, ":")[1])
+    findFilterValue = findFilterValue[0: len(findFilterValue) - 1]
+
+    // fmt.Println("!>>>>>>>>: ", findFilter, findFilterKey, findFilterValue)
+
+    var obj interface{}
+    if strings.HasPrefix(findFilterValue, "ObjectId") {
+        findFilterValue = findFilterValue[9:]
+        findFilterValue = findFilterValue[1: len(findFilterValue) - 2]
+        obj, _ = primitive.ObjectIDFromHex(findFilterValue)
+    } else {
+        obj = findFilterValue
+    }  
+
+    // fmt.Println("!!>>>>>>>>: ", findFilter, findFilterKey, findFilterValue, obj)
+
+    return findFilterKey, obj
+}
+
+func getUpdateFilterKeyValue (updateFilter string) (string, interface{}) {
+    kvSlice := strings.Split(updateFilter, ":")
+
+    updateFilterKey := strings.TrimSpace(kvSlice[1])
+    updateFilterKey = updateFilterKey[2: len(updateFilterKey) - 1]
+
+    updateFilterValue := strings.TrimSpace(kvSlice[2])
+    updateFilterValue = updateFilterValue[1: len(updateFilterValue) - 3]
+
+    // fmt.Println("!!!>>>>>>>>: ", updateFilter, updateFilterKey, updateFilterValue)
+
+    return updateFilterKey, updateFilterValue
+}
+
+
