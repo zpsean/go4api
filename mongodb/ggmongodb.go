@@ -194,26 +194,40 @@ func (mongoDBExec *MongoDBExec) Do () error {
             collection := client.Database(mongoDBExec.Database).Collection(mongoDBExec.Collection)
 
             //
-            sl := strings.Split(mongoDBExec.Filter.(string), ",")
-            findFilter := sl[0]
+            if strings.Count("mongoDBExec.Filter.(string)", ",") > 0 {
+                sl := strings.Split(mongoDBExec.Filter.(string), ",")
+                findFilter := sl[0]
 
-            findFilterKey, findFilterValue := getFindFilterKeyValue(findFilter)
+                findFilterKey, findFilterValue := getFindFilterKeyValue(findFilter)
 
-            ff := findFilterValue.(string)
-            ff = ff[2: len(ff) - 1]
+                ff := findFilterValue.(string)
+                ff = ff[2: len(ff) - 1]
 
-            filter := bson.D{{findFilterKey, primitive.Regex{Pattern: ff, Options: ""}}}
-            res, err = collection.DeleteMany(ctx, filter)
+                filter := bson.D{{findFilterKey, primitive.Regex{Pattern: ff, Options: ""}}}
+                res, err = collection.DeleteMany(ctx, filter)
 
-            if err != nil {
-                panic(err)
+                if err != nil {
+                    panic(err)
+                }
+
+                if err == nil {
+                    mongoDBExec.CmdAffectedCount = -1
+                    mongoDBExec.CmdResults = res
+                }
+            } else {
+                filter := bson.D{{}}
+                res, err = collection.DeleteMany(ctx, filter)
+
+                if err != nil {
+                    panic(err)
+                }
+
+                if err == nil {
+                    mongoDBExec.CmdAffectedCount = -1
+                    mongoDBExec.CmdResults = res
+                }
             }
-
-            if err == nil {
-                mongoDBExec.CmdAffectedCount = -1
-                mongoDBExec.CmdResults = res
-            }
-
+            
             // fmt.Println(">>>>>>>> res: ", res)
 
         default:
