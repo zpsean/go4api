@@ -16,6 +16,7 @@ import (
     "strings"
     "os"
     "context"
+    "reflect"
 
     "go4api/cmd"
 
@@ -120,8 +121,6 @@ func Run (cmdStr string) (int, interface{}, string) {
             CmdResults: "",
     }
 
-    // fmt.Println(">>>>>>>>: ", mongoDBExec)
-
     err = mongoDBExec.Do()
     if err == nil {
         mongoExecStatus = "cmdSuccess"
@@ -138,104 +137,135 @@ func (mongoDBExec *MongoDBExec) Do () error {
 
     var err error
     var res interface{}
+    var v *mongo.SingleResult
 
     ctx, _ := context.WithTimeout(context.Background(), 2 * time.Second)
     //
     switch strings.ToUpper(mongoDBExec.Cmd) {
-        // case "FIND":
-        //     collection := client.Database(mongoDBExec.Database).Collection(mongoDBExec.Collection)
+    case "FINDONE":
+        collection := client.Database(mongoDBExec.Database).Collection(mongoDBExec.Collection)
 
-        //     // get data
-        //     objID, _ := primitive.ObjectIDFromHex(mongoDBExec.CmdSlice[2])
-        //     filter := bson.M{"_id": objID}
-        //     res := collection.FindOne(ctx, filter)
-
-        //     rr, err := res.DecodeBytes()
-
-        //     if err != nil {
-        //         panic(err)
-        //     }
-
-        //     if err == nil {
-        //         mongoDBExec.CmdAffectedCount = 1
-        //         mongoDBExec.CmdResults = rr
-        //     }
-
-        //     fmt.Println(">>>>>>>>: ", string(rr))
-
-        case "UPDATEONE":
-            collection := client.Database(mongoDBExec.Database).Collection(mongoDBExec.Collection)
-
-            //
+        // if has filter specified, i.e. contains ":"
+        if strings.Count(mongoDBExec.Filter.(string), ":") > 0 {
             sl := strings.Split(mongoDBExec.Filter.(string), ",")
             findFilter := sl[0]
-            findFilterKey, findFilterValue := getFindFilterKeyValue(findFilter)
-            //
-            updateFilter := sl[1]
-            updateFilterKey, updateFilterValue := getUpdateFilterKeyValue(updateFilter)
 
-            //
-            res, err = collection.UpdateOne(ctx, 
-                                        bson.D{{findFilterKey, findFilterValue}}, 
-                                        bson.M{"$set": bson.M{updateFilterKey: updateFilterValue}},
-                                    )
+            findFilterKey, findFilterValue := getFindFilterKeyValue(findFilter)
+            filter := getFindFilterBson(findFilterKey, findFilterValue)
+            
+            v = collection.FindOne(ctx, filter)
+
+            r, err := v.DecodeBytes()
+
+            if err != nil {
+                panic(err)
+            } else {
+                res = r.String()
+
+                mongoDBExec.CmdAffectedCount = -1
+                mongoDBExec.CmdResults = res
+            }
+        } else {
+            filter := bson.D{{}}
+            v = collection.FindOne(ctx, filter)
+
+            r, err := v.DecodeBytes()
+
+            if err != nil {
+                panic(err)
+            } else {
+                res = r.String()
+
+                mongoDBExec.CmdAffectedCount = -1
+                mongoDBExec.CmdResults = res
+            }
+        }
+    case "UPDATEONE":
+        collection := client.Database(mongoDBExec.Database).Collection(mongoDBExec.Collection)
+
+        //
+        sl := strings.Split(mongoDBExec.Filter.(string), ",")
+        findFilter := sl[0]
+        findFilterKey, findFilterValue := getFindFilterKeyValue(findFilter)
+        //
+        updateFilter := sl[1]
+        updateFilterKey, updateFilterValue := getUpdateFilterKeyValue(updateFilter)
+
+        //
+        res, err = collection.UpdateOne(ctx, 
+                                    bson.D{{findFilterKey, findFilterValue}}, 
+                                    bson.M{"$set": bson.M{updateFilterKey: updateFilterValue}},
+                                )
+
+        if err != nil {
+            panic(err)
+        }
+
+        if err == nil {
+            mongoDBExec.CmdAffectedCount = 1
+            mongoDBExec.CmdResults = res
+        }
+    case "DELETEMANY":
+        collection := client.Database(mongoDBExec.Database).Collection(mongoDBExec.Collection)
+
+        // if has filter specified, i.e. contains ":"
+        if strings.Count(mongoDBExec.Filter.(string), ":") > 0 {
+            sl := strings.Split(mongoDBExec.Filter.(string), ",")
+            findFilter := sl[0]
+
+            findFilterKey, findFilterValue := getFindFilterKeyValue(findFilter)
+            filter := getFindFilterBson(findFilterKey, findFilterValue)
+
+            res, err = collection.DeleteMany(ctx, filter)
 
             if err != nil {
                 panic(err)
             }
 
             if err == nil {
-                mongoDBExec.CmdAffectedCount = 1
+                mongoDBExec.CmdAffectedCount = -1
                 mongoDBExec.CmdResults = res
             }
+        } else {
+            filter := bson.D{{}}
+            res, err = collection.DeleteMany(ctx, filter)
 
-            // fmt.Println(">>>>>>>>: ", res)
-        case "DELETEMANY":
-            collection := client.Database(mongoDBExec.Database).Collection(mongoDBExec.Collection)
-
-            //
-            if strings.Count("mongoDBExec.Filter.(string)", ",") > 0 {
-                sl := strings.Split(mongoDBExec.Filter.(string), ",")
-                findFilter := sl[0]
-
-                findFilterKey, findFilterValue := getFindFilterKeyValue(findFilter)
-
-                ff := findFilterValue.(string)
-                ff = ff[2: len(ff) - 1]
-
-                filter := bson.D{{findFilterKey, primitive.Regex{Pattern: ff, Options: ""}}}
-                res, err = collection.DeleteMany(ctx, filter)
-
-                if err != nil {
-                    panic(err)
-                }
-
-                if err == nil {
-                    mongoDBExec.CmdAffectedCount = -1
-                    mongoDBExec.CmdResults = res
-                }
-            } else {
-                filter := bson.D{{}}
-                res, err = collection.DeleteMany(ctx, filter)
-
-                if err != nil {
-                    panic(err)
-                }
-
-                if err == nil {
-                    mongoDBExec.CmdAffectedCount = -1
-                    mongoDBExec.CmdResults = res
-                }
+            if err != nil {
+                panic(err)
             }
-            
-            // fmt.Println(">>>>>>>> res: ", res)
 
-        default:
-            mongoDBExec.CmdAffectedCount = -1
-            fmt.Println("!! Warning, Command ", mongoDBExec.Cmd, " is not supported currently, will enhance it later")
+            if err == nil {
+                mongoDBExec.CmdAffectedCount = -1
+                mongoDBExec.CmdResults = res
+            }
+        }
+    default:
+        mongoDBExec.CmdAffectedCount = -1
+        fmt.Println("!! Warning, Command ", mongoDBExec.Cmd, " is not supported currently, will enhance it later")
     }
 
     return err
+}
+
+func getFindFilterBson (findFilterKey string, findFilterValue interface{}) interface{} {
+    var filter = bson.D{{}}
+
+    switch reflect.TypeOf(findFilterValue).Kind().String() {
+    case "string": 
+        ff := findFilterValue.(string)
+        ff = ff[2: len(ff) - 1]
+
+        // if is reg expression
+        if strings.HasPrefix(ff, "/") {
+            filter = bson.D{{findFilterKey, primitive.Regex{Pattern: ff, Options: ""}}}
+        } else {
+            filter = bson.D{{findFilterKey, findFilterValue}} 
+        }
+    default:
+        filter = bson.D{{findFilterKey, findFilterValue}} 
+    }
+
+    return filter
 }
 
 func getFindFilterKeyValue (findFilter string) (string, interface{}) {
@@ -256,8 +286,6 @@ func getFindFilterKeyValue (findFilter string) (string, interface{}) {
         obj = findFilterValue
     }  
 
-    // fmt.Println("!!>>>>>>>>: ", findFilter, findFilterKey, findFilterValue, obj)
-
     return findFilterKey, obj
 }
 
@@ -269,8 +297,6 @@ func getUpdateFilterKeyValue (updateFilter string) (string, interface{}) {
 
     updateFilterValue := strings.TrimSpace(kvSlice[2])
     updateFilterValue = updateFilterValue[1: len(updateFilterValue) - 3]
-
-    // fmt.Println("!!!>>>>>>>>: ", updateFilter, updateFilterKey, updateFilterValue)
 
     return updateFilterKey, updateFilterValue
 }

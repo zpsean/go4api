@@ -37,6 +37,8 @@ func (tcDataStore *TcDataStore) GetResponseValue (searchPath string) interface{}
             value = tcDataStore.GetSqlActualValueByPath(searchPath)
         case strings.HasPrefix(searchPath, "$(redis)."):
             value = tcDataStore.GetRedisActualValueByPath(searchPath)
+        case strings.HasPrefix(searchPath, "$(mongodb)."):
+            value = tcDataStore.GetMongoDBActualValueByPath(searchPath)
         case strings.HasPrefix(searchPath, "$(file)."):
             value = tcDataStore.GetFileActualValueByPath(searchPath)
         // case strings.HasPrefix(searchPath, "$."):
@@ -165,6 +167,48 @@ func (tcDataStore *TcDataStore) GetRedisActualValueByPath (searchPath string) in
             value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
             resValue = value.Value()
         }
+    } else {
+        resValue = searchPath
+    }
+
+    return resValue
+}
+
+// MongoDB
+func (tcDataStore *TcDataStore) GetMongoDBActualValueByPath (searchPath string) interface{} {
+    var resValue interface{}
+ 
+    prefix := "$(mongodb)."
+    lenPrefix := len(prefix)
+
+    // cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
+    // cmdResultsJson := string(cmdResultsB)
+
+    cmdResultsJson := tcDataStore.CmdResults.(string)
+
+    if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
+        switch {
+        case searchPath == "$(mongodb).affectedCount":
+            resValue = tcDataStore.CmdAffectedCount
+        case searchPath == "$(mongodb).*":
+            resValue = tcDataStore.CmdResults
+        case tcDataStore.IfCmdResultsPrimitive():
+            resValue = tcDataStore.CmdResults
+        default:
+            value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
+            resValue = value.Value()
+        }
+
+        // if searchPath == "$(sql).#" {
+        //     resValue = tcDataStore.CmdAffectedCount
+        // } else if searchPath == "$(sql).*" {
+        //     resValue = tcDataStore.CmdResults
+        // } else if tcDataStore.IfCmdResultsPrimitive() {
+        //     resValue = tcDataStore.CmdResults
+        // } else {
+        //     value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
+        //     resValue = value.Value()
+        // }
     } else {
         resValue = searchPath
     }
