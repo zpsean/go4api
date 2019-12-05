@@ -34,6 +34,7 @@ Features
 - **Fuzz / Mutation Testing**: includes Mutation and Random testing (embedded pairwise algorithm implementation) 
 - **Scenario Testing**: when APIs have data dependency
 - **Convert HAR file / Swagger API file** 
+- **DB manipulation support**: MySql, PostgreSql, MongoDB, Redis, and easy extension to other database(s)  
 - **Built-in functions** 
 - **User defined functions**: use ECMAScript 5.1(+)  
 
