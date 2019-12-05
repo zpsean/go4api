@@ -34,35 +34,35 @@ func (tcDataStore *TcDataStore) CommandGroup (cmdGroupOrigin []*testcase.Command
         var sMessages [][]*testcase.TestMessage
 
         cmdType := cmdGroupOrigin[i].CmdType
+        lc := strings.ToLower(cmdType)
+        switch lc {
+        case "sql", "mysql", "postgres", "postgresql":
+            sResults, sMessages = tcDataStore.HandleSqlCmd(lc, i)
 
-        switch strings.ToLower(cmdType) {
-            case "sql":
-                sResults, sMessages = tcDataStore.HandleSqlCmd(i)
+            cmdsResults = append(cmdsResults, sResults[0:]...)
+            finalTestMessages = append(finalTestMessages, sMessages[0:]...)
+        case "redis":
+            sResults, sMessages = tcDataStore.HandleRedisCmd(i)
 
-                cmdsResults = append(cmdsResults, sResults[0:]...)
-                finalTestMessages = append(finalTestMessages, sMessages[0:]...)
-            case "redis":
-                sResults, sMessages = tcDataStore.HandleRedisCmd(i)
+            cmdsResults = append(cmdsResults, sResults[0:]...)
+            finalTestMessages = append(finalTestMessages, sMessages[0:]...)
+        case "mongodb":
+            sResults, sMessages = tcDataStore.HandleMongoDBCmd(i)
 
-                cmdsResults = append(cmdsResults, sResults[0:]...)
-                finalTestMessages = append(finalTestMessages, sMessages[0:]...)
-            case "mongodb":
-                sResults, sMessages = tcDataStore.HandleMongoDBCmd(i)
+            cmdsResults = append(cmdsResults, sResults[0:]...)
+            finalTestMessages = append(finalTestMessages, sMessages[0:]...)
+        case "init":
+            sResults, sMessages = tcDataStore.HandleInitCmd(i)
 
-                cmdsResults = append(cmdsResults, sResults[0:]...)
-                finalTestMessages = append(finalTestMessages, sMessages[0:]...)
-            case "init":
-                sResults, sMessages = tcDataStore.HandleInitCmd(i)
+            cmdsResults = append(cmdsResults, sResults[0:]...)
+            finalTestMessages = append(finalTestMessages, sMessages[0:]...)
+        case "jsonfile":
+            sResults, sMessages = tcDataStore.HandleJsonFile(i)
 
-                cmdsResults = append(cmdsResults, sResults[0:]...)
-                finalTestMessages = append(finalTestMessages, sMessages[0:]...)
-            case "jsonfile":
-                sResults, sMessages = tcDataStore.HandleJsonFile(i)
-
-                cmdsResults = append(cmdsResults, sResults[0:]...)
-                finalTestMessages = append(finalTestMessages, sMessages[0:]...)
-            default:
-                fmt.Println("!! warning, command ", cmdType, " can not be recognized.")
+            cmdsResults = append(cmdsResults, sResults[0:]...)
+            finalTestMessages = append(finalTestMessages, sMessages[0:]...)
+        default:
+            fmt.Println("!! warning, command ", cmdType, " can not be recognized.")
         }
     }
 
@@ -118,8 +118,8 @@ func (tcDataStore *TcDataStore) HandleJsonFile (i int) ([]bool, [][]*testcase.Te
 }
 
 
-//sql
-func (tcDataStore *TcDataStore) HandleSqlCmd (i int) ([]bool, [][]*testcase.TestMessage) {
+//mysql
+func (tcDataStore *TcDataStore) HandleSqlCmd (lc string, i int) ([]bool, [][]*testcase.TestMessage) {
     var sResults []bool
     var sMessages [][]*testcase.TestMessage
 
@@ -134,7 +134,7 @@ func (tcDataStore *TcDataStore) HandleSqlCmd (i int) ([]bool, [][]*testcase.Test
     cmdTgtDb := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdSource"
     tgtDb := gjson.Get(tcDataJson, cmdTgtDb).String()
     // init
-    tcDataStore.CmdType = "sql"
+    // tcDataStore.CmdType = "sql"
     tcDataStore.CmdExecStatus = ""
     tcDataStore.CmdAffectedCount = -1
     tcDataStore.CmdResults = -1
@@ -144,8 +144,18 @@ func (tcDataStore *TcDataStore) HandleSqlCmd (i int) ([]bool, [][]*testcase.Test
         fmt.Println("No target db provided, default to master")
         tgtDb = "master"
     }
-    cmdAffectedCount, _, cmdResults, cmdExecStatus := RunSql(tgtDb, cmdStr)
-    
+    cmdAffectedCount := -1
+    var cmdResults []map[string]interface{}
+    cmdExecStatus    := ""
+    //
+    switch lc {
+    case "sql", "mysql":
+        tcDataStore.CmdType = "mysql"
+        cmdAffectedCount, _, cmdResults, cmdExecStatus = RunSql(tgtDb, cmdStr)
+    case "postgres", "postgresql":
+        tcDataStore.CmdType = "postgresql"
+        cmdAffectedCount, _, cmdResults, cmdExecStatus = RunPgSql(tgtDb, cmdStr)
+    }
     tcDataStore.CmdExecStatus = cmdExecStatus
     tcDataStore.CmdAffectedCount = cmdAffectedCount
     tcDataStore.CmdResults = cmdResults

@@ -13,7 +13,7 @@ package api
 import (
  	// "fmt"
 
- 	gredis "go4api/redis"
+ 	gredis "go4api/db/redis"
 )
 
 func RunRedis (cmdStr string, cmdKey string, cmdValue string) (int, interface{}, string) {

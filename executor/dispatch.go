@@ -20,9 +20,10 @@ import (
     "go4api/cmd"
     // "go4api/fuzz"
     "go4api/mutation"
-    "go4api/sql"
-    "go4api/redis"
-    "go4api/mongodb"
+    "go4api/db/mysql"
+    "go4api/db/postgres"
+    "go4api/db/redis"
+    "go4api/db/mongodb"
 )
 
 func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) { 
@@ -40,6 +41,7 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
     //
     if cmd.Opt.IfMutation {
         WarmUpDBConnection()
+        WarmUpPgDbConnection()
         WarmUpRedisConnection()
         WarmUpMongoDBConnection()
         //
@@ -69,6 +71,7 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
         // Run(ch, baseUrl, resultsDir, resultsLogFile, fuzzTcArray)
     } else {
         WarmUpDBConnection()
+        WarmUpPgDbConnection()
         WarmUpRedisConnection()
         WarmUpMongoDBConnection()
         //
@@ -129,6 +132,12 @@ func MkResultsDir(gStart_str string, opt cmd.Options) string {
 func WarmUpDBConnection () {
     if cmd.Opt.IfSqlDb == true {
         gsql.InitConnection()
+    }
+}
+
+func WarmUpPgDbConnection () {
+    if cmd.Opt.IfPgDb == true {
+        gpg.InitConnection()
     }
 }
 

@@ -13,9 +13,11 @@ package api
 import (
     // "fmt"
     
-    gsql "go4api/sql"
+    gsql "go4api/db/mysql"
+    gpg "go4api/db/postgres"
 )
 
+// for mysql
 func RunSql (tgtDb string, stmt string) (int, []string, []map[string]interface{}, string) {
     // gsql.Run will return: <impacted rows : int>, <rows for select : [][]interface{}{}>, <sql status : string>
     // status: SqlSuccess, SqlFailed
@@ -24,4 +26,12 @@ func RunSql (tgtDb string, stmt string) (int, []string, []map[string]interface{}
     return rowsCount, rowsHeaders, rowsData, sqlExecStatus
 }
 
+// for postgresql
+func RunPgSql (tgtDb string, stmt string) (int, []string, []map[string]interface{}, string) {
+    // gsql.Run will return: <impacted rows : int>, <rows for select : [][]interface{}{}>, <sql status : string>
+    // status: SqlSuccess, SqlFailed
+    rowsCount, rowsHeaders, rowsData, sqlExecStatus := gpg.Run(tgtDb, stmt)
+
+    return rowsCount, rowsHeaders, rowsData, sqlExecStatus
+}
 

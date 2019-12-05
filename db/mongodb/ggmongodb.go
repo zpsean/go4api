@@ -158,7 +158,8 @@ func (mongoDBExec *MongoDBExec) Do () error {
             r, err := v.DecodeBytes()
 
             if err != nil {
-                panic(err)
+                // panic(err)
+                fmt.Println("!! Warning, mongo: no documents in result. ", err)
             } else {
                 res = r.String()
 
@@ -172,7 +173,8 @@ func (mongoDBExec *MongoDBExec) Do () error {
             r, err := v.DecodeBytes()
 
             if err != nil {
-                panic(err)
+                // panic(err)
+                fmt.Println("!! Warning, mongo: no documents in result")
             } else {
                 res = r.String()
 
@@ -180,6 +182,7 @@ func (mongoDBExec *MongoDBExec) Do () error {
                 mongoDBExec.CmdResults = res
             }
         }
+        // fmt.Println(">>>>>>>> res: ", res)
     case "UPDATEONE":
         collection := client.Database(mongoDBExec.Database).Collection(mongoDBExec.Collection)
 
@@ -283,6 +286,7 @@ func getFindFilterKeyValue (findFilter string) (string, interface{}) {
         findFilterValue = findFilterValue[1: len(findFilterValue) - 2]
         obj, _ = primitive.ObjectIDFromHex(findFilterValue)
     } else {
+        findFilterValue = findFilterValue[1: len(findFilterValue) - 1]
         obj = findFilterValue
     }  
 

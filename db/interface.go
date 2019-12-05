@@ -8,17 +8,11 @@
  *
  */
 
-package api
+package db
 
 import (
- 	// "fmt"
 
- 	gmongodb "go4api/db/mongodb"
 )
 
-func RunMongoDB (cmdStr string) (int, interface{}, string) {
-   	keysCount, cmdResults, redExecStatus := gmongodb.Run(cmdStr)
 
-    return keysCount, cmdResults, redExecStatus
-}
 

@@ -26,6 +26,7 @@ type Environment struct {
     BaseUrl string
     TimeZone string
     Dbs map[string]*DbDetails
+    PostgreSql map[string]*DbDetails
     Redis map[string]*RedisDetails
     MongoDB map[string]*MongDBDetails
 }
@@ -37,6 +38,8 @@ type DbDetails struct {
     Port interface{}
     UserName string
     Password string
+    Dbname   string
+    Sslmode  string
 }
 
 type RedisDetails struct {
@@ -83,8 +86,14 @@ func GetTimeZoneConfig () string {
         return config[tEnv].TimeZone
 }
 
+// mysql
 func GetDbConfig () map[string]*DbDetails {
         return config[tEnv].Dbs
+}
+
+// postgresql
+func GetPgDbConfig () map[string]*DbDetails {
+        return config[tEnv].PostgreSql
 }
 
 func GetRedisConfig () map[string]*RedisDetails {
