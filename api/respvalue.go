@@ -35,6 +35,8 @@ func (tcDataStore *TcDataStore) GetResponseValue (searchPath string) interface{}
             value = tcDataStore.GetBodyActualValueByPath(searchPath)
         case strings.HasPrefix(searchPath, "$(sql)."):
             value = tcDataStore.GetSqlActualValueByPath(searchPath)
+        case strings.HasPrefix(searchPath, "$(postgresql)."):
+            value = tcDataStore.GetPgSqlActualValueByPath(searchPath)
         case strings.HasPrefix(searchPath, "$(redis)."):
             value = tcDataStore.GetRedisActualValueByPath(searchPath)
         case strings.HasPrefix(searchPath, "$(mongodb)."):
@@ -106,7 +108,7 @@ func (tcDataStore *TcDataStore) GetBodyActualValueByPath (key string) interface{
     return actualValue
 }
 
-// sql
+// mysql
 func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string) interface{} {
     var resValue interface{}
  
@@ -139,6 +141,35 @@ func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string) inte
         //     value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
         //     resValue = value.Value()
         // }
+    } else {
+        resValue = searchPath
+    }
+
+    return resValue
+}
+
+// postgresql
+func (tcDataStore *TcDataStore) GetPgSqlActualValueByPath (searchPath string) interface{} {
+    var resValue interface{}
+ 
+    prefix := "$(postgresql)."
+    lenPrefix := len(prefix)
+
+    cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
+    cmdResultsJson := string(cmdResultsB)
+
+    if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
+        switch {
+        case searchPath == "$(postgresql).affectedCount":
+            resValue = tcDataStore.CmdAffectedCount
+        case searchPath == "$(postgresql).*":
+            resValue = tcDataStore.CmdResults
+        case tcDataStore.IfCmdResultsPrimitive():
+            resValue = tcDataStore.CmdResults
+        default:
+            value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
+            resValue = value.Value()
+        }
     } else {
         resValue = searchPath
     }

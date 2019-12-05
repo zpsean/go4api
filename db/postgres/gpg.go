@@ -40,7 +40,6 @@ func InitConnection () {
 
     //
     dbs := cmd.GetPgDbConfig()
-    // fmt.Println("---->pg: ", dbs, dbs.Master)
 
     for k, v := range dbs {
         ip := v.Ip
@@ -186,7 +185,6 @@ func (sqlExec *SqlExec) QueryWithoutParams () error {
     //         fmt.Println("!! Err, Catch gsql err:", r)   
     //     }  
     // }()  
-    fmt.Println("sqlExec.Stmt: ", sqlExec.Stmt)
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     if err != nil {
         fmt.Println("!! Err, SELECT Prepare, Catch pg err:", err)
