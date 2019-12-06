@@ -154,7 +154,7 @@ func init() {
 
 func usage() {
     fmt.Fprintf(os.Stderr, `
-go4api version: 0.20.0
+go4api version: 0.65.0
 
 Usage:
   go4api [command] [options]
