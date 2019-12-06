@@ -11,12 +11,13 @@
 package api
 
 import (                                                                                                                                             
-    "os"
+    // "os"
     // "fmt"
-    "strings"
+    // "strings"
     // "encoding/json"
 
     gsession "go4api/lib/session"
+    "go4api/utils"
     // "go4api/cmd"
 )
 
@@ -29,7 +30,7 @@ func (tcDataStore *TcDataStore) MergeTestData () map[string]interface{} {
     // check if config
 
     // 2
-    envMap := GetOsEnviron()
+    envMap := utils.GetOsEnviron()
     for k, v := range envMap {
         finalMap[k] = v
     }
@@ -78,30 +79,9 @@ func (tcDataStore *TcDataStore) MergeTestData () map[string]interface{} {
 
 // 1. from cmd, getconfig()
 
-
 // 2. env variables (key, value), with prefix go4_
-func GetOsEnviron () map[string]string {
-    csvMap := map[string]string{}
-    // consider add the env variables with prefix "go4_*" for username/password/athentication, etc.
-    var envArray []string
-
-    envArray = os.Environ()
-    for _, env := range envArray {
-        // find out the first = position, to get the key
-        env_k := strings.Split(env, "=")[0]
-        if strings.HasPrefix(env_k, "go4_") {
-            if strings.TrimLeft(env_k, "go4_") != "" {
-                csvMap[strings.TrimLeft(env_k, "go4_")] = os.Getenv(env_k)
-            }
-        } 
-    }
-
-    return csvMap
-}
-
 
 // 3. session, if parent has seesion, all direct child would have it (mainly for scenario)
-
 
 // 4. data file (*_dt) / data file (inputs)
 func ConvertCsvRowToMap (csvHeader []string, csvRow []interface{}) map[string]interface{} {

@@ -12,7 +12,7 @@ package gsql
 
 import (
     "fmt"
-    "os"
+    // "os"
     // "strconv"
     "strings"
     "database/sql"
@@ -20,6 +20,7 @@ import (
     // "encoding/json"
 
     "go4api/cmd"
+    "go4api/utils"
 
     _ "github.com/go-sql-driver/mysql"
 )
@@ -41,25 +42,17 @@ func InitConnection () {
     dbs := cmd.GetDbConfig()
 
     for k, v := range dbs {
-        ip := v.Ip
-        port := v.Port
-        user := v.UserName
-    
-        pw := ""
-        pwV := v.Password
-        pwV = strings.Replace(pwV, "${", "", -1)
-        pwV = strings.Replace(pwV, "}", "", -1)
-        if len(pwV) > 0 {
-            if len(os.Getenv(pwV)) > 0 {
-                pw = os.Getenv(pwV)
-            } else {
-                pw = pwV
-            }
-        }
+        envMap := utils.GetOsEnviron()
+  
+        ip := renderValue(v.Ip, envMap)
+        port := renderValue(fmt.Sprint(v.Port), envMap)
+        user := renderValue(v.UserName, envMap)
+        password := renderValue(v.Password, envMap)
+        // dbname := renderValue(v.Dbname, envMap)
         
-        defaultSchema := os.Getenv("go4_dev_db_defaultSchema")
+        defaultSchema := ""
 
-        conInfo := user + ":" + pw + "@tcp(" + ip + ":" + fmt.Sprint(port) + ")/" + defaultSchema
+        conInfo := user + ":" + password + "@tcp(" + ip + ":" + port + ")/" + defaultSchema
         db, _ := sql.Open("mysql", conInfo)
         db.SetMaxOpenConns(2000)
         db.SetMaxIdleConns(1000)
@@ -73,9 +66,27 @@ func InitConnection () {
         dbIndicator := strings.ToLower(k)
         SqlCons[dbIndicator] = db
     }
-    // fmt.Println("SqlCons: ", SqlCons)
 } 
 
+//
+func renderValue (jsonStr string, feeder map[string]string) string {
+    s := jsonStr
+ 
+    if strings.HasPrefix(s, "${go4_") {
+        // key, value are both string
+        su := strings.Replace(s, "${go4_", "${", -1)
+        for key, value := range feeder {
+            k := "${" + key + "}"
+            if k == su {
+                s = strings.Replace(su, k, value, -1)
+            }
+        }
+    }
+
+    return s
+}
+
+//
 func Run (tgtDb string, stmt string) (int, []string, []map[string]interface{}, string) {
     // update, delete, select, insert
     s := strings.TrimSpace(stmt)

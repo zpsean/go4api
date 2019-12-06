@@ -12,7 +12,7 @@ package gpg
 
 import (
     "fmt"
-    "os"
+    // "os"
     // "strconv"
     "strings"
     "database/sql"
@@ -20,6 +20,7 @@ import (
     // "encoding/json"
 
     "go4api/cmd"
+    "go4api/utils"
 
     _ "github.com/lib/pq"
 )
@@ -42,31 +43,25 @@ func InitConnection () {
     dbs := cmd.GetPgDbConfig()
 
     for k, v := range dbs {
-        ip := v.Ip
-        port := v.Port
-        user := v.UserName
-    
-        pw := ""
-        pwV := v.Password
-        pwV = strings.Replace(pwV, "${", "", -1)
-        pwV = strings.Replace(pwV, "}", "", -1)
-        if len(pwV) > 0 {
-            if len(os.Getenv(pwV)) > 0 {
-                pw = os.Getenv(pwV)
-            } else {
-                pw = pwV
-            }
-        }
+        envMap := utils.GetOsEnviron()
+  
+        ip := renderValue(v.Ip, envMap)
+        port := renderValue(fmt.Sprint(v.Port), envMap)
+        userName := renderValue(v.UserName, envMap)
+        password := renderValue(v.Password, envMap)
+        dbname := renderValue(v.Dbname, envMap)
+        sslmode := renderValue(v.Sslmode, envMap)
+
         // conInfo := "postgres://pqgotest:password@localhost/pqgotest?sslmode=verify-full"
         // conInfo := "postgres://" +  user + ":" + pw + "@" + ip + ":" + fmt.Sprint(port)
-        u := "user=" + user 
-        pa := " password=" + pw
         h := " host=" + ip
-        po := " port=" + fmt.Sprint(port)
-        d := " dbname=" + v.Dbname
-        ssl := " sslmode=" + v.Sslmode
+        u := "user=" + userName 
+        pa := " password=" + password
+        po := " port=" + port
+        d := " dbname=" + dbname
+        ssl := " sslmode=" + sslmode
         conInfo := u + pa + h + po + d + ssl
-
+    
         db, _ := sql.Open("postgres", conInfo)
         db.SetMaxOpenConns(2000)
         db.SetMaxIdleConns(1000)
@@ -80,9 +75,27 @@ func InitConnection () {
         dbIndicator := strings.ToLower(k)
         PgCons[dbIndicator] = db
     }
-    // fmt.Println("PgCons: ", PgCons)
 } 
 
+//
+func renderValue (jsonStr string, feeder map[string]string) string {
+    s := jsonStr
+ 
+    if strings.HasPrefix(s, "${go4_") {
+        // key, value are both string
+        su := strings.Replace(s, "${go4_", "${", -1)
+        for key, value := range feeder {
+            k := "${" + key + "}"
+            if k == su {
+                s = strings.Replace(su, k, value, -1)
+            }
+        }
+    }
+
+    return s
+}
+   
+//
 func Run (tgtDb string, stmt string) (int, []string, []map[string]interface{}, string) {
     // update, delete, select, insert
     s := strings.TrimSpace(stmt)

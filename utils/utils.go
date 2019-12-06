@@ -112,6 +112,26 @@ func GetAbsPaths (paths []string) []string {
     return absPaths
 }
 
+//
+func GetOsEnviron () map[string]string {
+    csvMap := map[string]string{}
+    // consider add the env variables with prefix "go4_*" for username/password/athentication, etc.
+    var envArray []string
+
+    envArray = os.Environ()
+    for _, env := range envArray {
+        // find out the first = position, to get the key
+        env_k := strings.Split(env, "=")[0]
+        if strings.HasPrefix(env_k, "go4_") {
+            if strings.TrimLeft(env_k, "go4_") != "" {
+                csvMap[strings.TrimLeft(env_k, "go4_")] = os.Getenv(env_k)
+            }
+        } 
+    }
+
+    return csvMap
+}
+
 // for the dir and sub-dir
 func WalkPath(searchDir string, extension string) ([]string, error) {
     fileList := make([]string, 0)

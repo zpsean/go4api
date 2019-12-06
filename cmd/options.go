@@ -56,7 +56,7 @@ type Options struct {
 
     IfSqlDb bool
     IfPgDb bool
-    IfCache bool
+    IfRedis bool
     IfMongoDB bool
 }
 
@@ -102,10 +102,10 @@ func init() {
 
     timeZone := flag.String("timeZone", "", "timezone used, GMT+/-N:00")
 
-    ifSqlDb := flag.Bool("ifSqlDb", true, "if test has MySql")
-    ifPgDb := flag.Bool("ifPgDb", true, "if test has PostgreSql")
-    ifCache := flag.Bool("ifCache", true, "if test has Redis")
-    ifMongoDB := flag.Bool("ifMongoDB", true, "if test has MongoDb")
+    ifSqlDb := flag.Bool("ifSqlDb", false, "if test has MySql")
+    ifPgDb := flag.Bool("ifPgDb", false, "if test has PostgreSql")
+    ifRedis := flag.Bool("ifRedis", false, "if test has Redis")
+    ifMongoDB := flag.Bool("ifMongoDB", false, "if test has MongoDb")
 
     //
     flag.Parse()
@@ -140,7 +140,7 @@ func init() {
 
     Opt.IfSqlDb = *ifSqlDb
     Opt.IfPgDb = *ifPgDb
-    Opt.IfCache = *ifCache
+    Opt.IfRedis = *ifRedis
     Opt.IfMongoDB = *ifMongoDB
 
     if h {

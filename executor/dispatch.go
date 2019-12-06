@@ -142,7 +142,7 @@ func WarmUpPgDbConnection () {
 }
 
 func WarmUpRedisConnection () {
-    if cmd.Opt.IfCache == true {
+    if cmd.Opt.IfRedis == true {
         gredis.InitRedisConnection()
     }
 }
