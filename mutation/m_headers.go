@@ -14,24 +14,32 @@ import (
     "fmt"
     // "strings"
     "reflect"
-    // "encoding/json"
+    "encoding/json"
     "go4api/lib/rands"
 
     // gjson "github.com/tidwall/gjson"
     sjson "github.com/tidwall/sjson"
 )
 
-func (mTd *MTestCaseDataInfo) MRequestHeaders (tcJson []byte) {
-    mTd.MSetRequestHeader(tcJson, mFuncs[0])
-    mTd.MDelRequestHeader(tcJson, mFuncs[1])
-    mTd.MAddRequestHeader(tcJson, mFuncs[2])
-    mTd.MDelAllRequestHeaders(tcJson, mFuncs[3])
+func (mTd *MTestCaseDataInfo) MRequestHeaders () {
+    // not to mutate the Content-Type
+    if mTd.HContentType != nil {
+        tc4MH := *mTd.OriginTcD
+        tc4MH.TestCase.DelRequestHeader("Content-Type")
+        mTd.Tc4MH = &tc4MH
+    }
+
+    // mTd.MSetRequestHeader(mFuncs[0])
+    // mTd.MDelRequestHeader(mFuncs[1])
+    // mTd.MAddRequestHeader(mFuncs[2])
+    mTd.MDelAllRequestHeaders(mFuncs[3])
 }
 
-func (mTd *MTestCaseDataInfo) MSetRequestHeader (tcJson []byte, mFunc *MFunc) {
-    i := 0
+func (mTd *MTestCaseDataInfo) MSetRequestHeader (mFunc *MFunc) {
+    tcJson, _ := json.Marshal(mTd.Tc4MH)
     //
-    for key, value := range mTd.Tc4M.TestCase.ReqHeaders() {
+    i := 0
+    for key, value := range mTd.Tc4MH.TestCase.ReqHeaders() {
         //
         mFd := MFieldDetails {
             FieldPath:     []string{key}, 
@@ -54,15 +62,21 @@ func (mTd *MTestCaseDataInfo) MSetRequestHeader (tcJson []byte, mFunc *MFunc) {
             //-- set new info to mutated tc
             mTcData := getMutatedTcData(tcJson, i, mFunc, mtedValue.MutationRule, mutationInfo, tcMutationInfo)
             mTcData.TestCase.SetRequestHeader(key, fmt.Sprint(mtedValue.MutatedValue))
+            //
+            if mTd.HContentType != nil {
+                mTcData.TestCase.SetRequestHeader("Content-Type", fmt.Sprint(mTd.HContentType))
+            }
 
-            mTd.IMMTcs = append(mTd.IMMTcs, &mTcData)
+            mTd.MTcDs = append(mTd.MTcDs, &mTcData)
         }
     }
 }
 
-func (mTd *MTestCaseDataInfo) MDelRequestHeader (tcJson []byte, mFunc *MFunc) {
+func (mTd *MTestCaseDataInfo) MDelRequestHeader (mFunc *MFunc) {
+    tcJson, _ := json.Marshal(mTd.OriginTcD)
+    //
     i := 0
-    for key, _ := range mTd.Tc4M.TestCase.ReqHeaders() {
+    for key, _ := range mTd.OriginTcD.TestCase.ReqHeaders() {
         i = i + 1
         mFd := MFieldDetails {
             FieldPath:     []string{key}, 
@@ -78,15 +92,20 @@ func (mTd *MTestCaseDataInfo) MDelRequestHeader (tcJson []byte, mFunc *MFunc) {
         // del the key
         mTcData := getMutatedTcData(tcJson, i, mFunc, "Remove header key", mutationInfo, tcMutationInfo)
         mTcData.TestCase.DelRequestHeader(key)
+        //
+        if mTd.HContentType != nil {
+            mTcData.TestCase.SetRequestHeader("Content-Type", fmt.Sprint(mTd.HContentType))
+        }
 
-        mTd.IMMTcs = append(mTd.IMMTcs, &mTcData)
+        mTd.MTcDs = append(mTd.MTcDs, &mTcData)
     }
 }
 
-func (mTd *MTestCaseDataInfo) MAddRequestHeader (tcJson []byte, mFunc *MFunc) {
+func (mTd *MTestCaseDataInfo) MAddRequestHeader (mFunc *MFunc) {
     // add new key: get rand key, get rand value, then Add()
+    tcJson, _ := json.Marshal(mTd.OriginTcD)
+    //
     i := 0
-
     randKey := rands.RandStringRunes(5)
     randValue := rands.RandStringRunes(5)
     mFd := MFieldDetails {
@@ -102,16 +121,21 @@ func (mTd *MTestCaseDataInfo) MAddRequestHeader (tcJson []byte, mFunc *MFunc) {
     //
     mTcData := getMutatedTcData(tcJson, i, mFunc, "Add new rand header key", mutationInfo, tcMutationInfo)
     mTcData.TestCase.AddRequestHeader(randKey, randValue)
+    //
+    if mTd.HContentType != nil {
+        mTcData.TestCase.SetRequestHeader("Content-Type", fmt.Sprint(mTd.HContentType))
+    }
 
-    mTd.IMMTcs = append(mTd.IMMTcs, &mTcData)
+    mTd.MTcDs = append(mTd.MTcDs, &mTcData)
 }
 
 
-func (mTd *MTestCaseDataInfo) MDelAllRequestHeaders (tcJson []byte, mFunc *MFunc) {
+func (mTd *MTestCaseDataInfo) MDelAllRequestHeaders (mFunc *MFunc) {
     // remove all headers
+    tcJson, _ := json.Marshal(mTd.OriginTcD)
+    //
     i := 0
-  
-    hFullPath := "TestCase." + mTd.Tc4M.TcName() + ".request." + "headers"
+    hFullPath := "TestCase." + mTd.OriginTcD.TcName() + ".request." + "headers"
     mutatedTcJson, _ := sjson.Delete(string(tcJson), hFullPath)
     mFd := MFieldDetails {
         FieldPath:     []string{}, 
@@ -125,8 +149,12 @@ func (mTd *MTestCaseDataInfo) MDelAllRequestHeaders (tcJson []byte, mFunc *MFunc
     tcMutationInfo := getTcMutationInfo(mFd, "")
     //
     mTcData := getMutatedTcData([]byte(mutatedTcJson), i, mFunc, "Remove all headers", mutationInfo, tcMutationInfo)
+    //
+    if mTd.HContentType != nil {
+        mTcData.TestCase.AddRequestHeader("Content-Type", fmt.Sprint(mTd.HContentType))
+    }
     
-    mTd.IMMTcs = append(mTd.IMMTcs, &mTcData)
+    mTd.MTcDs = append(mTd.MTcDs, &mTcData)
 }
 
 

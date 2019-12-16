@@ -133,10 +133,12 @@ func (tc *TestCase) AddRequestHeader (key string, newValue string) {
     // if has key, value already
     if len(reqH) > 0 {
         (*tc)[tc.TcName()].Request.Headers[key] = newValue
-    }
-    // } else {
+    } else {
         // need to init the headers make(map[]), otherwise, assign to nil map
-    // }
+        h := make(map[string]interface{})
+        (*tc)[tc.TcName()].Request.Headers = h
+        (*tc)[tc.TcName()].Request.Headers[key] = newValue
+    }
 }
 
 func (tc *TestCase) DelRequestHeader (key string) {

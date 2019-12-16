@@ -43,14 +43,15 @@ import (
 
 type MTestCaseDataInfo struct {
     OriginTcD      *testcase.TestCaseDataInfo
-    TcType         string    // text, multipart-form, form, "" (others)
-    HContentType   string    // Content-Type: multipart/form-data
+    HContentType   interface{}    // Content-Type: multipart/form-data
+    Tc4MH          *testcase.TestCaseDataInfo  // for mt headers
+    Tc4MQS         *testcase.TestCaseDataInfo  // for mt queryString
+    Tc4MPL         *testcase.TestCaseDataInfo  // if multipart-form, payload without file
+    TcPlType       string    // text, multipart-form, form, <others>
     PLMPForm       PLMPForm  // if multipart-form
     PLMPFormNoFile PLMPForm
     PLMPFormFile   PLMPForm
-    Tc4M           *testcase.TestCaseDataInfo  // if multipart-form, payload without file
-    IMMTcs         []*testcase.TestCaseDataInfo  // intermediate
-    FinalMTcs      []*testcase.TestCaseDataInfo  // final
+    MTcDs          []*testcase.TestCaseDataInfo  // mutated tcds
 }
 
 type MFieldDetails struct {
@@ -103,6 +104,7 @@ func init() {
     mFuncs = append(mFuncs, &MFunc{"12", "-M-PL-D-", "payload", "DelRequestPayload"})
     mFuncs = append(mFuncs, &MFunc{"13", "-M-PL-A-", "payload", "AddRequestPayloadNode"})
     mFuncs = append(mFuncs, &MFunc{"14", "-M-PL-D-", "payload", "DelWholeRequestPayloadNode"})
+    mFuncs = append(mFuncs, &MFunc{"16", "-M-PL-D-F-", "payload", "MDelRequestPayloadMPFile"})
 }
 
 func MutateTcArray (originTcArray []*testcase.TestCaseDataInfo) []*testcase.TestCaseDataInfo {
@@ -116,87 +118,36 @@ func MutateTcArray (originTcArray []*testcase.TestCaseDataInfo) []*testcase.Test
         mutatedTcArray = append(mutatedTcArray, originTcData)
         // json, originTcData, multipart-form, form
         mTd := InitMTc(originTcData)
-        tcJson, _ := json.Marshal(mTd)
+        
         // --- here to start the mutation
-        mTd.MRequestHeaders(tcJson)
-        mTd.MRequestQueryString(tcJson)
-        mTd.MRequestPayload(tcJson)
+        mTd.MRequestHeaders()
+        mTd.MRequestQueryString()
+        mTd.MRequestPayload()
 
-        // json, originTcData, multipart-form, form
-        mTd.ReBuildTC()
-
-        mutatedTcArray = append(mutatedTcArray, mTd.FinalMTcs...)
+        mutatedTcArray = append(mutatedTcArray, mTd.MTcDs...)
     }
-    // aa, _ := json.Marshal(mutatedTcArray)
-    // fmt.Println("\nmutatedTcArray: ", string(aa))
+    // aa, _ := json.Marshal(mutatedTcArray)   
+    // fmt.Println(string(aa))
     return mutatedTcArray
 }
 
 func InitMTc (originTcData *testcase.TestCaseDataInfo) (MTestCaseDataInfo) {
     var m MTestCaseDataInfo
+    var lKey string
     //
+    hContentType := originTcData.TestCase.ReqHeaders()["Content-Type"]
     for key, _ := range originTcData.TestCase.ReqPayload() {
-        lKey := strings.ToLower(key)
-        switch lKey {
-        case "text", "form", "" :
-            tc4M := *originTcData
-            m = MTestCaseDataInfo {
-                OriginTcD: originTcData,
-                TcType:    lKey,
-                Tc4M:      &tc4M,
-            }
-        case "multipart-form":
-            var pLMPForm PLMPForm
-            var pLnf PLMPForm
-            var pLf PLMPForm
-
-            reqPayload := originTcData.TestCase.ReqPayload()
-            reqPayloadJsonBytes, _ := json.Marshal(reqPayload)
-            // reqPayloadJson := string(reqPayloadJsonBytes)
-
-            json.Unmarshal(reqPayloadJsonBytes, &pLMPForm)
-
-            for i, _ := range pLMPForm {
-                if len(pLMPForm[i].Type) == 0 {
-                    pLnf = append(pLnf, pLMPForm[i])
-                } else {
-                    pLf = append(pLf, pLMPForm[i])
-                }
-            }
-            //
-            var pl = make(map[string]string)
-            for i, _ := range pLnf {
-                pl[pLnf[i].Name] = pl[pLnf[i].Value]
-            }
-            tc4M := *originTcData
-            hContentType := tc4M.TestCase.ReqHeaders()["Content-Type"].(string)
-            tc4M.TestCase.DelRequestHeader("Content-Type") //multipart/form-data
-
-            tc4M.TestCase.DelReqPayload("multipart-form")
-            tc4M.TestCase.SetRequestPayload("text", pl)
-            //
-            m = MTestCaseDataInfo {
-                OriginTcD:      originTcData,
-                TcType:         "multipart-form",
-                HContentType:   hContentType,
-                PLMPForm:       pLMPForm,  // if multipart-form
-                PLMPFormNoFile: pLnf,
-                PLMPFormFile:   pLf,
-                Tc4M:           &tc4M,
-            }
-        }
+        lKey = strings.ToLower(key)
+        break
+    }
+    //
+    m = MTestCaseDataInfo {
+        OriginTcD:     originTcData,
+        HContentType:  hContentType,
+        TcPlType:      lKey,
     }
 
-    return m
-}
-
-func (mTd *MTestCaseDataInfo) ReBuildTC () {
-    switch mTd.TcType {
-    case "text", "form", "" :
-        mTd.FinalMTcs = append(mTd.FinalMTcs, mTd.IMMTcs...)
-    case "multipart-form":
-
-    }
+    return m    
 }
 
 func getMutatedTcData (tcJson []byte, i int, mFunc *MFunc, mutationRule string, 

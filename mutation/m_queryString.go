@@ -14,23 +14,27 @@ import (
     "fmt"
     // "strings"
     "reflect"
-
+    "encoding/json"
     "go4api/lib/rands"
 
     // gjson "github.com/tidwall/gjson"
     sjson "github.com/tidwall/sjson"
 )
 
-func (mTd *MTestCaseDataInfo) MRequestQueryString (tcJson []byte) {
-    mTd.MSetRequestQueryString(tcJson, mFuncs[4])
-    mTd.MDelRequestQueryString(tcJson, mFuncs[5])
-    mTd.MAddRequestQueryString(tcJson, mFuncs[6])
-    mTd.MDelAllRequestQueryStrings(tcJson, mFuncs[7])
+func (mTd *MTestCaseDataInfo) MRequestQueryString () {
+    tc4MQS := *mTd.OriginTcD
+    mTd.Tc4MQS = &tc4MQS
+
+    mTd.MSetRequestQueryString(mFuncs[4])
+    mTd.MDelRequestQueryString(mFuncs[5])
+    mTd.MAddRequestQueryString(mFuncs[6])
+    mTd.MDelAllRequestQueryStrings(mFuncs[7])
 }
 
-func (mTd *MTestCaseDataInfo) MSetRequestQueryString (tcJson []byte, mFunc *MFunc) {
+func (mTd *MTestCaseDataInfo) MSetRequestQueryString (mFunc *MFunc) {
+    tcJson, _ := json.Marshal(mTd.Tc4MQS)
     i := 0
-    for key, value := range mTd.Tc4M.TestCase.ReqQueryString() {
+    for key, value := range mTd.Tc4MQS.TestCase.ReqQueryString() {
         mFd := MFieldDetails {
             FieldPath:     []string{key}, 
             CurrValue:     value, 
@@ -53,15 +57,16 @@ func (mTd *MTestCaseDataInfo) MSetRequestQueryString (tcJson []byte, mFunc *MFun
             mTcData := getMutatedTcData(tcJson, i, mFunc, mutatedValue.MutationRule, mutationInfo, tcMutationInfo)
             mTcData.TestCase.SetRequestQueryString(key, fmt.Sprint(mutatedValue.MutatedValue))
 
-            mTd.IMMTcs = append(mTd.IMMTcs, &mTcData)
+            mTd.MTcDs = append(mTd.MTcDs, &mTcData)
         }
     }
 }
 
 
-func (mTd *MTestCaseDataInfo) MDelRequestQueryString (tcJson []byte, mFunc *MFunc) {
+func (mTd *MTestCaseDataInfo) MDelRequestQueryString (mFunc *MFunc) {
+    tcJson, _ := json.Marshal(mTd.Tc4MQS)
     i := 0
-    for key, _ := range mTd.Tc4M.TestCase.ReqQueryString() {
+    for key, _ := range mTd.Tc4MQS.TestCase.ReqQueryString() {
         // del key
         i = i + 1
         mFd := MFieldDetails {
@@ -79,13 +84,14 @@ func (mTd *MTestCaseDataInfo) MDelRequestQueryString (tcJson []byte, mFunc *MFun
         mTcData := getMutatedTcData(tcJson, i, mFunc, "Remove querystring key", mutationInfo, tcMutationInfo)
         mTcData.TestCase.DelRequestQueryString(key)
 
-        mTd.IMMTcs = append(mTd.IMMTcs, &mTcData)
+        mTd.MTcDs = append(mTd.MTcDs, &mTcData)
     }
 }
 
 
-func (mTd *MTestCaseDataInfo) MAddRequestQueryString (tcJson []byte, mFunc *MFunc) {
+func (mTd *MTestCaseDataInfo) MAddRequestQueryString (mFunc *MFunc) {
     // add new key: get rand key, get rand value, then Add()
+    tcJson, _ := json.Marshal(mTd.Tc4MQS)
     i := 0
 
     randKey := rands.RandStringRunes(5)
@@ -105,14 +111,15 @@ func (mTd *MTestCaseDataInfo) MAddRequestQueryString (tcJson []byte, mFunc *MFun
     mTcData := getMutatedTcData(tcJson, i, mFunc, "Add new rand querystring key", mutationInfo, tcMutationInfo)
     mTcData.TestCase.AddRequestQueryString(randKey, randValue)
 
-    mTd.IMMTcs = append(mTd.IMMTcs, &mTcData)
+    mTd.MTcDs = append(mTd.MTcDs, &mTcData)
 }
 
-func (mTd *MTestCaseDataInfo) MDelAllRequestQueryStrings (tcJson []byte, mFunc *MFunc) {
+func (mTd *MTestCaseDataInfo) MDelAllRequestQueryStrings (mFunc *MFunc) {
     // remove all querystring
+    tcJson, _ := json.Marshal(mTd.Tc4MQS)
     i := 0
  
-    qSFullPath := "TestCase." + mTd.Tc4M.TcName() + ".request." + "queryString"
+    qSFullPath := "TestCase." + mTd.Tc4MQS.TcName() + ".request." + "queryString"
     mutatedTcJson, _ := sjson.Delete(string(tcJson), qSFullPath)
     mFd := MFieldDetails {
         FieldPath:     []string{}, 
@@ -127,7 +134,7 @@ func (mTd *MTestCaseDataInfo) MDelAllRequestQueryStrings (tcJson []byte, mFunc *
     //
     mTcData := getMutatedTcData([]byte(mutatedTcJson), i, mFunc, "Remove all querystring", mutationInfo, tcMutationInfo)
     
-    mTd.IMMTcs = append(mTd.IMMTcs, &mTcData)
+    mTd.MTcDs = append(mTd.MTcDs, &mTcData)
 }
 
 
