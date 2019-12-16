@@ -164,9 +164,8 @@ func (tc *TestCase) DelRequestQueryString (key string) {
 }
 
 
-// request query Payload??
-// Note: currently, if the post data is json, then the key is "text"
-func (tc *TestCase) SetRequestPayload (key string, newValue string) {
+// request query Payload
+func (tc *TestCase) SetRequestPayload (key string, newValue interface{}) {
     (*tc)[tc.TcName()].Request.Payload[key] = newValue
 }
 

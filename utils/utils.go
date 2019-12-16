@@ -144,6 +144,7 @@ func WalkPath(searchDir string, extension string) ([]string, error) {
     })
     
     if e != nil {
+        fmt.Println("Err, search files under ", searchDir, " failed")
         panic(e)
     }
 

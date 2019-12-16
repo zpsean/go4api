@@ -13,15 +13,9 @@ package mutation
 import ( 
     "fmt"
     "strings"
-    "reflect"
     "encoding/json"
 
     "go4api/lib/testcase"
-    "go4api/lib/rands"
-    "go4api/lib/g4json"
-
-    // gjson "github.com/tidwall/gjson"
-    sjson "github.com/tidwall/sjson"
 )
 
 // mutation is to mutate the valid data to working api, see if mutated invalid data still can be handled by the api
@@ -32,7 +26,7 @@ import (
 // Lib has no deepcopy, so that, here uses a plain way, that is, to re-sturct the TestCaseDataInfo
 //
 // Option 2:
-// json.Marshal the tc in originMutationTcArray, 
+// json.Marshal the tc in originTcArray, 
 // then change the value(s) in the json
 // then Unmarshal the to testcase, and add to mutatedTcArray
 // then execute the mutatedTcArray
@@ -47,486 +41,194 @@ import (
 //     Payload map[string]interface{} => change the priority: set 9, del 10, add 11, del all 12
 // }
 
-var mCategoryFuncSlice []*MCategoryFuncMap
+type MTestCaseDataInfo struct {
+    OriginTcD      *testcase.TestCaseDataInfo
+    TcType         string    // text, multipart-form, form, "" (others)
+    HContentType   string    // Content-Type: multipart/form-data
+    PLMPForm       PLMPForm  // if multipart-form
+    PLMPFormNoFile PLMPForm
+    PLMPFormFile   PLMPForm
+    Tc4M           *testcase.TestCaseDataInfo  // if multipart-form, payload without file
+    IMMTcs         []*testcase.TestCaseDataInfo  // intermediate
+    FinalMTcs      []*testcase.TestCaseDataInfo  // final
+}
 
 type MFieldDetails struct {
-    FieldPath []string
-    CurrValue interface{}
-    FieldType string // the json supported types
-    FieldSubType string  // like ip/email/phone/etc.
+    FieldPath     []string
+    CurrValue     interface{}
+    FieldType     string  // the json supported types
+    FieldSubType  string  // like ip/email/phone/etc.
     MutatedValues []interface{}
 }
 
-type MCategoryFuncMap struct {
+type MFunc struct {
     MPriority string
     MTcSuffix string
-    MArea string
+    MArea     string
     MCategory string
-    MFunc interface{}
+    // MFunc interface{}
 }
 
+//
+type PLForm []*Form
+type Form struct {
+    Name  string
+    Value string
+}
 
+//
+type PLMPForm []*MPForm
+type MPForm struct {
+    Name  string
+    Value string
+    Type  string
+}
+
+//
+var mFuncs []*MFunc
+
+//
 func init() {
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"3", "-M-H-S-", "headers", "SetRequestHeader", MutateSetRequestHeader})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"4", "-M-H-D-", "headers", "DelRequestHeader", MutateDelRequestHeader})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"5", "-M-H-A-", "headers", "AddRequestHeader", MutateAddRequestHeader})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"6", "-M-H-D-", "headers", "DelAllRequestHeaders", MutateDelAllRequestHeaders})
+    mFuncs = append(mFuncs, &MFunc{"3", "-M-H-S-", "headers", "SetRequestHeader"})
+    mFuncs = append(mFuncs, &MFunc{"4", "-M-H-D-", "headers", "DelRequestHeader"})
+    mFuncs = append(mFuncs, &MFunc{"5", "-M-H-A-", "headers", "AddRequestHeader"})
+    mFuncs = append(mFuncs, &MFunc{"6", "-M-H-D-", "headers", "DelAllRequestHeaders"})
 
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"7", "-M-QS-S-", "queryString", "SetRequestQueryString", MutateSetRequestQueryString})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"8", "-M-QS-D-", "queryString", "DelRequestQueryString", MutateDelRequestQueryString})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"9", "-M-QS-A-", "queryString", "AddRequestQueryString", MutateAddRequestQueryString})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"10", "-M-QS-D-", "queryString", "DelAllRequestQueryStrings", MutateDelAllRequestQueryStrings})
+    mFuncs = append(mFuncs, &MFunc{"7", "-M-QS-S-", "queryString", "SetRequestQueryString"})
+    mFuncs = append(mFuncs, &MFunc{"8", "-M-QS-D-", "queryString", "DelRequestQueryString"})
+    mFuncs = append(mFuncs, &MFunc{"9", "-M-QS-A-", "queryString", "AddRequestQueryString"})
+    mFuncs = append(mFuncs, &MFunc{"10", "-M-QS-D-", "queryString", "DelAllRequestQueryStrings"})
 
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"11", "-M-PL-S-", "payload", "SetRequestPayload", MutateSetRequestPayload})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"12", "-M-PL-D-", "payload", "DelRequestPayload", MutateDelRequestPayload})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"13", "-M-PL-A-", "payload", "AddRequestPayloadNode", MutateAddRequestPayloadNode})
-    mCategoryFuncSlice = append(mCategoryFuncSlice, &MCategoryFuncMap{"14", "-M-PL-D-", "payload", "DelWholeRequestPayloadNode", MutateDelWholeRequestPayloadNode})
+    mFuncs = append(mFuncs, &MFunc{"11", "-M-PL-S-", "payload", "SetRequestPayload"})
+    mFuncs = append(mFuncs, &MFunc{"12", "-M-PL-D-", "payload", "DelRequestPayload"})
+    mFuncs = append(mFuncs, &MFunc{"13", "-M-PL-A-", "payload", "AddRequestPayloadNode"})
+    mFuncs = append(mFuncs, &MFunc{"14", "-M-PL-D-", "payload", "DelWholeRequestPayloadNode"})
 }
 
-
-func MutateTcArray(originMutationTcArray []*testcase.TestCaseDataInfo) []*testcase.TestCaseDataInfo {
+func MutateTcArray (originTcArray []*testcase.TestCaseDataInfo) []*testcase.TestCaseDataInfo {
     var mutatedTcArray []*testcase.TestCaseDataInfo
 
-    for _, originTcData := range originMutationTcArray {
+    for _, originTcData := range originTcArray {
         if originTcData.TestCase.IfGlobalSetUpTestCase() == true {
-            // mutatedTcArray = append(mutatedTcArray, originTcData)
             continue
         }
 
-        tcJson, _ := json.Marshal(*originTcData)
         mutatedTcArray = append(mutatedTcArray, originTcData)
-
+        // json, originTcData, multipart-form, form
+        mTd := InitMTc(originTcData)
+        tcJson, _ := json.Marshal(mTd)
         // --- here to start the mutation
-        for i, _ := range mCategoryFuncSlice {
-            if mCategoryFuncSlice[i].MArea != "payload" {
-                f := reflect.ValueOf(mCategoryFuncSlice[i].MFunc)
+        mTd.MRequestHeaders(tcJson)
+        mTd.MRequestQueryString(tcJson)
+        mTd.MRequestPayload(tcJson)
 
-                in := make([]reflect.Value, 3)
-                in[0] = reflect.ValueOf(*originTcData)
-                in[1] = reflect.ValueOf(tcJson)
-                in[2] = reflect.ValueOf(mCategoryFuncSlice[i])
+        // json, originTcData, multipart-form, form
+        mTd.ReBuildTC()
 
-                result := f.Call(in)
-
-                mTcArray := result[0].Interface().([]testcase.TestCaseDataInfo)
-                for ii, _ := range mTcArray {
-                    mutatedTcArray = append(mutatedTcArray, &mTcArray[ii])
-                }
-            }
-        }
-        // for payload
-        mTcArray := MutateRequestPayload(*originTcData, tcJson)
-        for ii, _ := range mTcArray {
-            mutatedTcArray = append(mutatedTcArray, &mTcArray[ii])
-        }
+        mutatedTcArray = append(mutatedTcArray, mTd.FinalMTcs...)
     }
     // aa, _ := json.Marshal(mutatedTcArray)
     // fmt.Println("\nmutatedTcArray: ", string(aa))
     return mutatedTcArray
 }
 
-func getMutatedTcData (tcJson []byte, i int, mCategoryFuncMap *MCategoryFuncMap, mutationRule string, mutationInfo string, tcMutationInfo testcase.MutationInfo) testcase.TestCaseDataInfo {
-    tcSuffix := mCategoryFuncMap.MTcSuffix + fmt.Sprint(i)
+func InitMTc (originTcData *testcase.TestCaseDataInfo) (MTestCaseDataInfo) {
+    var m MTestCaseDataInfo
+    //
+    for key, _ := range originTcData.TestCase.ReqPayload() {
+        lKey := strings.ToLower(key)
+        switch lKey {
+        case "text", "form", "" :
+            tc4M := *originTcData
+            m = MTestCaseDataInfo {
+                OriginTcD: originTcData,
+                TcType:    lKey,
+                Tc4M:      &tc4M,
+            }
+        case "multipart-form":
+            var pLMPForm PLMPForm
+            var pLnf PLMPForm
+            var pLf PLMPForm
+
+            reqPayload := originTcData.TestCase.ReqPayload()
+            reqPayloadJsonBytes, _ := json.Marshal(reqPayload)
+            // reqPayloadJson := string(reqPayloadJsonBytes)
+
+            json.Unmarshal(reqPayloadJsonBytes, &pLMPForm)
+
+            for i, _ := range pLMPForm {
+                if len(pLMPForm[i].Type) == 0 {
+                    pLnf = append(pLnf, pLMPForm[i])
+                } else {
+                    pLf = append(pLf, pLMPForm[i])
+                }
+            }
+            //
+            var pl = make(map[string]string)
+            for i, _ := range pLnf {
+                pl[pLnf[i].Name] = pl[pLnf[i].Value]
+            }
+            tc4M := *originTcData
+            hContentType := tc4M.TestCase.ReqHeaders()["Content-Type"].(string)
+            tc4M.TestCase.DelRequestHeader("Content-Type") //multipart/form-data
+
+            tc4M.TestCase.DelReqPayload("multipart-form")
+            tc4M.TestCase.SetRequestPayload("text", pl)
+            //
+            m = MTestCaseDataInfo {
+                OriginTcD:      originTcData,
+                TcType:         "multipart-form",
+                HContentType:   hContentType,
+                PLMPForm:       pLMPForm,  // if multipart-form
+                PLMPFormNoFile: pLnf,
+                PLMPFormFile:   pLf,
+                Tc4M:           &tc4M,
+            }
+        }
+    }
+
+    return m
+}
+
+func (mTd *MTestCaseDataInfo) ReBuildTC () {
+    switch mTd.TcType {
+    case "text", "form", "" :
+        mTd.FinalMTcs = append(mTd.FinalMTcs, mTd.IMMTcs...)
+    case "multipart-form":
+
+    }
+}
+
+func getMutatedTcData (tcJson []byte, i int, mFunc *MFunc, mutationRule string, 
+        mutationInfo string, tcMutationInfo testcase.MutationInfo) testcase.TestCaseDataInfo {
+    //------
+    tcSuffix := mFunc.MTcSuffix + fmt.Sprint(i)
 
     //-- set new info to mutated tc
     var mTcData testcase.TestCaseDataInfo
     json.Unmarshal(tcJson, &mTcData)
 
     mTcData.TestCase.UpdateTcName(mTcData.TcName() + tcSuffix)
-    mTcData.TestCase.SetPriority(mCategoryFuncMap.MPriority)
-    mTcData.MutationArea = mCategoryFuncMap.MArea
-    mTcData.MutationCategory = mCategoryFuncMap.MCategory
-    mTcData.MutationRule = mutationRule
-    mTcData.MutationInfoStr = mutationInfo
-    mTcData.MutationInfo = tcMutationInfo
+    mTcData.TestCase.SetPriority(mFunc.MPriority)
+    mTcData.MutationArea     = mFunc.MArea
+    mTcData.MutationCategory = mFunc.MCategory
+    mTcData.MutationRule     = mutationRule
+    mTcData.MutationInfoStr  = mutationInfo
+    mTcData.MutationInfo     = tcMutationInfo
     
     return mTcData
 }
 
 func getTcMutationInfo (mFieldDetails MFieldDetails, mutatedValue interface{}) testcase.MutationInfo {
     tcMutationInfo := testcase.MutationInfo {
-        FieldPath: mFieldDetails.FieldPath,
-        CurrValue: mFieldDetails.CurrValue,
-        FieldType: mFieldDetails.FieldType,
+        FieldPath:    mFieldDetails.FieldPath,
+        CurrValue:    mFieldDetails.CurrValue,
+        FieldType:    mFieldDetails.FieldType,
         FieldSubType: mFieldDetails.FieldSubType,
         MutatedValue: mutatedValue,
     }
 
     return tcMutationInfo
-}
-
-// headers
-func MutateSetRequestHeader (originTcData testcase.TestCaseDataInfo, tcJson []byte, mCategoryFuncMap *MCategoryFuncMap) []testcase.TestCaseDataInfo {
-    var mutatedTcArray []testcase.TestCaseDataInfo
-    i := 0
-    for key, value := range originTcData.TestCase.ReqHeaders() {
-        //
-        mFieldDetails := MFieldDetails{[]string{key}, value, reflect.TypeOf(value).Kind().String(), "", []interface{}{}}
-        mType := mFieldDetails.DetermineMutationType()
-        mutatedValues := mFieldDetails.CallMutationRules(mType)
-        //
-        for _, mutatedValue := range mutatedValues {
-            i = i + 1
-            mutationInfo := "Update/Set header key: " + key + ", `" + fmt.Sprint(mFieldDetails.CurrValue) + "`, `" + fmt.Sprint(mutatedValue.MutatedValue) + "`" +
-                "\nUsing Mutation Rule: " + mutatedValue.MutationRule
-
-            tcMutationInfo := getTcMutationInfo(mFieldDetails, mutatedValue.MutatedValue)
-            
-            //-- set new info to mutated tc
-            mTcData := getMutatedTcData(tcJson, i, mCategoryFuncMap, mutatedValue.MutationRule, mutationInfo, tcMutationInfo)
-            mTcData.TestCase.SetRequestHeader(key, fmt.Sprint(mutatedValue.MutatedValue))
-
-            mutatedTcArray = append(mutatedTcArray, mTcData)
-        }
-    }
-
-    return mutatedTcArray
-}
-
-func MutateDelRequestHeader (originTcData testcase.TestCaseDataInfo, tcJson []byte, mCategoryFuncMap *MCategoryFuncMap) []testcase.TestCaseDataInfo {
-    var mutatedTcArray []testcase.TestCaseDataInfo
-    i := 0
-    for key, _ := range originTcData.TestCase.ReqHeaders() {
-        i = i + 1
-        mFieldDetails := MFieldDetails{[]string{key}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
-        mutationInfo := "Remove header key: " + "`" + key + "`"
-
-        tcMutationInfo := getTcMutationInfo(mFieldDetails, "")
-
-        // del the key
-        mTcData := getMutatedTcData(tcJson, i, mCategoryFuncMap, "Remove header key", mutationInfo, tcMutationInfo)
-        mTcData.TestCase.DelRequestHeader(key)
-
-        mutatedTcArray = append(mutatedTcArray, mTcData)
-    }
-
-    return mutatedTcArray
-}
-
-func MutateAddRequestHeader (originTcData testcase.TestCaseDataInfo, tcJson []byte, mCategoryFuncMap *MCategoryFuncMap) []testcase.TestCaseDataInfo {
-    var mutatedTcArray []testcase.TestCaseDataInfo
-    // add new key: get rand key, get rand value, then Add()
-    i := 0
-
-    randKey := rands.RandStringRunes(5)
-    randValue := rands.RandStringRunes(5)
-    mFieldDetails := MFieldDetails{[]string{randKey}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
-    mutationInfo := "Add new rand header key: " + " `" + fmt.Sprint(randKey) + "`, `" + fmt.Sprint(randValue) + "`"
-
-    tcMutationInfo := getTcMutationInfo(mFieldDetails, randValue)
-    //
-    mTcData := getMutatedTcData(tcJson, i, mCategoryFuncMap, "Add new rand header key", mutationInfo, tcMutationInfo)
-    mTcData.TestCase.AddRequestHeader(randKey, randValue)
-
-    mutatedTcArray = append(mutatedTcArray, mTcData)
-
-    return mutatedTcArray
-}
-
-
-func MutateDelAllRequestHeaders (originTcData testcase.TestCaseDataInfo, tcJson []byte, mCategoryFuncMap *MCategoryFuncMap) []testcase.TestCaseDataInfo {
-    var mutatedTcArray []testcase.TestCaseDataInfo
-    // remove all headers
-    i := 0
-  
-    hFullPath := "TestCase." + originTcData.TcName() + ".request." + "headers"
-    mutatedTcJson, _ := sjson.Delete(string(tcJson), hFullPath)
-    mFieldDetails := MFieldDetails{[]string{}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
-    mutationInfo := "Remove all headers"
-
-    tcMutationInfo := getTcMutationInfo(mFieldDetails, "")
-    //
-    mTcData := getMutatedTcData([]byte(mutatedTcJson), i, mCategoryFuncMap, "Remove all headers", mutationInfo, tcMutationInfo)
-    
-    mutatedTcArray = append(mutatedTcArray, mTcData)
-
-    return mutatedTcArray
-}
-
-
-// QueryString
-func MutateSetRequestQueryString (originTcData testcase.TestCaseDataInfo, tcJson []byte, mCategoryFuncMap *MCategoryFuncMap) []testcase.TestCaseDataInfo {
-    var mutatedTcArray []testcase.TestCaseDataInfo
-    i := 0
-    for key, value := range originTcData.TestCase.ReqQueryString() {
-        mFieldDetails := MFieldDetails{[]string{key}, value, reflect.TypeOf(value).Kind().String(), "", []interface{}{}}
-        mType := mFieldDetails.DetermineMutationType()
-        mutatedValues := mFieldDetails.CallMutationRules(mType)
-        // loop and mutate the value, set new value to key
-        for _, mutatedValue := range mutatedValues {
-            i = i + 1
-            mutationInfo := "Update/Set header key: " + key + ", `" + fmt.Sprint(mFieldDetails.CurrValue) + "`, `" + fmt.Sprint(mutatedValue.MutatedValue) + "`" +
-                "\nUsing Mutation Rule: " + mutatedValue.MutationRule
-
-            tcMutationInfo := getTcMutationInfo(mFieldDetails, mutatedValue.MutatedValue)
-
-            //-- set new info to mutated tc
-            mTcData := getMutatedTcData(tcJson, i, mCategoryFuncMap, mutatedValue.MutationRule, mutationInfo, tcMutationInfo)
-            mTcData.TestCase.SetRequestQueryString(key, fmt.Sprint(mutatedValue.MutatedValue))
-
-            mutatedTcArray = append(mutatedTcArray, mTcData)
-        }
-    }
-
-    return mutatedTcArray
-}
-
-
-func MutateDelRequestQueryString (originTcData testcase.TestCaseDataInfo, tcJson []byte, mCategoryFuncMap *MCategoryFuncMap) []testcase.TestCaseDataInfo {
-    var mutatedTcArray []testcase.TestCaseDataInfo
-    i := 0
-    for key, _ := range originTcData.TestCase.ReqQueryString() {
-        // del key
-        i = i + 1
-        mFieldDetails := MFieldDetails{[]string{key}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
-        mutationInfo := "Remove querystring key: " + "`" + key + "`"
-
-        tcMutationInfo := getTcMutationInfo(mFieldDetails, "")
-
-        // del the key
-        mTcData := getMutatedTcData(tcJson, i, mCategoryFuncMap, "Remove querystring key", mutationInfo, tcMutationInfo)
-        mTcData.TestCase.DelRequestQueryString(key)
-
-        mutatedTcArray = append(mutatedTcArray, mTcData)
-    }
-
-    return mutatedTcArray
-}
-
-
-func MutateAddRequestQueryString (originTcData testcase.TestCaseDataInfo, tcJson []byte, mCategoryFuncMap *MCategoryFuncMap) []testcase.TestCaseDataInfo {
-    var mutatedTcArray []testcase.TestCaseDataInfo
-    // add new key: get rand key, get rand value, then Add()
-    i := 0
-
-    randKey := rands.RandStringRunes(5)
-    randValue := rands.RandStringRunes(5)
-
-    mFieldDetails := MFieldDetails{[]string{}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
-    mutationInfo := "Add new rand QueryString key: " + " `" + fmt.Sprint(randKey) + "`, `" + fmt.Sprint(randValue) + "`"
-
-    tcMutationInfo := getTcMutationInfo(mFieldDetails, "")
-    //
-    mTcData := getMutatedTcData(tcJson, i, mCategoryFuncMap, "Add new rand querystring key", mutationInfo, tcMutationInfo)
-    mTcData.TestCase.AddRequestQueryString(randKey, randValue)
-
-    mutatedTcArray = append(mutatedTcArray, mTcData)
-
-    return mutatedTcArray
-}
-
-func MutateDelAllRequestQueryStrings (originTcData testcase.TestCaseDataInfo, tcJson []byte, mCategoryFuncMap *MCategoryFuncMap) []testcase.TestCaseDataInfo {
-    var mutatedTcArray []testcase.TestCaseDataInfo
-    // remove all querystring
-    i := 0
- 
-    qSFullPath := "TestCase." + originTcData.TcName() + ".request." + "queryString"
-    mutatedTcJson, _ := sjson.Delete(string(tcJson), qSFullPath)
-    mFieldDetails := MFieldDetails{[]string{}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
-    mutationInfo := "Remove all querystring"
-
-    tcMutationInfo := getTcMutationInfo(mFieldDetails, "")
-    //
-    mTcData := getMutatedTcData([]byte(mutatedTcJson), i, mCategoryFuncMap, "Remove all querystring", mutationInfo, tcMutationInfo)
-    
-    mutatedTcArray = append(mutatedTcArray, mTcData)
-
-    return mutatedTcArray
-}
-
-// MutateRequestPayload
-func MutateRequestPayload (originTcData testcase.TestCaseDataInfo, tcJson []byte) []testcase.TestCaseDataInfo {
-    var mutatedTcArray []testcase.TestCaseDataInfo
-    for key, value := range originTcData.TestCase.ReqPayload() {
-        if key == "text" {
-            // to loop over the struct
-            var mFieldDetailsSlice []MFieldDetails
-            mFieldDetailsSlice = getFieldsMutationDetails(value)
-            //
-            for i, _ := range mCategoryFuncSlice {
-                if mCategoryFuncSlice[i].MArea == "payload" {
-                    f := reflect.ValueOf(mCategoryFuncSlice[i].MFunc)
-
-                    in := make([]reflect.Value, 5)
-                    in[0] = reflect.ValueOf(originTcData)
-                    in[1] = reflect.ValueOf(tcJson)
-                    in[2] = reflect.ValueOf(key)
-                    in[3] = reflect.ValueOf(mFieldDetailsSlice)
-                    in[4] = reflect.ValueOf(mCategoryFuncSlice[i])
-
-                    result := f.Call(in)
-                    mTcArray := result[0].Interface().([]testcase.TestCaseDataInfo)
-
-                    mutatedTcArray = append(mutatedTcArray, mTcArray[0:]...)
-                }
-            }
-        }
-    }
-    return mutatedTcArray
-}
-
-func MutateSetRequestPayload (originTcData testcase.TestCaseDataInfo, tcJson []byte, key string, mFieldDetailsSlice []MFieldDetails, 
-        mCategoryFuncMap *MCategoryFuncMap) []testcase.TestCaseDataInfo {
-    //--------------------
-    var mutatedTcArray []testcase.TestCaseDataInfo
-    // (1), set node value
-    i := 0
-    for _, mFieldDetails := range mFieldDetailsSlice {
-        // set the value
-        plPath := key + "." + strings.Join(mFieldDetails.FieldPath, ".")
-        plFullPath := "TestCase." + originTcData.TcName() + ".request.payload" + "." + plPath
-        // mutate the value based on rules 
-        mType := mFieldDetails.DetermineMutationType()
-        mutatedValues := mFieldDetails.CallMutationRules(mType)
-        // (1). set node
-        for _, mutatedValue := range mutatedValues {
-            i = i + 1
-     
-            mutatedTcJson, _ := sjson.Set(string(tcJson), plFullPath, mutatedValue.MutatedValue)
-            mDJsonByte, _ := json.Marshal(mFieldDetails)
-            mutationInfo := fmt.Sprint(string(mDJsonByte)) + ", `" + fmt.Sprint(mFieldDetails.CurrValue) + "`, `" + fmt.Sprint(mutatedValue.MutatedValue) + "`" +
-                "\nUsing Mutation Rule: " + mutatedValue.MutationRule
-
-            tcMutationInfo := getTcMutationInfo(mFieldDetails, mutatedValue.MutatedValue)
-            //
-            mTcData := getMutatedTcData([]byte(mutatedTcJson), i, mCategoryFuncMap, mutatedValue.MutationRule, mutationInfo, tcMutationInfo)
-    
-            mutatedTcArray = append(mutatedTcArray, mTcData)
-        }
-
-        // add new node
-    }
-    return mutatedTcArray
-}
-
-func getPayloadNodePaths (mFieldDetailsSlice []MFieldDetails) ([]string, int) {
-    // get the max level of the paths
-    max := 0
-    for _, mFieldDetails := range mFieldDetailsSlice {
-        if len(mFieldDetails.FieldPath) > max {
-            max = len(mFieldDetails.FieldPath)
-        }
-    }
-    // 
-    var nodePaths []string
-    for i := max; i > 0; i-- {
-        for _, mFieldDetails := range mFieldDetailsSlice {
-            if len(mFieldDetails.FieldPath) >= i {
-                nodePathStr := strings.Join(mFieldDetails.FieldPath[0:i], ".")
-
-                ifExists := ""
-                for _, str := range nodePaths {
-                    if nodePathStr == str {
-                        ifExists = "Y"
-                        break
-                    }
-                }
-                if ifExists == "" {
-                    nodePaths = append(nodePaths, nodePathStr)
-                }
-            }
-        }
-    }
-
-    return nodePaths, max
-}
-
-
-func MutateDelRequestPayload (originTcData testcase.TestCaseDataInfo, tcJson []byte, key string, mFieldDetailsSlice []MFieldDetails, 
-        mCategoryFuncMap *MCategoryFuncMap) []testcase.TestCaseDataInfo {
-    //--------------------
-    var mutatedTcArray []testcase.TestCaseDataInfo
-    nodePaths, _ := getPayloadNodePaths(mFieldDetailsSlice)
-
-    i := 0
-    for _, pathStr := range nodePaths {
-        i = i + 1
-    
-        plPath := key + "." + pathStr
-        plFullPath := "TestCase." + originTcData.TcName() + ".request.payload" + "." + plPath
-
-        // (2). del node
-        mutatedTcJson, _ := sjson.Delete(string(tcJson), plFullPath)
-        mFieldDetails := MFieldDetails{[]string{pathStr}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
-        mutationInfo := "Remove payload value on node: " + pathStr
-
-        tcMutationInfo := getTcMutationInfo(mFieldDetails, "")
-        //
-        mTcData := getMutatedTcData([]byte(mutatedTcJson), i, mCategoryFuncMap, "Remove payload value on node", mutationInfo, tcMutationInfo)
-    
-        mutatedTcArray = append(mutatedTcArray, mTcData)
-    }
-
-    return mutatedTcArray
-}
-
-
-func MutateAddRequestPayloadNode (originTcData testcase.TestCaseDataInfo, tcJson []byte, key string, mFieldDetailsSlice []MFieldDetails, 
-        mCategoryFuncMap *MCategoryFuncMap) []testcase.TestCaseDataInfo {
-    //--------------------
-    var mutatedTcArray []testcase.TestCaseDataInfo
-    // (3). add new node, for each node level
-    i := 0
-
-    randKey := rands.RandStringRunes(5)
-    randValue := rands.RandStringRunes(5)
-
-    // set the value
-    plPath := key + "." + randKey
-    plFullPath := "TestCase." + originTcData.TcName() + ".request.payload" + "." + plPath
-
-    mutatedTcJson, _ := sjson.Set(string(tcJson), plFullPath, randValue)
-
-    mFieldDetails := MFieldDetails{[]string{randKey}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
-    mutationInfo := "Add new rand payload key: " + " `" + fmt.Sprint(randKey) + "`, `" + fmt.Sprint(randValue) + "`"
-
-    tcMutationInfo := getTcMutationInfo(mFieldDetails, "")
-    mTcData := getMutatedTcData([]byte(mutatedTcJson), i, mCategoryFuncMap, "Add new rand payload key", mutationInfo, tcMutationInfo)
-
-    mutatedTcArray = append(mutatedTcArray, mTcData)
-
-    return mutatedTcArray
-}
-
-func MutateDelWholeRequestPayloadNode (originTcData testcase.TestCaseDataInfo, tcJson []byte, key string, mFieldDetailsSlice []MFieldDetails, 
-        mCategoryFuncMap *MCategoryFuncMap) []testcase.TestCaseDataInfo {
-    //--------------------
-    var mutatedTcArray []testcase.TestCaseDataInfo
-    i := 0
-    // (4). remove whole payload, i.e. set to: "text" : {} or "text" : null
-    plFullPath := "TestCase." + originTcData.TcName() + ".request.payload." + key
-    mutatedTcJson, _ := sjson.Set(string(tcJson), plFullPath, "")
-    mFieldDetails := MFieldDetails{[]string{}, "", reflect.TypeOf("").Kind().String(), "", []interface{}{}}
-    mutationInfo := "Remove whole post body"
-
-    tcMutationInfo := getTcMutationInfo(mFieldDetails, "")
-    //
-    mTcData := getMutatedTcData([]byte(mutatedTcJson), i, mCategoryFuncMap, "Remove whole post body", mutationInfo, tcMutationInfo)
-    
-    mutatedTcArray = append(mutatedTcArray, mTcData)
-
-    return mutatedTcArray
-}
-
-
-func getFieldsMutationDetails(value interface{}) []MFieldDetails {
-    var mFieldDetailsSlice []MFieldDetails
-
-    fieldDetailsSlice := g4json.GetFieldsDetails(value)
-
-    for i, _ := range fieldDetailsSlice {
-        mFieldDetails := MFieldDetails {
-            FieldPath: fieldDetailsSlice[i].FieldPath,
-            CurrValue: fieldDetailsSlice[i].CurrValue,
-            FieldType: fieldDetailsSlice[i].FieldType,
-            FieldSubType: fieldDetailsSlice[i].FieldSubType,
-            MutatedValues: []interface{}{},
-        }
-
-        mFieldDetailsSlice = append(mFieldDetailsSlice, mFieldDetails)
-    }
-
-    return mFieldDetailsSlice
 }
 
 

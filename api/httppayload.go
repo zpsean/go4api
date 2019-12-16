@@ -90,16 +90,8 @@ func PrepMultipart (reqPayload map[string]interface {}, path string) (*bytes.Buf
     for i = 0; i < total.Int(); i++ {
         name := gjson.Get(reqPayloadJson, "multipart-form." + fmt.Sprint(i) + ".name")
         value := gjson.Get(reqPayloadJson, "multipart-form." + fmt.Sprint(i) + ".value")
-        // formMap := gjson.Get(reqPayloadJson, "multipart-form." + fmt.Sprint(i)).Map()
-        // for k, v := range formMap {
-        //     if k != "type" {
-        //         data.Set(k, v.String())
-        //     }
-        // }
-
         fieldType := gjson.Get(reqPayloadJson, "multipart-form." + fmt.Sprint(i) + ".type")
         
-
         if strings.ToLower(fieldType.String()) == "file" {
             fp := fileOpen(path, value.String())
             defer fp.Close()
@@ -148,7 +140,6 @@ func PrepMultipart (reqPayload map[string]interface {}, path string) (*bytes.Buf
 
 }
 
-
 func PrepPostPayload (reqPayload map[string]interface{}) *strings.Reader {
     var body *strings.Reader
 
@@ -165,24 +156,15 @@ func PrepPostPayload (reqPayload map[string]interface{}) *strings.Reader {
 
 func PrepPostFormPayload (reqPayload map[string]interface{}) *strings.Reader {
     var body *strings.Reader
-
-    data := url.Values{}
-
+    //
     reqPayloadJsonBytes, _ := json.Marshal(reqPayload)
     reqPayloadJson := string(reqPayloadJsonBytes)
+    formMap := gjson.Get(reqPayloadJson, "form").Map()
 
-    var i int64
-    total := gjson.Get(reqPayloadJson, "form.#")
-    for i = 0; i < total.Int(); i++ {
-        // formMap := gjson.Get(reqPayloadJson, "form." + fmt.Sprint(i)).Map()
-        // for k, v := range formMap {
-        //     data.Set(k, v.String())
-        // }
-        name := gjson.Get(reqPayloadJson, "form." + fmt.Sprint(i) + ".name")
-        value := gjson.Get(reqPayloadJson, "form." + fmt.Sprint(i) + ".value")
-        data.Set(name.String(), value.String())
+    data := url.Values{}
+    for k, v := range formMap {
+        data.Set(k, v.String())
     }
-
     body = strings.NewReader(data.Encode())
 
     return body
