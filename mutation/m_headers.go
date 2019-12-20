@@ -15,7 +15,9 @@ import (
     // "strings"
     "reflect"
     "encoding/json"
+
     "go4api/lib/rands"
+    "go4api/lib/testcase"
 
     // gjson "github.com/tidwall/gjson"
     sjson "github.com/tidwall/sjson"
@@ -24,14 +26,17 @@ import (
 func (mTd *MTestCaseDataInfo) MRequestHeaders () {
     // not to mutate the Content-Type
     if mTd.HContentType != nil {
-        tc4MH := *mTd.OriginTcD
+        var tc4MH testcase.TestCaseDataInfo
+        tj, _ := json.Marshal(mTd.OriginTcD)   
+        json.Unmarshal(tj, &tc4MH)
+
         tc4MH.TestCase.DelRequestHeader("Content-Type")
         mTd.Tc4MH = &tc4MH
     }
 
-    // mTd.MSetRequestHeader(mFuncs[0])
-    // mTd.MDelRequestHeader(mFuncs[1])
-    // mTd.MAddRequestHeader(mFuncs[2])
+    mTd.MSetRequestHeader(mFuncs[0])
+    mTd.MDelRequestHeader(mFuncs[1])
+    mTd.MAddRequestHeader(mFuncs[2])
     mTd.MDelAllRequestHeaders(mFuncs[3])
 }
 
@@ -46,22 +51,24 @@ func (mTd *MTestCaseDataInfo) MSetRequestHeader (mFunc *MFunc) {
             CurrValue:     value, 
             FieldType:     reflect.TypeOf(value).Kind().String(),
             FieldSubType:  "", 
-            MutatedValues: []interface{}{},
         }
-        mType := mFd.DetermineMutationType()
-        mutatedValues := mFd.CallMutationRules(mType)
+        mFd.CallMutationRules()
         //
-        for _, mtedValue := range mutatedValues {
+        for _, mtedValue := range mFd.MutatedValues {
             i = i + 1
-            mutationInfo := "Update/Set header key: " + key + ", `" + fmt.Sprint(mFd.CurrValue) + "`, `" + 
+            mInfoStr := "Update/Set header key: " + key + ", `" + 
+                fmt.Sprint(mFd.CurrValue) + "`, `" + 
                 fmt.Sprint(mtedValue.MutatedValue) + "`" +
                 "\nUsing Mutation Rule: " + mtedValue.MutationRule
 
             tcMutationInfo := getTcMutationInfo(mFd, mtedValue.MutatedValue)
             
             //-- set new info to mutated tc
-            mTcData := getMutatedTcData(tcJson, i, mFunc, mtedValue.MutationRule, mutationInfo, tcMutationInfo)
+            mTcData := getMutatedTcData(tcJson, i, mFunc, mtedValue.MutationRule, mInfoStr, tcMutationInfo)
             mTcData.TestCase.SetRequestHeader(key, fmt.Sprint(mtedValue.MutatedValue))
+
+            mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
+            mTd.NextTcPriority = mTd.NextTcPriority + 1
             //
             if mTd.HContentType != nil {
                 mTcData.TestCase.SetRequestHeader("Content-Type", fmt.Sprint(mTd.HContentType))
@@ -83,15 +90,17 @@ func (mTd *MTestCaseDataInfo) MDelRequestHeader (mFunc *MFunc) {
             CurrValue:     "", 
             FieldType:     reflect.TypeOf("").Kind().String(), 
             FieldSubType:  "", 
-            MutatedValues: []interface{}{},
         }
-        mutationInfo := "Remove header key: " + "`" + key + "`"
+        mInfoStr := "Remove header key: " + "`" + key + "`"
 
         tcMutationInfo := getTcMutationInfo(mFd, "")
 
         // del the key
-        mTcData := getMutatedTcData(tcJson, i, mFunc, "Remove header key", mutationInfo, tcMutationInfo)
+        mTcData := getMutatedTcData(tcJson, i, mFunc, "Remove header key", mInfoStr, tcMutationInfo)
         mTcData.TestCase.DelRequestHeader(key)
+
+        mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
+        mTd.NextTcPriority = mTd.NextTcPriority + 1
         //
         if mTd.HContentType != nil {
             mTcData.TestCase.SetRequestHeader("Content-Type", fmt.Sprint(mTd.HContentType))
@@ -113,14 +122,16 @@ func (mTd *MTestCaseDataInfo) MAddRequestHeader (mFunc *MFunc) {
         CurrValue:     "", 
         FieldType:     reflect.TypeOf("").Kind().String(), 
         FieldSubType:  "", 
-        MutatedValues: []interface{}{},
     }
-    mutationInfo := "Add new rand header key: " + " `" + fmt.Sprint(randKey) + "`, `" + fmt.Sprint(randValue) + "`"
+    mInfoStr := "Add new rand header key: " + " `" + fmt.Sprint(randKey) + "`, `" + fmt.Sprint(randValue) + "`"
 
     tcMutationInfo := getTcMutationInfo(mFd, randValue)
     //
-    mTcData := getMutatedTcData(tcJson, i, mFunc, "Add new rand header key", mutationInfo, tcMutationInfo)
+    mTcData := getMutatedTcData(tcJson, i, mFunc, "Add new rand header key", mInfoStr, tcMutationInfo)
     mTcData.TestCase.AddRequestHeader(randKey, randValue)
+
+    mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
+    mTd.NextTcPriority = mTd.NextTcPriority + 1
     //
     if mTd.HContentType != nil {
         mTcData.TestCase.SetRequestHeader("Content-Type", fmt.Sprint(mTd.HContentType))
@@ -142,13 +153,15 @@ func (mTd *MTestCaseDataInfo) MDelAllRequestHeaders (mFunc *MFunc) {
         CurrValue:     "", 
         FieldType:     reflect.TypeOf("").Kind().String(), 
         FieldSubType:  "", 
-        MutatedValues: []interface{}{},
     }
-    mutationInfo := "Remove all headers"
+    mInfoStr := "Remove all headers"
 
     tcMutationInfo := getTcMutationInfo(mFd, "")
     //
-    mTcData := getMutatedTcData([]byte(mutatedTcJson), i, mFunc, "Remove all headers", mutationInfo, tcMutationInfo)
+    mTcData := getMutatedTcData([]byte(mutatedTcJson), i, mFunc, "Remove all headers", mInfoStr, tcMutationInfo)
+
+    mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
+    mTd.NextTcPriority = mTd.NextTcPriority + 1
     //
     if mTd.HContentType != nil {
         mTcData.TestCase.AddRequestHeader("Content-Type", fmt.Sprint(mTd.HContentType))

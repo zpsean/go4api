@@ -15,14 +15,19 @@ import (
     // "strings"
     "reflect"
     "encoding/json"
+    
     "go4api/lib/rands"
+    "go4api/lib/testcase"
 
     // gjson "github.com/tidwall/gjson"
     sjson "github.com/tidwall/sjson"
 )
 
 func (mTd *MTestCaseDataInfo) MRequestQueryString () {
-    tc4MQS := *mTd.OriginTcD
+    var tc4MQS testcase.TestCaseDataInfo
+    tj, _ := json.Marshal(mTd.OriginTcD)   
+    json.Unmarshal(tj, &tc4MQS)
+
     mTd.Tc4MQS = &tc4MQS
 
     mTd.MSetRequestQueryString(mFuncs[4])
@@ -33,6 +38,7 @@ func (mTd *MTestCaseDataInfo) MRequestQueryString () {
 
 func (mTd *MTestCaseDataInfo) MSetRequestQueryString (mFunc *MFunc) {
     tcJson, _ := json.Marshal(mTd.Tc4MQS)
+
     i := 0
     for key, value := range mTd.Tc4MQS.TestCase.ReqQueryString() {
         mFd := MFieldDetails {
@@ -40,22 +46,24 @@ func (mTd *MTestCaseDataInfo) MSetRequestQueryString (mFunc *MFunc) {
             CurrValue:     value, 
             FieldType:     reflect.TypeOf(value).Kind().String(), 
             FieldSubType:  "", 
-            MutatedValues: []interface{}{},
         }
-        mType := mFd.DetermineMutationType()
-        mutatedValues := mFd.CallMutationRules(mType)
-        // loop and mutate the value, set new value to key
-        for _, mutatedValue := range mutatedValues {
+        mFd.CallMutationRules()
+        // 
+        for _, mtedValue := range mFd.MutatedValues {
             i = i + 1
-            mutationInfo := "Update/Set header key: " + key + ", `" + fmt.Sprint(mFd.CurrValue) + "`, `" + 
-                fmt.Sprint(mutatedValue.MutatedValue) + "`" +
-                "\nUsing Mutation Rule: " + mutatedValue.MutationRule
+            mInfoStr := "Update/Set header key: " + key + ", `" + 
+                fmt.Sprint(mFd.CurrValue) + "`, `" + 
+                fmt.Sprint(mtedValue.MutatedValue) + "`" +
+                "\nUsing Mutation Rule: " + mtedValue.MutationRule
 
-            tcMutationInfo := getTcMutationInfo(mFd, mutatedValue.MutatedValue)
+            tcMutationInfo := getTcMutationInfo(mFd, mtedValue.MutatedValue)
 
             //-- set new info to mutated tc
-            mTcData := getMutatedTcData(tcJson, i, mFunc, mutatedValue.MutationRule, mutationInfo, tcMutationInfo)
-            mTcData.TestCase.SetRequestQueryString(key, fmt.Sprint(mutatedValue.MutatedValue))
+            mTcData := getMutatedTcData(tcJson, i, mFunc, mtedValue.MutationRule, mInfoStr, tcMutationInfo)
+            mTcData.TestCase.SetRequestQueryString(key, fmt.Sprint(mtedValue.MutatedValue))
+
+            mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
+            mTd.NextTcPriority = mTd.NextTcPriority + 1
 
             mTd.MTcDs = append(mTd.MTcDs, &mTcData)
         }
@@ -74,15 +82,17 @@ func (mTd *MTestCaseDataInfo) MDelRequestQueryString (mFunc *MFunc) {
             CurrValue:     "", 
             FieldType:     reflect.TypeOf("").Kind().String(), 
             FieldSubType:  "", 
-            MutatedValues: []interface{}{},
         }
-        mutationInfo := "Remove querystring key: " + "`" + key + "`"
+        mInfoStr := "Remove querystring key: " + "`" + key + "`"
 
         tcMutationInfo := getTcMutationInfo(mFd, "")
 
         // del the key
-        mTcData := getMutatedTcData(tcJson, i, mFunc, "Remove querystring key", mutationInfo, tcMutationInfo)
+        mTcData := getMutatedTcData(tcJson, i, mFunc, "Remove querystring key", mInfoStr, tcMutationInfo)
         mTcData.TestCase.DelRequestQueryString(key)
+
+        mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
+        mTd.NextTcPriority = mTd.NextTcPriority + 1
 
         mTd.MTcDs = append(mTd.MTcDs, &mTcData)
     }
@@ -102,14 +112,16 @@ func (mTd *MTestCaseDataInfo) MAddRequestQueryString (mFunc *MFunc) {
         CurrValue:     "", 
         FieldType:     reflect.TypeOf("").Kind().String(), 
         FieldSubType:  "", 
-        MutatedValues: []interface{}{},
     }
-    mutationInfo := "Add new rand QueryString key: " + " `" + fmt.Sprint(randKey) + "`, `" + fmt.Sprint(randValue) + "`"
+    mInfoStr := "Add new rand QueryString key: " + " `" + fmt.Sprint(randKey) + "`, `" + fmt.Sprint(randValue) + "`"
 
     tcMutationInfo := getTcMutationInfo(mFd, "")
     //
-    mTcData := getMutatedTcData(tcJson, i, mFunc, "Add new rand querystring key", mutationInfo, tcMutationInfo)
+    mTcData := getMutatedTcData(tcJson, i, mFunc, "Add new rand querystring key", mInfoStr, tcMutationInfo)
     mTcData.TestCase.AddRequestQueryString(randKey, randValue)
+
+    mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
+    mTd.NextTcPriority = mTd.NextTcPriority + 1
 
     mTd.MTcDs = append(mTd.MTcDs, &mTcData)
 }
@@ -126,13 +138,15 @@ func (mTd *MTestCaseDataInfo) MDelAllRequestQueryStrings (mFunc *MFunc) {
         CurrValue:     "", 
         FieldType:     reflect.TypeOf("").Kind().String(), 
         FieldSubType:  "", 
-        MutatedValues: []interface{}{},
     }
-    mutationInfo := "Remove all querystring"
+    mInfoStr := "Remove all querystring"
 
     tcMutationInfo := getTcMutationInfo(mFd, "")
     //
-    mTcData := getMutatedTcData([]byte(mutatedTcJson), i, mFunc, "Remove all querystring", mutationInfo, tcMutationInfo)
+    mTcData := getMutatedTcData([]byte(mutatedTcJson), i, mFunc, "Remove all querystring", mInfoStr, tcMutationInfo)
+
+    mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
+    mTd.NextTcPriority = mTd.NextTcPriority + 1
     
     mTd.MTcDs = append(mTd.MTcDs, &mTcData)
 }

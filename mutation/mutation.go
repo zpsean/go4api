@@ -52,16 +52,25 @@ type MTestCaseDataInfo struct {
     PLMPFormNoFile PLMPForm
     PLMPFormFile   PLMPForm
     MTcDs          []*testcase.TestCaseDataInfo  // mutated tcds
+    NextTcPriority int
 }
 
+//
 type MFieldDetails struct {
     FieldPath     []string
     CurrValue     interface{}
     FieldType     string  // the json supported types
     FieldSubType  string  // like ip/email/phone/etc.
-    MutatedValues []interface{}
+    MutationType  string  // inner code like, MChar, MCharNumeric, etc.
+    MutatedValues []*MutatedValue
 }
 
+type MutatedValue struct {
+    MutationRule string
+    MutatedValue interface{}
+}
+
+//
 type MFunc struct {
     MPriority string
     MTcSuffix string
@@ -115,20 +124,22 @@ func MutateTcArray (originTcArray []*testcase.TestCaseDataInfo) []*testcase.Test
             continue
         }
 
+        originTcData.TestCase.SetPriority(fmt.Sprint(1))
         mutatedTcArray = append(mutatedTcArray, originTcData)
         // json, originTcData, multipart-form, form
         mTd := InitMTc(originTcData)
-        
+
+        mTd.NextTcPriority = 2
         // --- here to start the mutation
-        mTd.MRequestHeaders()
-        mTd.MRequestQueryString()
+        // mTd.MRequestHeaders()
+        // mTd.MRequestQueryString()
         mTd.MRequestPayload()
 
         mutatedTcArray = append(mutatedTcArray, mTd.MTcDs...)
     }
-    // aa, _ := json.Marshal(mutatedTcArray)   
-    // fmt.Println(string(aa))
-    return mutatedTcArray
+    aa, _ := json.Marshal(mutatedTcArray[0:5])   
+    fmt.Println(string(aa))
+    return mutatedTcArray[0:5]
 }
 
 func InitMTc (originTcData *testcase.TestCaseDataInfo) (MTestCaseDataInfo) {
@@ -151,7 +162,7 @@ func InitMTc (originTcData *testcase.TestCaseDataInfo) (MTestCaseDataInfo) {
 }
 
 func getMutatedTcData (tcJson []byte, i int, mFunc *MFunc, mutationRule string, 
-        mutationInfo string, tcMutationInfo testcase.MutationInfo) testcase.TestCaseDataInfo {
+        mInfoStr string, tcMutationInfo testcase.MutationInfo) testcase.TestCaseDataInfo {
     //------
     tcSuffix := mFunc.MTcSuffix + fmt.Sprint(i)
 
@@ -160,11 +171,11 @@ func getMutatedTcData (tcJson []byte, i int, mFunc *MFunc, mutationRule string,
     json.Unmarshal(tcJson, &mTcData)
 
     mTcData.TestCase.UpdateTcName(mTcData.TcName() + tcSuffix)
-    mTcData.TestCase.SetPriority(mFunc.MPriority)
+    // mTcData.TestCase.SetPriority(mFunc.MPriority)
     mTcData.MutationArea     = mFunc.MArea
     mTcData.MutationCategory = mFunc.MCategory
     mTcData.MutationRule     = mutationRule
-    mTcData.MutationInfoStr  = mutationInfo
+    mTcData.MutationInfoStr  = mInfoStr
     mTcData.MutationInfo     = tcMutationInfo
     
     return mTcData

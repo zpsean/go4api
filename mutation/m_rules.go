@@ -129,21 +129,17 @@ import (
 // (3) -> remove key/value (one each time)
 // (4) -> remove key/value (all)
 
-type MutatedValue struct {
-    MutationRule string
-    MutatedValue interface{}
-}
 
 var (
     nilNull *int
 )
 
 //
-func (mtD MFieldDetails) DetermineMutationType() string {
+func (mFd *MFieldDetails) DetermineMutationType() {
     var mType string
-    switch strings.ToLower(mtD.FieldType) {
+    switch strings.ToLower(mFd.FieldType) {
         case "char", "string":
-            switch strings.ToLower(mtD.FieldSubType) {
+            switch strings.ToLower(mFd.FieldSubType) {
                 case "numeric":
                     mType = "MCharNumeric"
                 case "alpha":
@@ -160,7 +156,7 @@ func (mtD MFieldDetails) DetermineMutationType() string {
                     mType = "MChar"
             }
         case "int":
-            switch strings.ToLower(mtD.FieldSubType) {
+            switch strings.ToLower(mFd.FieldSubType) {
                 case "time":
                     mType = "MIntTime"
                 default:
@@ -175,36 +171,41 @@ func (mtD MFieldDetails) DetermineMutationType() string {
         case "map":
             mType = "MMap"
         default:
-            fmt.Println("!! Error: No specific rules mapping matched: ", strings.ToLower(mtD.FieldType))
+            fmt.Println("!! Error: No specific rules mapping matched: ", strings.ToLower(mFd.FieldType))
     }
-    
-    return mType
+
+    mFd.MutationType = mType
 }
 
 
 // fuzz - mutation
-func (mtD MFieldDetails) CallMutationRules(key string) []*MutatedValue {
+func (mFd *MFieldDetails) CallMutationRules () {
+    // set mFd.MutationType
+    mFd.DetermineMutationType()
+    mType := mFd.MutationType
+
+    //
     var mutatedValues []*MutatedValue
-    for _, ruleFunc := range MutationRulesMapping(key) {
+    for _, ruleFunc := range MutationRulesMapping(mType) {
 
         f := reflect.ValueOf(ruleFunc)
         //
         in := make([]reflect.Value, 3)
-        in[0] = reflect.ValueOf(mtD.CurrValue)
-        in[1] = reflect.ValueOf(mtD.FieldType)
-        in[2] = reflect.ValueOf(mtD.FieldSubType)
+        in[0] = reflect.ValueOf(mFd.CurrValue)
+        in[1] = reflect.ValueOf(mFd.FieldType)
+        in[2] = reflect.ValueOf(mFd.FieldSubType)
         //
         result := f.Call(in)
 
         mutatedValue := MutatedValue {
-            MutatedValue: result[0].Interface(),
             MutationRule: runtime.FuncForPC(f.Pointer()).Name(),
+            MutatedValue: result[0].Interface(),
         }
 
         mutatedValues = append(mutatedValues, &mutatedValue)
     }
 
-    return mutatedValues
+    mFd.MutatedValues = mutatedValues
 }
 
 
