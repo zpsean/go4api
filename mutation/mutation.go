@@ -12,7 +12,7 @@ package mutation
 
 import ( 
     "fmt"
-    "strings"
+    // "strings"
     "encoding/json"
 
     "go4api/lib/testcase"
@@ -46,9 +46,9 @@ type MTestCaseDataInfo struct {
     HContentType   interface{}    // Content-Type: multipart/form-data
     Tc4MH          *testcase.TestCaseDataInfo  // for mt headers
     Tc4MQS         *testcase.TestCaseDataInfo  // for mt queryString
-    Tc4MPL         *testcase.TestCaseDataInfo  // if multipart-form, payload without file
-    TcPlType       string    // text, multipart-form, form, <others>
-    PLMPForm       PLMPForm  // if multipart-form
+    Tc4MPL         *testcase.TestCaseDataInfo  // if multipartForm, payload without file
+    TcPlType       string    // text, multipartForm, form, <others>
+    PLMPForm       PLMPForm  // if multipartForm
     PLMPFormNoFile PLMPForm
     PLMPFormFile   PLMPForm
     MTcDs          []*testcase.TestCaseDataInfo  // mutated tcds
@@ -89,9 +89,10 @@ type Form struct {
 //
 type PLMPForm []*MPForm
 type MPForm struct {
-    Name  string
-    Value string
-    Type  string
+    Name        string                 `json:"name"`
+    Value       string                 `json:"value"`
+    Type        string                 `json:"type"`
+    MIMEHeader  map[string]interface{} `json:"mIMEHeader"`
 }
 
 //
@@ -126,20 +127,20 @@ func MutateTcArray (originTcArray []*testcase.TestCaseDataInfo) []*testcase.Test
 
         originTcData.TestCase.SetPriority(fmt.Sprint(1))
         mutatedTcArray = append(mutatedTcArray, originTcData)
-        // json, originTcData, multipart-form, form
+        // json, originTcData, multipartForm, form
         mTd := InitMTc(originTcData)
 
         mTd.NextTcPriority = 2
         // --- here to start the mutation
-        // mTd.MRequestHeaders()
-        // mTd.MRequestQueryString()
+        mTd.MRequestHeaders()
+        mTd.MRequestQueryString()
         mTd.MRequestPayload()
 
         mutatedTcArray = append(mutatedTcArray, mTd.MTcDs...)
     }
-    aa, _ := json.Marshal(mutatedTcArray[0:5])   
-    fmt.Println(string(aa))
-    return mutatedTcArray[0:5]
+    // aa, _ := json.Marshal(mutatedTcArray[0:1])   
+    // fmt.Println(string(aa))
+    return mutatedTcArray
 }
 
 func InitMTc (originTcData *testcase.TestCaseDataInfo) (MTestCaseDataInfo) {
@@ -148,7 +149,7 @@ func InitMTc (originTcData *testcase.TestCaseDataInfo) (MTestCaseDataInfo) {
     //
     hContentType := originTcData.TestCase.ReqHeaders()["Content-Type"]
     for key, _ := range originTcData.TestCase.ReqPayload() {
-        lKey = strings.ToLower(key)
+        lKey = key
         break
     }
     //

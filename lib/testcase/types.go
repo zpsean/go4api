@@ -82,18 +82,35 @@ type TestCaseBasics struct {
     TearDown []*CommandDetails               `json:"tearDown"`
 }
 
+//
 type Request struct {  
-    Method string                       `json:"method"`
-    Path string                         `json:"path"`
-    Headers map[string]interface{}      `json:"headers"`
+    Method      string                  `json:"method"`
+    Path        string                  `json:"path"`
+    Headers     map[string]interface{}  `json:"headers"`
     QueryString map[string]interface{}  `json:"queryString"`
-    Payload map[string]interface{}      `json:"payload"`
+    Payload     map[string]interface{}  `json:"payload"`
 }
 
+type Payload struct {
+    TextJson       interface{}             `json:"textJson"`
+    Text           interface{}             `json:"text"`
+    MultipartForm  *MultipartForm          `json:"multipartForm"`
+    Form           map[string]interface{}  `json:"form"`
+}
+
+type MultipartForm struct {
+    Name        string                 `json:"name"`
+    Value       string                 `json:"value"`
+    Type        string                 `json:"type"`
+    MIMEHeader  map[string]interface{} `json:"mIMEHeader"`
+}
+
+
+//
 type Response struct {  
-    Status map[string]interface{}   `json:"status"`
+    Status  map[string]interface{}  `json:"status"`
     Headers map[string]interface{}  `json:"headers"`
-    Body map[string]interface{}     `json:"body"`
+    Body    map[string]interface{}  `json:"body"`
 }
 
 type OutputsDetails struct {

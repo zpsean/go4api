@@ -24,52 +24,23 @@ import (
     sjson "github.com/tidwall/sjson"
 )
 
-// -- payload types:
-// -- 1: for header: "Content-Type": "multipart/form-data"
-// "payload": {
-//   "multipart-form": [
-//           {
-//             "name": "name",
-//             "value": "zp-c-01"
-//           },
-//           {
-//             "name": "cover",
-//             "value": "banner3-符合.jpeg",
-//             "type": "file"
-//           }
-//         ]
-// }
-//
-// -- 2: for header: "Content-Type": "application/json;charset=UTF-8"
-// "payload": {
-//   "text": {
-//             "username":"${user}",
-//             "password":"${password}"
-//           }
-// }
-// -- 3: "Content-Type": application/x-www-form-urlencoded
-// "payload": {
-//   "form": {
-//             "username":"${user}",
-//             "password":"${password}"
-//           }
-// }
-
 // MutateRequestPayload
 func (mTd *MTestCaseDataInfo) MRequestPayload () {
     mTd.initTc4MPL()
 
     for _, value := range mTd.Tc4MPL.TestCase.ReqPayload() {
         switch mTd.TcPlType {
-        case "text", "form", "multipart-form":
+        case "text", "form", "multipartForm":
             mFds := getMFieldsDetails(value)
 
+            fmt.Println("mFds: ", mFds)
+
             mTd.MSetRequestPayload(mTd.TcPlType, mFds, mFuncs[8])
-            // mTd.MDelRequestPayload(mTd.TcPlType, mFds, mFuncs[9])
-            // mTd.MAddRequestPayloadNode(mTd.TcPlType, mFds, mFuncs[10])
-            // mTd.MDelWholeRequestPayloadNode(mTd.TcPlType, mFds, mFuncs[11])
+            mTd.MDelRequestPayload(mTd.TcPlType, mFds, mFuncs[9])
+            mTd.MAddRequestPayloadNode(mTd.TcPlType, mFds, mFuncs[10])
+            mTd.MDelWholeRequestPayloadNode(mTd.TcPlType, mFds, mFuncs[11])
             //
-            if mTd.TcPlType == "multipart-form" {
+            if mTd.TcPlType == "multipartForm" {
                 mTd.MDelRequestPayloadMPFile(mTd.TcPlType, mFds, mFuncs[12])
             }
         }
@@ -85,12 +56,12 @@ func (mTd *MTestCaseDataInfo) initTc4MPL () {
         tj, _ := json.Marshal(mTd.OriginTcD)   
         json.Unmarshal(tj, &tc4MPL)
         mTd.Tc4MPL = &tc4MPL
-    case "multipart-form":
+    case "multipartForm":
         var pLMPForm PLMPForm
         var pLnf PLMPForm
         var pLf PLMPForm
 
-        reqPayload := mTd.OriginTcD.TestCase.ReqPayload()["multipart-form"]
+        reqPayload := mTd.OriginTcD.TestCase.ReqPayload()["multipartForm"]
         reqPayloadJsonBytes, _ := json.Marshal(reqPayload)
         json.Unmarshal(reqPayloadJsonBytes, &pLMPForm)
 
@@ -111,8 +82,8 @@ func (mTd *MTestCaseDataInfo) initTc4MPL () {
         tj, _ := json.Marshal(mTd.OriginTcD)   
         json.Unmarshal(tj, &tc4MPL)
 
-        tc4MPL.TestCase.DelReqPayload("multipart-form")
-        tc4MPL.TestCase.SetRequestPayload("multipart-form", pl)
+        tc4MPL.TestCase.DelReqPayload("multipartForm")
+        tc4MPL.TestCase.SetRequestPayload("multipartForm", pl)
         //
         mTd.Tc4MPL         = &tc4MPL
         mTd.PLMPForm       = pLMPForm
@@ -141,7 +112,7 @@ func getMFieldsDetails(value interface{}) []MFieldDetails {
 
 // MSetRequestPayload
 func (mTd *MTestCaseDataInfo) MSetRequestPayload (key string, mFds []MFieldDetails, mFunc *MFunc) {
-    
+    tcJson, _ := json.Marshal(mTd.Tc4MPL)
     //
     i := 0
     for _, mFd := range mFds {
@@ -153,15 +124,14 @@ func (mTd *MTestCaseDataInfo) MSetRequestPayload (key string, mFds []MFieldDetai
         for _, mtedValue := range mFd.MutatedValues {
             i = i + 1
             
-            tcJson, _ := json.Marshal(mTd.Tc4MPL)
             mtedTcJson, _ := sjson.Set(string(tcJson), plFullPath, mtedValue.MutatedValue)
             // mDJsonByte, _ := json.Marshal(mFd)
 
-            mInfoStr := fmt.Sprint(mFd.FieldPath) + ", `" + 
-                fmt.Sprint(mFd.CurrValue) + "`, `" + 
-                fmt.Sprint(mFd.FieldType) + "`, `" + 
-                fmt.Sprint(mFd.FieldSubType) + "`, `" + 
-                fmt.Sprint(mtedValue.MutatedValue) + "`" + 
+            mInfoStr := "FieldPath: " + fmt.Sprint(mFd.FieldPath) + 
+                "\nCurrValue: " + "`" + fmt.Sprint(mFd.CurrValue) + "`" + 
+                "\nFieldType: " + "`" + fmt.Sprint(mFd.FieldType) + "`"+ 
+                "\nFieldSubType: " + "`" + fmt.Sprint(mFd.FieldSubType) + "`" + 
+                "\nMutatedValue: " + "`" + fmt.Sprint(mtedValue.MutatedValue) + "`" + 
                 "\n=> Using Mutation Rule: " + mtedValue.MutationRule
 
             tcMutationInfo := getTcMutationInfo(mFd, mtedValue.MutatedValue)
@@ -172,15 +142,10 @@ func (mTd *MTestCaseDataInfo) MSetRequestPayload (key string, mFds []MFieldDetai
             mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
             mTd.NextTcPriority = mTd.NextTcPriority + 1
             //
-            if key == "multipart-form" {
-                fmt.Println("--->>>>: ", "reached here")
+            if key == "multipartForm" {
                 mTd.reWrite4MPForm(&mTcData)
             }
 
-            tt, _ := json.Marshal(mTcData)
-            fmt.Println("mInfoStr: ", key, mInfoStr)
-            fmt.Println("--->: ", string(tt))
-            fmt.Println("")
             mTd.MTcDs = append(mTd.MTcDs, &mTcData)
         }
     }
@@ -216,7 +181,7 @@ func (mTd *MTestCaseDataInfo) MDelRequestPayload (key string, mFds []MFieldDetai
         mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
         mTd.NextTcPriority = mTd.NextTcPriority + 1
         //
-        if key == "multipart-form" {
+        if key == "multipartForm" {
             mTd.reWrite4MPForm(&mTcData)
         }
     
@@ -287,7 +252,7 @@ func (mTd *MTestCaseDataInfo) MAddRequestPayloadNode (key string, mFds []MFieldD
     mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
     mTd.NextTcPriority = mTd.NextTcPriority + 1
     //
-    if key == "multipart-form" {
+    if key == "multipartForm" {
         mTd.reWrite4MPForm(&mTcData)
     }
 
@@ -317,17 +282,17 @@ func (mTd *MTestCaseDataInfo) MDelWholeRequestPayloadNode (key string, mFds []MF
     mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
     mTd.NextTcPriority = mTd.NextTcPriority + 1
     //
-    if key == "multipart-form" {
+    if key == "multipartForm" {
         var pLMPForm PLMPForm
-        mTcData.TestCase.DelReqPayload("multipart-form")
-        mTcData.TestCase.SetRequestPayload("multipart-form", pLMPForm)
+        mTcData.TestCase.DelReqPayload("multipartForm")
+        mTcData.TestCase.SetRequestPayload("multipartForm", pLMPForm)
     }
     
     mTd.MTcDs = append(mTd.MTcDs, &mTcData)
 }
 
-// MDelRequestPayloadMPFile, especially for multipart-form
-// this is to remove the file node one by one for multipart-form
+// MDelRequestPayloadMPFile, especially for multipartForm
+// this is to remove the file node one by one for multipartForm
 func (mTd *MTestCaseDataInfo) MDelRequestPayloadMPFile (key string, mFds []MFieldDetails, mFunc *MFunc) {
     tcJson, _ := json.Marshal(mTd.Tc4MPL)
 
@@ -350,6 +315,10 @@ func (mTd *MTestCaseDataInfo) MDelRequestPayloadMPFile (key string, mFds []MFiel
             }
         }
 
+        for _, vk := range mTd.PLMPFormNoFile {
+            pLMPForm = append(pLMPForm, vk)
+        }
+
         mInfoStr := "Remove one file field: " + " `" + fmt.Sprint(v.Name) + 
             "`, `" + fmt.Sprint(v.Value) + "`"
         tcMutationInfo := getTcMutationInfo(mFd, "")
@@ -360,8 +329,8 @@ func (mTd *MTestCaseDataInfo) MDelRequestPayloadMPFile (key string, mFds []MFiel
         mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
         mTd.NextTcPriority = mTd.NextTcPriority + 1
         //
-        mTcData.TestCase.DelReqPayload("multipart-form")
-        mTcData.TestCase.SetRequestPayload("multipart-form", pLMPForm)
+        mTcData.TestCase.DelReqPayload("multipartForm")
+        mTcData.TestCase.SetRequestPayload("multipartForm", pLMPForm)
         //
         mTd.MTcDs = append(mTd.MTcDs, &mTcData)
     }    
@@ -370,7 +339,7 @@ func (mTd *MTestCaseDataInfo) MDelRequestPayloadMPFile (key string, mFds []MFiel
 //
 func (mTd *MTestCaseDataInfo) reWrite4MPForm (mTcData *testcase.TestCaseDataInfo) {
     var pLMPForm PLMPForm
-    mPl := mTcData.TestCase.ReqPayload()["multipart-form"]
+    mPl := mTcData.TestCase.ReqPayload()["multipartForm"]
     for k, v := range mPl.(map[string]interface{}) {
         mPForm := MPForm {
             Name:  k,
@@ -380,8 +349,8 @@ func (mTd *MTestCaseDataInfo) reWrite4MPForm (mTcData *testcase.TestCaseDataInfo
     }
     pLMPForm = append(pLMPForm, mTd.PLMPFormFile...)
     
-    mTcData.TestCase.DelReqPayload("multipart-form")
-    mTcData.TestCase.SetRequestPayload("multipart-form", pLMPForm)
+    mTcData.TestCase.DelReqPayload("multipartForm")
+    mTcData.TestCase.SetRequestPayload("multipartForm", pLMPForm)
 
     mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
     mTd.NextTcPriority = mTd.NextTcPriority + 1

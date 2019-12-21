@@ -40,7 +40,7 @@ func GetPayloadInfo (tcData *testcase.TestCaseDataInfo) (string, string, *string
     // Note, has 3 conditions: text (json), form, or multipart file upload
     for key, _ := range reqPayload {
         switch key {
-            case "multipart-form": {
+            case "multipartForm": {
                 //multipart/form-data
                 apiMethodSelector = "POSTMultipart"
                 multipartFilePath := cmd.Opt.Testresource
@@ -87,9 +87,9 @@ func PrepMultipart (reqPayload map[string]interface {}, path string) (*bytes.Buf
     var i int64
     var err error
 
-    total := gjson.Get(reqPayloadJson, "multipart-form.#")
+    total := gjson.Get(reqPayloadJson, "multipartForm.#")
     for i = 0; i < total.Int(); i++ {
-        item := gjson.Get(reqPayloadJson, "multipart-form." + fmt.Sprint(i))
+        item := gjson.Get(reqPayloadJson, "multipartForm." + fmt.Sprint(i))
         //
         ifFile := false
         iMap := item.Map()
@@ -110,8 +110,13 @@ func PrepMultipart (reqPayload map[string]interface {}, path string) (*bytes.Buf
             h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s"`, n, v))
 
             for k, v := range iMap {
-                if k != "name" || k != "value" || k != "type" {
-                    h.Set(k, v.String())
+                // if k != "name" || k != "value" || k != "type" {
+                //     h.Set(k, v.String())
+                // }
+                if k == "mIMEHeader" {
+                    for hk, hv := range v.Map() {
+                        h.Set(hk, hv.String())
+                    }
                 }
             }
 

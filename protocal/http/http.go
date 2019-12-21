@@ -33,6 +33,7 @@ func (httpRestful HttpRestful) Request(urlStr string, apiMethod string, reqHeade
     // type conversion to payload, based on reqBody, apiMethod
     var reqest *http.Request
     var err error
+    // fmt.Println(reqBody)
     switch reflect.TypeOf(reqBody).String() {
         case "*strings.Reader":
             if apiMethod == "GET" {
