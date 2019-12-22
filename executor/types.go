@@ -24,17 +24,19 @@ type G4Store struct {
     FullTcSlice             []*testcase.TestCaseDataInfo
     GlobalSetUpRunStore     *TcsRunStore
     NormalRunStore          *TcsRunStore
+    MutationRunStore        *TcsRunStore
     GlobalTeardownRunStore  *TcsRunStore
 }
 
 type TcsRunStore struct {
     TcSlice     []*testcase.TestCaseDataInfo
-
+    //
     PrioritySet []string
-    Root        *tree.TcNode
-    TcTree      tree.TcTree
-    TcTreeStats tree.TcTreeStats
-    OverallFail int
+    Root         *tree.TcNode
+    TcTree       tree.TcTree
+    TcTreeStats  tree.TcTreeStats
+    TcDs         []*testcase.TestCaseDataInfo
+    OverallFail  int
 }
 
 func InitG4Store () *G4Store {
@@ -68,39 +70,49 @@ func InitG4Store () *G4Store {
 
     globalSetUpTcSlice := InitGlobalSetUpTcSlice(fullTcSlice)
     globalSetUpRunStore := &TcsRunStore {
-        TcSlice: globalSetUpTcSlice,
+        TcSlice:     globalSetUpTcSlice,
         PrioritySet: []string{},
-        Root: &tree.TcNode{},
-        TcTree: tree.TcTree{},
+        Root:        &tree.TcNode{},
+        TcTree:      tree.TcTree{},
         TcTreeStats: tree.TcTreeStats{},
         OverallFail: 0,
     }
 
     normalTcSlice := InitNormalTcSlice(fullTcSlice)
     normalRunStore := &TcsRunStore {
-        TcSlice: normalTcSlice,
+        TcSlice:     normalTcSlice,
         PrioritySet: []string{},
-        Root: &tree.TcNode{},
-        TcTree: tree.TcTree{},
+        Root:        &tree.TcNode{},
+        TcTree:      tree.TcTree{},
+        TcTreeStats: tree.TcTreeStats{},
+        OverallFail: 0,
+    }
+
+    mutationRunStore := &TcsRunStore {
+        TcSlice:     []*testcase.TestCaseDataInfo{},
+        PrioritySet: []string{},
+        Root:        &tree.TcNode{},
+        TcTree:      tree.TcTree{},
         TcTreeStats: tree.TcTreeStats{},
         OverallFail: 0,
     }
 
     globalTeardownTcSlice := InitGlobalTeardownTcSlice(fullTcSlice)
     globalTeardownRunStore := &TcsRunStore {
-        TcSlice: globalTeardownTcSlice,
+        TcSlice:     globalTeardownTcSlice,
         PrioritySet: []string{},
-        Root: &tree.TcNode{},
-        TcTree: tree.TcTree{},
+        Root:        &tree.TcNode{},
+        TcTree:      tree.TcTree{},
         TcTreeStats: tree.TcTreeStats{},
         OverallFail: 0,
     }
 
     g4Store := &G4Store {
         OverallFail: 0,
-        FullTcSlice: fullTcSlice,
-        GlobalSetUpRunStore: globalSetUpRunStore,
-        NormalRunStore: normalRunStore,
+        FullTcSlice:            fullTcSlice,
+        GlobalSetUpRunStore:    globalSetUpRunStore,
+        NormalRunStore:         normalRunStore,
+        MutationRunStore:       mutationRunStore,
         GlobalTeardownRunStore: globalTeardownRunStore,
     }
 

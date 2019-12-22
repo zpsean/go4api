@@ -26,7 +26,7 @@ import (
 
 func (tcsRunStore *TcsRunStore) InitRun () { 
     tcTree := tree.CreateTcTree()
-    root := tcTree.BuildTree(tcsRunStore.TcSlice)
+    root   := tcTree.BuildTree(tcsRunStore.TcSlice)
     //
     prioritySet := GetPrioritySet(tcsRunStore.TcSlice)
     tcTreeStats := tree.CreateTcTreeStats(prioritySet)
@@ -37,8 +37,8 @@ func (tcsRunStore *TcsRunStore) InitRun () {
     // fmt.Println(string(aa))
 
     tcsRunStore.PrioritySet = prioritySet
-    tcsRunStore.Root = root
-    tcsRunStore.TcTree = tcTree
+    tcsRunStore.Root        = root
+    tcsRunStore.TcTree      = tcTree
     tcsRunStore.TcTreeStats = tcTreeStats
 }
 
@@ -107,6 +107,8 @@ func (tcsRunStore *TcsRunStore) RunEachPriority (baseUrl string, priority string
             tcReportResults := tcExecution.TcReportResults()
             repJson, _ := json.Marshal(tcReportResults)
 
+            tcsRunStore.TcDs = append(tcsRunStore.TcDs, tcExecution.TestCaseDataInfo)
+
             reports.WriteExecutionResults(string(repJson), logFilePtr)
             reports.ReportConsoleByTc(tcExecution)
         }
@@ -133,13 +135,15 @@ func (tcsRunStore *TcsRunStore) RunConsoleOverallReport () {
 // for all (global setup, normal, global teardown)
 func (g4Store *G4Store) RunFinalConsoleReport () {
     fmt.Println("")
-    fmt.Println("Final Test Case Execution Statistics")
+    fmt.Println("---------------------------------------------------------------------------------")
+    fmt.Println("Final Test Case Execution Statistics - Overall")
 
     totalTcCount := len(g4Store.FullTcSlice)
 
     reports.ReportConsoleOverall(totalTcCount, "Overall", 
         g4Store.GlobalSetUpRunStore.TcTreeStats.StatusCountByPriority, 
         g4Store.NormalRunStore.TcTreeStats.StatusCountByPriority, 
+        g4Store.MutationRunStore.TcTreeStats.StatusCountByPriority, 
         g4Store.GlobalTeardownRunStore.TcTreeStats.StatusCountByPriority)
 }
 

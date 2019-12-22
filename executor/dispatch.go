@@ -39,59 +39,36 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
     // for type 1, the json is rendered by data tables first, then build the tcTree
     // for type 2, build the cases hierarchy first, then render the child cases using the parent's outputs
     //
+    WarmUpDBConnection()
+    WarmUpPgDbConnection()
+    WarmUpRedisConnection()
+    WarmUpMongoDBConnection()
+    //
+    g4Store := InitG4Store()
+    //
+    g4Store.GlobalSetUpRunStore.InitRun()
+    g4Store.GlobalSetUpRunStore.RunPriorities(baseUrl, resultsLogFile)
+    g4Store.GlobalSetUpRunStore.RunConsoleOverallReport()
+    //
+    g4Store.NormalRunStore.InitRun()
+    g4Store.NormalRunStore.RunPriorities(baseUrl, resultsLogFile)
+    g4Store.NormalRunStore.RunConsoleOverallReport()
+    //
     if cmd.Opt.IfMutation {
-        WarmUpDBConnection()
-        WarmUpPgDbConnection()
-        WarmUpRedisConnection()
-        WarmUpMongoDBConnection()
-        //
-        g4Store := InitG4Store()
-        //
-        g4Store.GlobalSetUpRunStore.InitRun()
-        g4Store.GlobalSetUpRunStore.RunPriorities(baseUrl, resultsLogFile)
-        g4Store.GlobalSetUpRunStore.RunConsoleOverallReport()
-        //
-        mutatedTcArray := mutation.MutateTcArray(g4Store.NormalRunStore.TcSlice)
-        g4Store.NormalRunStore.TcSlice = mutatedTcArray
+        mutatedTcArray := mutation.MutateTcArray(g4Store.NormalRunStore.TcDs)
+        g4Store.MutationRunStore.TcSlice = mutatedTcArray
 
-        g4Store.NormalRunStore.InitRun()
-        g4Store.NormalRunStore.RunPriorities(baseUrl, resultsLogFile)
-        g4Store.NormalRunStore.RunConsoleOverallReport()
-        //
-        g4Store.GlobalTeardownRunStore.InitRun()
-        g4Store.GlobalTeardownRunStore.RunPriorities(baseUrl, resultsLogFile)
-        g4Store.GlobalTeardownRunStore.RunConsoleOverallReport()
-        //
-        g4Store.RunFinalConsoleReport()
-        g4Store.RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
-    } else if cmd.Opt.IfFuzzTest {
-        // fuzz.PrepFuzzTest()
-        // //
-        // fuzzTcArray := GetFuzzTcArray()
-        // Run(ch, baseUrl, resultsDir, resultsLogFile, fuzzTcArray)
-    } else {
-        WarmUpDBConnection()
-        WarmUpPgDbConnection()
-        WarmUpRedisConnection()
-        WarmUpMongoDBConnection()
-        //
-        g4Store := InitG4Store()
-        //
-        g4Store.GlobalSetUpRunStore.InitRun()
-        g4Store.GlobalSetUpRunStore.RunPriorities(baseUrl, resultsLogFile)
-        g4Store.GlobalSetUpRunStore.RunConsoleOverallReport()
-        //
-        g4Store.NormalRunStore.InitRun()
-        g4Store.NormalRunStore.RunPriorities(baseUrl, resultsLogFile)
-        g4Store.NormalRunStore.RunConsoleOverallReport()
-        //
-        g4Store.GlobalTeardownRunStore.InitRun()
-        g4Store.GlobalTeardownRunStore.RunPriorities(baseUrl, resultsLogFile)
-        g4Store.GlobalTeardownRunStore.RunConsoleOverallReport()
-        //
-        g4Store.RunFinalConsoleReport()
-        g4Store.RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
+        g4Store.MutationRunStore.InitRun()
+        g4Store.MutationRunStore.RunPriorities(baseUrl, resultsLogFile)
+        g4Store.MutationRunStore.RunConsoleOverallReport()
     }
+    //
+    g4Store.GlobalTeardownRunStore.InitRun()
+    g4Store.GlobalTeardownRunStore.RunPriorities(baseUrl, resultsLogFile)
+    g4Store.GlobalTeardownRunStore.RunConsoleOverallReport()
+    //
+    g4Store.RunFinalConsoleReport()
+    g4Store.RunFinalReport(ch, gStart_str, resultsDir, resultsLogFile)
 }
 
 
