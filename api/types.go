@@ -29,22 +29,22 @@ type TcDataStore struct {
 
     TcLocalVariables map[string]interface{}
 
-    HttpExpStatus map[string]interface{}
-    HttpExpHeader map[string]interface{}
-    HttpExpBody map[string]interface{}
+    HttpExpStatus    map[string]interface{}
+    HttpExpHeader    map[string]interface{}
+    HttpExpBody      map[string]interface{}
     HttpActualStatusCode int
     HttpActualHeader map[string][]string
-    HttpActualBody []byte
+    HttpActualBody   []byte
 
-    HttpUrl string
+    HttpUrl    string
 
     CmdSection string // setUp, tearDown
     CmdGroupLength int
     
-    CmdType string // sql, redis, init, etc.
+    CmdType       string // sql, redis, init, etc.
     CmdExecStatus string
     CmdAffectedCount int
-    CmdResults interface{}
+    CmdResults    interface{}
 }
 
 func InitTcDataStore (tcData *testcase.TestCaseDataInfo) *TcDataStore {
@@ -129,30 +129,38 @@ func (tcDataStore *TcDataStore) RenderTcVariables (path string, res interface{})
     tcDataJson := string(tcDataJsonBytes)
 
     jsonStr := gjson.Get(tcDataJson, path).String()
-  
-    if strings.Contains(jsonStr, "${") {
-        // Warning, there may have performance issues
-        for key, value := range dataFeeder {
-            var valueStr = ""
+
+    n := strings.Count(jsonStr, "${")
+    if n > 0 {
+        // as the dataFedder is map, its sequence can not be guaranteed
+        // so, replace the ${} from right to left
+        for i := 0; i < n; i++ {
+            idx1 := strings.LastIndex(jsonStr, "${")
+            // sL := jsonStr[0:idx1]
+            sR := jsonStr[idx1 + 2:]
+            idx2 := strings.Index(sR, "}")
+
+            key   := sR[0:idx2]
+            value := dataFeeder[key]
+
+            var vStr = ""
             if value != nil {
                 switch reflect.TypeOf(value).Kind().String() {
                 case "float64":
-                    valueStr = utils.FloatToString(value.(float64))
+                    vStr = utils.FloatToString(value.(float64))
                 case "string":
-                    valueStr = value.(string)
+                    vStr = value.(string)
                 case "slice":
                     // for slice, []string or []float64, may have better solution later
                     // for example:
                     // valueB, _ := json.Marshal(value)
-                    // valueStr = "`" + string(valueB) + "`"
-
-                    valueStr = fmt.Sprint(value)
+                    // vStr = "`" + string(valueB) + "`"
+                    vStr = fmt.Sprint(value)
                 default:
-                    valueStr = fmt.Sprint(value)
+                    vStr = fmt.Sprint(value)
                 }
             }
-
-            jsonStr = strings.Replace(jsonStr, "${" + key + "}", valueStr, -1)
+            jsonStr = strings.Replace(jsonStr, "${" + key + "}", vStr, -1)
         }
         // Note: if the jsonStr is string, like "request":{"method":"POST","path":"... 
         // the returned string tcDataJson is: "{\"method\":\"POST\",\"path\":\"...

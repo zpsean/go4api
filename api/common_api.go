@@ -333,21 +333,27 @@ func (tcDataStore *TcDataStore) CompareRespGroup (cmdExpResp map[string]interfac
     for key, value := range cmdExpResp {
         cmdExpResp_sub := value.(map[string]interface{})
         for assertionKey, expValueOrigin := range cmdExpResp_sub {
-            
-            actualValue := tcDataStore.GetResponseValue(key)
+            switch assertionKey {
+            case "HasMapKey", "NotHasMapKey":
+                
+            case "IsNull", "IsNotNull":
 
-            var expValue interface{}
-            switch expValueOrigin.(type) {
-                case float64, int64: 
-                    expValue = expValueOrigin
-                default:
-                    expValue = tcDataStore.GetResponseValue(expValueOrigin.(string))
-            }
-            
-            testRes, msg := compareCommon(tcDataStore.CmdType, key, assertionKey, actualValue, expValue)
-            
-            testMessages = append(testMessages, msg)
-            testResults = append(testResults, testRes)
+            default:
+                actualValue := tcDataStore.GetResponseValue(key)
+
+                var expValue interface{}
+                switch expValueOrigin.(type) {
+                    case float64, int64: 
+                        expValue = expValueOrigin
+                    default:
+                        expValue = tcDataStore.GetResponseValue(expValueOrigin.(string))
+                }
+                
+                testRes, msg := compareCommon(tcDataStore.CmdType, key, assertionKey, actualValue, expValue)
+                
+                testMessages = append(testMessages, msg)
+                testResults = append(testResults, testRes)
+            }  
         }
     }
 

@@ -124,17 +124,15 @@ func GetOsEnviron () map[string]string {
         envMap[env_k] = os.Getenv(env_k)
     }
     // incase the env variables have the prefix "go4_*"
-    for _, env := range envArray {
-        // find out the first = position, to get the key
-        env_k := strings.Split(env, "=")[0]
-        if strings.HasPrefix(env_k, "go4_") {
-            if strings.TrimLeft(env_k, "go4_") != "" {
-                envMap[strings.TrimLeft(env_k, "go4_")] = os.Getenv(env_k)
-            }
-        } 
-    }
-
-    fmt.Println(envMap)
+    // for _, env := range envArray {
+    //     // find out the first = position, to get the key
+    //     env_k := strings.Split(env, "=")[0]
+    //     if strings.HasPrefix(env_k, "go4_") {
+    //         if strings.TrimLeft(env_k, "go4_") != "" {
+    //             envMap[strings.TrimLeft(env_k, "go4_")] = os.Getenv(env_k)
+    //         }
+    //     } 
+    // }
 
     return envMap
 }

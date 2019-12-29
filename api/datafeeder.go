@@ -27,14 +27,14 @@ import (
 // Note: here may occur: fatal error: concurrent map iteration and map write, => need to fix
 func (tcDataStore *TcDataStore) MergeTestData () map[string]interface{} {
     var finalMap = make(map[string]interface{})
-    // 1, options, cmdArgs
-    for k, v := range cmd.CmdArgs {
+    // 1
+    envMap := utils.GetOsEnviron()
+    for k, v := range envMap {
         finalMap[k] = v
     }
 
-    // 2
-    envMap := utils.GetOsEnviron()
-    for k, v := range envMap {
+    // 2, options, cmdArgs
+    for k, v := range cmd.CmdArgs {
         finalMap[k] = v
     }
 
