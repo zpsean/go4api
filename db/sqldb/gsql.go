@@ -8,95 +8,54 @@
  *
  */
 
-package gpg
+package gsql
 
 import (
     "fmt"
-    // "os"
-    // "strconv"
     "strings"
     "database/sql"
-    // "reflect"
-    // "encoding/json"
-
-    "go4api/cmd"
-    "go4api/utils"
-
-    _ "github.com/lib/pq"
 )
 
 // var db = &sql.DB{}
-var PgCons map[string]*sql.DB
+// SqlCons, example,
+// {
+//     "mysql": {
+//         "master": {}
+//         "slave" : {}
+//     }
+//     "postgres": {
+//         "master": {}
+//         "slave" : {}
+//     }
+// }
+
+var SqlCons map[string]map[string]*sql.DB
 
 type SqlExec struct {
-    TargetDb string
-    Stmt string
+    DriverName       string
+    TargetDb         string
+    Stmt             string
     CmdAffectedCount int
-    RowsHeaders []string
-    CmdResults []map[string]interface{}
+    RowsHeaders      []string
+    CmdResults       []map[string]interface{}
 }
 
-func InitConnection () {
-    PgCons = make(map[string]*sql.DB)
+func InitConnection (driverName string) {
+    dri := strings.ToLower(driverName)
+    SqlCons = make(map[string]map[string]*sql.DB)
 
-    //
-    dbs := cmd.GetPgDbConfig()
-
-    for k, v := range dbs {
-        envMap := utils.GetOsEnviron()
-  
-        ip := renderValue(v.Ip, envMap)
-        port := renderValue(fmt.Sprint(v.Port), envMap)
-        userName := renderValue(v.UserName, envMap)
-        password := renderValue(v.Password, envMap)
-        dbname := renderValue(v.Dbname, envMap)
-        sslmode := renderValue(v.Sslmode, envMap)
-
-        // conInfo := "postgres://pqgotest:password@localhost/pqgotest?sslmode=verify-full"
-        // conInfo := "postgres://" +  user + ":" + pw + "@" + ip + ":" + fmt.Sprint(port)
-        h := " host=" + ip
-        u := "user=" + userName 
-        pa := " password=" + password
-        po := " port=" + port
-        d := " dbname=" + dbname
-        ssl := " sslmode=" + sslmode
-        conInfo := u + pa + h + po + d + ssl
-    
-        db, _ := sql.Open("postgres", conInfo)
-        db.SetMaxOpenConns(2000)
-        db.SetMaxIdleConns(1000)
-
-        err := db.Ping()
-        if err != nil {
-            fmt.Println("Err, pg connection is not established. ", err)
-            panic(err)
-        }
-
-        dbIndicator := strings.ToLower(k)
-        PgCons[dbIndicator] = db
+    switch dri {
+    case "sql", "mysql":
+        cons := InitMySqlConnection()
+        SqlCons["mysql"] = cons
+    case "postgres", "postgresql":
+        cons := InitPgConnection()
+        SqlCons["postgres"] = cons
     }
 } 
 
 //
-func renderValue (jsonStr string, feeder map[string]string) string {
-    s := jsonStr
- 
-    if strings.HasPrefix(s, "${go4_") {
-        // key, value are both string
-        su := strings.Replace(s, "${go4_", "${", -1)
-        for key, value := range feeder {
-            k := "${" + key + "}"
-            if k == su {
-                s = strings.Replace(su, k, value, -1)
-            }
-        }
-    }
-
-    return s
-}
-   
-//
-func Run (tgtDb string, stmt string) (int, []string, []map[string]interface{}, string) {
+func Run (driverName string, tgtDb string, stmt string) (int, []string, []map[string]interface{}, string) {
     // update, delete, select, insert
     s := strings.TrimSpace(stmt)
     s = strings.ToUpper(s)
@@ -107,7 +66,14 @@ func Run (tgtDb string, stmt string) (int, []string, []map[string]interface{}, s
 
     // tDb := "master"
     tDb := tgtDb
-    sqlExec := &SqlExec{tDb, stmt, -1, []string{}, []map[string]interface{}{}}
+    sqlExec := &SqlExec {
+        DriverName:       driverName,
+        TargetDb:         tDb,
+        Stmt:             stmt,
+        CmdAffectedCount: -1,
+        RowsHeaders:      []string{},
+        CmdResults:       []map[string]interface{}{},
+    }
 
     switch strings.ToUpper(s) {
         case "UPDATE":
@@ -130,7 +96,7 @@ func Run (tgtDb string, stmt string) (int, []string, []map[string]interface{}, s
 }
 
 func (sqlExec *SqlExec) Update () error {
-    db := PgCons[sqlExec.TargetDb]
+    db := SqlCons[sqlExec.DriverName][sqlExec.TargetDb]
 
     // defer func() {  
     //     if r := recover(); r != nil {  
@@ -140,14 +106,14 @@ func (sqlExec *SqlExec) Update () error {
 
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     if err != nil {
-        fmt.Println("!! Err, Catch pg err:", err)
+        fmt.Println("!! Err, Catch gsql err:", err)
         panic(err)
     }
     defer sqlStmt.Close()
 
     res, err := sqlStmt.Exec()
     if err != nil {
-        fmt.Println("!! Err, Catch pg err:", err)
+        fmt.Println("!! Err, Catch gsql err:", err)
         panic(err)
     }
 
@@ -160,7 +126,7 @@ func (sqlExec *SqlExec) Update () error {
 }
 
 func (sqlExec *SqlExec) Delete () error {
-    db := PgCons[sqlExec.TargetDb]
+    db := SqlCons[sqlExec.DriverName][sqlExec.TargetDb]
 
     // defer func() {  
     //     if r := recover(); r != nil {  
@@ -171,14 +137,14 @@ func (sqlExec *SqlExec) Delete () error {
 
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     if err != nil {
-        fmt.Println("!! Err, Delete Prepare, Catch pg err:", err) 
+        fmt.Println("!! Err, Delete Prepare, Catch gsql err:", err) 
         panic(err)
     }
     defer sqlStmt.Close()
 
     res, err := sqlStmt.Exec()
     if err != nil {
-        fmt.Println("!! Err, Delete Exec, Catch pg err:", err)
+        fmt.Println("!! Err, Delete Exec, Catch gsql err:", err)
         panic(err)
     }
 
@@ -191,23 +157,24 @@ func (sqlExec *SqlExec) Delete () error {
 }
 
 func (sqlExec *SqlExec) QueryWithoutParams () error {
-    db := PgCons[sqlExec.TargetDb]
+    db := SqlCons[sqlExec.DriverName][sqlExec.TargetDb]
 
     // defer func() {  
     //     if r := recover(); r != nil {  
     //         fmt.Println("!! Err, Catch gsql err:", r)   
     //     }  
     // }()  
+
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     if err != nil {
-        fmt.Println("!! Err, SELECT Prepare, Catch pg err:", err)
+        fmt.Println("!! Err, SELECT Prepare, Catch gsql err:", err)
         panic(err)
     }
     defer sqlStmt.Close()
 
     rows, err := sqlStmt.Query()
     if err != nil {
-        fmt.Println("!! Err, SELECT Query, Catch pg err:", err)
+        fmt.Println("!! Err, SELECT Query, Catch gsql err:", err)
         panic(err)
     }
 
@@ -266,7 +233,7 @@ func ScanRows (rows *sql.Rows) (int, []string, []map[string]interface{}) {
 }
 
 func (sqlExec *SqlExec) Insert () error {
-    db := PgCons[sqlExec.TargetDb]
+    db := SqlCons[sqlExec.DriverName][sqlExec.TargetDb]
 
     // defer func() {  
     //     if r := recover(); r != nil {  
@@ -276,14 +243,14 @@ func (sqlExec *SqlExec) Insert () error {
 
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     if err != nil {
-        fmt.Println("!! Err, Insert Prepare, Catch pg err:", err)
+        fmt.Println("!! Err, Insert Prepare, Catch gsql err:", err)
         panic(err)
     }
     defer sqlStmt.Close()
 
     res, err := sqlStmt.Exec()
     if err != nil {
-        fmt.Println("!! Err, Insert Exec, Catch pg err:", err)
+        fmt.Println("!! Err, Insert Exec, Catch gsql err:", err)
         panic(err)
     }
 

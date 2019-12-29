@@ -33,16 +33,14 @@ func (mTd *MTestCaseDataInfo) MRequestPayload () {
         case "text", "form", "multipartForm":
             mFds := getMFieldsDetails(value)
 
-            fmt.Println("mFds: ", mFds)
+            if mTd.TcPlType == "multipartForm" {
+                mTd.getTypeFileIndex(mFds)
+            }
 
             mTd.MSetRequestPayload(mTd.TcPlType, mFds, mFuncs[8])
-            mTd.MDelRequestPayload(mTd.TcPlType, mFds, mFuncs[9])
-            mTd.MAddRequestPayloadNode(mTd.TcPlType, mFds, mFuncs[10])
+            // mTd.MDelRequestPayload(mTd.TcPlType, mFds, mFuncs[9])
+            // mTd.MAddRequestPayloadNode(mTd.TcPlType, mFds, mFuncs[10])
             mTd.MDelWholeRequestPayloadNode(mTd.TcPlType, mFds, mFuncs[11])
-            //
-            if mTd.TcPlType == "multipartForm" {
-                mTd.MDelRequestPayloadMPFile(mTd.TcPlType, mFds, mFuncs[12])
-            }
         }
 
         break
@@ -51,44 +49,24 @@ func (mTd *MTestCaseDataInfo) MRequestPayload () {
 
 func (mTd *MTestCaseDataInfo) initTc4MPL () {
     switch mTd.TcPlType {
-    case "text", "form", "" :
+    case "text", "form", "", "multipartForm":
         var tc4MPL testcase.TestCaseDataInfo
         tj, _ := json.Marshal(mTd.OriginTcD)   
         json.Unmarshal(tj, &tc4MPL)
         mTd.Tc4MPL = &tc4MPL
-    case "multipartForm":
+    case "multipartFormM":
         var pLMPForm PLMPForm
-        var pLnf PLMPForm
-        var pLf PLMPForm
 
         reqPayload := mTd.OriginTcD.TestCase.ReqPayload()["multipartForm"]
         reqPayloadJsonBytes, _ := json.Marshal(reqPayload)
         json.Unmarshal(reqPayloadJsonBytes, &pLMPForm)
-
-        for i, _ := range pLMPForm {
-            if len(pLMPForm[i].Type) == 0 {
-                pLnf = append(pLnf, pLMPForm[i])
-            } else {
-                pLf = append(pLf, pLMPForm[i])
-            }
-        }
-        //
-        var pl = make(map[string]string)
-        for i, _ := range pLnf {
-            pl[pLnf[i].Name] = pLnf[i].Value
-        }
         //
         var tc4MPL testcase.TestCaseDataInfo
         tj, _ := json.Marshal(mTd.OriginTcD)   
         json.Unmarshal(tj, &tc4MPL)
-
-        tc4MPL.TestCase.DelReqPayload("multipartForm")
-        tc4MPL.TestCase.SetRequestPayload("multipartForm", pl)
         //
         mTd.Tc4MPL         = &tc4MPL
         mTd.PLMPForm       = pLMPForm
-        mTd.PLMPFormNoFile = pLnf
-        mTd.PLMPFormFile   = pLf
     }
 }
 
@@ -110,12 +88,53 @@ func getMFieldsDetails(value interface{}) []MFieldDetails {
     return mFds
 }
 
+func (mTd *MTestCaseDataInfo) getTypeFileIndex (mFds []MFieldDetails) {
+    var ii []string
+    for _, mFd := range mFds {
+        if len(mFd.FieldPath) == 2 {
+            if mFd.FieldPath[1] == "type" && mFd.CurrValue == "file" {
+                ii = append(ii, mFd.FieldPath[0])
+            }
+        }
+    }
+
+    mTd.MFileIndex = ii
+}
+
+func ifItemExists (item string, items []string) bool {
+    matched := false
+    for _, it := range items {
+        if it == item {
+            matched = true
+            break
+        }
+    }
+
+    return matched
+}
+
 // MSetRequestPayload
 func (mTd *MTestCaseDataInfo) MSetRequestPayload (key string, mFds []MFieldDetails, mFunc *MFunc) {
     tcJson, _ := json.Marshal(mTd.Tc4MPL)
     //
     i := 0
     for _, mFd := range mFds {
+        if key == "multipartForm" {
+            switch len(mFd.FieldPath) {
+            case 0:
+                continue
+            case 1:
+                continue
+            case 2:
+                if mFd.FieldPath[1] == "name" {
+                    continue
+                }
+                if ifItemExists(mFd.FieldPath[0], mTd.MFileIndex) {
+                    continue
+                }
+            }
+        }
+        //
         plPath := key + "." + strings.Join(mFd.FieldPath, ".")
         plFullPath := "TestCase." + mTd.Tc4MPL.TcName() + ".request.payload" + "." + plPath
         // 
@@ -142,9 +161,9 @@ func (mTd *MTestCaseDataInfo) MSetRequestPayload (key string, mFds []MFieldDetai
             mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
             mTd.NextTcPriority = mTd.NextTcPriority + 1
             //
-            if key == "multipartForm" {
-                mTd.reWrite4MPForm(&mTcData)
-            }
+            // if key == "multipartForm" {
+            //     mTd.reWrite4MPForm(&mTcData)
+            // }
 
             mTd.MTcDs = append(mTd.MTcDs, &mTcData)
         }
@@ -156,8 +175,23 @@ func (mTd *MTestCaseDataInfo) MDelRequestPayload (key string, mFds []MFieldDetai
     tcJson, _ := json.Marshal(mTd.Tc4MPL)
     nodePaths, _ := getPayloadNodePaths(mFds)
 
+    aa, _ := json.Marshal(nodePaths)
+    fmt.Println("nodePaths: ", string(aa))
+
     i := 0
     for _, pathStr := range nodePaths {
+        if key == "multipartForm" {
+            pp := strings.Split(pathStr, ".")
+            switch len(pp) {
+            case 0:
+                continue
+            case 2:
+                if pp[1] == "name" || pp[1] == "value" {
+                    continue
+                }
+            }
+        }
+        //
         i = i + 1
     
         plPath := key + "." + pathStr
@@ -180,10 +214,6 @@ func (mTd *MTestCaseDataInfo) MDelRequestPayload (key string, mFds []MFieldDetai
 
         mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
         mTd.NextTcPriority = mTd.NextTcPriority + 1
-        //
-        if key == "multipartForm" {
-            mTd.reWrite4MPForm(&mTcData)
-        }
     
         mTd.MTcDs = append(mTd.MTcDs, &mTcData)
     }
@@ -226,37 +256,53 @@ func (mTd *MTestCaseDataInfo) MAddRequestPayloadNode (key string, mFds []MFieldD
     // (3). add new node, for each node level
     tcJson, _ := json.Marshal(mTd.Tc4MPL)
 
-    i := 0
-
     randKey := rands.RandStringRunes(5)
     randValue := rands.RandStringRunes(5)
 
-    // set the value
-    plPath := key + "." + randKey
-    plFullPath := "TestCase." + mTd.Tc4MPL.TcName() + ".request.payload" + "." + plPath
-
-    mutatedTcJson, _ := sjson.Set(string(tcJson), plFullPath, randValue)
-
-    mFd := MFieldDetails {
-        FieldPath:     []string{randKey}, 
-        CurrValue:     "", 
-        FieldType:     reflect.TypeOf("").Kind().String(), 
-        FieldSubType:  "", 
-    }
-    mInfoStr := "Add new rand payload key: " + " `" + fmt.Sprint(randKey) + "`, `" + fmt.Sprint(randValue) + "`"
-
-    tcMutationInfo := getTcMutationInfo(mFd, "")
-    mTcData := getMutatedTcData([]byte(mutatedTcJson), i, mFunc, 
-        "Add new rand payload key", mInfoStr, tcMutationInfo)
-
-    mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
-    mTd.NextTcPriority = mTd.NextTcPriority + 1
-    //
     if key == "multipartForm" {
-        mTd.reWrite4MPForm(&mTcData)
-    }
+        m := make(map[string]string)
 
-    mTd.MTcDs = append(mTd.MTcDs, &mTcData)
+        m["name"] = randKey
+        m["value"] = randValue
+
+        // value, _ := sjson.Set(`{"friends":["Andy","Carol"]}`, "friends.-1", "Sara")
+        // sjson.Set(`{"key":true}`, "key", map[string]interface{}{"hello":"world"})
+
+        // pp := strings.Split(pathStr, ".")
+        // switch len(pp) {
+        // case 0:
+        //     continue
+        // case 2:
+        //     if pp[1] == "name" || pp[1] == "value" {
+        //         continue
+        //     }
+        // }
+    } else {
+        i := 0
+        
+        // set the value
+        plPath := key + "." + randKey
+        plFullPath := "TestCase." + mTd.Tc4MPL.TcName() + ".request.payload" + "." + plPath
+
+        mutatedTcJson, _ := sjson.Set(string(tcJson), plFullPath, randValue)
+
+        mFd := MFieldDetails {
+            FieldPath:     []string{randKey}, 
+            CurrValue:     "", 
+            FieldType:     reflect.TypeOf("").Kind().String(), 
+            FieldSubType:  "", 
+        }
+        mInfoStr := "Add new rand payload key: " + " `" + fmt.Sprint(randKey) + "`, `" + fmt.Sprint(randValue) + "`"
+
+        tcMutationInfo := getTcMutationInfo(mFd, "")
+        mTcData := getMutatedTcData([]byte(mutatedTcJson), i, mFunc, 
+            "Add new rand payload key", mInfoStr, tcMutationInfo)
+
+        mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
+        mTd.NextTcPriority = mTd.NextTcPriority + 1
+
+        mTd.MTcDs = append(mTd.MTcDs, &mTcData)
+    }  
 }
 
 func (mTd *MTestCaseDataInfo) MDelWholeRequestPayloadNode (key string, mFds []MFieldDetails, mFunc *MFunc) {
@@ -290,70 +336,3 @@ func (mTd *MTestCaseDataInfo) MDelWholeRequestPayloadNode (key string, mFds []MF
     
     mTd.MTcDs = append(mTd.MTcDs, &mTcData)
 }
-
-// MDelRequestPayloadMPFile, especially for multipartForm
-// this is to remove the file node one by one for multipartForm
-func (mTd *MTestCaseDataInfo) MDelRequestPayloadMPFile (key string, mFds []MFieldDetails, mFunc *MFunc) {
-    tcJson, _ := json.Marshal(mTd.Tc4MPL)
-
-    i := 0
-
-    for ii, v := range mTd.PLMPFormFile {
-        i = i + 1
-        
-        mFd := MFieldDetails {
-            FieldPath:     []string{v.Name}, 
-            CurrValue:     v.Value, 
-            FieldType:     reflect.TypeOf("").Kind().String(), 
-            FieldSubType:  "", 
-        } 
-        //
-        var pLMPForm PLMPForm
-        for jj, vj := range mTd.PLMPFormFile {
-            if ii != jj {
-                pLMPForm = append(pLMPForm, vj)
-            }
-        }
-
-        for _, vk := range mTd.PLMPFormNoFile {
-            pLMPForm = append(pLMPForm, vk)
-        }
-
-        mInfoStr := "Remove one file field: " + " `" + fmt.Sprint(v.Name) + 
-            "`, `" + fmt.Sprint(v.Value) + "`"
-        tcMutationInfo := getTcMutationInfo(mFd, "")
-
-        mTcData := getMutatedTcData([]byte(tcJson), i, mFunc, 
-            "Remove at lease one of the file field", mInfoStr, tcMutationInfo)
-
-        mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
-        mTd.NextTcPriority = mTd.NextTcPriority + 1
-        //
-        mTcData.TestCase.DelReqPayload("multipartForm")
-        mTcData.TestCase.SetRequestPayload("multipartForm", pLMPForm)
-        //
-        mTd.MTcDs = append(mTd.MTcDs, &mTcData)
-    }    
-}
-
-//
-func (mTd *MTestCaseDataInfo) reWrite4MPForm (mTcData *testcase.TestCaseDataInfo) {
-    var pLMPForm PLMPForm
-    mPl := mTcData.TestCase.ReqPayload()["multipartForm"]
-    for k, v := range mPl.(map[string]interface{}) {
-        mPForm := MPForm {
-            Name:  k,
-            Value: fmt.Sprint(v),
-        }
-        pLMPForm = append(pLMPForm, &mPForm)
-    }
-    pLMPForm = append(pLMPForm, mTd.PLMPFormFile...)
-    
-    mTcData.TestCase.DelReqPayload("multipartForm")
-    mTcData.TestCase.SetRequestPayload("multipartForm", pLMPForm)
-
-    mTcData.TestCase.SetPriority(fmt.Sprint(mTd.NextTcPriority))
-    mTd.NextTcPriority = mTd.NextTcPriority + 1
-}
-
-

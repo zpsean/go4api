@@ -18,7 +18,7 @@ import (
 
     gsession "go4api/lib/session"
     "go4api/utils"
-    // "go4api/cmd"
+    "go4api/cmd"
 )
 
 // data lookup sequence, latter override former one(s)
@@ -27,7 +27,10 @@ import (
 // Note: here may occur: fatal error: concurrent map iteration and map write, => need to fix
 func (tcDataStore *TcDataStore) MergeTestData () map[string]interface{} {
     var finalMap = make(map[string]interface{})
-    // check if config
+    // 1, options, cmdArgs
+    for k, v := range cmd.CmdArgs {
+        finalMap[k] = v
+    }
 
     // 2
     envMap := utils.GetOsEnviron()

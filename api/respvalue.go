@@ -84,6 +84,7 @@ func (tcDataStore *TcDataStore) GetHeadersActualValue (key string) interface{} {
     return actualValue
 }
 
+// http response body
 func (tcDataStore *TcDataStore) GetBodyActualValueByPath (key string) interface{} {  
     var actualValue interface{}
     actualBody := tcDataStore.HttpActualBody
@@ -330,11 +331,11 @@ func compareCommon (reponsePart string, key string, assertionKey string, actualV
     //
     msg := testcase.TestMessage {
         AssertionResults: assertionResults,
-        ReponsePart: reponsePart,
-        FieldName: key,
-        AssertionKey:  assertionKey,
-        ActualValue: actualValue,
-        ExpValue: expValue,   
+        ReponsePart:      reponsePart,
+        FieldName:        key,
+        AssertionKey:     assertionKey,
+        ActualValue:      actualValue,
+        ExpValue:         expValue,   
     }
 
     return testRes, &msg

@@ -20,6 +20,7 @@ import (
     "net/url"  
     "strings"
     "encoding/json"
+    "path/filepath"
 
     "go4api/cmd"
     "go4api/lib/testcase" 
@@ -66,15 +67,6 @@ func GetPayloadInfo (tcData *testcase.TestCaseDataInfo) (string, string, *string
     }
 
     return apiMethodSelector, apiMethod, bodyText, bodyMultipart, boundary
-}
-
-func fileOpen (path string, fileName string) *os.File {
-    fp, err := os.Open(path + fileName) 
-    if err != nil {
-        panic(err)
-    }
-
-    return fp
 }
 
 func PrepMultipart (reqPayload map[string]interface {}, path string) (*bytes.Buffer, string, error) {
@@ -124,13 +116,24 @@ func PrepMultipart (reqPayload map[string]interface {}, path string) (*bytes.Buf
                 return nil, "", err
             }
 
-            fp := fileOpen(path, v)
-            defer fp.Close()
+            ff := filepath.Join(path, strings.TrimSpace(v))
+            fInfo, err := os.Stat(ff)
 
-            if _, err = io.Copy(fw, fp); err != nil {
-                panic(err)
+            if os.IsNotExist(err) {
                 return nil, "", err
-            }
+            } else {
+                if !fInfo.IsDir() {
+                    fp := fileOpen(ff)
+                    defer fp.Close()
+
+                    if _, err = io.Copy(fw, fp); err != nil {
+                        panic(err)
+                        return nil, "", err
+                    }
+                } else {
+                    return nil, "", err
+                }
+            }    
         } else {
             n := iMap["name"].String()
             v := iMap["value"].String()
@@ -156,6 +159,15 @@ func PrepMultipart (reqPayload map[string]interface {}, path string) (*bytes.Buf
     boundary := writer.FormDataContentType()
   
     return body, boundary, nil
+}
+
+func fileOpen (fPath string) *os.File {
+    fp, err := os.Open(fPath) 
+    if err != nil {
+        panic(err)
+    }
+
+    return fp
 }
 
 func PrepPostPayload (reqPayload map[string]interface{}) *strings.Reader {

@@ -12,16 +12,16 @@ package api
 
 import (
     // "fmt"
-    
-    gsql "go4api/db/mysql"
-    gpg "go4api/db/postgres"
+
+    gsql "go4api/db/sqldb"
+    // gpg  "go4api/db/postgres"
 )
 
 // for mysql
 func RunSql (tgtDb string, stmt string) (int, []string, []map[string]interface{}, string) {
     // gsql.Run will return: <impacted rows : int>, <rows for select : [][]interface{}{}>, <sql status : string>
     // status: SqlSuccess, SqlFailed
-    rowsCount, rowsHeaders, rowsData, sqlExecStatus := gsql.Run(tgtDb, stmt)
+    rowsCount, rowsHeaders, rowsData, sqlExecStatus := gsql.Run("mysql", tgtDb, stmt)
 
     return rowsCount, rowsHeaders, rowsData, sqlExecStatus
 }
@@ -30,7 +30,7 @@ func RunSql (tgtDb string, stmt string) (int, []string, []map[string]interface{}
 func RunPgSql (tgtDb string, stmt string) (int, []string, []map[string]interface{}, string) {
     // gsql.Run will return: <impacted rows : int>, <rows for select : [][]interface{}{}>, <sql status : string>
     // status: SqlSuccess, SqlFailed
-    rowsCount, rowsHeaders, rowsData, sqlExecStatus := gpg.Run(tgtDb, stmt)
+    rowsCount, rowsHeaders, rowsData, sqlExecStatus := gsql.Run("postgres", tgtDb, stmt)
 
     return rowsCount, rowsHeaders, rowsData, sqlExecStatus
 }

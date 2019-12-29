@@ -173,7 +173,7 @@ func GreaterOrEquals (actualValue interface{}, expValue interface{}) bool {
     }
 }
 
-// In, NotIn, Has, NotHas
+// In, NotIn, Has, NotHas, for item in item slice
 func In (actualValue interface{}, expValue interface{}) bool {
     var ifIn bool
 
@@ -222,5 +222,24 @@ func Match (actualValue interface{}, expPattern interface{}) bool {
     }
 }
 
+// special cases for map:
+// map has key
+func HasMapKey (actualValue interface{}, expValue interface{}) {
+    
+}
+
+func NotHasMapKey (actualValue interface{}, expValue interface{}) {
+    
+}
+
+// has key but value is null
+func IsNull (actualValue interface{}, expValue interface{}) {
+    
+}
+
+// has key but value is not null
+func IsNotNull (actualValue interface{}, expValue interface{}) {
+    
+}
 
 

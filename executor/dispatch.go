@@ -20,8 +20,7 @@ import (
     "go4api/cmd"
     // "go4api/fuzz"
     "go4api/mutation"
-    "go4api/db/mysql"
-    "go4api/db/postgres"
+    gsql "go4api/db/sqldb"
     "go4api/db/redis"
     "go4api/db/mongodb"
 )
@@ -39,8 +38,7 @@ func Dispatch(ch chan int, gStart_time time.Time, gStart_str string) {
     // for type 1, the json is rendered by data tables first, then build the tcTree
     // for type 2, build the cases hierarchy first, then render the child cases using the parent's outputs
     //
-    WarmUpDBConnection()
-    WarmUpPgDbConnection()
+    WarmUpSqlDBConnection()
     WarmUpRedisConnection()
     WarmUpMongoDBConnection()
     //
@@ -106,15 +104,13 @@ func MkResultsDir(gStart_str string, opt cmd.Options) string {
     return resultsDir
 }
 
-func WarmUpDBConnection () {
-    if cmd.Opt.IfSqlDb == true {
-        gsql.InitConnection()
+func WarmUpSqlDBConnection () {
+    if cmd.Opt.IfMySqlDb == true {
+        gsql.InitConnection("mysql")
     }
-}
 
-func WarmUpPgDbConnection () {
     if cmd.Opt.IfPgDb == true {
-        gpg.InitConnection()
+        gsql.InitConnection("postgres")
     }
 }
 

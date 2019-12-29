@@ -42,7 +42,7 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo) {
             out_len = length
         }
 
-        fmt.Printf("\n%s%-40s%-3s%-30s%-7s[%-7s,%-7s,%-10s] %-30s%-30s%-4s%d%s\n", CLR_R, 
+        fmt.Printf("\n%s%-45s%-4s%-30s%-7s[%-7s,%-7s,%-10s] %-30s%-30s%-4s%d%s\n", CLR_R, 
             tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
             tcReportResults.TestResult, tcReportResults.SetUpResult, tcReportResults.HttpResult, tcReportResults.TearDownResult, 
             tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
@@ -61,7 +61,7 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo) {
 
         fmt.Println(string(tcExecution.ActualBody)[0:out_len], "...")
     } else if tcReportResults.TestResult == "Success" {
-        fmt.Printf("\n%s%-40s%-3s%-30s%-7s[%-7s,%-7s,%-10s] %-30s%-30s%-4s%d%s\n", CLR_G, 
+        fmt.Printf("\n%s%-45s%-4s%-30s%-7s[%-7s,%-7s,%-10s] %-30s%-30s%-4s%d%s\n", CLR_G, 
             tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
             tcReportResults.TestResult, tcReportResults.SetUpResult, tcReportResults.HttpResult, tcReportResults.TearDownResult, 
             tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,
@@ -71,7 +71,7 @@ func ReportConsoleByTc (tcExecution testcase.TestCaseExecutionInfo) {
             fmt.Println(tcReportResults.MutationInfoStr)
         }
     } else {
-        fmt.Printf("\n%s%-40s%-3s%-30s%-7s[%-7s,%-7s,%-10s] %-30s%-30s%-4s%d%s\n", CLR_W, 
+        fmt.Printf("\n%s%-45s%-4s%-30s%-7s[%-7s,%-7s,%-10s] %-30s%-30s%-4s%d%s\n", CLR_W, 
             tcReportResults.TcName, tcReportResults.Priority, tcReportResults.ParentTestCase, 
             tcReportResults.TestResult, tcReportResults.SetUpResult, tcReportResults.HttpResult, tcReportResults.TearDownResult, 
             tcReportResults.JsonFilePath, tcReportResults.CsvFile, tcReportResults.CsvRow,

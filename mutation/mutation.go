@@ -49,8 +49,7 @@ type MTestCaseDataInfo struct {
     Tc4MPL         *testcase.TestCaseDataInfo  // if multipartForm, payload without file
     TcPlType       string    // text, multipartForm, form, <others>
     PLMPForm       PLMPForm  // if multipartForm
-    PLMPFormNoFile PLMPForm
-    PLMPFormFile   PLMPForm
+    MFileIndex     []string
     MTcDs          []*testcase.TestCaseDataInfo  // mutated tcds
     NextTcPriority int
 }
@@ -80,14 +79,8 @@ type MFunc struct {
 }
 
 //
-type PLForm []*Form
-type Form struct {
-    Name  string
-    Value string
-}
-
-//
 type PLMPForm []*MPForm
+
 type MPForm struct {
     Name        string                 `json:"name"`
     Value       string                 `json:"value"`
@@ -126,14 +119,14 @@ func MutateTcArray (originTcArray []*testcase.TestCaseDataInfo) []*testcase.Test
         }
 
         originTcData.TestCase.SetPriority(fmt.Sprint(1))
-        mutatedTcArray = append(mutatedTcArray, originTcData)
+        // mutatedTcArray = append(mutatedTcArray, originTcData)
         // json, originTcData, multipartForm, form
         mTd := InitMTc(originTcData)
 
         mTd.NextTcPriority = 2
         // --- here to start the mutation
-        mTd.MRequestHeaders()
-        mTd.MRequestQueryString()
+        // mTd.MRequestHeaders()
+        // mTd.MRequestQueryString()
         mTd.MRequestPayload()
 
         mutatedTcArray = append(mutatedTcArray, mTd.MTcDs...)
