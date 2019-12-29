@@ -91,16 +91,11 @@ func (tcDataStore *TcDataStore) GetBodyActualValueByPath (key string) interface{
 
     prefix := "$(body)."
     lenPrefix := len(prefix)
-    prefix2 := "$."
-    lenPrefix2 := len(prefix2)
 
-    if key == prefix + "*" || key == prefix2 + "*" {
+    if key == prefix + "*" {
         actualValue = string(actualBody)
     } else if len(key) > lenPrefix && key[0:lenPrefix] == prefix {
         value := gjson.Get(string(actualBody), key[lenPrefix:])
-        actualValue = value.Value()
-    } else if len(key) > lenPrefix2 && key[0:lenPrefix2] == prefix2 {
-        value := gjson.Get(string(actualBody), key[lenPrefix2:])
         actualValue = value.Value()
     } else {
         actualValue = key
@@ -131,17 +126,6 @@ func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string) inte
             value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
             resValue = value.Value()
         }
-
-        // if searchPath == "$(sql).#" {
-        //     resValue = tcDataStore.CmdAffectedCount
-        // } else if searchPath == "$(sql).*" {
-        //     resValue = tcDataStore.CmdResults
-        // } else if tcDataStore.IfCmdResultsPrimitive() {
-        //     resValue = tcDataStore.CmdResults
-        // } else {
-        //     value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
-        //     resValue = value.Value()
-        // }
     } else {
         resValue = searchPath
     }
