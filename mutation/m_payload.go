@@ -38,8 +38,8 @@ func (mTd *MTestCaseDataInfo) MRequestPayload () {
             }
 
             mTd.MSetRequestPayload(mTd.TcPlType, mFds, mFuncs[8])
-            // mTd.MDelRequestPayload(mTd.TcPlType, mFds, mFuncs[9])
-            // mTd.MAddRequestPayloadNode(mTd.TcPlType, mFds, mFuncs[10])
+            mTd.MDelRequestPayload(mTd.TcPlType, mFds, mFuncs[9])
+            mTd.MAddRequestPayloadNode(mTd.TcPlType, mFds, mFuncs[10])
             mTd.MDelWholeRequestPayloadNode(mTd.TcPlType, mFds, mFuncs[11])
         }
 

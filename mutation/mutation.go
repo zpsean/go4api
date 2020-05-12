@@ -125,8 +125,8 @@ func MutateTcArray (originTcArray []*testcase.TestCaseDataInfo) []*testcase.Test
 
         mTd.NextTcPriority = 2
         // --- here to start the mutation
-        // mTd.MRequestHeaders()
-        // mTd.MRequestQueryString()
+        mTd.MRequestHeaders()
+        mTd.MRequestQueryString()
         mTd.MRequestPayload()
 
         mutatedTcArray = append(mutatedTcArray, mTd.MTcDs...)
