@@ -96,7 +96,14 @@ func (tcDataStore *TcDataStore) GetBodyActualValueByPath (key string) interface{
         actualValue = string(actualBody)
     } else if len(key) > lenPrefix && key[0:lenPrefix] == prefix {
         value := gjson.Get(string(actualBody), key[lenPrefix:])
-        actualValue = value.Value()
+
+        // if the path (key) exists
+        if !value.Exists() {
+            // the key does not exist, set the actualValue = _null.key
+            actualValue = "_null.key"
+        } else {
+            actualValue = value.Value()
+        }
     } else {
         actualValue = key
     }
@@ -124,7 +131,14 @@ func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string) inte
             resValue = tcDataStore.CmdResults
         default:
             value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
-            resValue = value.Value()
+            // if the path (key) exists
+            if !value.Exists() {
+                // the key does not exist, set the actualValue = _null.key
+                resValue = "_null.key"
+            } else {
+                resValue = value.Value()
+            }
+            // resValue = value.Value()
         }
     } else {
         resValue = searchPath
@@ -140,6 +154,12 @@ func (tcDataStore *TcDataStore) GetPgSqlActualValueByPath (searchPath string) in
     prefix := "$(postgresql)."
     lenPrefix := len(prefix)
 
+    if len(tcDataStore.CmdResults.([]map[string]interface {})) == 0 {
+        resValue = "_null_key"
+
+        return resValue
+    }
+
     cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
     cmdResultsJson := string(cmdResultsB)
 
@@ -153,7 +173,14 @@ func (tcDataStore *TcDataStore) GetPgSqlActualValueByPath (searchPath string) in
             resValue = tcDataStore.CmdResults
         default:
             value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
-            resValue = value.Value()
+            // if the path (key) exists
+            if !value.Exists() {
+                // the key does not exist, set the actualValue = _null.key
+                resValue = "_null_key"
+            } else {
+                resValue = value.Value()
+            }
+            // resValue = value.Value()
         }
     } else {
         resValue = searchPath

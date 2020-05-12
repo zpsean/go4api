@@ -11,7 +11,7 @@
 package cmd
 
 import (
-    // "fmt"
+    "fmt"
     "encoding/json"
 
     "go4api/utils"
@@ -70,7 +70,12 @@ func SetTestEnv () {
 func GetConfig () Config {
     if len(Opt.Testconfig) > 0 {
         configJson := utils.GetJsonFromFile(Opt.Testconfig)
-        json.Unmarshal([]byte(configJson), &config)
+
+        e := json.Unmarshal([]byte(configJson), &config)
+        if e != nil {
+            fmt.Println("Unmarshal error: ")
+            panic(e)
+        }
 
         return config
     } else {
