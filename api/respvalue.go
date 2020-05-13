@@ -11,7 +11,7 @@
 package api
 
 import (
-    // "fmt"
+    "fmt"
     "strings"
     // "reflect"
     "encoding/json"
@@ -99,8 +99,8 @@ func (tcDataStore *TcDataStore) GetBodyActualValueByPath (key string) interface{
 
         // if the path (key) exists
         if !value.Exists() {
-            // the key does not exist, set the actualValue = _null.key
-            actualValue = "_null.key"
+            // the key does not exist, set the actualValue = _null_key_
+            actualValue = "_null_key_"
         } else {
             actualValue = value.Value()
         }
@@ -133,8 +133,8 @@ func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string) inte
             value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
             // if the path (key) exists
             if !value.Exists() {
-                // the key does not exist, set the actualValue = _null.key
-                resValue = "_null.key"
+                // the key does not exist, set the actualValue = _null_key_
+                resValue = "_null_key_"
             } else {
                 resValue = value.Value()
             }
@@ -155,7 +155,7 @@ func (tcDataStore *TcDataStore) GetPgSqlActualValueByPath (searchPath string) in
     lenPrefix := len(prefix)
 
     if len(tcDataStore.CmdResults.([]map[string]interface {})) == 0 {
-        resValue = "_null_key"
+        resValue = "_null_key_"
 
         return resValue
     }
@@ -175,8 +175,8 @@ func (tcDataStore *TcDataStore) GetPgSqlActualValueByPath (searchPath string) in
             value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
             // if the path (key) exists
             if !value.Exists() {
-                // the key does not exist, set the actualValue = _null.key
-                resValue = "_null_key"
+                // the key does not exist, set the actualValue = _null_key_
+                resValue = "_null_key_"
             } else {
                 resValue = value.Value()
             }
@@ -315,6 +315,22 @@ func compareCommon (reponsePart string, key string, assertionKey string, actualV
     // but here can not distinguish them
     assertionResults := ""
     var testRes bool
+
+    // reserved word: _ignore_assertion_
+    if fmt.Sprint(expValue) == "_ignore_assertion_" {
+        msg := testcase.TestMessage {
+            AssertionResults: "Success",
+            ReponsePart:      reponsePart,
+            FieldName:        key,
+            AssertionKey:     assertionKey,
+            ActualValue:      actualValue,
+            ExpValue:         expValue,   
+        }
+        
+        testRes = true
+
+        return testRes, &msg
+    } 
 
     if actualValue == nil || expValue == nil {
         // if only one nil

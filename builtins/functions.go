@@ -293,12 +293,21 @@ func Length (param interface{}) int {
 }
 
 //
-func ToInt (param interface{}) int {
+func ToInt (param interface{}) interface{} {
     switch param.(type) {
     case float64:
         // Note: tbd, to cosider format for int, float64 more
         return int(param.(float64))
     case string:
+        // for null
+        if fmt.Sprint(param) == "_null_key_" || fmt.Sprint(param) == "_null_value_" {
+            return param
+        }
+
+        if fmt.Sprint(param) == "_ignore_assertion_" {
+            return param
+        }
+
         i, err := strconv.Atoi(param.(string))
         if err != nil {
             fmt.Println("ToInt param is: ", param)

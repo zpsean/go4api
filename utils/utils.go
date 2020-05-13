@@ -35,13 +35,17 @@ func GetCurrentDir() string{
 }
 
 func GetCsvFromFile(filePath string) [][]string {
-    fi,err := ioutil.ReadFile(filePath)
+    fi, err := ioutil.ReadFile(filePath)
     if err != nil {
         fmt.Println("!! Error: ", filePath)
         panic(err)
     }
-    r2 := csv.NewReader(strings.NewReader(string(fi)))
-    csvRows, err := r2.ReadAll()
+
+    reader := csv.NewReader(strings.NewReader(string(fi)))
+    // the csv may contain row for comments, which is leading with #, to ignore
+    reader.Comment = '#'
+
+    csvRows, err := reader.ReadAll()
     if err != nil {
         fmt.Println("!! Error: ", filePath)
         panic(err)
