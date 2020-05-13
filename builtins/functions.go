@@ -299,7 +299,7 @@ func ToInt (param interface{}) interface{} {
         // Note: tbd, to cosider format for int, float64 more
         return int(param.(float64))
     case string:
-        // for null
+        // for null, _null_key_, _null_value_
         if fmt.Sprint(param) == "_null_key_" || fmt.Sprint(param) == "_null_value_" {
             return param
         }

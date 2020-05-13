@@ -180,7 +180,6 @@ func (tcDataStore *TcDataStore) GetPgSqlActualValueByPath (searchPath string) in
             } else {
                 resValue = value.Value()
             }
-            // resValue = value.Value()
         }
     } else {
         resValue = searchPath

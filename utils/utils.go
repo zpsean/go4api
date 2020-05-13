@@ -42,7 +42,7 @@ func GetCsvFromFile(filePath string) [][]string {
     }
 
     reader := csv.NewReader(strings.NewReader(string(fi)))
-    // the csv may contain row for comments, which is leading with #, to ignore
+    // the csv may contain row for comments, which is leading with # (rune), to ignore
     reader.Comment = '#'
 
     csvRows, err := reader.ReadAll()
