@@ -12,6 +12,7 @@ package gsql
 
 import (
     "fmt"
+    "time"
     "strings"
     "database/sql"
 )
@@ -199,6 +200,7 @@ func ScanRows (rows *sql.Rows) (int, []string, []map[string]interface{}) {
 
     scanArgs := make([]interface{}, len(rowsHeaders))
     values := make([]interface{}, len(rowsHeaders))
+
     for i := range values {
         scanArgs[i] = &values[i]
     }
@@ -209,20 +211,35 @@ func ScanRows (rows *sql.Rows) (int, []string, []map[string]interface{}) {
         record := make(map[string]interface{})
 
         for i, col := range values {
-            if col != nil {
-                // note, try best to get the type information to interface{}
-                switch col.(type) {
-                case int:
-                    record[rowsHeaders[i]] = col.(int)
-                case int64:
-                    record[rowsHeaders[i]] = col.(int64)
-                case float32:
-                    record[rowsHeaders[i]] = col.(float32)
-                case float64:
-                    record[rowsHeaders[i]] = col.(float64)
-                default:
-                    record[rowsHeaders[i]] = string(col.([]byte))
-                }
+            // note, try best to get the type information to interface{}
+            // int64
+            // float64
+            // bool
+            // []byte
+            // string
+            // time.Time
+            // nil
+            switch col.(type) {
+            case int:
+                record[rowsHeaders[i]] = col.(int)
+            case int64:
+                record[rowsHeaders[i]] = col.(int64)
+            case float32:
+                record[rowsHeaders[i]] = col.(float32)
+            case float64:
+                record[rowsHeaders[i]] = col.(float64)
+            case bool:
+                record[rowsHeaders[i]] = col.(bool)
+            case []byte:
+                record[rowsHeaders[i]] = col.([]byte)
+            case string:
+                record[rowsHeaders[i]] = col.(string)
+            case time.Time:
+                record[rowsHeaders[i]] = col.(time.Time)
+            case nil:
+                record[rowsHeaders[i]] = nil
+            default:
+                record[rowsHeaders[i]] = fmt.Sprint(col)
             }
         }
         rowsCount = rowsCount + 1

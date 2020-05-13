@@ -164,7 +164,7 @@ func (tcDataStore *TcDataStore) CompareBody() ([]bool, []*testcase.TestMessage) 
 
             for assertionKey, expValue := range expBody_sub {
                 // if path, then value - value, otherwise, key - value
-                actualValue := tcDataStore.GetBodyActualValueByPath(key)
+                actualValue := tcDataStore.GetResponseValue(key)
                 
                 testRes, msg := compareCommon("Body", key, assertionKey, actualValue, expValue)
 

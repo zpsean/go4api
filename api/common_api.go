@@ -343,10 +343,10 @@ func (tcDataStore *TcDataStore) CompareRespGroup (cmdExpResp map[string]interfac
 
                 var expValue interface{}
                 switch expValueOrigin.(type) {
-                    case float64, int64: 
+                    case float64, int64, nil: 
                         expValue = expValueOrigin
                     default:
-                        expValue = tcDataStore.GetResponseValue(expValueOrigin.(string))
+                        expValue = tcDataStore.GetResponseValue(fmt.Sprint(expValueOrigin))
                 }
                 
                 testRes, msg := compareCommon(tcDataStore.CmdType, key, assertionKey, actualValue, expValue)

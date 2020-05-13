@@ -23,30 +23,34 @@ import (
 )
 
 func (tcDataStore *TcDataStore) GetResponseValue (searchPath string) interface{} {
-    // prefix = "$(status).", "$(headers).", "$(body)."
+    // searchPath has prefix = "$(status).", "$(headers).", "$(body).", "$(xx).", etc.
     var value interface{}
 
-    switch {
-        case strings.HasPrefix(searchPath, "$(status)."):
-            value = tcDataStore.GetStatusActualValue(searchPath)
-        case strings.HasPrefix(searchPath, "$(headers)."):
-            value = tcDataStore.GetHeadersActualValue(searchPath)
-        case strings.HasPrefix(searchPath, "$(body)."):
-            value = tcDataStore.GetBodyActualValueByPath(searchPath)
-        case strings.HasPrefix(searchPath, "$(sql)."):
-            value = tcDataStore.GetSqlActualValueByPath(searchPath)
-        case strings.HasPrefix(searchPath, "$(postgresql)."):
-            value = tcDataStore.GetPgSqlActualValueByPath(searchPath)
-        case strings.HasPrefix(searchPath, "$(redis)."):
-            value = tcDataStore.GetRedisActualValueByPath(searchPath)
-        case strings.HasPrefix(searchPath, "$(mongodb)."):
-            value = tcDataStore.GetMongoDBActualValueByPath(searchPath)
-        case strings.HasPrefix(searchPath, "$(file)."):
-            value = tcDataStore.GetFileActualValueByPath(searchPath)
-        // case strings.HasPrefix(searchPath, "$."):
-        //     value = tcDataStore.GetBodyActualValueByPath(searchPath)
-        default:
+    z := strings.SplitN(searchPath, ".", 2)
+
+    if len(z) == 2 {
+        if len(z[0]) > 0 && len(z[1]) > 0 {
+            switch z[0] {
+            case "$(status)":
+                value = tcDataStore.GetStatusActualValue(searchPath)
+            case "$(headers)":
+                value = tcDataStore.GetHeadersActualValue(searchPath)
+            case "$(body)":
+                value = tcDataStore.GetBodyActualValueByPath(z[1])
+            case "$(sql)", "$(mysql)", "$(postgresql)", "$(mongodb)":
+                value = tcDataStore.GetSqlActualValueByPath(z[1])
+            case "$(file)":
+                value = tcDataStore.GetFileActualValueByPath(z[1])
+            case "$(redis)":
+                value = tcDataStore.GetRedisActualValueByPath(searchPath)
+            default:
+                value = searchPath
+            } 
+        } else {
             value = searchPath
+        }
+    } else {
+        value = searchPath
     }
     
     return value
@@ -84,75 +88,38 @@ func (tcDataStore *TcDataStore) GetHeadersActualValue (key string) interface{} {
     return actualValue
 }
 
+
 // http response body
-func (tcDataStore *TcDataStore) GetBodyActualValueByPath (key string) interface{} {  
-    var actualValue interface{}
-    actualBody := tcDataStore.HttpActualBody
+func (tcDataStore *TcDataStore) GetBodyActualValueByPath (jsonPath string) interface{} {  
+    var resValue interface{}
 
-    prefix := "$(body)."
-    lenPrefix := len(prefix)
+    actualBodyString := string(tcDataStore.HttpActualBody)
 
-    if key == prefix + "*" {
-        actualValue = string(actualBody)
-    } else if len(key) > lenPrefix && key[0:lenPrefix] == prefix {
-        value := gjson.Get(string(actualBody), key[lenPrefix:])
-
+    switch {
+    case jsonPath == "*":
+        resValue = actualBodyString
+    default:
+        value := gjson.Get(actualBodyString, jsonPath)
         // if the path (key) exists
         if !value.Exists() {
             // the key does not exist, set the actualValue = _null_key_
-            actualValue = "_null_key_"
+            resValue = "_null_key_"
         } else {
-            actualValue = value.Value()
+            resValue = value.Value()
         }
-    } else {
-        actualValue = key
     }
 
-    return actualValue
-}
-
-// mysql
-func (tcDataStore *TcDataStore) GetSqlActualValueByPath (searchPath string) interface{} {
-    var resValue interface{}
- 
-    prefix := "$(sql)."
-    lenPrefix := len(prefix)
-
-    cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
-    cmdResultsJson := string(cmdResultsB)
-
-    if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
-        switch {
-        case searchPath == "$(sql).affectedCount":
-            resValue = tcDataStore.CmdAffectedCount
-        case searchPath == "$(sql).*":
-            resValue = tcDataStore.CmdResults
-        case tcDataStore.IfCmdResultsPrimitive():
-            resValue = tcDataStore.CmdResults
-        default:
-            value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
-            // if the path (key) exists
-            if !value.Exists() {
-                // the key does not exist, set the actualValue = _null_key_
-                resValue = "_null_key_"
-            } else {
-                resValue = value.Value()
-            }
-            // resValue = value.Value()
-        }
-    } else {
-        resValue = searchPath
+    if resValue == nil {
+        resValue = "_null_value_"
     }
 
     return resValue
 }
 
-// postgresql
-func (tcDataStore *TcDataStore) GetPgSqlActualValueByPath (searchPath string) interface{} {
+
+// for RDBMS sql
+func (tcDataStore *TcDataStore) GetSqlActualValueByPath (jsonPath string) interface{} {
     var resValue interface{}
- 
-    prefix := "$(postgresql)."
-    lenPrefix := len(prefix)
 
     if len(tcDataStore.CmdResults.([]map[string]interface {})) == 0 {
         resValue = "_null_key_"
@@ -160,33 +127,11 @@ func (tcDataStore *TcDataStore) GetPgSqlActualValueByPath (searchPath string) in
         return resValue
     }
 
-    cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
-    cmdResultsJson := string(cmdResultsB)
-
-    if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
-        switch {
-        case searchPath == "$(postgresql).affectedCount":
-            resValue = tcDataStore.CmdAffectedCount
-        case searchPath == "$(postgresql).*":
-            resValue = tcDataStore.CmdResults
-        case tcDataStore.IfCmdResultsPrimitive():
-            resValue = tcDataStore.CmdResults
-        default:
-            value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
-            // if the path (key) exists
-            if !value.Exists() {
-                // the key does not exist, set the actualValue = _null_key_
-                resValue = "_null_key_"
-            } else {
-                resValue = value.Value()
-            }
-        }
-    } else {
-        resValue = searchPath
-    }
+    resValue = tcDataStore.CommonGetActualValueByPath(jsonPath)
 
     return resValue
 }
+
 
 // redis
 func (tcDataStore *TcDataStore) GetRedisActualValueByPath (searchPath string) interface{} {
@@ -216,67 +161,44 @@ func (tcDataStore *TcDataStore) GetRedisActualValueByPath (searchPath string) in
     return resValue
 }
 
-// MongoDB
-func (tcDataStore *TcDataStore) GetMongoDBActualValueByPath (searchPath string) interface{} {
+
+// file
+func (tcDataStore *TcDataStore) GetFileActualValueByPath (jsonPath string) interface{} {
     var resValue interface{}
- 
-    prefix := "$(mongodb)."
-    lenPrefix := len(prefix)
 
-    // cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
-    // cmdResultsJson := string(cmdResultsB)
-
-    cmdResultsJson := tcDataStore.CmdResults.(string)
-
-    if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
-        switch {
-        case searchPath == "$(mongodb).affectedCount":
-            resValue = tcDataStore.CmdAffectedCount
-        case searchPath == "$(mongodb).*":
-            resValue = tcDataStore.CmdResults
-        case tcDataStore.IfCmdResultsPrimitive():
-            resValue = tcDataStore.CmdResults
-        default:
-            value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
-            resValue = value.Value()
-        }
-
-        // if searchPath == "$(sql).#" {
-        //     resValue = tcDataStore.CmdAffectedCount
-        // } else if searchPath == "$(sql).*" {
-        //     resValue = tcDataStore.CmdResults
-        // } else if tcDataStore.IfCmdResultsPrimitive() {
-        //     resValue = tcDataStore.CmdResults
-        // } else {
-        //     value := gjson.Get(string(cmdResultsJson), searchPath[lenPrefix:])
-        //     resValue = value.Value()
-        // }
-    } else {
-        resValue = searchPath
-    }
+    resValue = tcDataStore.CommonGetActualValueByPath(jsonPath)
 
     return resValue
 }
 
-// file
-func (tcDataStore *TcDataStore) GetFileActualValueByPath (searchPath string) interface{} {
-    var resValue interface{}
- 
-    prefix := "$(file)."
-    lenPrefix := len(prefix)
 
-    cmdResultsJson := tcDataStore.CmdResults.(string)
- 
-    if len(searchPath) > lenPrefix && searchPath[0:lenPrefix] == prefix {
-        switch {
-        case tcDataStore.IfCmdResultsPrimitive():
-            resValue = tcDataStore.CmdResults
-        default:
-            value := gjson.Get(cmdResultsJson, searchPath[lenPrefix:])
+// common json compatible value search
+func (tcDataStore *TcDataStore) CommonGetActualValueByPath (jsonPath string) interface{} {
+    var resValue interface{}
+
+    cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
+    cmdResultsJson := string(cmdResultsB)
+
+    switch {
+    // case jsonPath == "affectedCount":
+    //     resValue = tcDataStore.CmdAffectedCount
+    case jsonPath == "*":
+        resValue = tcDataStore.CmdResults
+    case tcDataStore.IfCmdResultsPrimitive():
+        resValue = tcDataStore.CmdResults
+    default:
+        value := gjson.Get(string(cmdResultsJson), jsonPath)
+        // if the path (key) exists
+        if !value.Exists() {
+            // the key does not exist, set the actualValue = _null_key_
+            resValue = "_null_key_"
+        } else {
             resValue = value.Value()
         }
-    } else {
-        resValue = searchPath
+    }
+
+    if resValue == nil {
+        resValue = "_null_value_"
     }
 
     return resValue
