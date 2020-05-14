@@ -39,7 +39,6 @@ func main(){
     fmt.Println(Banner)
 
     //get the cmd options
-
     ch := make(chan int, 1)
 
     fmt.Println("\n----- Start Main -----")

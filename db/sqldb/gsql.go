@@ -260,7 +260,7 @@ func ScanRows (rows *sql.Rows) (int, []string, []map[string]interface{}) {
         rowsCount = rowsCount + 1
         rowsData = append(rowsData, record)
     }
-    fmt.Println("---rowsCount, rowsHeaders, rowsData: ", rowsCount, rowsHeaders, rowsData)
+    // fmt.Println("---rowsCount, rowsHeaders, rowsData: ", rowsCount, rowsHeaders, rowsData)
     return rowsCount, rowsHeaders, rowsData
 }
 
