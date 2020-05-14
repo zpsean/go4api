@@ -99,14 +99,40 @@ func (tcDataStore *TcDataStore) GetBodyActualValueByPath (jsonPath string) inter
     case jsonPath == "*":
         resValue = actualBodyString
     default:
-        value := gjson.Get(actualBodyString, jsonPath)
-        // if the path (key) exists
-        if !value.Exists() {
-            // the key does not exist, set the actualValue = _null_key_
-            resValue = "_null_key_"
+        b := strings.HasSuffix(jsonPath, "__keys_count_")
+
+        if b == true {
+            var result gjson.Result
+
+            if jsonPath == "__keys_count_" {
+                result = gjson.Result {
+                    Type:  gjson.JSON,
+                    Raw:   actualBodyString,
+                }
+            } else {
+                subPath := jsonPath[0 : len(jsonPath) - len("__keys_count_") - 1]
+
+                result = gjson.Get(actualBodyString, subPath)
+            }
+            //
+            i := 0
+            result.ForEach(func(key, value gjson.Result) bool {
+                i = i + 1
+                return true // keep iterating
+            })
+
+            resValue = i
+
         } else {
-            resValue = value.Value()
-        }
+            value := gjson.Get(actualBodyString, jsonPath)
+            // if the path (key) exists
+            if !value.Exists() {
+                // the key does not exist, set the actualValue = _null_key_
+                resValue = "_null_key_"
+            } else {
+                resValue = value.Value()
+            }
+        }   
     }
 
     if resValue == nil {
