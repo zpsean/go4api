@@ -201,19 +201,30 @@ func (tcDataStore *TcDataStore) GetFileActualValueByPath (jsonPath string) inter
 // common json compatible value search
 func (tcDataStore *TcDataStore) CommonGetActualValueByPath (jsonPath string) interface{} {
     var resValue interface{}
+    var cmdResultsJson string
 
-    cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
-    cmdResultsJson := string(cmdResultsB)
+    switch tcDataStore.CmdResults.(type) {
+    case string:
+        cmdResultsJson = tcDataStore.CmdResults.(string)
+    default:
+        cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
+        cmdResultsJson = string(cmdResultsB)
+    }
 
+    // --
     switch {
     // case jsonPath == "affectedCount":
     //     resValue = tcDataStore.CmdAffectedCount
     case jsonPath == "*":
-        resValue = tcDataStore.CmdResults
+        result := gjson.Result {
+            Type:  gjson.JSON,
+            Raw:   cmdResultsJson,
+        }
+        resValue = result.Value()
     case tcDataStore.IfCmdResultsPrimitive():
         resValue = tcDataStore.CmdResults
     default:
-        value := gjson.Get(string(cmdResultsJson), jsonPath)
+        value := gjson.Get(cmdResultsJson, jsonPath)
         // if the path (key) exists
         if !value.Exists() {
             // the key does not exist, set the actualValue = _null_key_
@@ -222,7 +233,7 @@ func (tcDataStore *TcDataStore) CommonGetActualValueByPath (jsonPath string) int
             resValue = value.Value()
         }
     }
-
+    
     if resValue == nil {
         resValue = "_null_value_"
     }
@@ -233,8 +244,15 @@ func (tcDataStore *TcDataStore) CommonGetActualValueByPath (jsonPath string) int
 
 //
 func (tcDataStore *TcDataStore) IfCmdResultsPrimitive () bool {
-    cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
-    cmdResultsJson := string(cmdResultsB)
+    var cmdResultsJson string
+
+    switch tcDataStore.CmdResults.(type) {
+    case string:
+        cmdResultsJson = tcDataStore.CmdResults.(string)
+    default:
+        cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
+        cmdResultsJson = string(cmdResultsB)
+    }
 
     // remove left \n
     ss := strings.TrimLeft(cmdResultsJson, "\n")

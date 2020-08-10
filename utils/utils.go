@@ -79,6 +79,7 @@ func GetJsonFromFile(filePath string) string {
     return string(fd)
 }
 
+
 // for path contains ~
 func GetAbsPath (path string) string {
     var absPath string
