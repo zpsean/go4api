@@ -38,8 +38,10 @@ Features
 - **Built-in functions** 
 - **User defined functions**: use ECMAScript 5.1(+)  
 
-More information, refer to [wiki](https://github.com/zpsean/go4api/wiki).
-
+More information, refer to [wiki](https://github.com/zpsean/go4api/wiki) and Blog:  
+[（上篇）API测试在测些什么，这些方向你值得拥有](https://www.jianshu.com/p/d5909638c82a).  
+[（下篇）吃自己的狗粮：Go4Api之API测试项目实践](https://www.jianshu.com/p/cc536d6a1898).  
+[测试与自动化测试，记测试工具Go4Api的诞生](https://www.jianshu.com/p/1d9241ec0c3e).  
 
 
 Install and Run
