@@ -105,6 +105,7 @@ func (tcsRunStore *TcsRunStore) RunEachPriority (baseUrl string, priority string
 
             // console 1. to print status to console (i.e. executed cases: "Success", "Fail")
             tcReportResults := tcExecution.TcReportResults()
+
             repJson, _ := json.Marshal(tcReportResults)
 
             tcsRunStore.TcDs = append(tcsRunStore.TcDs, tcExecution.TestCaseDataInfo)

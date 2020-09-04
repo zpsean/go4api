@@ -130,7 +130,18 @@ func (tcDataStore *TcDataStore) GetBodyActualValueByPath (jsonPath string) inter
                 // the key does not exist, set the actualValue = _null_key_
                 resValue = "_null_key_"
             } else {
-                resValue = value.Value()
+                // to avoid the scientific notation for big int
+                // get the underlying type of value first, if it is int / int64
+                // Note: need to refactor further
+                if value.Int() > 1000000000000 {
+                    if fmt.Sprint(value.Int()) == value.String() {
+                        resValue = value.Int()
+                    } else {
+                        resValue = value.Value()
+                    }
+                } else {
+                    resValue = value.Value()
+                }
             }
         }   
     }

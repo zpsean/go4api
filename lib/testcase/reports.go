@@ -13,7 +13,6 @@ package testcase
 import (
     // "fmt"
     "path/filepath"
-    "encoding/json"
 
     "go4api/cmd"
     gsession "go4api/lib/session"
@@ -22,17 +21,17 @@ import (
 // for report
 func (tcExecution *TestCaseExecutionInfo) TcConsoleResults() *TcConsoleResults {
     tcConsoleRes := &TcConsoleResults { 
-        TcName: tcExecution.TcName(),
-        Priority: tcExecution.Priority(),
-        ParentTestCase: tcExecution.ParentTestCase(),
-        JsonFilePath: filepath.Base(tcExecution.TestCaseDataInfo.JsonFilePath),
-        CsvFile: filepath.Base(tcExecution.TestCaseDataInfo.CsvFile),
-        CsvRow: tcExecution.TestCaseDataInfo.CsvRow,
+        TcName:          tcExecution.TcName(),
+        Priority:        tcExecution.Priority(),
+        ParentTestCase:  tcExecution.ParentTestCase(),
+        JsonFilePath:    filepath.Base(tcExecution.TestCaseDataInfo.JsonFilePath),
+        CsvFile:         filepath.Base(tcExecution.TestCaseDataInfo.CsvFile),
+        CsvRow:          tcExecution.TestCaseDataInfo.CsvRow,
         MutationInfoStr: tcExecution.TestCaseDataInfo.MutationInfoStr,
-        SetUpResult: tcExecution.SetUpResult,
-        HttpResult: tcExecution.HttpResult,
-        TearDownResult: tcExecution.TearDownResult,
-        TestResult: tcExecution.TestResult,
+        SetUpResult:     tcExecution.SetUpResult,
+        HttpResult:      tcExecution.HttpResult,
+        TearDownResult:  tcExecution.TearDownResult,
+        TestResult:       tcExecution.TestResult,
         ActualStatusCode: tcExecution.ActualStatusCode,
         HttpTestMessages: tcExecution.HttpTestMessages,
     }
@@ -61,7 +60,7 @@ func (tcExecution *TestCaseExecutionInfo) TcReportResults() *TcReportResults {
     if cmd.Opt.IfShowOriginRequest == true {
         caseOrigin = tcExecution.TestCaseDataInfo.TestCase
 
-        json.Unmarshal(tcExecution.ActualBody, &actualBody)
+        actualBody = string(tcExecution.ActualBody)
 
         actualHeader = tcExecution.ActualHeader
         globalVariables = gsession.LoopGlobalVariables()

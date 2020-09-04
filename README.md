@@ -238,6 +238,12 @@ dt1-2,2,500
 $./go4api -run -baseUrl https://api.douban.com -c /<you Path>/testconfig  -tc  /<you Path>/testdata -tr /<you Path>/testresource -r /<you Path>/testresults
 ```
 
+Html Reporting
+-----------
+<p align="center">
+  <img width="900" src="https://cdn.rawgit.com/zpsean/go4api/master/doc/4-html-report.png">
+</p>
+
 ---
 
 Reference
