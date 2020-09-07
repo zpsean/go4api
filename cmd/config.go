@@ -23,19 +23,19 @@ var tEnv string
 type Config map[string]*Environment
 
 type Environment struct {
-    BaseUrl string
-    TimeZone string
-    Dbs map[string]*DbDetails
+    BaseUrl    string
+    TimeZone   string
+    Dbs        map[string]*DbDetails
     PostgreSql map[string]*DbDetails
-    Redis map[string]*RedisDetails
-    MongoDB map[string]*MongDBDetails
+    Redis      map[string]*RedisDetails
+    MongoDB    map[string]*MongDBDetails
 }
 
 //
 type DbDetails struct {
-    SqlCon interface{}
-    Ip string
-    Port interface{}
+    SqlCon   interface{}
+    Ip       string
+    Port     interface{}
     UserName string
     Password string
     Dbname   string
@@ -44,18 +44,18 @@ type DbDetails struct {
 
 type RedisDetails struct {
     RedisCon interface{}
-    Ip string
-    Port interface{}
+    Ip       string
+    Port     interface{}
     UserName string
     Password string
 }
 
 type MongDBDetails struct {
     MongDBCon interface{}
-    Ip string
-    Port interface{}
-    UserName string
-    Password string
+    Ip        string
+    Port      interface{}
+    UserName  string
+    Password  string
 }
 
 //

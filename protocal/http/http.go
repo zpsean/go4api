@@ -49,7 +49,11 @@ func (httpRestful HttpRestful) Request(urlStr string, apiMethod string, reqHeade
     }
     //Header
     for key, value := range reqHeaders {
-        reqest.Header.Add(key, fmt.Sprint(value))
+        if strings.ToLower(key) == "host" {
+            reqest.Host = fmt.Sprint(value)
+        } else {
+            reqest.Header.Add(key, fmt.Sprint(value))
+        }
     }
     //response
     response, err := client.Do(reqest)

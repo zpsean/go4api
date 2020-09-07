@@ -15,6 +15,7 @@ import (
     "strings"
     // "reflect"
     "encoding/json"
+    "strconv"
 
     "go4api/assertion" 
     "go4api/lib/testcase" 
@@ -130,15 +131,12 @@ func (tcDataStore *TcDataStore) GetBodyActualValueByPath (jsonPath string) inter
                 // the key does not exist, set the actualValue = _null_key_
                 resValue = "_null_key_"
             } else {
-                // to avoid the scientific notation for big int
-                // get the underlying type of value first, if it is int / int64
-                // Note: need to refactor further
-                if value.Int() > 1000000000000 {
-                    if fmt.Sprint(value.Int()) == value.String() {
-                        resValue = value.Int()
-                    } else {
-                        resValue = value.Value()
-                    }
+                // for big int, to avoid the automatical convertion to 
+                // scientific notation convertion for float64
+                s := value.String()
+                intI, err := strconv.Atoi(s)
+                if err == nil {
+                    resValue = intI
                 } else {
                     resValue = value.Value()
                 }
