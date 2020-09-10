@@ -131,14 +131,29 @@ func (tcDataStore *TcDataStore) GetBodyActualValueByPath (jsonPath string) inter
                 // the key does not exist, set the actualValue = _null_key_
                 resValue = "_null_key_"
             } else {
-                // for big int, to avoid the automatical convertion to 
-                // scientific notation convertion for float64
-                s := value.String()
-                intI, err := strconv.Atoi(s)
-                if err == nil {
-                    resValue = intI
-                } else {
-                    resValue = value.Value()
+                vv := value.Value()
+
+                switch vv.(type) {
+                    case nil:
+                        resValue = value.Value()
+                    case string, bool:
+                        resValue = value.Value()
+                    case float64:
+                        // for big int, to avoid the automatical convertion to 
+                        // scientific notation convertion for float64
+                        s := value.String()
+                        intI, err := strconv.Atoi(s)
+                        if err == nil {
+                            resValue = intI
+                        } else {
+                            resValue = value.Value()
+                        }
+                    case map[string]interface{}:
+                        resValue = value.Value()
+                    case []interface{}:
+                        resValue = value.Value()
+                    default:
+                        resValue = value.Value()
                 }
             }
         }   
