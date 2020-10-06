@@ -11,7 +11,7 @@
 package api
 
 import (
-    // "fmt" 
+    "fmt" 
     "strings"
     // "encoding/json"
 
@@ -73,18 +73,9 @@ func (tcDataStore *TcDataStore) Compare () (string, []*testcase.TestMessage) {
     path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "response"
     tcDataStore.PrepEmbeddedFunctions(path)
 
-    // status
-    testResultsS, testMessagesS := tcDataStore.CompareStatus()
-    testResults = append(testResults, testResultsS[0:]...)
-    testMessages = append(testMessages, testMessagesS[0:]...)
-    // headers
-    testResultsH, testMessagesH := tcDataStore.CompareHeaders()
-    testResults = append(testResults, testResultsH[0:]...)
-    testMessages = append(testMessages, testMessagesH[0:]...)
-    // body
-    testResultsB, testMessagesB := tcDataStore.CompareBody()
-    testResults = append(testResults, testResultsB[0:]...)
-    testMessages = append(testMessages, testMessagesB[0:]...)
+
+    httpExpResp := tcDataStore.TcData.TestCase.Response()
+    testResults, testMessages = tcDataStore.CompareHttpRespGroup(httpExpResp)
 
     // default finalResults
     finalResults := "Success"
@@ -102,81 +93,56 @@ func (tcDataStore *TcDataStore) Compare () (string, []*testcase.TestMessage) {
 } 
 
 
-func (tcDataStore *TcDataStore) CompareStatus() ([]bool, []*testcase.TestMessage) {
+func (tcDataStore *TcDataStore) CompareHttpRespGroup (httpExpResp []map[string]interface{}) ([]bool, []*testcase.TestMessage){
     var testResults []bool
     var testMessages []*testcase.TestMessage
 
-    tcData := tcDataStore.TcData
-    expStatus := tcData.TestCase.RespStatus()
-    actualStatusCode := tcDataStore.HttpActualStatusCode
-    // status
-    if expStatus != nil {
-        for assertionKey, expValue := range expStatus {
-            actualValue := actualStatusCode
-            key := "status"
+    for _, v := range httpExpResp {
+        for key, value := range v {
+            httpExpResp_sub := value.(map[string]interface{})
+            for assertionKey, expValueOrigin := range httpExpResp_sub {
+                switch assertionKey {
+                case "HasMapKey", "NotHasMapKey":
+                    
+                case "IsNull", "IsNotNull":
 
-            testRes, msg := compareCommon("Status", key, assertionKey, actualValue, expValue)
-            
-            testMessages = append(testMessages, msg)
-            testResults = append(testResults, testRes)
-        }
-    }
-        
-    return testResults, testMessages
-} 
+                default:
+                    actualValue := tcDataStore.GetResponseValue(key)
 
-func (tcDataStore *TcDataStore) CompareHeaders() ([]bool, []*testcase.TestMessage) {
-    var testResults []bool
-    var testMessages []*testcase.TestMessage
-
-    tcData := tcDataStore.TcData
-    expHeader := tcData.TestCase.RespHeaders()
-    actualHeader := tcDataStore.HttpActualHeader
-    // headers
-    if expHeader != nil {
-        for key, value := range expHeader {
-            expHeader_sub := value.(map[string]interface{})
-            //
-            for assertionKey, expValue := range expHeader_sub {
-                actualValue := strings.Join(actualHeader[key], ",")
-
-                testRes, msg := compareCommon("Headers", key, assertionKey, actualValue, expValue)
-
-                testMessages = append(testMessages, msg)
-                testResults = append(testResults, testRes)
-            } 
-        }
-    }
-        
-    return testResults, testMessages
-} 
-
-func (tcDataStore *TcDataStore) CompareBody() ([]bool, []*testcase.TestMessage) {
-    var testResults []bool
-    var testMessages []*testcase.TestMessage
-
-    tcData := tcDataStore.TcData
-    expBody := tcData.TestCase.RespBody()
-    // body
-    if expBody != nil {
-        for key, value := range expBody {
-            expBody_sub := value.(map[string]interface{})
-
-            for assertionKey, expValue := range expBody_sub {
-                // if path, then value - value, otherwise, key - value
-                actualValue := tcDataStore.GetResponseValue(key)
-                
-                testRes, msg := compareCommon("Body", key, assertionKey, actualValue, expValue)
-
-                testMessages = append(testMessages, msg)
-                testResults = append(testResults, testRes)
+                    var expValue interface{}
+                    switch expValueOrigin.(type) {
+                        case float64, int64, nil: 
+                            expValue = expValueOrigin
+                        default:
+                            expValue = tcDataStore.GetResponseValue(fmt.Sprint(expValueOrigin))
+                    }
+                        
+                    // $(status), $(headers), $(body)
+                    var part string
+                    switch {
+                        case strings.HasPrefix(key, "$(status)"): 
+                            part = "HTTP.Status"
+                        case strings.HasPrefix(key, "$(headers)"): 
+                            part = "HTTP.Headers"
+                        case strings.HasPrefix(key, "$(body)"): 
+                            part = "HTTP.Body"
+                        default:
+                            part = "HTTP"
+                    }
+                    testRes, msg := compareCommon(part, key, assertionKey, actualValue, expValue)
+                    
+                    testMessages = append(testMessages, msg)
+                    testResults = append(testResults, testRes)
+                }
             }
         }
     }
-        
-    return testResults, testMessages
-} 
 
+    return testResults, testMessages
+}
+
+
+//
 func (tcDataStore *TcDataStore) HandleHttpResultsForOut () {
     // write out session if has
     path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + "session"

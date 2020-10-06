@@ -29,11 +29,7 @@ func (tcDataStore *TcDataStore) WriteOutGlobalVariables (expOutGlobalVariables m
                 value = v
             }
 
-            // value := tcDataStore.GetResponseValue(v.(string))
             gsession.WriteGlobalVariables(k, value)
-            // if err != nil {
-            //     panic(err) 
-            // }
         } 
     }
 }
@@ -49,11 +45,8 @@ func (tcDataStore *TcDataStore) WriteOutTcLocalVariables (expOutLocalVariables m
             case int, int64, float64:
                 value = v
             }
-            // value := tcDataStore.GetResponseValue(v.(string))
+
             tcDataStore.TcLocalVariables[k] = value
-            // if err != nil {
-            //     panic(err) 
-            // }
         } 
     }
 }

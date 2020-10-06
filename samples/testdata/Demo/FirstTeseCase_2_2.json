@@ -15,33 +15,43 @@
           "pageSize": "12"
         }
       },
-      "response": {
-        "status": {
-          "Equals": 200
-        },
-        "headers": {
-          "Content-Type": {
-            "Contains": "application/json"
+      "response": [
+        {
+          "$(status).statusCode": {
+            "Equals": 200
           }
         },
-        "body": {
-          "$.title": {
+        {
+          "$(headers).Content-Type": {
+            "Contains": "application/json;charset=UTF-8"
+          }
+        },
+        {
+          "$(body).title": {
             "Equals": "The Shawshank Redemption"
-          },
-          "$.original_title": {
+          }
+        },
+        {
+          "$(body).original_title": {
             "Equals": "肖申克的救赎"
-          },
-          "$.notexistkeyfortest": {
-            "Equals": null
-          },
-          "$.seasons_count": {
-            "Equals": null
-          },
-          "$.id": {
-            "Equals": null
+          }
+        },
+        {
+          "$(body).notexistkeyfortest": {
+            "Equals": "_null_key_"
+          }
+        },
+        {
+          "$(body).seasons_count": {
+            "Equals": "_null_value_"
+          }
+        },
+        {
+          "$(body).id": {
+            "Equals": "_null_value_"
           }
         }
-      },
+      ],
       "outputs": []
     }
   }

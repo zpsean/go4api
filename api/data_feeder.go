@@ -79,13 +79,6 @@ func (tcDataStore *TcDataStore) MergeTestData () map[string]interface{} {
     return finalMap
 }
 
-
-// 1. from cmd, getconfig()
-
-// 2. env variables (key, value), with prefix go4_
-
-// 3. session, if parent has seesion, all direct child would have it (mainly for scenario)
-
 // 4. data file (*_dt) / data file (inputs)
 func ConvertCsvRowToMap (csvHeader []string, csvRow []interface{}) map[string]interface{} {
     csvMap := map[string]interface{}{}

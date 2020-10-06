@@ -28,13 +28,6 @@ type FieldDetails struct {
 }
 
 func GetFieldsDetails(valueSource interface{}) []FieldDetails {
-    var value interface{}
-    jsonBytes, err := json.Marshal(valueSource)
-    if err != nil {
-        panic(err)
-    }
-    json.Unmarshal(jsonBytes, &value)
-
     var fieldDetailsSlice []FieldDetails
     c := make(chan FieldDetails)
 
@@ -43,7 +36,7 @@ func GetFieldsDetails(valueSource interface{}) []FieldDetails {
         wg := &sync.WaitGroup{}
 
         wg.Add(1)
-        TraverseFields(c, []string{}, value, wg)
+        TraverseFields(c, []string{}, valueSource, wg)
 
         wg.Wait()
     }(c)
@@ -74,9 +67,38 @@ func TraverseFields (c chan FieldDetails, subPath []string, value interface{}, w
         case nil:
             wg.Add(1)
             go fieldNull(c, subPath, value, "", wg)
-        case string, float64, bool:
+        case float64:
             wg.Add(1)
             fieldPrimitive(c, subPath, value, "", wg)
+        case bool:
+            wg.Add(1)
+            fieldPrimitive(c, subPath, value, "", wg)
+        case string:
+            ss := strings.TrimLeft(value.(string), "\n")
+            ss = strings.TrimSpace(ss)
+
+            if ss[0:1] == "{" || ss[1:2] == "{" {
+                pMap := make(map[string]interface{})
+                err := json.Unmarshal([]byte(value.(string)), &pMap)
+                if err != nil {
+                    panic(err)
+                }
+
+                wg.Add(1)
+                go fieldMap(c, subPath, pMap, "", wg)
+            } else if ss[0:1] == "[" || ss[1:2] == "[" {
+                var pSlice []interface{}
+                err := json.Unmarshal([]byte(value.(string)), &pSlice)
+                if err != nil {
+                    panic(err)
+                }
+
+                wg.Add(1)
+                go fieldSlice(c, subPath, pSlice, "", wg)
+            } else {
+                wg.Add(1)
+                fieldPrimitive(c, subPath, value, "", wg)
+            }
         case map[string]interface{}:
             wg.Add(1)
             go fieldMap(c, subPath, value, "", wg)
@@ -258,5 +280,4 @@ func GetJsonLeaves (fieldDetailsSlice []FieldDetails) []FieldDetails {
 
     return leaves
 }
-
 

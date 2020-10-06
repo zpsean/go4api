@@ -132,7 +132,7 @@ func ConstructTcInfosWithDt (jsonFile string, csvFileList []string) []*TestCaseD
                     value := csvRows[i][col]
 
                     // Note: trial, introduce "Fn::ToRawJson" for key, value like:
-                    // "jkey": {"Fn::ToRawJson": "${varableInCsv}"},
+                    // "key": {"Fn::ToRawJson": "${varableInCsv}"},
                     // it is mainly for json map {} or json array []
                     // !!! To be improved further using json key lookup method
                     jsonR = strings.Replace(jsonR, `{"Fn::ToRawJson": "${` + key + `}"}`, fmt.Sprint(value), -1)

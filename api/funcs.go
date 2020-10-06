@@ -13,7 +13,7 @@ package api
 import (
     "fmt"
     "strings"
-    // "reflect"
+    "reflect"
     "encoding/json"
 
     "go4api/lib/g4json"
@@ -26,14 +26,26 @@ import (
 
 
 func (tcDataStore *TcDataStore) EvaluateEmbeddedFunctions (value interface{}) interface{} {
-    jsonBytes, _ := json.Marshal(value)
-    jsonStr := string(jsonBytes)
+    if value == nil {
+        return nil
+    }
+
+    t := reflect.TypeOf(value).Kind().String()
+
+    jsonStr := "" 
+    switch t {
+    case "string":
+        jsonStr = value.(string)
+    default:
+        jsonBytes, _ := json.Marshal(value)
+        jsonStr = string(jsonBytes)
+    }
 
     // check if has embedded function
     if !strings.Contains(jsonStr, "Fn::") {
         return value
     } else {
-        // fmt.Println(">>...")
+        // the longest path which has "Fn::"
         funcLeavesSlice := GetFuncLeavesSlice(value)
 
         maxLevel := g4json.GetJsonNodesLevel(funcLeavesSlice)
@@ -48,6 +60,7 @@ func GetFuncLeavesSlice (value interface{}) []g4json.FieldDetails {
     var funcLeavesSlice []g4json.FieldDetails
 
     fieldDetailsSlice := g4json.GetFieldsDetails(value)
+
     leavesSlice := g4json.GetJsonLeaves(fieldDetailsSlice)
 
     for i, _ := range leavesSlice {

@@ -79,7 +79,7 @@ func Convert () {
                 SetUp:                    []*testcase.CommandDetails{},
                 Inputs:                   []interface{}{},
                 Request:                  &g4ARequest,
-                Response:                 &g4AResponse,
+                Response:                 g4AResponse,
                 Outputs:                  []*testcase.OutputsDetails{},
                 OutFiles:                 []*testcase.OutFilesDetails{},
                 OutGlobalVariables:       map[string]interface{}{},  // OutGlobalVariables
@@ -167,19 +167,19 @@ func (pathDetails PathDetails) buildG4ARequest () testcase.Request {
     return g4ARequest
 }
 
-func (pathDetails PathDetails) buildG4AResponse () testcase.Response {
-    var g4AResponse testcase.Response
+func (pathDetails PathDetails) buildG4AResponse () []map[string]interface{}  {
+    var g4AResponse []map[string]interface{} 
 
     respHeaders := make(map[string]interface{})
     // for _, consumes := range pathDetails.Produces {
         respHeaders["Content-Type"] = strings.Join(pathDetails.Produces, ";")
     // }
-    g4AResponse.Headers = respHeaders
+    // g4AResponse.Headers = respHeaders
 
     respStatus := make(map[string]interface{})
     respStatus["Equals"] = 200
 
-    g4AResponse.Status = respStatus
+    // g4AResponse.Status = respStatus
 
     return g4AResponse
 }

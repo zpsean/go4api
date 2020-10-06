@@ -15,46 +15,46 @@ import (
 
 // test case data type, includes testcase
 type TestCaseDataInfo struct {
-    TestCase *TestCase
-    JsonFilePath string
-    CsvFile string
-    CsvRow string
-    MutationArea string
+    TestCase         *TestCase
+    JsonFilePath     string
+    CsvFile          string
+    CsvRow           string
+    MutationArea     string
     MutationCategory string
-    MutationRule string
-    MutationInfoStr interface{}
-    MutationInfo MutationInfo
+    MutationRule     string
+    MutationInfoStr  interface{}
+    MutationInfo     MutationInfo
 }
 
 // test case execution type, includes testdata
 type TestCaseExecutionInfo struct {
-    TestCaseDataInfo *TestCaseDataInfo
-    SetUpResult string
+    TestCaseDataInfo  *TestCaseDataInfo
+    SetUpResult       string
     SetUpTestMessages [][]*TestMessage
-    HttpResult string
-    ActualStatusCode int
-    StartTime string
-    EndTime string
-    HttpTestMessages []*TestMessage
+    HttpResult        string
+    ActualStatusCode  int
+    StartTime         string
+    EndTime           string
+    HttpTestMessages  []*TestMessage
     StartTimeUnixNano int64
-    EndTimeUnixNano int64
-    DurationUnixNano int64
-    ActualBody []byte
-    ActualHeader map[string][]string
-    HttpUrl string
-    TearDownResult string
+    EndTimeUnixNano   int64
+    DurationUnixNano  int64
+    ActualBody        []byte
+    ActualHeader      map[string][]string
+    HttpUrl           string
+    TearDownResult    string
     TearDownTestMessages [][]*TestMessage
-    TestResult string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
-    LocalVariables interface{}
+    TestResult           string  // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
+    LocalVariables       interface{}
 }
 
 type TestMessage struct {  
     AssertionResults string
-    ReponsePart string // Status, Headers, Body
-    FieldName interface{}
-    AssertionKey  interface{}
-    ActualValue  interface{}
-    ExpValue interface{}
+    ReponsePart      string // Status, Headers, Body
+    FieldName        interface{}
+    AssertionKey     interface{}
+    ActualValue      interface{}
+    ExpValue         interface{}
 }
 
 //
@@ -64,22 +64,22 @@ type TestCases []TestCase
 type TestCase map[string]*TestCaseBasics
 
 type TestCaseBasics struct {
-    Priority string         `json:"priority"`
-    ParentTestCase string   `json:"parentTestCase"`
-    FunctionAreas []string  `json:"functionAreas"`
-    TestSuite string        `json:"testSuite"`
-    IfGlobalSetUpTestCase bool    `json:"ifGlobalSetUpTestCase"`
-    IfGlobalTearDownTestCase bool `json:"ifGlobalTearDownTestCase"`
-    SetUp []*CommandDetails     `json:"setUp"`
-    Inputs []interface{}        `json:"inputs"`
-    Request *Request            `json:"request"`
-    Response *Response          `json:"response"`
-    Outputs []*OutputsDetails   `json:"outputs"`
-    OutFiles []*OutFilesDetails   `json:"outFiles"`
-    OutGlobalVariables map[string]interface{}   `json:"outGlobalVariables"`
-    OutLocalVariables map[string]interface{}   `json:"outLocalVariables"`
-    Session map[string]interface{}           `json:"session"`
-    TearDown []*CommandDetails               `json:"tearDown"`
+    Priority       string                      `json:"priority"`
+    ParentTestCase string                      `json:"parentTestCase"`
+    FunctionAreas  []string                    `json:"functionAreas"`
+    TestSuite      string                      `json:"testSuite"`
+    IfGlobalSetUpTestCase    bool              `json:"ifGlobalSetUpTestCase"`
+    IfGlobalTearDownTestCase bool              `json:"ifGlobalTearDownTestCase"`
+    SetUp       []*CommandDetails              `json:"setUp"`
+    Inputs      []interface{}                  `json:"inputs"`
+    Request     *Request                       `json:"request"`
+    Response    []map[string]interface{}       `json:"response"`
+    Outputs     []*OutputsDetails              `json:"outputs"`
+    OutFiles    []*OutFilesDetails             `json:"outFiles"`
+    OutGlobalVariables map[string]interface{}  `json:"outGlobalVariables"`
+    OutLocalVariables  map[string]interface{}  `json:"outLocalVariables"`
+    Session   map[string]interface{}           `json:"session"`
+    TearDown  []*CommandDetails                `json:"tearDown"`
 }
 
 //
@@ -106,101 +106,102 @@ type MultipartForm struct {
 }
 
 
-//
-type Response struct {  
-    Status  map[string]interface{}  `json:"status"`
-    Headers map[string]interface{}  `json:"headers"`
-    Body    map[string]interface{}  `json:"body"`
-}
+// --
+// type Response struct {  
+//     Status  map[string]interface{}  `json:"status"`
+//     Headers map[string]interface{}  `json:"headers"`
+//     Body    map[string]interface{}  `json:"body"`
+// }
+// type Response []map[string]interface{}
 
 type OutputsDetails struct {
     FileName string
-    Format string
-    Data map[string][]interface{}
+    Format   string
+    Data     map[string][]interface{}
 }
 
 type OutFilesDetails struct {
-    TargetFile string
-    TargetHeader []string
-    Sources []string
+    TargetFile    string
+    TargetHeader  []string
+    Sources       []string
     SourcesFields []string
-    Operation string
-    Data map[string][]interface{}
+    Operation     string
+    Data          map[string][]interface{}
 }
 
 type CommandDetails struct {
-    CmdType string                              `json:"cmdType"`
-    CmdSource string                            `json:"cmdSource"`
-    Cmd interface{}                             `json:"cmd"`
-    CmdResponse map[string]interface{}          `json:"cmdResponse"`
-    OutGlobalVariables map[string]interface{}   `json:"outGlobalVariables"`
-    OutLocalVariables map[string]interface{}    `json:"outLocalVariables"`
-    Session map[string]interface{}              `json:"session"`
-    OutFiles []*OutFilesDetails                 `json:"outFiles"`
+    CmdType            string                    `json:"cmdType"`
+    CmdSource          string                    `json:"cmdSource"`
+    Cmd                interface{}               `json:"cmd"`
+    CmdResponse        []map[string]interface{}  `json:"cmdResponse"`
+    OutGlobalVariables map[string]interface{}    `json:"outGlobalVariables"`
+    OutLocalVariables  map[string]interface{}    `json:"outLocalVariables"`
+    Session            map[string]interface{}    `json:"session"`
+    OutFiles           []*OutFilesDetails        `json:"outFiles"`
 }
 
 type MutationInfo struct {
-    FieldPath []string
-    CurrValue interface{}
-    FieldType string // the json supported types
+    FieldPath    []string
+    CurrValue    interface{}
+    FieldType    string // the json supported types
     FieldSubType string  // like ip/email/phone/etc.
     MutatedValue interface{}
 }
 
 // for report format 
 type TcReportResults struct { 
-    TcName string 
+    TcName                string 
     IfGlobalSetUpTearDown string // SetUp, TearDown
     // CaseType string // Normal, Scenario, Mutation, Fuzz
-    Priority string
+    Priority       string
     ParentTestCase string
-    FunctionAreas []string
-    TestSuite string   
-    SetUpResult string // Success, Fail
+    FunctionAreas  []string
+    TestSuite      string   
+    SetUpResult     string // Success, Fail
     SetUpTestMessages [][]*TestMessage
-    Path string
-    Method string
-    JsonFilePath string
-    CsvFile string
-    CsvRow string
-    MutationArea string
+    Path          string
+    Method        string
+    JsonFilePath  string
+    CsvFile       string
+    CsvRow        string
+    MutationArea  string
     MutationCategory string
-    MutationRule string
-    MutationInfo interface{}
-    HttpResult string // Success, Fail
+    MutationRule     string
+    MutationInfo     interface{}
+    HttpResult       string // Success, Fail
     ActualStatusCode int
-    StartTime string
-    EndTime string
+    StartTime        string
+    EndTime          string
     HttpTestMessages []*TestMessage
     StartTimeUnixNano int64
-    EndTimeUnixNano int64
-    DurationUnixNano int64
-    DurationUnixMillis int64
-    TearDownResult string // Success, Fail
+    EndTimeUnixNano   int64
+    DurationUnixNano  int64
+    DurationUnixMillis   int64
+    TearDownResult       string // Success, Fail
     TearDownTestMessages [][]*TestMessage
-    TestResult string  // Success, Fail, ParentFailed
-    HttpUrl string
-    CaseOrigin interface{}
-    GlobalVariables interface{}
-    Session interface{}
+    TestResult           string  // Success, Fail, ParentFailed
+    HttpUrl              string
+    CaseOrigin           interface{}
+    GlobalVariables      interface{}
+    Session              interface{}
     LocalVariables interface{}
-    ActualHeader interface{}
-    ActualBody interface{}
+    ActualHeader   interface{}
+    ActualBody     interface{}
 }
 
 
 type TcConsoleResults struct { 
-    TcName string 
-    Priority string
+    TcName         string 
+    Priority       string
     ParentTestCase string
-    JsonFilePath string
-    CsvFile string
-    CsvRow string
+    JsonFilePath   string
+    CsvFile        string
+    CsvRow         string
     MutationInfoStr interface{}
-    SetUpResult string
-    HttpResult string  
-    TearDownResult string
-    TestResult string // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
+    SetUpResult     string
+    HttpResult      string  
+    TearDownResult  string
+    TestResult      string // Ready, Running, Success, Fail, ParentReady, ParentRunning, ParentFailed
     ActualStatusCode int
     HttpTestMessages []*TestMessage
 }

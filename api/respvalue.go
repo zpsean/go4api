@@ -11,14 +11,11 @@
 package api
 
 import (
-    "fmt"
+    // "fmt"
     "strings"
-    // "reflect"
+    "reflect"
     "encoding/json"
     "strconv"
-
-    "go4api/assertion" 
-    "go4api/lib/testcase" 
     
     gjson "github.com/tidwall/gjson"
 )
@@ -33,19 +30,31 @@ func (tcDataStore *TcDataStore) GetResponseValue (searchPath string) interface{}
         if len(z[0]) > 0 && len(z[1]) > 0 {
             switch z[0] {
             case "$(status)":
-                value = tcDataStore.GetStatusActualValue(searchPath)
+                value = tcDataStore.GetStatusActualValue()
             case "$(headers)":
-                value = tcDataStore.GetHeadersActualValue(searchPath)
+                value = tcDataStore.GetHeadersActualValue(z[1])
             case "$(body)":
-                value = tcDataStore.GetBodyActualValueByPath(z[1])
+                s := string(tcDataStore.HttpActualBody)
+
+                value = tcDataStore.GetContentByPath(s, z[1])
             case "$(sql)", "$(mysql)", "$(postgresql)", "$(mongodb)":
-                value = tcDataStore.GetSqlActualValueByPath(z[1])
+                s := tcDataStore.CmdResults
+
+                value = tcDataStore.GetContentByPath(s, z[1])
             case "$(file)":
-                value = tcDataStore.GetFileActualValueByPath(z[1])
+                s := tcDataStore.CmdResults
+
+                value = tcDataStore.GetContentByPath(s, z[1])
             case "$(redis)":
                 value = tcDataStore.GetRedisActualValueByPath(searchPath)
             default:
-                value = searchPath
+                // If the value from from declared variable: $(${variable}).xx.yy
+                if strings.Contains(z[0], "$(") {
+                    s := tcDataStore.GetVariableContent(z[0])
+                    value = tcDataStore.GetContentByPath(s, z[1])
+                } else {
+                    value = searchPath
+                }
             } 
         } else {
             value = searchPath
@@ -53,135 +62,157 @@ func (tcDataStore *TcDataStore) GetResponseValue (searchPath string) interface{}
     } else {
         value = searchPath
     }
-    
+ 
     return value
 }
 
-func (tcDataStore *TcDataStore) GetStatusActualValue (key string) interface{} {
-    var actualValue interface{}
+// http response status code
+func (tcDataStore *TcDataStore) GetStatusActualValue () interface{} {
     actualStatusCode := tcDataStore.HttpActualStatusCode
-    
-    prefix := "$(status)."
-    lenPrefix := len(prefix)
 
-    if len(key) == lenPrefix && key[0:lenPrefix] == prefix {
-        actualValue = actualStatusCode
-    } else {
-        actualValue = key
-    }
-
-    return actualValue
+    return actualStatusCode
 }
 
+// http response headers
 func (tcDataStore *TcDataStore) GetHeadersActualValue (key string) interface{} { 
     var actualValue interface{}
     actualHeader := tcDataStore.HttpActualHeader
  
-    prefix := "$(headers)."
-    lenPrefix := len(prefix)
-
-    if len(key) > lenPrefix && key[0:lenPrefix] == prefix {
-        actualValue = strings.Join(actualHeader[key[lenPrefix:]], ",")
-    } else {
-        actualValue = key
-    }
+    actualValue = strings.Join(actualHeader[key], ",")
 
     return actualValue
 }
 
+// ------------------------
+func (tcDataStore *TcDataStore) GetContentByPath (res interface{}, jsonPath string) interface{} {  
+    var r interface{}
 
-// http response body
-func (tcDataStore *TcDataStore) GetBodyActualValueByPath (jsonPath string) interface{} {  
-    var resValue interface{}
+    if res == nil {
+        return "_null_key_"
+    }
 
-    actualBodyString := string(tcDataStore.HttpActualBody)
+    if jsonPath == "*" {
+        return res
+    }
 
-    switch {
-    case jsonPath == "*":
-        resValue = actualBodyString
+    t := reflect.TypeOf(res).Kind().String()
+    switch t {
+    case "string":
+        if strings.HasSuffix(jsonPath, "_keys_count_") {
+            tcDataStore.GetKeysCount(res.(string), jsonPath)
+        }
+        
+        r = tcDataStore.GetRes(res.(string), jsonPath)
+    case "float64":
+        r = res
+    case "bool":
+        r = res
+    // case "map":
+    //     fmt.Println("type is: ", t)
+    case "slice", "map":
+        s, err := json.Marshal(res)
+        if err != nil {
+            panic(err)
+        }
+
+        if strings.HasSuffix(jsonPath, "_keys_count_") {
+            tcDataStore.GetKeysCount(string(s), jsonPath)
+        }
+        
+        r = tcDataStore.GetRes(string(s), jsonPath)
     default:
-        b := strings.HasSuffix(jsonPath, "__keys_count_")
-
-        if b == true {
-            var result gjson.Result
-
-            if jsonPath == "__keys_count_" {
-                result = gjson.Result {
-                    Type:  gjson.JSON,
-                    Raw:   actualBodyString,
-                }
-            } else {
-                subPath := jsonPath[0 : len(jsonPath) - len("__keys_count_") - 1]
-
-                result = gjson.Get(actualBodyString, subPath)
-            }
-            //
-            i := 0
-            result.ForEach(func(key, value gjson.Result) bool {
-                i = i + 1
-                return true // keep iterating
-            })
-
-            resValue = i
-
-        } else {
-            value := gjson.Get(actualBodyString, jsonPath)
-            // if the path (key) exists
-            if !value.Exists() {
-                // the key does not exist, set the actualValue = _null_key_
-                resValue = "_null_key_"
-            } else {
-                vv := value.Value()
-
-                switch vv.(type) {
-                    case nil:
-                        resValue = value.Value()
-                    case string, bool:
-                        resValue = value.Value()
-                    case float64:
-                        // for big int, to avoid the automatical convertion to 
-                        // scientific notation convertion for float64
-                        s := value.String()
-                        intI, err := strconv.Atoi(s)
-                        if err == nil {
-                            resValue = intI
-                        } else {
-                            resValue = value.Value()
-                        }
-                    case map[string]interface{}:
-                        resValue = value.Value()
-                    case []interface{}:
-                        resValue = value.Value()
-                    default:
-                        resValue = value.Value()
-                }
-            }
-        }   
+        r = "aaaaaaaaaa"
     }
 
-    if resValue == nil {
-        resValue = "_null_value_"
-    }
-
-    return resValue
+    return r
 }
 
-
-// for RDBMS sql
-func (tcDataStore *TcDataStore) GetSqlActualValueByPath (jsonPath string) interface{} {
+func (tcDataStore *TcDataStore) GetRes (s string, jsonPath string) interface{} {
     var resValue interface{}
+    
+    value := gjson.Get(s, jsonPath)
 
-    if len(tcDataStore.CmdResults.([]map[string]interface {})) == 0 {
+    // if the path (key) exists
+    if !value.Exists() {
+        // the key does not exist, set the actualValue = _null_key_
         resValue = "_null_key_"
+    } else {
+        vv := value.Value()
 
-        return resValue
+        switch vv.(type) {
+        case nil:
+            resValue = "_null_value_"
+        case string:
+            resValue = value.String()
+        case bool:
+            resValue = value.Bool()
+        case float64:
+            // for big int, to avoid the automatical convertion to 
+            // scientific notation convertion for float64
+            s := value.String()
+            intI, err := strconv.Atoi(s)
+            if err == nil {
+                resValue = intI
+            } else {
+                resValue = value.Float()
+            }
+        case map[string]interface{}, []interface{}:
+            r := value.Value()
+
+            rs, err := json.Marshal(r)
+            if err != nil {
+                panic(err)
+            }
+            resValue = string(rs)
+        default:
+            resValue = value.Value()
+        }
     }
-
-    resValue = tcDataStore.CommonGetActualValueByPath(jsonPath)
 
     return resValue
 }
 
+
+func (tcDataStore *TcDataStore) GetKeysCount (s string, jsonPath string) interface{} {
+    var resValue int
+    var result gjson.Result
+
+    if jsonPath == "_keys_count_" {
+        result = gjson.Result {
+            Type:  gjson.JSON,
+            Raw:   s,
+        }
+    } else {
+        subPath := jsonPath[0 : len(jsonPath) - len("_keys_count_") - 1]
+
+        result = gjson.Get(s, subPath)
+    }
+    //
+    i := 0
+    result.ForEach(func(key, value gjson.Result) bool {
+        i = i + 1
+        return true // keep iterating
+    })
+
+    resValue = i
+
+    return resValue
+}
+
+// -----
+// Variable's Content, supports json path expression
+func (tcDataStore *TcDataStore) GetVariableContent (s string) interface{} {  
+    // var resValue interface{}
+
+    s = strings.Replace(s, "$(", "", -1)
+    s = strings.Replace(s, ")", "", -1)
+
+    f := tcDataStore.RenderExpresionB(s)
+
+    return f
+}
+
+// ------------------------
 
 // redis
 func (tcDataStore *TcDataStore) GetRedisActualValueByPath (searchPath string) interface{} {
@@ -210,61 +241,6 @@ func (tcDataStore *TcDataStore) GetRedisActualValueByPath (searchPath string) in
 
     return resValue
 }
-
-
-// file
-func (tcDataStore *TcDataStore) GetFileActualValueByPath (jsonPath string) interface{} {
-    var resValue interface{}
-
-    resValue = tcDataStore.CommonGetActualValueByPath(jsonPath)
-
-    return resValue
-}
-
-
-// common json compatible value search
-func (tcDataStore *TcDataStore) CommonGetActualValueByPath (jsonPath string) interface{} {
-    var resValue interface{}
-    var cmdResultsJson string
-
-    switch tcDataStore.CmdResults.(type) {
-    case string:
-        cmdResultsJson = tcDataStore.CmdResults.(string)
-    default:
-        cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
-        cmdResultsJson = string(cmdResultsB)
-    }
-
-    // --
-    switch {
-    // case jsonPath == "affectedCount":
-    //     resValue = tcDataStore.CmdAffectedCount
-    case jsonPath == "*":
-        result := gjson.Result {
-            Type:  gjson.JSON,
-            Raw:   cmdResultsJson,
-        }
-        resValue = result.Value()
-    case tcDataStore.IfCmdResultsPrimitive():
-        resValue = tcDataStore.CmdResults
-    default:
-        value := gjson.Get(cmdResultsJson, jsonPath)
-        // if the path (key) exists
-        if !value.Exists() {
-            // the key does not exist, set the actualValue = _null_key_
-            resValue = "_null_key_"
-        } else {
-            resValue = value.Value()
-        }
-    }
-    
-    if resValue == nil {
-        resValue = "_null_value_"
-    }
-
-    return resValue
-}
-
 
 //
 func (tcDataStore *TcDataStore) IfCmdResultsPrimitive () bool {
@@ -296,63 +272,3 @@ func (tcDataStore *TcDataStore) IfCmdResultsPrimitive () bool {
     }
 }
 
-//
-func compareCommon (reponsePart string, key string, assertionKey string, actualValue interface{}, expValue interface{}) (bool, *testcase.TestMessage) {
-    // Note: As get Go nil, for JSON null, need special care, two possibilities:
-    // p1: expResult -> null, but can not find out actualValue, go set it to nil, i.e. null (assertion -> false)
-    // p2: expResult -> null, actualValue can be founc, and its value --> null (assertion -> true)
-    // but here can not distinguish them
-    assertionResults := ""
-    var testRes bool
-
-    // reserved word: _ignore_assertion_
-    if fmt.Sprint(expValue) == "_ignore_assertion_" {
-        msg := testcase.TestMessage {
-            AssertionResults: "Success",
-            ReponsePart:      reponsePart,
-            FieldName:        key,
-            AssertionKey:     assertionKey,
-            ActualValue:      actualValue,
-            ExpValue:         expValue,   
-        }
-        
-        testRes = true
-
-        return testRes, &msg
-    } 
-
-    if actualValue == nil || expValue == nil {
-        // if only one nil
-        if actualValue != nil || expValue != nil {
-            assertionResults = "Failed"
-            testRes = false
-        // both nil
-        } else {
-            assertionResults = "Success"
-            testRes = true
-        }
-    // no nil
-    } else {
-        // call the assertion function
-        testResult := assertion.CallAssertion(assertionKey, actualValue, expValue)
-        
-        if testResult == false {
-            assertionResults = "Failed"
-            testRes = false
-        } else {
-            assertionResults = "Success"
-            testRes = true
-        }
-    }
-    //
-    msg := testcase.TestMessage {
-        AssertionResults: assertionResults,
-        ReponsePart:      reponsePart,
-        FieldName:        key,
-        AssertionKey:     assertionKey,
-        ActualValue:      actualValue,
-        ExpValue:         expValue,   
-    }
-
-    return testRes, &msg
-}

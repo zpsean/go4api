@@ -16,6 +16,7 @@ import (
     "time"
     "strconv"
     "encoding/json"
+    "reflect"
 
     "go4api/cmd"
     "go4api/lib/testcase"
@@ -296,8 +297,8 @@ func (tcDataStore *TcDataStore) HandleSingleCmdResult (i int) ([]bool, [][]*test
     var cmdGroup []*testcase.CommandDetails
 
     if tcDataStore.CmdExecStatus == "cmdSuccess" {
-        path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdResponse"
-        tcDataStore.PrepEmbeddedFunctions(path)
+        // path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdResponse"
+        // tcDataStore.PrepEmbeddedFunctions(path)
         //
         switch tcDataStore.CmdSection {
         case "setUp":
@@ -324,37 +325,21 @@ func (tcDataStore *TcDataStore) HandleSingleCmdResult (i int) ([]bool, [][]*test
     return cmdsResults, finalTestMessages
 }
 
-func (tcDataStore *TcDataStore) CompareRespGroup (cmdExpResp map[string]interface{}) (bool, []*testcase.TestMessage){
+
+// for trial
+func (tcDataStore *TcDataStore) CompareRespGroup (cmdExpResp []map[string]interface{}) (bool, []*testcase.TestMessage){
     //-----------
     singleCmdResults := true
     var testResults []bool
     var testMessages []*testcase.TestMessage
+    for _, v := range cmdExpResp {
+        // path := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdResponse"
+        // tcDataStore.PrepEmbeddedFunctions(path)
 
-    for key, value := range cmdExpResp {
-        cmdExpResp_sub := value.(map[string]interface{})
-        for assertionKey, expValueOrigin := range cmdExpResp_sub {
-            switch assertionKey {
-            case "HasMapKey", "NotHasMapKey":
-                
-            case "IsNull", "IsNotNull":
+        testRes, msg := tcDataStore.CompareRespGroupSingleAssertion(v)
 
-            default:
-                actualValue := tcDataStore.GetResponseValue(key)
-
-                var expValue interface{}
-                switch expValueOrigin.(type) {
-                    case float64, int64, nil: 
-                        expValue = expValueOrigin
-                    default:
-                        expValue = tcDataStore.GetResponseValue(fmt.Sprint(expValueOrigin))
-                }
-                
-                testRes, msg := compareCommon(tcDataStore.CmdType, key, assertionKey, actualValue, expValue)
-                
-                testMessages = append(testMessages, msg)
-                testResults = append(testResults, testRes)
-            }  
-        }
+        testMessages = append(testMessages, msg)
+        testResults = append(testResults, testRes)
     }
 
     for key := range testResults {
@@ -367,6 +352,78 @@ func (tcDataStore *TcDataStore) CompareRespGroup (cmdExpResp map[string]interfac
     return singleCmdResults, testMessages
 }
 
+// for trial
+func (tcDataStore *TcDataStore) CompareRespGroupSingleAssertion (v map[string]interface{}) (bool, *testcase.TestMessage){
+    //-----------
+    var testResult bool
+    var testMessage *testcase.TestMessage
+
+    for actualOrigin, value := range v {
+        cmdExpResp_sub := value.(map[string]interface{})
+        for assertionKey, expValueOrigin := range cmdExpResp_sub {
+            switch assertionKey {
+            case "HasMapKey", "NotHasMapKey":
+                
+            case "IsNull", "IsNotNull":
+
+            default:
+                var actualValue interface{}
+                if strings.Contains(actualOrigin, "$(") {
+                    l := tcDataStore.RenderExpresionA(actualOrigin)
+
+                    actualValue = tcDataStore.GetResponseValue(l)
+                } else {
+                    actualValue = tcDataStore.RenderExpresionB(actualOrigin)
+                }
+
+                var expValue interface{}
+                // expValueOrigin may have "$(...)" or "Fn::"
+                // !!! currently, suppose the "$(...)" and "Fn::" do not coexist
+                t := reflect.TypeOf(expValueOrigin).Kind().String()
+                switch t {
+                case "float64":
+                    expValue = expValueOrigin
+                case "string":
+                    e := expValueOrigin.(string)
+                    if strings.Contains(e, "$(") {
+                        l := tcDataStore.RenderExpresionA(e)
+
+                        expValue = tcDataStore.GetResponseValue(l)
+                    } else {
+                        expValue = tcDataStore.RenderExpresionB(e)
+                    }
+                case "map":
+                    b, _ := json.Marshal(expValueOrigin)
+                    s := tcDataStore.GetRenderTcVariables(string(b))
+
+                    expValue = s
+
+                    if strings.Contains(s, "Fn::") {
+                        f := tcDataStore.EvaluateEmbeddedFunctions(cmdExpResp_sub)
+
+                        var vv interface{}
+                        json.Unmarshal([]byte(f.(string)), &vv)
+
+                        for _, v1 := range vv.(map[string]interface{}) {
+                            expValue = v1
+                        }
+                    }
+                case "slice":
+                    expValue = expValueOrigin
+                default:
+                    expValue = expValueOrigin
+                }
+                
+                // fmt.Println("CompareRespGroupSingleAssertion: ", assertionKey, actualValue, expValue)
+                testResult, testMessage = compareCommon(tcDataStore.CmdType, actualOrigin, assertionKey, actualValue, expValue)
+            }  
+        }
+    }
+
+    return testResult, testMessage
+}
+
+//
 func (tcDataStore *TcDataStore) HandleCmdResultsForOut (i int) {
     var cmdGroup []*testcase.CommandDetails
     

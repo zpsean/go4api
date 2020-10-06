@@ -94,14 +94,6 @@ Note: You can prepare many many test cases based on below examples to let Go4Api
 ### Your testing workspace may like below:
 ```js
 samples/
-├── conversion
-│   ├── har_sample.json
-│   ├── har_sample.json.out.json
-│   ├── swagger_sample.json
-│   └── swagger_sample.json.out.json
-├── fuzz
-│   ├── FuzzTeseCase.fuzz
-│   └── FuzzTeseCase.json
 ├── mutation
 │   └── MutationTeseCase.json
 ├── scenarios
@@ -153,30 +145,38 @@ testresults/
           "pageSize": "12"
         }
       },
-      "response": {
-        "status": {
-          "Equals": 200
+      "response": [
+        {
+          "$(status).statusCode": {
+            "Equals": 200
+          }
         },
-        "headers": {
-          "Content-Type": {
+        {
+          "$(headers).Content-Type": {
             "Contains": "application/json;charset=UTF-8"
           }
         },
-        "body": {
+        {
           "$(body).start": {
             "GreaterOrEquals": 0
-          },
+          }
+        },
+        {
           "$(body).subjects.#": {
             "Equals": 20
-          },
+          }
+        },
+        {
           "$(body).total": {
             "Equals": 250
-          },
+          }
+        },
+        {
           "$(body).subjects.0.title": {
             "Contains": "肖申克的救赎"
           }
         }
-      }
+      ]
     }
   }
 ]
@@ -210,16 +210,18 @@ SecondTeseCase.json
           "pageSize": "12"
         }
       },
-      "response": {
-        "status": {
-          "Equals": {"Fn::ToInt": "${statuscode}"}
+      "response": [
+        {
+          "$(status).statusCode": {
+            "Equals": {"Fn::ToInt": "${statuscode}"}
+          }
         },
-        "headers": {
-          "Content-Type": {
+        {
+          "$(headers).Content-Type": {
             "Contains": "application/json;charset=UTF-8"
           }
         }
-      }
+      ]
     }
   }
 ]

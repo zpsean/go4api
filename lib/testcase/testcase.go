@@ -61,6 +61,10 @@ func (tc *TestCase) SetUp() []*CommandDetails {
     return (*tc)[tc.TcName()].SetUp
 }
 
+func (tc *TestCase) Response() []map[string]interface{} {
+    return (*tc)[tc.TcName()].Response
+}
+
 func (tc *TestCase) Inputs() []interface{} {
     return (*tc)[tc.TcName()].Inputs
 }
@@ -328,30 +332,30 @@ func (tc *TestCase) DelReqPayload (key string) {
 
 
 // type Response struct
-func (tc *TestCase) RespStatus() map[string]interface{} {
-    if (*tc)[tc.TcName()].Response == nil {
-        return nil
-    } else {
-        return (*tc)[tc.TcName()].Response.Status
-    }
+// func (tc *TestCase) RespStatus() map[string]interface{} {
+//     if (*tc)[tc.TcName()].Response == nil {
+//         return nil
+//     } else {
+//         return (*tc)[tc.TcName()].Response.Status
+//     }
     
-}
+// }
 
-func (tc *TestCase) RespHeaders() map[string]interface{} {
-    if (*tc)[tc.TcName()].Response == nil {
-        return nil
-    } else {
-        return (*tc)[tc.TcName()].Response.Headers
-    }
-}
+// func (tc *TestCase) RespHeaders() map[string]interface{} {
+//     if (*tc)[tc.TcName()].Response == nil {
+//         return nil
+//     } else {
+//         return (*tc)[tc.TcName()].Response.Headers
+//     }
+// }
 
-func (tc *TestCase) RespBody() map[string]interface{} {
-    if (*tc)[tc.TcName()].Response == nil {
-        return nil
-    } else {
-        return (*tc)[tc.TcName()].Response.Body
-    }
-}
+// func (tc *TestCase) RespBody() map[string]interface{} {
+//     if (*tc)[tc.TcName()].Response == nil {
+//         return nil
+//     } else {
+//         return (*tc)[tc.TcName()].Response.Body
+//     }
+// }
 
 // !! ---------------------------------------
 // !! --- test case data type 

@@ -54,7 +54,7 @@ func Convert () {
             SetUp:                    []*testcase.CommandDetails{},
             Inputs:                   []interface{}{},
             Request:                  &g4ARequest,
-            Response:                 &g4AResponse,
+            Response:                 g4AResponse,
             Outputs:                  []*testcase.OutputsDetails{},
             OutFiles:                 []*testcase.OutFilesDetails{},
             OutGlobalVariables:       map[string]interface{}{},  // OutGlobalVariables
@@ -144,13 +144,13 @@ func (harRequest Request) buildG4ARequest () testcase.Request {
     return g4ARequest
 }
 
-func (harResponse Response) buildG4AResponse () testcase.Response {
-    var g4AResponse testcase.Response
+func (harResponse Response) buildG4AResponse () []map[string]interface{}  {
+    var g4AResponse []map[string]interface{} 
 
     respStatus := make(map[string]interface{})
     respStatus["Equals"] = harResponse.Status
 
-    g4AResponse.Status = respStatus
+    // g4AResponse.Status = respStatus
 
     return g4AResponse
 }

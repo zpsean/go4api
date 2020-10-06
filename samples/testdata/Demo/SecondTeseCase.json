@@ -14,16 +14,18 @@
           "pageSize": "12"
         }
       },
-      "response": {
-        "status": {
-          "Equals": {"Fn::ToInt": "${statuscode}"}
+      "response": [
+        {
+          "$(status).statusCode": {
+            "Equals": {"Fn::ToInt": "${statuscode}"}
+          }
         },
-        "headers": {
-          "Content-Type": {
-            "Contains": "application/json"
+        {
+          "$(headers).Content-Type": {
+            "Contains": "application/json;charset=UTF-8"
           }
         }
-      }
+      ]
     }
   }
 ]
