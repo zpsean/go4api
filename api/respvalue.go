@@ -99,10 +99,10 @@ func (tcDataStore *TcDataStore) GetContentByPath (res interface{}, jsonPath stri
     switch t {
     case "string":
         if strings.HasSuffix(jsonPath, "_keys_count_") {
-            tcDataStore.GetKeysCount(res.(string), jsonPath)
+            r = tcDataStore.GetKeysCount(res.(string), jsonPath)
+        } else {
+            r = tcDataStore.GetRes(res.(string), jsonPath)
         }
-        
-        r = tcDataStore.GetRes(res.(string), jsonPath)
     case "float64":
         r = res
     case "bool":
@@ -116,12 +116,12 @@ func (tcDataStore *TcDataStore) GetContentByPath (res interface{}, jsonPath stri
         }
 
         if strings.HasSuffix(jsonPath, "_keys_count_") {
-            tcDataStore.GetKeysCount(string(s), jsonPath)
+            r = tcDataStore.GetKeysCount(string(s), jsonPath)
+        } else {
+            r = tcDataStore.GetRes(string(s), jsonPath)
         }
-        
-        r = tcDataStore.GetRes(string(s), jsonPath)
     default:
-        r = "aaaaaaaaaa"
+        r = res
     }
 
     return r

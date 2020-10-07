@@ -56,7 +56,7 @@ func compareCommon (reponsePart string, key string, assertionKey string, actualV
     } else {
         // call the assertion function
         testResult := assertion.CallAssertion(assertionKey, actualValue, expValue)
-        
+
         if testResult == false {
             assertionResults = "Failed"
             testRes = false

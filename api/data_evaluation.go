@@ -309,6 +309,8 @@ func (tcDataStore *TcDataStore) RenderExpresionB (source interface{}) (interface
 
             finalExp = t
         }  
+    } else {
+        finalExp = jsonStr
     }
 
     return finalExp

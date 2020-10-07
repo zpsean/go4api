@@ -29,7 +29,16 @@ func CallAssertion (name string, params ... interface{}) bool {
     if ifBothNil(params) {
         return true
     } else if !ValidateCallParams(name, params) {
-        return false
+        var r bool
+
+        n := strings.ToLower(name)
+        if strings.Contains(n, "not") {
+            r = true
+        } else {
+            r = false
+        }
+
+        return r
     } else {
         f := reflect.ValueOf(assertionMapping[name].AssertionFunc)
 

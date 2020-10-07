@@ -414,7 +414,7 @@ func (tcDataStore *TcDataStore) CompareRespGroupSingleAssertion (v map[string]in
                     expValue = expValueOrigin
                 }
                 
-                // fmt.Println("CompareRespGroupSingleAssertion: ", assertionKey, actualValue, expValue)
+                // fmt.Println("CompareRespGroupSingleAssertion: ", expValueOrigin, t, assertionKey, actualValue, expValue)
                 testResult, testMessage = compareCommon(tcDataStore.CmdType, actualOrigin, assertionKey, actualValue, expValue)
             }  
         }
