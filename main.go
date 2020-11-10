@@ -24,7 +24,7 @@ import (
 
 func main(){
 
-    var Version = "0.71.2"
+    var Version = "0.71.4"
     var Banner = `
      ________                 ____          ___                   _
     /  ____  \   _______     / __ |        / _ \       ______    |_|

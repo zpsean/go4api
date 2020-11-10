@@ -11,7 +11,7 @@
 package api
 
 import (
-    // "fmt"
+    "fmt"
     "strings"
     "reflect"
     "encoding/json"
@@ -46,7 +46,10 @@ func (tcDataStore *TcDataStore) GetResponseValue (searchPath string) interface{}
 
                 value = tcDataStore.GetContentByPath(s, z[1])
             case "$(redis)":
-                value = tcDataStore.GetRedisActualValueByPath(searchPath)
+                s := tcDataStore.CmdResults
+                
+                value = tcDataStore.GetContentByPath(s, z[1])
+                // value = tcDataStore.GetRedisActualValueByPath(searchPath)
             default:
                 // If the value from from declared variable: $(${variable}).xx.yy
                 if strings.Contains(z[0], "$(") {
@@ -220,6 +223,8 @@ func (tcDataStore *TcDataStore) GetRedisActualValueByPath (searchPath string) in
  
     prefix := "$(redis)."
     lenPrefix := len(prefix)
+
+    fmt.Println("==> tcDataStore.CmdResults: ", tcDataStore.CmdResults)
 
     cmdResultsB, _ := json.Marshal(tcDataStore.CmdResults)
     cmdResultsJson := string(cmdResultsB)
