@@ -179,22 +179,31 @@ func (tcDataStore *TcDataStore) HandleRedisCmd (i int) ([]bool, [][]*testcase.Te
     tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
     tcDataJson := string(tcDataJsonB)
 
-    cmdMap := gjson.Get(tcDataJson, cmdStrPath).Map()
-
     // cmdTgtDb := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdSource"
     // tgtDb := gjson.Get(tcDataJson, cmdTgtDb).String()
 
-    for k, v := range cmdMap {
-        cmdStr = k
-        if len(v.Array()) == 1 {
-            cmdKey = v.Array()[0].String()
-            cmdValue = ""
-        }
-        if len(v.Array()) > 1 {
-            cmdKey = v.Array()[0].String()
-            cmdValue = v.Array()[1].String()
+    cmdS := gjson.Get(tcDataJson, cmdStrPath).String()
+
+    var mm []string
+    m := strings.Split(cmdS, " ")
+    for _, k := range m {
+        if len(k) > 0 {
+            mm = append(mm, k)
         }
     }
+
+    switch len(mm) {
+    case 1:
+        cmdStr = mm[0]
+    case 2:
+        cmdStr = mm[0]
+        cmdKey = mm[1]
+    case 3:
+        cmdStr = mm[0]
+        cmdKey = mm[1]
+        cmdValue = mm[2]
+    }
+
     // init
     tcDataStore.CmdType = "redis"
     tcDataStore.CmdExecStatus = ""
