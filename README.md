@@ -240,6 +240,108 @@ dt1-2,2,500
 $./go4api -run -baseUrl https://api.douban.com -c /<you Path>/testconfig  -tc  /<you Path>/testdata -tr /<you Path>/testresource -r /<you Path>/testresults
 ```
 
+
+More code snippets
+-----------
+
+#### Config file sample
+```js
+{
+  "Local": {
+      "baseUrl": "...",
+      "mysql": {
+          "master": {
+              "ip": "",
+              ...
+          }
+      },
+      "postgresql": {
+          "master": {
+              "ip": "",
+              ...
+          }
+      },
+      "redis": {
+          "master": {
+              ...
+          }
+      },
+      "mongoDB": {
+          "master": {
+              ...
+          }
+      }
+  },
+  "Dev": ...,
+  "QA": ...,
+  "UAT": ...
+}
+```
+
+#### POST, application/json
+```js
+[
+  {
+    "tcname ...": {
+      ...,
+      "request": {
+        "method": "POST",
+        "path": "...",
+        "headers": {
+          "Content-Type": "application/json;charset=UTF-8"
+        },
+        "payload": {
+          "text": {
+                    "f_1": "v_1",
+                    "f_2": "v_2"
+                  }
+        }
+      },
+      "response": ...
+    }
+  }
+]
+```
+
+#### POST, multipart/form-data
+```js
+[
+  {
+    "tcname ...": {
+      ...,
+      "request": {
+        "method": "POST",
+        "path": "...",
+        "headers": {
+          "Content-Type": "multipart/form-data"
+        },
+        "payload": {
+          "multipartForm": [
+                  { 
+                    "name": "fname_1",
+                    "value": "fvalue_1"
+                  },
+                  {
+                    "name": "fname_2",
+                    "value": "fvalue_2.csv",
+                    "type": "file",
+                    "mIMEHeader": {
+                      "content-type": "text/csv"
+                    }
+                  }
+                ]
+        }
+      },
+      "response": ...
+    }
+  }
+]
+
+```
+
+
+
+
 Html Reporting
 -----------
 <p align="center">
@@ -247,6 +349,7 @@ Html Reporting
 </p>
 
 ---
+
 
 Reference
 --------------------------------
