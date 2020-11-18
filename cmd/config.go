@@ -25,7 +25,7 @@ type Config map[string]*Environment
 type Environment struct {
     BaseUrl    string
     TimeZone   string
-    Dbs        map[string]*DbDetails
+    Mysql      map[string]*DbDetails
     PostgreSql map[string]*DbDetails
     Redis      map[string]*RedisDetails
     MongoDB    map[string]*MongDBDetails
@@ -93,7 +93,7 @@ func GetTimeZoneConfig () string {
 
 // mysql
 func GetDbConfig () map[string]*DbDetails {
-        return config[tEnv].Dbs
+        return config[tEnv].Mysql
 }
 
 // postgresql

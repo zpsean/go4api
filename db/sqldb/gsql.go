@@ -136,7 +136,7 @@ func (sqlExec *SqlExec) Delete () error {
     //         sqlExec.CmdAffectedCount = -1
     //     }  
     // }()
-
+    
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     if err != nil {
         fmt.Println("!! Err, Delete Prepare, Catch gsql err:", err) 
@@ -166,7 +166,7 @@ func (sqlExec *SqlExec) QueryWithoutParams () error {
     //         fmt.Println("!! Err, Catch gsql err:", r)   
     //     }  
     // }()  
-
+    
     sqlStmt, err := db.Prepare(sqlExec.Stmt)
     if err != nil {
         fmt.Println("!! Err, SELECT Prepare, Catch gsql err:", err)
