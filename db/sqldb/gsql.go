@@ -181,7 +181,7 @@ func (sqlExec *SqlExec) QueryWithoutParams () error {
     }
 
     if err == nil {
-        rowsCount, rowsHeaders, rowsData := ScanRows(rows)
+        rowsCount, rowsHeaders, rowsData := sqlExec.ScanRows(rows)
 
         sqlExec.CmdAffectedCount = rowsCount
         sqlExec.RowsHeaders = rowsHeaders
@@ -195,7 +195,7 @@ func (sqlExec *SqlExec) QueryWithParams () {
 
 }
 
-func ScanRows (rows *sql.Rows) (int, []string, []map[string]interface{}) {
+func (sqlExec *SqlExec) ScanRows (rows *sql.Rows) (int, []string, []map[string]interface{}) {
     rowsHeaders, _ := rows.Columns()
     var rowsData []map[string]interface{}
 
@@ -232,21 +232,27 @@ func ScanRows (rows *sql.Rows) (int, []string, []map[string]interface{}) {
             case bool:
                 record[rowsHeaders[i]] = col.(bool)
             case []byte:
-                // postgresql's field type numeric(m, n) is recognized as []byte (i.e. []uint8)
-                // for example: 99999999.9900 represeted as => []unit8 => [57 57 57 57 57 57 57 57 46 57 57 48 48] => 
-                //
-                // !!Note: here need more code to enhance
-                var v interface{}
+                dri := strings.ToLower(sqlExec.DriverName)
+                switch dri {
+                case "sql", "mysql":
+                    record[rowsHeaders[i]] = string(col.([]byte))
+                case "postgres", "postgresql":
+                    // postgresql's field type numeric(m, n) is recognized as []byte (i.e. []uint8)
+                    // for example: 99999999.9900 represeted as => []unit8 => [57 57 57 57 57 57 57 57 46 57 57 48 48] => 
+                    //
+                    // !!Note: here need more code to enhance
+                    var v interface{}
 
-                s :=  string(col.([]byte))
-                v, err := strconv.ParseFloat(s, 64)
-                if err != nil {
-                    fmt.Println("!! Err, the string can not be parsed int float64:", col.([]byte), err)
-                    // panic(err)
-                    v = col.([]byte)
+                    s :=  string(col.([]byte))
+                    v, err := strconv.ParseFloat(s, 64)
+                    if err != nil {
+                        fmt.Println("!! Warning, can not be parsed into float64:", col.([]byte), s, err)
+                        // panic(err)
+                        v = col.([]byte)
+                    }
+                    
+                    record[rowsHeaders[i]] = v
                 }
-                
-                record[rowsHeaders[i]] = v
             case string:
                 record[rowsHeaders[i]] = col.(string)
             case time.Time:
