@@ -85,11 +85,8 @@ func (tcDataStore *TcDataStore) HandleJsonFile (i int) ([]bool, [][]*testcase.Te
     // cmd is always ""
     // cmdStr := ""
 
-    tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
-    tcDataJson := string(tcDataJsonB)
-
-    cmdTgtJsonFile := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdSource"
-    tgtJsonFile := gjson.Get(tcDataJson, cmdTgtJsonFile).String()
+    // 1. cmdSource
+    tgtJsonFile := tcDataStore.HandleCmdSource(i)
 
     tgtJsonFileFullPath := ""
     // check if tgtJsonFile is absolute path
@@ -124,16 +121,12 @@ func (tcDataStore *TcDataStore) HandleSqlCmd (lc string, i int) ([]bool, [][]*te
     var sResults []bool
     var sMessages [][]*testcase.TestMessage
 
-    cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmd"
-    tcDataStore.PrepEmbeddedFunctions(cmdStrPath)
+    // 1. cmdSource
+    tgtDb := tcDataStore.HandleCmdSource(i)
 
-    tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
-    tcDataJson := string(tcDataJsonB)
-
-    cmdStr := gjson.Get(tcDataJson, cmdStrPath).String()
-
-    cmdTgtDb := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdSource"
-    tgtDb := gjson.Get(tcDataJson, cmdTgtDb).String()
+    // 2. cmd
+    cmdStr := tcDataStore.HandleCmdStr(i)
+  
     // init
     // tcDataStore.CmdType = "sql"
     tcDataStore.CmdExecStatus = ""
@@ -173,16 +166,11 @@ func (tcDataStore *TcDataStore) HandleRedisCmd (i int) ([]bool, [][]*testcase.Te
 
     var cmdStr, cmdKey, cmdValue string
 
-    cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmd"
-    tcDataStore.PrepEmbeddedFunctions(cmdStrPath)
+    // 1. cmdSource
+    // tgtDb := tcDataStore.HandleCmdSource(i)
 
-    tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
-    tcDataJson := string(tcDataJsonB)
-
-    // cmdTgtDb := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdSource"
-    // tgtDb := gjson.Get(tcDataJson, cmdTgtDb).String()
-
-    cmdS := gjson.Get(tcDataJson, cmdStrPath).String()
+    // 2. cmd
+    cmdS := tcDataStore.HandleCmdStr(i)
 
     var mm []string
     m := strings.Split(cmdS, " ")
@@ -226,13 +214,11 @@ func (tcDataStore *TcDataStore) HandleMongoDBCmd (i int) ([]bool, [][]*testcase.
     var sResults []bool
     var sMessages [][]*testcase.TestMessage
 
-    cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmd"
-    tcDataStore.PrepEmbeddedFunctions(cmdStrPath)
+    // 1. cmdSource
+    // tgtDb := tcDataStore.HandleCmdSource(i)
 
-    tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
-    tcDataJson := string(tcDataJsonB)
-
-    cmdStr := gjson.Get(tcDataJson, cmdStrPath).String()
+    // 2. cmd
+    cmdStr := tcDataStore.HandleCmdStr(i)
 
     // init
     tcDataStore.CmdType = "mongodb"
@@ -256,16 +242,10 @@ func (tcDataStore *TcDataStore) HandleInitCmd (i int) ([]bool, [][]*testcase.Tes
     var sResults []bool
     var sMessages [][]*testcase.TestMessage
 
-    cmdStrPath := "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmd"
-    tcDataStore.PrepEmbeddedFunctions(cmdStrPath)
+    // 1. cmd
+    cmdStr := tcDataStore.HandleCmdStr(i)
 
-    tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
-    tcDataJson := string(tcDataJsonB)
-
-    cmdStr := gjson.Get(tcDataJson, cmdStrPath).String()
-
-    s := strings.ToLower(cmdStr)
-
+    s  := strings.ToLower(cmdStr)
     ss := strings.Fields(strings.TrimSpace(s))
 
     if len(ss) == 0 {
@@ -433,6 +413,36 @@ func (tcDataStore *TcDataStore) CompareRespGroupSingleAssertion (v map[string]in
 }
 
 //
+func (tcDataStore *TcDataStore) HandleCmdStr (i int) string {
+    var p string
+    
+    p = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmd"
+    tcDataStore.PrepEmbeddedFunctions(p)
+
+    tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
+    tcDataJson := string(tcDataJsonB)
+
+    cmdStr := gjson.Get(tcDataJson, p).String()
+
+    return cmdStr
+}
+
+//
+func (tcDataStore *TcDataStore) HandleCmdSource (i int) string {
+    var p string
+    
+    p = "TestCase." + tcDataStore.TcData.TestCase.TcName() + "." + tcDataStore.CmdSection + "." + fmt.Sprint(i) + ".cmdSource"
+    tcDataStore.PrepEmbeddedFunctions(p)
+
+    tcDataJsonB, _ := json.Marshal(tcDataStore.TcData)
+    tcDataJson := string(tcDataJsonB)
+
+    cmdSource := gjson.Get(tcDataJson, p).String()
+
+    return cmdSource
+}
+
+// ------
 func (tcDataStore *TcDataStore) HandleCmdResultsForOut (i int) {
     var cmdGroup []*testcase.CommandDetails
     

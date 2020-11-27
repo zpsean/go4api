@@ -237,18 +237,20 @@ func (sqlExec *SqlExec) ScanRows (rows *sql.Rows) (int, []string, []map[string]i
                 case "sql", "mysql":
                     record[rowsHeaders[i]] = string(col.([]byte))
                 case "postgres", "postgresql":
+                    // 1. 
                     // postgresql's field type numeric(m, n) is recognized as []byte (i.e. []uint8)
                     // for example: 99999999.9900 represeted as => []unit8 => [57 57 57 57 57 57 57 57 46 57 57 48 48] => 
                     //
+                    // 2. if field is jsonb
                     // !!Note: here need more code to enhance
                     var v interface{}
 
                     s :=  string(col.([]byte))
                     v, err := strconv.ParseFloat(s, 64)
                     if err != nil {
-                        fmt.Println("!! Warning, can not be parsed into float64:", col.([]byte), s, err)
+                        // fmt.Println("!! Warning, can not be parsed into float64:", col.([]byte), s, err)
                         // panic(err)
-                        v = col.([]byte)
+                        v = s
                     }
                     
                     record[rowsHeaders[i]] = v
